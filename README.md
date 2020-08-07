@@ -1,5 +1,7 @@
 # zio-aws
 
+*WORK IN PROGRESS, NOT READY TO BE USED YET*
+
 Low-level AWS wrapper for [ZIO](https://zio.dev) for _all_ AWS services using the AWS Java SDK v2.
 
 Features:
