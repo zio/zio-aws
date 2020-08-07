@@ -27,8 +27,8 @@ lazy val codegen = Project("zio-aws-codegen", file("zio-aws-codegen")).settings(
   libraryDependencies ++= Seq(
     "dev.zio" %% "zio" % zioVersion,
 
-    "io.github.vigoo" %% "clipp-core" % "0.3.2",
-    "io.github.vigoo" %% "clipp-zio" % "0.3.2",
+    "io.github.vigoo" %% "clipp-core" % "0.4.0",
+    "io.github.vigoo" %% "clipp-zio" % "0.4.0",
 
     "software.amazon.awssdk" % "codegen" % awsVersion,
     "software.amazon.awssdk" % "aws-sdk-java" % awsVersion, // TODO: enable all

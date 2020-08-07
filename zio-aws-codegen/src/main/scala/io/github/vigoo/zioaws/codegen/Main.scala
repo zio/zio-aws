@@ -1,11 +1,15 @@
 package io.github.vigoo.zioaws.codegen
 
+import java.io.File
+import java.nio.file.Path
+
 import io.github.vigoo.clipp.ParserFailure
-import io.github.vigoo.clipp.zio.Clipp
+import io.github.vigoo.clipp.zioapi._
 import io.github.vigoo.zioaws.codegen.loader.ModelId
 import zio._
 
 object Main extends App {
+
   override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] = {
     val app = for {
       ids <- loader.findModels()
@@ -18,15 +22,11 @@ object Main extends App {
       }
     } yield ExitCode.success
 
-    val cfg = config.fromArgs(args)
+    val cfg = config.fromArgsWithUsageInfo(args, Parameters.spec)
     val modules = loader.live ++ (cfg >>> generator.live)
     app.provideCustomLayer(modules).catchAll {
       case exception: Throwable => console.putStrErr(exception.toString).as(ExitCode.failure)
-      case parserFailure: ParserFailure =>
-        import io.github.vigoo.clipp.zio._
-        Clipp.displayErrorsAndUsageInfo(config.spec)(parserFailure)
-          .catchAll { _ => ZIO.unit } // TODO: remove once clipp interface is fixed
-          .as(ExitCode.failure)
+      case parserFailure: ParserFailure => ZIO.succeed(ExitCode.failure)
     }
   }
 }

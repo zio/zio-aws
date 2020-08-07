@@ -1,9 +1,9 @@
 package io.github.vigoo.zioaws.codegen
 
 import java.nio.charset.StandardCharsets
-import java.nio.file.{Files, OpenOption, Paths}
+import java.nio.file.Files
 
-import io.github.vigoo.zioaws.codegen.config.Config
+import io.github.vigoo.clipp.zioapi.config.ClippConfig
 import io.github.vigoo.zioaws.codegen.generator.Generator.{FailedToCreateDirectories, FailedToWriteFile, GeneratorError}
 import io.github.vigoo.zioaws.codegen.loader.ModelId
 import software.amazon.awssdk.codegen.C2jModels
@@ -12,7 +12,6 @@ import software.amazon.awssdk.codegen.naming.{DefaultNamingStrategy, NamingStrat
 import zio._
 
 import scala.jdk.CollectionConverters.MapHasAsScala
-import scala.meta.tokens.Token.{Comment, Ident}
 
 package object generator {
   type Generator = Has[Generator.Service]
@@ -44,7 +43,7 @@ package object generator {
   case object EventStreamOutput extends OperationMethodType
   case object EventStreamInputOutput extends OperationMethodType
 
-  val live: ZLayer[Config, Nothing, Generator] = ZLayer.fromService { config =>
+  val live: ZLayer[ClippConfig[Parameters], Nothing, Generator] = ZLayer.fromService { config =>
     new Generator.Service {
       import scala.meta._
 
