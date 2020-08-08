@@ -1,3 +1,4 @@
+import scala.sys.process._
 
 val zioVersion = "1.0.0"
 val zioCatsInteropVersion = "2.1.4.0"
@@ -6,6 +7,9 @@ val awsVersion = "2.13.69"
 val http4sVersion = "0.21.0"
 val fs2Version = "2.2.2"
 
+val generateAll = taskKey[Unit]("Generates all AWS client libraries")
+val buildAll = taskKey[Unit]("Generates and builds all AWS client libraries")
+
 lazy val commonSettings =
   Seq(
     scalaVersion := "2.13.3",
@@ -13,7 +17,37 @@ lazy val commonSettings =
   )
 
 lazy val root = Project("zio-aws", file(".")).settings(commonSettings).settings(
-  publishArtifact := false
+  publishArtifact := false,
+  generateAll := Def.taskDyn {
+    val root = baseDirectory.value.getAbsolutePath
+    Def.task {
+      (codegen / Compile / run).toTask(s" --target-root ${root}/generated --source-root ${root}").value
+    }
+  }.value,
+  buildAll := Def.taskDyn {
+    val _ = generateAll.value
+    val generatedRoot = baseDirectory.value / "generated"
+    val launcherVersion = sbtVersion.value
+    val launcher = s"sbt-launch-$launcherVersion.jar"
+    val launcherFile = generatedRoot / launcher
+
+    Def.task[Unit] {
+      if(!launcherFile.exists) {
+        val u = url(s"https://oss.sonatype.org/content/repositories/public/org/scala-sbt/sbt-launch/$launcherVersion/sbt-launch-$launcherVersion.jar")
+        sbt.io.Using.urlInputStream(u) { inputStream =>
+          IO.transfer(inputStream, launcherFile)
+        }
+      }
+      val fork = new ForkRun(ForkOptions()
+        .withWorkingDirectory(generatedRoot))
+      fork.run(
+        "xsbt.boot.Boot",
+        classpath = launcherFile :: Nil,
+        options = "compile" :: Nil,
+        log = streams.value.log
+      )
+    }
+  }.value
 ) aggregate(core, codegen)
 
 lazy val core = Project("zio-aws-core", file("zio-aws-core")).settings(commonSettings).settings(
@@ -50,3 +84,4 @@ lazy val http4s = Project("zio-aws-http4s", file("zio-aws-http4s")).settings(com
     "co.fs2" %% "fs2-reactive-streams"% fs2Version
   )
 ).dependsOn(core)
+
