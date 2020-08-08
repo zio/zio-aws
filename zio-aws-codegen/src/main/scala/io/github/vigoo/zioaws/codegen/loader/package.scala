@@ -23,7 +23,15 @@ import scala.util.matching.Regex
 package object loader {
   type Loader = Has[Loader.Service]
 
-  case class ModelId(name: String, subModule: Option[String])
+  case class ModelId(name: String, subModule: Option[String]) {
+    val moduleName: String = subModule.getOrElse(name)
+
+    override def toString: String =
+      subModule match {
+        case Some(value) => s"$name:$value"
+        case None => name
+      }
+  }
 
   object Loader {
     trait Service {

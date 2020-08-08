@@ -13,13 +13,15 @@ object Main extends App {
   override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] = {
     val app = for {
       ids <- loader.findModels()
-      _ <- ZIO.foreach(ids) { id =>
+      _ <- ZIO.foreachPar(ids) { id =>
         for {
           _ <- console.putStrLn(s"Generating $id")
           model <- loader.loadCodegenModel(id)
           _ <- generator.generateServiceModule(id, model).mapError(error => new RuntimeException(error.toString)) // TODO
         } yield ()
       }
+      _ <- generator.generateBuildSbt(ids)
+      _ <- generator.copyCoreProject()
     } yield ExitCode.success
 
     val cfg = config.fromArgsWithUsageInfo(args, Parameters.spec)

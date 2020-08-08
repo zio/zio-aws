@@ -1,6 +1,7 @@
 
 val zioVersion = "1.0.0"
 val zioCatsInteropVersion = "2.1.4.0"
+val zioReactiveStreamsInteropVersion = "1.0.3.5"
 val awsVersion = "2.13.69"
 val http4sVersion = "0.21.0"
 val fs2Version = "2.2.2"
@@ -17,12 +18,10 @@ lazy val root = Project("zio-aws", file(".")).settings(commonSettings).settings(
 
 lazy val core = Project("zio-aws-core", file("zio-aws-core")).settings(commonSettings).settings(
   libraryDependencies ++= Seq(
-    "software.amazon.awssdk" % "core" % awsVersion,
+    "software.amazon.awssdk" % "aws-core" % awsVersion,
     "dev.zio" %% "zio" % zioVersion,
     "dev.zio" %% "zio-streams" % zioVersion,
-
-    // "software.amazon.awssdk" % "dynamodb" % awsVersion, // TODO: remove
-    "software.amazon.awssdk" % "aws-sdk-java" % awsVersion, // TODO: remove
+    "dev.zio" %% "zio-interop-reactivestreams" % zioReactiveStreamsInteropVersion
   )
 )
 
@@ -34,9 +33,10 @@ lazy val codegen = Project("zio-aws-codegen", file("zio-aws-codegen")).settings(
     "io.github.vigoo" %% "clipp-zio" % "0.4.0",
 
     "software.amazon.awssdk" % "codegen" % awsVersion,
-    "software.amazon.awssdk" % "aws-sdk-java" % awsVersion, // TODO: enable all
-    //"software.amazon.awssdk" % "dynamodb" % awsVersion, // TODO: remove
-    "org.scalameta" %% "scalameta" % "4.3.20"
+    "software.amazon.awssdk" % "aws-sdk-java" % awsVersion,
+
+    "org.scalameta" %% "scalameta" % "4.3.20",
+    "com.lihaoyi" %% "os-lib" % "0.7.1"
   )
 )
 

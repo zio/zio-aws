@@ -11,4 +11,6 @@ Features:
 - Http service implementations for functional Scala http libraries, injected through ZIO's module system
 - **TODO** ZStream wrapper around paginated operations
 - **TODO** More idiomatic Scala request and response types wrapping the Java classes
+- **TODO** Generated error type
+
  
