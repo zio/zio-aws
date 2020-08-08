@@ -13,6 +13,9 @@ trait AwsServiceBase {
   final def asyncRequestResponse[Request, Response](impl: Request => CompletableFuture[Response])(request: Request): IO[AwsError, Response] =
     ZIO.fromCompletionStage(impl(request)).mapError(AwsError.fromThrowable)
 
+  final def asyncPaginatedRequest[Request, Item, Response](impl: Request => Response, selector: Response => Publisher[Item])(request: Request): IO[AwsError, ZStream[Any, Throwable, Item]] =
+    ZIO(selector(impl(request)).toStream()).mapError(AwsError.fromThrowable)
+
   final def asyncRequestOutputStream[Request, Response](impl: (Request, AsyncResponseTransformer[Response, Task[StreamingOutputResult[Response]]]) => CompletableFuture[Task[StreamingOutputResult[Response]]])
                                                        (request: Request): IO[AwsError, StreamingOutputResult[Response]] = {
     for {
