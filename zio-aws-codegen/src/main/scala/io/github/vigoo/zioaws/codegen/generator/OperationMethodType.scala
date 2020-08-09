@@ -8,6 +8,8 @@ import software.amazon.awssdk.codegen.model.service.{Operation, Shape}
 import zio.{ZIO, console}
 import zio.console.Console
 
+import scala.meta.Term
+
 sealed trait OperationMethodType
 
 case class RequestResponse(pagination: Option[PaginationDefinition]) extends OperationMethodType
@@ -37,7 +39,7 @@ object OperationMethodType {
       }
     }
 
-  def get(models: C2jModels, opName: String, op: Operation): ZIO[Console, Nothing, OperationMethodType] = {
+  def get(models: C2jModels, modelMap: Map[String, Model], modelPkg: Term.Ref, opName: String, op: Operation): ZIO[Console, Nothing, OperationMethodType] = {
     val inputIsStreaming = Option(op.getInput).flatMap(input => Option(models.serviceModel().getShape(input.getShape))).exists(hasStreamingMember(models, _))
     val outputIsStreaming = Option(op.getOutput).flatMap(output => Option(models.serviceModel().getShape(output.getShape))).exists(hasStreamingMember(models, _))
 
@@ -70,7 +72,7 @@ object OperationMethodType {
                       ZIO.succeed(
                         RequestResponse(pagination = Some(PaginationDefinition(
                           name = key,
-                          itemType = toType(itemMember.getShape, models)
+                          itemType = toType(modelMap(itemMember.getShape.capitalize), modelMap, modelPkg)
                         ))))
                     case None =>
                       for {
