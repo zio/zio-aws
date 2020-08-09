@@ -19,7 +19,7 @@ package object netty {
       ZIO(NettyNioAsyncHttpClient
         .builder()
         .optionallyWith(connectionTimeout)(_.connectionTimeout)
-        .optionallyWith(maxConcurrency)(_.maxConcurrency)
+        .optionallyWith(maxConcurrency.map(_.asInstanceOf[Integer]))(_.maxConcurrency)
         .optionallyWith(proxyConfiguration)(_.proxyConfiguration)
         // TODO: expose additional configuration
         .build())).map { nettyClient =>
