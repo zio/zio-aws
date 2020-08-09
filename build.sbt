@@ -3,6 +3,7 @@ import scala.sys.process._
 val zioVersion = "1.0.0"
 val zioCatsInteropVersion = "2.1.4.0"
 val zioReactiveStreamsInteropVersion = "1.0.3.5"
+val catsEffectVersion = "2.1.4"
 val awsSubVersion = "13.69"
 val awsVersion = s"2.$awsSubVersion"
 val http4sVersion = "0.21.0"
@@ -112,7 +113,8 @@ lazy val http4s = Project("zio-aws-http4s", file("zio-aws-http4s")).settings(com
     "software.amazon.awssdk" % "http-client-spi" % awsVersion,
     "dev.zio" %% "zio" % zioVersion,
     "dev.zio" %% "zio-interop-cats" % zioCatsInteropVersion,
-    "co.fs2" %% "fs2-reactive-streams" % fs2Version
+    "co.fs2" %% "fs2-reactive-streams" % fs2Version,
+    "org.typelevel"   %% "cats-effect" % catsEffectVersion
   )
 ).dependsOn(core)
 
