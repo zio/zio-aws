@@ -8,7 +8,7 @@ import zio._
 import zio.stream._
 import zio.interop.reactivestreams._
 
-class ZStreamAsyncResponseTransformer[Response](resultStreamPromise: Promise[Throwable, Stream[Throwable, Chunk[Byte]]],
+class ZStreamAsyncResponseTransformer[Response](resultStreamPromise: Promise[Throwable, Stream[AwsError, Chunk[Byte]]],
                                                 responsePromise: Promise[Throwable, Response],
                                                 errorPromise: Promise[Throwable, Unit])
                                                (implicit runtime: Runtime[Any])
@@ -31,7 +31,7 @@ class ZStreamAsyncResponseTransformer[Response](resultStreamPromise: Promise[Thr
       publisher
         .toStream()
         .interruptWhen(errorPromise)
-        .map(Chunk.fromByteBuffer)
+        .bimap(AwsError.fromThrowable, Chunk.fromByteBuffer)
     }))
   }
 
@@ -43,7 +43,7 @@ object ZStreamAsyncResponseTransformer {
   def apply[Response](): UIO[ZStreamAsyncResponseTransformer[Response]] =
     ZIO.runtime.flatMap { implicit runtime: Runtime[Any] =>
       for {
-        resultStreamPromise <- Promise.make[Throwable, Stream[Throwable, Chunk[Byte]]]
+        resultStreamPromise <- Promise.make[Throwable, Stream[AwsError, Chunk[Byte]]]
         responsePromise <- Promise.make[Throwable, Response]
         errorPromise <- Promise.make[Throwable, Unit]
       } yield new ZStreamAsyncResponseTransformer[Response](resultStreamPromise, responsePromise, errorPromise)

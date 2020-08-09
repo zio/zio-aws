@@ -13,8 +13,8 @@ trait AwsServiceBase {
   final def asyncRequestResponse[Request, Response](impl: Request => CompletableFuture[Response])(request: Request): IO[AwsError, Response] =
     ZIO.fromCompletionStage(impl(request)).mapError(AwsError.fromThrowable)
 
-  final def asyncPaginatedRequest[Request, Item, Response](impl: Request => Response, selector: Response => Publisher[Item])(request: Request): IO[AwsError, ZStream[Any, Throwable, Item]] =
-    ZIO(selector(impl(request)).toStream()).mapError(AwsError.fromThrowable)
+  final def asyncPaginatedRequest[Request, Item, Response](impl: Request => Response, selector: Response => Publisher[Item])(request: Request): IO[AwsError, ZStream[Any, AwsError, Item]] =
+    ZIO(selector(impl(request)).toStream().mapError(AwsError.fromThrowable)).mapError(AwsError.fromThrowable)
 
   final def asyncRequestOutputStream[Request, Response](impl: (Request, AsyncResponseTransformer[Response, Task[StreamingOutputResult[Response]]]) => CompletableFuture[Task[StreamingOutputResult[Response]]])
                                                        (request: Request): IO[AwsError, StreamingOutputResult[Response]] = {
@@ -26,13 +26,13 @@ trait AwsServiceBase {
   }
 
   final def asyncRequestInputStream[Request, Response](impl: (Request, AsyncRequestBody) => CompletableFuture[Response])
-                                                      (request: Request, body: ZStream[Any, Throwable, Chunk[Byte]]): IO[AwsError, Response] =
+                                                      (request: Request, body: ZStream[Any, AwsError, Chunk[Byte]]): IO[AwsError, Response] =
     ZIO.runtime.flatMap { implicit runtime: Runtime[Any] =>
       ZIO.fromCompletionStage(impl(request, new ZStreamAsyncRequestBody(body))).mapError(AwsError.fromThrowable)
     }
 
   final def asyncRequestInputOutputStream[Request, Response](impl: (Request, AsyncRequestBody, AsyncResponseTransformer[Response, Task[StreamingOutputResult[Response]]]) => CompletableFuture[Task[StreamingOutputResult[Response]]])
-                                                            (request: Request, body: ZStream[Any, Throwable, Chunk[Byte]]): IO[AwsError, StreamingOutputResult[Response]] = {
+                                                            (request: Request, body: ZStream[Any, AwsError, Chunk[Byte]]): IO[AwsError, StreamingOutputResult[Response]] = {
     ZIO.runtime.flatMap { implicit runtime: Runtime[Any] =>
       for {
         transformer <- ZStreamAsyncResponseTransformer[Response]()
@@ -49,7 +49,7 @@ trait AwsServiceBase {
     EventI,
     Event](impl: (Request, ResponseHandler) => CompletableFuture[Void],
            buildVisitor: Queue[Event] => ResponseHandler)
-          (request: Request): IO[AwsError, ZStream[Any, Throwable, Event]] = {
+          (request: Request): IO[AwsError, ZStream[Any, AwsError, Event]] = {
     for {
       queue <- ZQueue.unbounded[Event]
       stream = ZStream
@@ -60,9 +60,9 @@ trait AwsServiceBase {
   }
 
   final def asyncRequestEventInputStream[Request, Response, Event](impl: (Request, Publisher[Event]) => CompletableFuture[Response])
-                                                                  (request: Request, input: ZStream[Any, Throwable, Event]): IO[AwsError, Response] =
+                                                                  (request: Request, input: ZStream[Any, AwsError, Event]): IO[AwsError, Response] =
     for {
-      publisher <- input.toPublisher
+      publisher <- input.mapError(_.toThrowable).toPublisher
       response <- ZIO.fromCompletionStage(impl(request, publisher)).mapError(AwsError.fromThrowable)
     } yield response
 
@@ -74,9 +74,9 @@ trait AwsServiceBase {
     OutEventI,
     OutEvent](impl: (Request, Publisher[InEvent], ResponseHandler) => CompletableFuture[Void],
            buildVisitor: Queue[OutEvent] => ResponseHandler)
-          (request: Request, input: ZStream[Any, Throwable, InEvent]): IO[AwsError, ZStream[Any, Throwable, OutEvent]] = {
+          (request: Request, input: ZStream[Any, AwsError, InEvent]): IO[AwsError, ZStream[Any, AwsError, OutEvent]] = {
     for {
-      publisher <- input.toPublisher
+      publisher <- input.mapError(_.toThrowable).toPublisher
       queue <- ZQueue.unbounded[OutEvent]
       stream = ZStream
         .fromQueue(queue)

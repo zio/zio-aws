@@ -123,12 +123,12 @@ package object generator {
 
                   val streamedPaginator = ServiceMethod(
                     interface =
-                      q"""def $methodNameStream(request: $requestName): IO[AwsError, zio.stream.ZStream[Any, Throwable, $itemType]]""",
+                      q"""def $methodNameStream(request: $requestName): IO[AwsError, zio.stream.ZStream[Any, AwsError, $itemType]]""",
                     implementation =
-                      q"""def $methodNameStream(request: $requestName): IO[AwsError, zio.stream.ZStream[Any, Throwable, $itemType]] =
+                      q"""def $methodNameStream(request: $requestName): IO[AwsError, zio.stream.ZStream[Any, AwsError, $itemType]] =
                             asyncPaginatedRequest[$requestName, $itemType, $publisherType](api.$paginatorMethodName, _.${Term.Name(pagination.name.uncapitalize)}())(request)""",
                     accessor =
-                      q"""def $methodNameStream(request: $requestName): ZIO[$serviceNameT, AwsError, zio.stream.ZStream[Any, Throwable, $itemType]] =
+                      q"""def $methodNameStream(request: $requestName): ZIO[$serviceNameT, AwsError, zio.stream.ZStream[Any, AwsError, $itemType]] =
                             ZIO.accessM(_.get.$methodNameStream(request))"""
                   )
 
@@ -143,12 +143,12 @@ package object generator {
               ZIO.succeed(ServiceMethods(
                 ServiceMethod(
                   interface =
-                    q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, Throwable, Chunk[Byte]]): IO[AwsError, $responseName]""",
+                    q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Chunk[Byte]]): IO[AwsError, $responseName]""",
                   implementation =
-                    q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, Throwable, Chunk[Byte]]): IO[AwsError, $responseName] =
+                    q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Chunk[Byte]]): IO[AwsError, $responseName] =
                       asyncRequestInputStream[$requestName, $responseName](api.$methodName)(request, body)""",
                   accessor =
-                    q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, Throwable, Chunk[Byte]]): ZIO[$serviceNameT, AwsError, $responseName] =
+                    q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Chunk[Byte]]): ZIO[$serviceNameT, AwsError, $responseName] =
                           ZIO.accessM(_.get.$methodName(request, body))"""
                 )))
             case StreamedOutput =>
@@ -167,12 +167,12 @@ package object generator {
               ZIO.succeed(ServiceMethods(
                 ServiceMethod(
                   interface =
-                    q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, Throwable, Chunk[Byte]]): IO[AwsError, StreamingOutputResult[$responseName]]""",
+                    q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Chunk[Byte]]): IO[AwsError, StreamingOutputResult[$responseName]]""",
                   implementation =
-                    q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, Throwable, Chunk[Byte]]): IO[AwsError, StreamingOutputResult[$responseName]] =
+                    q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Chunk[Byte]]): IO[AwsError, StreamingOutputResult[$responseName]] =
                           asyncRequestInputOutputStream[$requestName, $responseName](api.$methodName[zio.Task[StreamingOutputResult[$responseName]]])(request, body)""",
                   accessor =
-                    q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, Throwable, Chunk[Byte]]): ZIO[$serviceNameT, AwsError, StreamingOutputResult[$responseName]] =
+                    q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Chunk[Byte]]): ZIO[$serviceNameT, AwsError, StreamingOutputResult[$responseName]] =
                           ZIO.accessM(_.get.$methodName(request, body))"""
                 )))
             case EventStreamInput =>
@@ -181,12 +181,12 @@ package object generator {
                 ZIO.succeed(ServiceMethods(
                   ServiceMethod(
                     interface =
-                      q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, Throwable, $eventT]): IO[AwsError, $responseName]""",
+                      q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, AwsError, $eventT]): IO[AwsError, $responseName]""",
                     implementation =
-                      q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, Throwable, $eventT]): IO[AwsError, $responseName] =
+                      q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, AwsError, $eventT]): IO[AwsError, $responseName] =
                             asyncRequestEventInputStream[$requestName, $responseName, $eventT](api.$methodName)(requset, input)""",
                     accessor =
-                      q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, Throwable, $eventT]): ZIO[$serviceNameT, AwsError, $responseName] =
+                      q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, AwsError, $eventT]): ZIO[$serviceNameT, AwsError, $responseName] =
                             ZIO.accessM(_.get.$methodName(request, input))"""
                   )))
               }
@@ -207,9 +207,9 @@ package object generator {
                 ZIO.succeed(ServiceMethods(
                   ServiceMethod(
                     interface =
-                      q"""def $methodName(request: $requestName): IO[AwsError, zio.stream.ZStream[Any, Throwable, $eventT]]""",
+                      q"""def $methodName(request: $requestName): IO[AwsError, zio.stream.ZStream[Any, AwsError, $eventT]]""",
                     implementation =
-                      q"""def $methodName(request: $requestName): IO[AwsError, zio.stream.ZStream[Any, Throwable, $eventT]] =
+                      q"""def $methodName(request: $requestName): IO[AwsError, zio.stream.ZStream[Any, AwsError, $eventT]] =
                           ZIO.runtime.flatMap { runtime: zio.Runtime[Any] =>
                             asyncRequestEventOutputStream[$requestName, $responseName, $responseHandlerT, $eventStreamT, $eventT](
                               (request: $requestName, handler: $responseHandlerT) => api.$methodName(request, handler),
@@ -221,7 +221,7 @@ package object generator {
                           }
                         """,
                     accessor =
-                      q"""def $methodName(request: $requestName): ZIO[$serviceNameT, AwsError, zio.stream.ZStream[Any, Throwable, $eventT]] =
+                      q"""def $methodName(request: $requestName): ZIO[$serviceNameT, AwsError, zio.stream.ZStream[Any, AwsError, $eventT]] =
                             ZIO.accessM(_.get.$methodName(request))"""
                   )))
               }
@@ -244,9 +244,9 @@ package object generator {
                   ZIO.succeed(ServiceMethods(
                     ServiceMethod(
                       interface =
-                        q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, Throwable, $inEventT]): IO[AwsError, zio.stream.ZStream[Any, Throwable, $outEventT]]""",
+                        q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, AwsError, $inEventT]): IO[AwsError, zio.stream.ZStream[Any, AwsError, $outEventT]]""",
                       implementation =
-                        q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, Throwable, $inEventT]): IO[AwsError, zio.stream.ZStream[Any, Throwable, $outEventT]] =
+                        q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, AwsError, $inEventT]): IO[AwsError, zio.stream.ZStream[Any, AwsError, $outEventT]] =
                                  ZIO.runtime.flatMap { runtime: zio.Runtime[Any] =>
                                    asyncRequestEventInputOutputStream[$requestName, $responseName, $inEventT, $responseHandlerT, $outEventStreamT, $outEventT](
                                      (request: $requestName, input: Publisher[$inEventT], handler: $responseHandlerT) => api.$methodName(request, input, handler),
@@ -256,7 +256,7 @@ package object generator {
                                          .build())(request, input)
                                  }""",
                       accessor =
-                        q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, Throwable, $inEventT]): ZIO[$serviceNameT, AwsError, zio.stream.ZStream[Any, Throwable, $outEventT]] =
+                        q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, AwsError, $inEventT]): ZIO[$serviceNameT, AwsError, zio.stream.ZStream[Any, AwsError, $outEventT]] =
                             ZIO.accessM(_.get.$methodName(request, input))"""
                     )))
                 }
@@ -360,7 +360,7 @@ package object generator {
 
             val pkg =
               q"""
-             package io.gihtub.vigoo.zioaws {
+             package io.github.vigoo.zioaws {
                ..$imports
                $module
              }
@@ -374,10 +374,11 @@ package object generator {
         val projects = ids.toList.map { id =>
           val name = Term.Name(id.moduleName)
           val nameStr = Lit.String(id.moduleName)
+          val fullNameStr = Lit.String(s"zio-aws-${id.moduleName}")
           val artifactStr = Lit.String(id.name)
           val nameP = Pat.Var(name)
 
-          q"""lazy val $nameP = Project($nameStr, file($nameStr)).settings(commonSettings).settings(
+          q"""lazy val $nameP = Project($fullNameStr, file($nameStr)).settings(commonSettings).settings(
                 libraryDependencies += "software.amazon.awssdk" % $artifactStr % awsVersion
               ).dependsOn(core)
            """
