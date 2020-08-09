@@ -3,17 +3,24 @@ import scala.sys.process._
 val zioVersion = "1.0.0"
 val zioCatsInteropVersion = "2.1.4.0"
 val zioReactiveStreamsInteropVersion = "1.0.3.5"
-val awsVersion = "2.13.69"
+val awsSubVersion = "13.69"
+val awsVersion = s"2.$awsSubVersion"
 val http4sVersion = "0.21.0"
 val fs2Version = "2.2.2"
 
+val majorVersion = "1"
+val minorVersion = "0"
+val zioAwsVersion = s"$majorVersion.$awsSubVersion.$minorVersion"
+
 val generateAll = taskKey[Unit]("Generates all AWS client libraries")
 val buildAll = taskKey[Unit]("Generates and builds all AWS client libraries")
+val publishLocalAll = taskKey[Unit]("Generates, builds and publishes all AWS client libraries")
 
 lazy val commonSettings =
   Seq(
     scalaVersion := "2.13.3",
-    organization := "io.github.vigoo"
+    organization := "io.github.vigoo",
+    version := zioAwsVersion
   )
 
 lazy val root = Project("zio-aws", file(".")).settings(commonSettings).settings(
@@ -21,7 +28,7 @@ lazy val root = Project("zio-aws", file(".")).settings(commonSettings).settings(
   generateAll := Def.taskDyn {
     val root = baseDirectory.value.getAbsolutePath
     Def.task {
-      (codegen / Compile / run).toTask(s" --target-root ${root}/generated --source-root ${root}").value
+      (codegen / Compile / run).toTask(s" --target-root ${root}/generated --source-root ${root} --version $zioAwsVersion --zio-version $zioVersion --zio-rs-version $zioReactiveStreamsInteropVersion").value
     }
   }.value,
   buildAll := Def.taskDyn {
@@ -32,7 +39,7 @@ lazy val root = Project("zio-aws", file(".")).settings(commonSettings).settings(
     val launcherFile = generatedRoot / launcher
 
     Def.task[Unit] {
-      if(!launcherFile.exists) {
+      if (!launcherFile.exists) {
         val u = url(s"https://oss.sonatype.org/content/repositories/public/org/scala-sbt/sbt-launch/$launcherVersion/sbt-launch-$launcherVersion.jar")
         sbt.io.Using.urlInputStream(u) { inputStream =>
           IO.transfer(inputStream, launcherFile)
@@ -44,6 +51,30 @@ lazy val root = Project("zio-aws", file(".")).settings(commonSettings).settings(
         "xsbt.boot.Boot",
         classpath = launcherFile :: Nil,
         options = "compile" :: Nil,
+        log = streams.value.log
+      )
+    }
+  }.value,
+  publishLocalAll := Def.taskDyn {
+    val _ = generateAll.value
+    val generatedRoot = baseDirectory.value / "generated"
+    val launcherVersion = sbtVersion.value
+    val launcher = s"sbt-launch-$launcherVersion.jar"
+    val launcherFile = generatedRoot / launcher
+
+    Def.task[Unit] {
+      if (!launcherFile.exists) {
+        val u = url(s"https://oss.sonatype.org/content/repositories/public/org/scala-sbt/sbt-launch/$launcherVersion/sbt-launch-$launcherVersion.jar")
+        sbt.io.Using.urlInputStream(u) { inputStream =>
+          IO.transfer(inputStream, launcherFile)
+        }
+      }
+      val fork = new ForkRun(ForkOptions()
+        .withWorkingDirectory(generatedRoot))
+      fork.run(
+        "xsbt.boot.Boot",
+        classpath = launcherFile :: Nil,
+        options = "publishLocal" :: Nil,
         log = streams.value.log
       )
     }
@@ -81,7 +112,7 @@ lazy val http4s = Project("zio-aws-http4s", file("zio-aws-http4s")).settings(com
     "software.amazon.awssdk" % "http-client-spi" % awsVersion,
     "dev.zio" %% "zio" % zioVersion,
     "dev.zio" %% "zio-interop-cats" % zioCatsInteropVersion,
-    "co.fs2" %% "fs2-reactive-streams"% fs2Version
+    "co.fs2" %% "fs2-reactive-streams" % fs2Version
   )
 ).dependsOn(core)
 

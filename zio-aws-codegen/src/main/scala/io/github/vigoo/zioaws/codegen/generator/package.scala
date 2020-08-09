@@ -3,7 +3,7 @@ package io.github.vigoo.zioaws.codegen
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 
-import io.github.vigoo.clipp.zioapi.config.ClippConfig
+import io.github.vigoo.clipp.zioapi.config.{ClippConfig, parameters}
 import io.github.vigoo.zioaws.codegen.generator.Generator._
 import io.github.vigoo.zioaws.codegen.loader.ModelId
 
@@ -567,17 +567,19 @@ package object generator {
               ).dependsOn(core)
            """
         }
-        val versionStr = Lit.String(VersionInfo.SDK_VERSION)
-        val zioVersionStr = Lit.String("1.0.0") // TODO: sync with build.sbt
-        val zioReactiveStreamsInteropVersionStr = Lit.String("1.0.3.5") // TODO: sync with build.sbt
+        val awsVersionStr = Lit.String(VersionInfo.SDK_VERSION)
+        val zioVersionStr = Lit.String(config.parameters.zioVersion)
+        val zioReactiveStreamsInteropVersionStr = Lit.String(config.parameters.zioInteropReactiveStreamsVersion)
+        val versionStr = Lit.String(config.parameters.version)
 
         val code =
           q"""
-              val awsVersion = $versionStr
+              val awsVersion = $awsVersionStr
 
               lazy val commonSettings = Seq(
                 scalaVersion := "2.13.3",
                 organization := "io.github.vigoo",
+                version := $versionStr,
                 libraryDependencies ++= Seq(
                   "dev.zio" %% "zio" % $zioVersionStr,
                   "dev.zio" %% "zio-streams" % $zioVersionStr,
