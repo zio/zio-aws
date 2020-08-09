@@ -79,7 +79,7 @@ lazy val root = Project("zio-aws", file(".")).settings(commonSettings).settings(
       )
     }
   }.value
-) aggregate(core, codegen)
+) aggregate(core, codegen, http4s, netty, akkahttp)
 
 lazy val core = Project("zio-aws-core", file("zio-aws-core")).settings(commonSettings).settings(
   libraryDependencies ++= Seq(
@@ -116,3 +116,16 @@ lazy val http4s = Project("zio-aws-http4s", file("zio-aws-http4s")).settings(com
   )
 ).dependsOn(core)
 
+lazy val akkahttp = Project("zio-aws-akka-http", file("zio-aws-akka-http")).settings(commonSettings).settings(
+  libraryDependencies ++= Seq(
+    "com.typesafe.akka" %% "akka-stream" % "2.6.8",
+    "com.typesafe.akka" %% "akka-http" % "10.2.0",
+    "com.github.matsluni" %% "aws-spi-akka-http" % "0.0.9",
+  )
+).dependsOn(core)
+
+lazy val netty = Project("zio-aws-netty", file("zio-aws-netty")).settings(commonSettings).settings(
+  libraryDependencies ++= Seq(
+    "software.amazon.awssdk" % "netty-nio-client" % awsVersion,
+  )
+).dependsOn(core)
