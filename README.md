@@ -89,6 +89,13 @@ Currently the following implementations can be used:
 - `zio-aws-akka-http` is based on Matthias Lüneberg's [aws-spi-akka-http library](https://github.com/matsluni/aws-spi-akka-http)
 - `zio-aws-http4s` is an implementation on top of _http4s_
  
+### Build
+
+Some custom sbt build tasks:
+- `generateAll` to generate all the source code
+- `buildAll` to generate and build all the libraries
+- `publishLocalAll` to generate, build and publish all the libraries to the local Ivy repository
+ 
 ### Example
 The following example uses the ElasticBeanstalk and EC2 APIs to print some info. 
  
