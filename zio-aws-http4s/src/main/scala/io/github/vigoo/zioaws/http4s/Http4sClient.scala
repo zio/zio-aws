@@ -2,7 +2,7 @@ package io.github.vigoo.zioaws.http4s
 
 import java.util.concurrent.CompletableFuture
 
-import cats.effect.Resource
+import cats.effect.{ExitCase, Resource}
 import fs2._
 import fs2.interop.reactivestreams._
 import org.http4s.Method.{NoBody, PermitsBody}
@@ -92,12 +92,19 @@ class Http4sClient(client: Client[Task],
           .statusCode(response.status.code)
           .statusText(response.status.reason)
           .build()))
+      streamFinished <- Promise.make[Throwable, Unit]
       _ <- Task(handler.onStream(
         response
           .body
           .chunks
           .map(_.toByteBuffer)
+          .onFinalizeCase {
+            case ExitCase.Completed => streamFinished.succeed(()).unit
+            case ExitCase.Canceled => streamFinished.succeed(()).unit
+            case ExitCase.Error(throwable) => streamFinished.fail(throwable).unit
+          }
           .toUnicastPublisher()))
+      _ <- streamFinished.await
     } yield null.asInstanceOf[Void]
   }
 }
