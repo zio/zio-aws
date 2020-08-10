@@ -1,5 +1,6 @@
 package io.github.vigoo.zioaws.codegen.generator
 
+import io.github.vigoo.zioaws.codegen.Main.GeneratorError
 import io.github.vigoo.zioaws.codegen.TypeMapping.toType
 
 import scala.jdk.CollectionConverters._
@@ -13,11 +14,17 @@ import scala.meta.Term
 sealed trait OperationMethodType
 
 case class RequestResponse(pagination: Option[PaginationDefinition]) extends OperationMethodType
+
 case object StreamedInput extends OperationMethodType
+
 case object StreamedOutput extends OperationMethodType
+
 case object StreamedInputOutput extends OperationMethodType
+
 case object EventStreamInput extends OperationMethodType
+
 case object EventStreamOutput extends OperationMethodType
+
 case object EventStreamInputOutput extends OperationMethodType
 
 object OperationMethodType {
@@ -39,7 +46,7 @@ object OperationMethodType {
       }
     }
 
-  def get(models: C2jModels, modelMap: Map[String, Model], modelPkg: Term.Ref, opName: String, op: Operation): ZIO[Console, Nothing, OperationMethodType] = {
+  def get(models: C2jModels, modelMap: ModelMap, modelPkg: Term.Ref, opName: String, op: Operation): ZIO[Console with GeneratorContext, GeneratorFailure, OperationMethodType] = {
     val inputIsStreaming = Option(op.getInput).flatMap(input => Option(models.serviceModel().getShape(input.getShape))).exists(hasStreamingMember(models, _))
     val outputIsStreaming = Option(op.getOutput).flatMap(output => Option(models.serviceModel().getShape(output.getShape))).exists(hasStreamingMember(models, _))
 
@@ -69,11 +76,13 @@ object OperationMethodType {
                   val listShape = models.serviceModel().getShape(outputListMember.getShape)
                   Option(listShape.getListMember) match {
                     case Some(itemMember) =>
-                      ZIO.succeed(
-                        RequestResponse(pagination = Some(PaginationDefinition(
-                          name = key,
-                          itemType = toType(modelMap(itemMember.getShape.capitalize), modelMap, modelPkg)
-                        ))))
+                      for {
+                        itemModel <- modelMap.get(itemMember.getShape)
+                        itemType <- toType(itemModel, modelMap, modelPkg)
+                      } yield RequestResponse(pagination = Some(PaginationDefinition(
+                        name = key,
+                        itemType = itemType
+                      )))
                     case None =>
                       for {
                         _ <- console.putStrLnErr(s"Could not find list item member for ${outputListMember.getShape}")

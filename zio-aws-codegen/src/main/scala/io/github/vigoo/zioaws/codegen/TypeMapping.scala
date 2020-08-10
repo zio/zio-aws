@@ -1,64 +1,85 @@
 package io.github.vigoo.zioaws.codegen
 
-import software.amazon.awssdk.codegen.C2jModels
-
+import io.github.vigoo.zioaws.codegen.generator._
 import scala.meta._
-import _root_.io.github.vigoo.zioaws.codegen.generator.Model
+import zio.ZIO
 
 object TypeMapping {
-  def toType(model: Model, models: Map[String, Model], modelPkg: Term.Ref): Type = {
+  def toType(model: Model, models: ModelMap, modelPkg: Term.Ref): ZIO[GeneratorContext, GeneratorFailure, Type] = {
     val shape = model.shape
     shape.getType match {
       case "map" =>
-        t"""java.util.Map[${toType(models(shape.getMapKeyType.getShape.capitalize), models, modelPkg)}, ${toType(models(shape.getMapValueType.getShape.capitalize), models, modelPkg)}]"""
+        for {
+          keyModel <- models.get(shape.getMapKeyType.getShape)
+          keyType <- toType(keyModel, models, modelPkg)
+          valueModel <- models.get(shape.getMapValueType.getShape)
+          valueType <- toType(valueModel, models, modelPkg)
+        } yield t"""java.util.Map[$keyType, $valueType]"""
       case "list" =>
-        t"""java.util.List[${toType(models(shape.getListMember.getShape.capitalize), models, modelPkg)}]"""
+        for {
+          itemModel <- models.get(shape.getListMember.getShape)
+          itemType <- toType(itemModel, models, modelPkg)
+        } yield t"""java.util.List[$itemType]"""
       case "string" if Option(shape.getEnumValues).isDefined =>
-        Type.Select(modelPkg, Type.Name(model.name))
+        ZIO.succeed(Type.Select(modelPkg, Type.Name(model.name)))
       case "string" =>
-        t"""String"""
+        ZIO.succeed(t"""String""")
       case "integer" =>
-        t"""Int"""
+        ZIO.succeed(t"""Int""")
       case "long" =>
-        t"""Long"""
+        ZIO.succeed(t"""Long""")
       case "float" =>
-        t"""Float"""
+        ZIO.succeed(t"""Float""")
       case "double" =>
-        t"""Double"""
+        ZIO.succeed(t"""Double""")
       case "boolean" =>
-        t"""Boolean"""
+        ZIO.succeed(t"""Boolean""")
       case "timestamp" =>
-        t"""java.time.Instant"""
+        ZIO.succeed(t"""java.time.Instant""")
       case "blob" =>
-        t"""SdkBytes"""
+        ZIO.succeed(t"""SdkBytes""")
       case _ =>
-        Type.Select(modelPkg, Type.Name(model.name))
+        ZIO.succeed(Type.Select(modelPkg, Type.Name(model.name)))
     }
   }
 
-  def toWrappedType(name: String, models: C2jModels): Type = {
-    val shape = models.serviceModel().getShape(name)
-    shape.getType match {
+  def toWrappedType(model: Model, models: ModelMap): ZIO[GeneratorContext, GeneratorFailure, Type] = {
+    model.shape.getType match {
       case "map" =>
-        t"""Map[${toWrappedType(shape.getMapKeyType.getShape, models)}, ${toWrappedType(shape.getMapValueType.getShape, models)}]"""
+        for {
+          keyModel <- models.get(model.shape.getMapKeyType.getShape)
+          keyType <- toWrappedType(keyModel, models)
+          valueModel <- models.get(model.shape.getMapValueType.getShape)
+          valueType <- toWrappedType(valueModel, models)
+        } yield t"""Map[$keyType, $valueType]"""
       case "list" =>
-        t"""List[${toWrappedType(shape.getListMember.getShape, models)}]"""
+        for {
+          itemModel <- models.get(model.shape.getListMember.getShape)
+          itemType <- toWrappedType(itemModel, models)
+        } yield t"""List[$itemType]"""
       case _ =>
-        Type.Name(name)
+        ZIO.succeed(Type.Name(model.name))
     }
   }
 
-  def toWrappedTypeReadOnly(name: String, models: C2jModels): Type = {
-    val shape = models.serviceModel().getShape(name)
-    shape.getType match {
+  def toWrappedTypeReadOnly(model: Model, models: ModelMap): ZIO[GeneratorContext, GeneratorFailure, Type] = {
+    model.shape.getType match {
       case "map" =>
-        t"""Map[${toWrappedTypeReadOnly(shape.getMapKeyType.getShape, models)}, ${toWrappedTypeReadOnly(shape.getMapValueType.getShape, models)}]"""
+        for {
+          keyModel <- models.get(model.shape.getMapKeyType.getShape)
+          keyType <- toWrappedTypeReadOnly(keyModel, models)
+          valueModel <- models.get(model.shape.getMapValueType.getShape)
+          valueType <- toWrappedTypeReadOnly(valueModel, models)
+        } yield t"""Map[$keyType, $valueType]"""
       case "list" =>
-        t"""List[${toWrappedTypeReadOnly(shape.getListMember.getShape, models)}]"""
+        for {
+          itemModel <- models.get(model.shape.getListMember.getShape)
+          itemType <- toWrappedTypeReadOnly(itemModel, models)
+        } yield t"""List[$itemType]"""
       case "structure" =>
-        Type.Select(Term.Name(name), Type.Name("ReadOnly"))
+        ZIO.succeed(Type.Select(Term.Name(model.name), Type.Name("ReadOnly")))
       case _ =>
-        Type.Name(name)
+        ZIO.succeed(Type.Name(model.name))
     }
   }
 }

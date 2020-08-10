@@ -67,9 +67,11 @@ package object generator {
         }
       }
 
-      private def findEventStreamShape(models: C2jModels, outputShape: String): ZIO[Any, GeneratorFailure, (String, Shape)] = {
-        ZIO.fromEither(tryFindEventStreamShape(models, outputShape).toRight(CannotFindEventStreamInShape(outputShape)))
-      }
+      private def findEventStreamShape(models: C2jModels, outputShape: String): ZIO[GeneratorContext, GeneratorFailure, (String, Shape)] =
+        tryFindEventStreamShape(models, outputShape) match {
+          case Some(value) => ZIO.succeed(value)
+          case None => ZIO.access[GeneratorContext](_.get.serviceName).flatMap(serviceName => ZIO.fail(CannotFindEventStreamInShape(serviceName, outputShape)))
+        }
 
       private def safeTypeName(customizationConfig: CustomizationConfig, modelPkg: Term.Ref, typ: Type): Type =
         typ match {
@@ -86,7 +88,10 @@ package object generator {
             typ
         }
 
-      private def generateServiceMethods(namingStrategy: NamingStrategy, models: C2jModels, modelMap: Map[String, Model], modelPkg: Term.Ref): ZIO[Console, GeneratorFailure, List[ServiceMethods]] = {
+      private def generateServiceMethods(namingStrategy: NamingStrategy,
+                                         models: C2jModels,
+                                         modelMap: ModelMap,
+                                         modelPkg: Term.Ref): ZIO[Console with GeneratorContext, GeneratorFailure, List[ServiceMethods]] = {
         val serviceNameT = Type.Name(namingStrategy.getServiceName)
 
         ZIO.foreach(OperationCollector.getFilteredOperations(models).toList) { case (opName, op) =>
@@ -271,52 +276,56 @@ package object generator {
         val clientInterfaceBuilder = Type.Name(serviceName.value + "AsyncClientBuilder")
 
         val modelPkg: Term.Ref = getSdkModelPackage(id, pkgName)
-        val usedModels = ModelCollector.collectUsedModels(namingStrategy, model)
-        val modelMap = usedModels.map { model => (model.shapeName -> model) }.toMap
+        val modelMap = ModelCollector.collectUsedModels(namingStrategy, model)
 
-        generateServiceMethods(namingStrategy, model, modelMap, modelPkg).flatMap { serviceMethods =>
-          ZIO.foreach(model.serviceModel().getOperations.asScala.toList) { case (opName, op) =>
-            OperationMethodType.get(model, modelMap, modelPkg, opName, op).map {
-              case RequestResponse(Some(_)) => true
-              case _ => false
-            }
-          }.map { paginations =>
-            val hasPaginators = paginations.exists(identity)
+        val generatorContext = ZLayer.succeed(new GeneratorContext.Service {
+          override val serviceName: String = id.moduleName
+        })
 
-            val serviceMethodIfaces = serviceMethods.flatMap(_.methods.map(_.interface))
-            val serviceMethodImpls = serviceMethods.flatMap(_.methods.map(_.implementation))
-            val serviceAccessors = serviceMethods.flatMap(_.methods.map(_.accessor))
+        generateServiceMethods(namingStrategy, model, modelMap, modelPkg)
+          .flatMap { serviceMethods =>
+            ZIO.foreach(model.serviceModel().getOperations.asScala.toList) { case (opName, op) =>
+              OperationMethodType.get(model, modelMap, modelPkg, opName, op).map {
+                case RequestResponse(Some(_)) => true
+                case _ => false
+              }
+            }.map { paginations =>
+              val hasPaginators = paginations.exists(identity)
 
-            val imports = List(
-              Some(q"""import io.github.vigoo.zioaws.core._"""),
-              Some(q"""import io.github.vigoo.zioaws.core.config.AwsConfig"""),
-              Some(Import(List(Importer(modelPkg, List(Importee.Wildcard()))))),
-              if (hasPaginators) {
+              val serviceMethodIfaces = serviceMethods.flatMap(_.methods.map(_.interface))
+              val serviceMethodImpls = serviceMethods.flatMap(_.methods.map(_.implementation))
+              val serviceAccessors = serviceMethods.flatMap(_.methods.map(_.accessor))
+
+              val imports = List(
+                Some(q"""import io.github.vigoo.zioaws.core._"""),
+                Some(q"""import io.github.vigoo.zioaws.core.config.AwsConfig"""),
+                Some(Import(List(Importer(modelPkg, List(Importee.Wildcard()))))),
+                if (hasPaginators) {
+                  Some(id.subModuleName match {
+                    case Some(submodule) if submodule != id.name =>
+                      Import(List(Importer(q"software.amazon.awssdk.services.${Term.Name(id.name)}.${Term.Name(submodule)}.paginators", List(Importee.Wildcard()))))
+                    case _ =>
+                      Import(List(Importer(q"software.amazon.awssdk.services.$pkgName.paginators", List(Importee.Wildcard()))))
+                  })
+                } else None,
                 Some(id.subModuleName match {
                   case Some(submodule) if submodule != id.name =>
-                    Import(List(Importer(q"software.amazon.awssdk.services.${Term.Name(id.name)}.${Term.Name(submodule)}.paginators", List(Importee.Wildcard()))))
+                    Import(List(Importer(q"software.amazon.awssdk.services.${Term.Name(id.name)}.${Term.Name(submodule)}",
+                      List(
+                        Importee.Name(Name(clientInterface.value)),
+                        Importee.Name(Name(clientInterfaceBuilder.value))))))
                   case _ =>
-                    Import(List(Importer(q"software.amazon.awssdk.services.$pkgName.paginators", List(Importee.Wildcard()))))
-                })
-              } else None,
-              Some(id.subModuleName match {
-                case Some(submodule) if submodule != id.name =>
-                  Import(List(Importer(q"software.amazon.awssdk.services.${Term.Name(id.name)}.${Term.Name(submodule)}",
-                    List(
-                      Importee.Name(Name(clientInterface.value)),
-                      Importee.Name(Name(clientInterfaceBuilder.value))))))
-                case _ =>
-                  Import(List(Importer(q"software.amazon.awssdk.services.$pkgName",
-                    List(
-                      Importee.Name(Name(clientInterface.value)),
-                      Importee.Name(Name(clientInterfaceBuilder.value))))))
-              }),
-              Some(q"""import zio.{Chunk, Has, IO, ZIO, ZLayer}"""),
-              Some(q"""import org.reactivestreams.Publisher""")
-            ).flatten
+                    Import(List(Importer(q"software.amazon.awssdk.services.$pkgName",
+                      List(
+                        Importee.Name(Name(clientInterface.value)),
+                        Importee.Name(Name(clientInterfaceBuilder.value))))))
+                }),
+                Some(q"""import zio.{Chunk, Has, IO, ZIO, ZLayer}"""),
+                Some(q"""import org.reactivestreams.Publisher""")
+              ).flatten
 
-            val module =
-              q"""
+              val module =
+                q"""
               package object $pkgName {
                 type $serviceNameT = Has[$serviceTrait]
 
@@ -344,16 +353,16 @@ package object generator {
               }
             """
 
-            val pkg =
-              q"""
+              val pkg =
+                q"""
              package io.github.vigoo.zioaws {
                ..$imports
                $module
              }
              """
-            pkg.toString
-          }
-        }
+              pkg.toString
+            }
+          }.provideSomeLayer[Console](generatorContext)
       }
 
       private def getSdkModelPackage(id: ModelId, pkgName: Term.Name) = {
@@ -418,42 +427,41 @@ package object generator {
         }
       }
 
-      private def wrapSdkValue(models: C2jModels, name: String, shape: Shape, term: Term): Term =
-        shape.getType match {
+      private def wrapSdkValue(model: Model, term: Term, modelMap: ModelMap): ZIO[GeneratorContext, GeneratorFailure, Term] =
+        model.shape.getType match {
           case "map" =>
-            val keyType = shape.getMapKeyType.getShape
-            val keyShape = models.serviceModel().getShape(keyType)
-            val valueType = shape.getMapValueType.getShape
-            val valueShape = models.serviceModel().getShape(valueType)
-            val key = Term.Name("key")
-            val value = Term.Name("value")
-            val wrapKey = wrapSdkValue(models, keyType, keyShape, key)
-            val wrapValue = wrapSdkValue(models, valueType, valueShape, value)
-            if (wrapKey == key && wrapValue == value) {
+            for {
+              keyModel <- modelMap.get(model.shape.getMapKeyType.getShape)
+              valueModel <- modelMap.get(model.shape.getMapValueType.getShape)
+              key = Term.Name("key")
+              value = Term.Name("value")
+              wrapKey <- wrapSdkValue(keyModel, key, modelMap)
+              wrapValue <- wrapSdkValue(valueModel, value, modelMap)
+            } yield if (wrapKey == key && wrapValue == value) {
               q"""$term.asScala.toMap"""
             } else {
               q"""$term.asScala.map { case (key, value) => $wrapKey -> $wrapValue }.toMap"""
             }
           case "list" =>
-            val valueType = shape.getListMember.getShape
-            val valueShape = models.serviceModel().getShape(valueType)
-            val item = Term.Name("item")
-            val wrapItem = wrapSdkValue(models, valueType, valueShape, item)
-            if (wrapItem == item) {
+            for {
+              valueModel <- modelMap.get(model.shape.getListMember.getShape)
+              item = Term.Name("item")
+              wrapItem <- wrapSdkValue(valueModel, item, modelMap)
+            } yield if (wrapItem == item) {
               q"""$term.asScala.toList"""
             } else {
               q"""$term.asScala.map { item => $wrapItem }.toList"""
             }
-          case "string" if Option(shape.getEnumValues).isDefined =>
-            val nameTerm = Term.Name(name)
-            q"""$nameTerm.wrap($term)"""
+          case "string" if Option(model.shape.getEnumValues).isDefined =>
+            val nameTerm = Term.Name(model.name)
+            ZIO.succeed(q"""$nameTerm.wrap($term)""")
           case "blob" =>
-            q"""Chunk.fromArray($term.wrappedBytes())"""
+            ZIO.succeed(q"""Chunk.fromByteBuffer($term.asByteBuffer())""")
           case "structure" =>
-            val nameTerm = Term.Name(name)
-            q"""$nameTerm.wrap($term)"""
+            val nameTerm = Term.Name(model.name)
+            ZIO.succeed(q"""$nameTerm.wrap($term)""")
           case _ =>
-            term
+            ZIO.succeed(q"""$term : ${Type.Name(model.name)}""")
         }
 
       private def filterMembers(models: C2jModels, shape: String, members: List[(String, software.amazon.awssdk.codegen.model.service.Member)]): List[(String, software.amazon.awssdk.codegen.model.service.Member)] = {
@@ -464,40 +472,39 @@ package object generator {
         val localExcludes = local.flatMap(l => Option(l.getExclude)).map(_.asScala).getOrElse(List.empty).map(_.toLowerCase)
 
         members.filterNot { case (memberName, member) =>
-          globalExcludes.contains(memberName.toLowerCase) || localExcludes.contains(memberName.toLowerCase)
+          globalExcludes.contains(memberName.toLowerCase) ||
+            localExcludes.contains(memberName.toLowerCase) ||
+            member.isStreaming ||
+            models.serviceModel().getShape(member.getShape).isStreaming
         }
       }
 
-      private def propertyName(namingStrategy: NamingStrategy, models: C2jModels, shapeName: String, name: String): String = {
+      private def propertyName(namingStrategy: NamingStrategy, models: C2jModels, model: Model, fieldModel: Model, name: String): String = {
         val shapeModifiers = Option(models.customizationConfig().getShapeModifiers).map(_.asScala).getOrElse(Map.empty[String, ShapeModifier])
-        shapeModifiers.get(shapeName) match {
-          case Some(shapeModifier) =>
-            val modifies = Option(shapeModifier.getModify).map(_.asScala).getOrElse(List.empty)
-            val matchingModifiers = modifies.flatMap { modifiesMap =>
-              modifiesMap.asScala.map { case (key, value) => (key.toLowerCase, value) }.get(name.toLowerCase)
-            }.toList
+        shapeModifiers.get(model.shapeName).flatMap { shapeModifier =>
+          val modifies = Option(shapeModifier.getModify).map(_.asScala).getOrElse(List.empty)
+          val matchingModifiers = modifies.flatMap { modifiesMap =>
+            modifiesMap.asScala.map { case (key, value) => (key.toLowerCase, value) }.get(name.toLowerCase)
+          }.toList
 
-            matchingModifiers
-              .map(modifier => Option(modifier.getEmitPropertyName))
-              .find(_.isDefined)
-              .flatten match {
-              case Some(newName) =>
-                newName.toCamelCase
-              case None =>
-                name.toCamelCase
-            }
-
-          case None =>
-            name.toCamelCase
+          matchingModifiers
+            .map(modifier => Option(modifier.getEmitPropertyName))
+            .find(_.isDefined)
+            .flatten.map(_.uncapitalize)
+        }.getOrElse {
+          val getterMethod = namingStrategy.getFluentGetterMethodName(name, model.shape, fieldModel.shape)
+          getterMethod
+            .stripSuffix("AsString")
+            .stripSuffix("AsStrings")
         }
       }
 
       private def generateModel(namingStrategy: NamingStrategy,
                                 storeRef: zio.Ref[Map[String, ModelWrapper]],
                                 models: C2jModels,
-                                modelMap: Map[String, Model],
+                                modelMap: ModelMap,
                                 modelPkg: Term.Ref,
-                                m: Model): ZIO[Console, GeneratorFailure, ModelWrapper] = {
+                                m: Model): ZIO[Console with GeneratorContext, GeneratorFailure, ModelWrapper] = {
         val shapeName = m.name
         val shape = m.shape
 
@@ -508,9 +515,8 @@ package object generator {
             case None =>
               val shapeNameT = Type.Name(shapeName)
               val shapeNameTerm = Term.Name(shapeName)
-              val awsShapeNameT = TypeMapping.toType(m, modelMap, modelPkg)
-
               for {
+                awsShapeNameT <- TypeMapping.toType(m, modelMap, modelPkg)
                 wrapper <- shape.getType match {
                   case "structure" =>
                     val roT = Type.Name("ReadOnly")
@@ -520,41 +526,62 @@ package object generator {
                     val fieldList = filterMembers(models, m.shapeName, shape.getMembers.asScala.toList)
                     val required = Option(shape.getRequired).map(_.asScala.toSet).getOrElse(Set.empty)
 
-                    val fieldParams = fieldList.map { case (memberName, member) =>
-                      val property = propertyName(namingStrategy, models, m.shapeName, memberName)
-                      val propertyNameTerm = Term.Name(property)
-                      val memberT = TypeMapping.toWrappedType(member.getShape, models)
-                      if (required contains memberName) {
-                        param"""$propertyNameTerm: $memberT"""
-                      } else {
-                        param"""$propertyNameTerm: Option[$memberT] = None"""
-                      }
-                    }
-                    val fieldGetterInterfaces = fieldList.map { case (memberName, member) =>
-                      val property = propertyName(namingStrategy, models, m.shapeName, memberName)
-                      val propertyNameTerm = Term.Name(property)
-                      val memberT = TypeMapping.toWrappedTypeReadOnly(member.getShape, models)
-                      if (required contains memberName) {
-                        q"""def ${propertyNameTerm}: $memberT"""
-                      } else {
-                        q"""def ${propertyNameTerm}: Option[$memberT]"""
-                      }
-                    }
-                    val fieldGetterImplementations = fieldList.map { case (memberName, member) =>
-                      val property = propertyName(namingStrategy, models, m.shapeName, memberName)
-                      val propertyNameTerm = Term.Name(property)
-                      val propertyNameP = Pat.Var(propertyNameTerm)
-                      val memberT = TypeMapping.toWrappedTypeReadOnly(member.getShape, models)
-                      val memberShape = models.serviceModel().getShape(member.getShape)
-                      val wrappedGet = wrapSdkValue(models, member.getShape, memberShape, Term.Apply(Term.Select(Term.Name("impl"), propertyNameTerm), List.empty))
-                      if (required contains memberName) {
-                        q"""override val $propertyNameP: $memberT = $wrappedGet"""
-                      } else {
-                        q"""override val $propertyNameP: Option[$memberT] = Option($wrappedGet)"""
-                      }
-                    }
+                    for {
+                      fieldParams <- ZIO.foreach(fieldList) {
+                        case (memberName, member) =>
+                          modelMap.get(member.getShape).flatMap { fieldModel =>
+                            val property = propertyName(namingStrategy, models, m, fieldModel, memberName)
+                            val propertyNameTerm = Term.Name(property)
 
-                    ZIO.succeed(ModelWrapper(
+                            TypeMapping.toWrappedType(fieldModel, modelMap).map { memberT =>
+                              if (required contains memberName) {
+                                param"""$propertyNameTerm: $memberT"""
+                              } else {
+                                param"""$propertyNameTerm: Option[$memberT] = None"""
+                              }
+                            }
+                          }
+                      }
+                      fieldGetterInterfaces <- ZIO.foreach(fieldList) { case (memberName, member) =>
+                        modelMap.get(member.getShape).flatMap { fieldModel =>
+                          val property = propertyName(namingStrategy, models, m, fieldModel, memberName)
+                          val propertyNameTerm = Term.Name(property)
+
+                          TypeMapping.toWrappedTypeReadOnly(fieldModel, modelMap).map { memberT =>
+                            if (required contains memberName) {
+                              q"""def ${propertyNameTerm}: $memberT"""
+                            } else {
+                              q"""def ${propertyNameTerm}: Option[$memberT]"""
+                            }
+                          }
+                        }
+                      }
+                      fieldGetterImplementations <- ZIO.foreach(fieldList) { case (memberName, member) =>
+                        modelMap.get(member.getShape).flatMap { fieldModel =>
+                          val property = propertyName(namingStrategy, models, m, fieldModel, memberName)
+                          val propertyNameTerm = Term.Name(property)
+                          val propertyNameP = Pat.Var(propertyNameTerm)
+
+                          TypeMapping.toWrappedTypeReadOnly(fieldModel, modelMap).flatMap { memberT =>
+                            if (required contains memberName) {
+                              wrapSdkValue(fieldModel, Term.Apply(Term.Select(Term.Name("impl"), propertyNameTerm), List.empty), modelMap).map { wrappedGet =>
+                                q"""override val $propertyNameP: $memberT = $wrappedGet"""
+                              }
+                            } else {
+                              val get = Term.Apply(Term.Select(Term.Name("impl"), propertyNameTerm), List.empty)
+                              val valueTerm = Term.Name("value")
+                              wrapSdkValue(fieldModel, valueTerm, modelMap).map { wrappedGet =>
+                                if (wrappedGet == valueTerm) {
+                                  q"""override val $propertyNameP: Option[$memberT] = Option($get)"""
+                                } else {
+                                  q"""override val $propertyNameP: Option[$memberT] = Option($get).map(value => $wrappedGet)"""
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    } yield ModelWrapper(
                       code = List(
                         q"""case class $shapeNameT(..$fieldParams) extends $shapeNameRoInit {}""",
                         q"""object $shapeNameTerm {
@@ -569,21 +596,27 @@ package object generator {
                             def wrap(impl: $awsShapeNameT): $roT = new Wrapper(impl)
                           }
                          """)
-                    ))
+                    )
                   case "list" =>
-                    val elemT = Type.Name(shape.getListMember.getShape)
-                    ZIO.succeed(ModelWrapper(
+                    for {
+                      itemModel <- modelMap.get(shape.getListMember.getShape)
+                      elemT = Type.Name(itemModel.name)
+                    } yield ModelWrapper(
                       code = List(q"""type $shapeNameT = List[$elemT]""")
-                    ))
+                    )
                   case "map" =>
-                    val keyT = Type.Name(shape.getMapKeyType.getShape)
-                    val valueT = Type.Name(shape.getMapValueType.getShape)
-                    ZIO.succeed(ModelWrapper(
+                    for {
+                      keyModel <- modelMap.get(shape.getMapKeyType.getShape)
+                      valueModel <- modelMap.get(shape.getMapValueType.getShape)
+                      keyT = Type.Name(keyModel.name)
+                      valueT = Type.Name(valueModel.name)
+                    } yield ModelWrapper(
                       code = List(q"""type $shapeNameT = Map[$keyT, $valueT]""")
-                    ))
+                    )
                   case "string" if Option(shape.getEnumValues).isDefined =>
                     val shapeNameI = Init(shapeNameT, Name.Anonymous(), List.empty)
-                    val enumValues = shape.getEnumValues.asScala.toList.map { enumValue =>
+                    val enumValueList = "unknownToSdkVersion" :: shape.getEnumValues.asScala.toList
+                    val enumValues = enumValueList.map { enumValue =>
                       val enumValueTerm = Term.Name(enumValue)
                       val enumValueScreaming = Term.Name(namingStrategy.getEnumValueName(enumValue))
                       q"""final case object $enumValueTerm extends $shapeNameI {
@@ -593,7 +626,7 @@ package object generator {
                     }
                     val wrapPatterns =
                       Term.Match(Term.Name("value"),
-                        shape.getEnumValues.asScala.toList.map { enumValue =>
+                        enumValueList.map { enumValue =>
                           val enumValueTerm = Term.Name(enumValue)
                           val enumValueScreaming = Term.Name(namingStrategy.getEnumValueName(enumValue))
                           val term = Term.Select(Term.Select(modelPkg, Term.Name(shapeName)), enumValueScreaming)
@@ -657,18 +690,21 @@ package object generator {
 
       private def generateServiceModelsCode(id: ModelId, model: C2jModels): ZIO[Console, GeneratorFailure, String] = {
         val namingStrategy = new DefaultNamingStrategy(model.serviceModel(), model.customizationConfig())
-        val serviceName = Term.Name(namingStrategy.getServiceName)
         val pkgName = Term.Name(id.moduleName)
         val fullPkgName = Term.Select(q"io.github.vigoo.zioaws", pkgName)
         val modelPkg: Term.Ref = getSdkModelPackage(id, pkgName)
 
-        val usedModels = ModelCollector.collectUsedModels(namingStrategy, model)
-        val modelMap = usedModels.map { model => (model.shapeName -> model) }.toMap
+        val modelMap = ModelCollector.collectUsedModels(namingStrategy, model)
+
+        val generatorContext = ZLayer.succeed(new GeneratorContext.Service {
+          override val serviceName: String = id.moduleName
+        })
 
         for {
           shapeStore <- ZRef.make(Map.empty[String, ModelWrapper])
-          models <- ZIO.foreach(filterModels(usedModels.toList)) { m =>
+          models <- ZIO.foreach(filterModels(modelMap.all.toList)) { m =>
             generateModel(namingStrategy, shapeStore, model, modelMap, modelPkg, m)
+              .provideSomeLayer[Console](generatorContext)
           }
         } yield
           q"""package $fullPkgName {
@@ -744,4 +780,15 @@ package object generator {
 
   def copyCoreProject(): ZIO[Generator with Console, GeneratorFailure, Unit] =
     ZIO.accessM(_.get.copyCoreProject())
+
+  type GeneratorContext = Has[GeneratorContext.Service]
+
+  object GeneratorContext {
+
+    trait Service {
+      val serviceName: String
+    }
+
+  }
+
 }
