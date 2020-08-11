@@ -1,10 +1,28 @@
-package io.github.vigoo.zioaws.codegen
+package io.github.vigoo.zioaws.codegen.generator
 
-import io.github.vigoo.zioaws.codegen.generator._
-import scala.meta._
+import software.amazon.awssdk.codegen.model.service.Shape
 import zio.ZIO
 
+import scala.meta._
+
 object TypeMapping {
+  def isPrimitiveType(shape: Shape): Boolean = shape.getType match {
+    case "string" if Option(shape.getEnumValues).isEmpty => true
+    case "integer" => true
+    case "long" => true
+    case "float" => true
+    case "double" => true
+    case "boolean" => true
+    case "timestamp" => true
+    case "blob" => true
+    case _ => false
+  }
+
+  private val builtIns = Set("String", "Boolean", "Int", "Integer", "Long", "Float", "Double")
+  def isBuiltIn(name: String): Boolean = {
+    builtIns.contains(name)
+  }
+
   def toType(model: Model, models: ModelMap, modelPkg: Term.Ref): ZIO[GeneratorContext, GeneratorFailure, Type] = {
     val shape = model.shape
     shape.getType match {
@@ -57,6 +75,8 @@ object TypeMapping {
           itemModel <- models.get(model.shape.getListMember.getShape)
           itemType <- toWrappedType(itemModel, models)
         } yield t"""List[$itemType]"""
+      case _ if isPrimitiveType(model.shape) && !isBuiltIn(model.shapeName) =>
+        ZIO.succeed(Type.Select(Term.Name("primitives"), Type.Name(model.name)))
       case _ =>
         ZIO.succeed(Type.Name(model.name))
     }
@@ -78,6 +98,8 @@ object TypeMapping {
         } yield t"""List[$itemType]"""
       case "structure" =>
         ZIO.succeed(Type.Select(Term.Name(model.name), Type.Name("ReadOnly")))
+      case _ if isPrimitiveType(model.shape) && !isBuiltIn(model.shapeName) =>
+        ZIO.succeed(Type.Select(Term.Name("primitives"), Type.Name(model.name)))
       case _ =>
         ZIO.succeed(Type.Name(model.name))
     }

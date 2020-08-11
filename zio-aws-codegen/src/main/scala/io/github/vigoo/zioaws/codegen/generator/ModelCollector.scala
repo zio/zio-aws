@@ -16,8 +16,8 @@ case class Model(name: String, shapeName: String, shape: Shape, serviceModelName
 }
 
 object ModelCollector {
-  def collectUsedModels(namingStrategy: NamingStrategy, model: C2jModels): ModelMap = {
-    val rootShapes = OperationCollector.getFilteredOperations(model).foldLeft(Set.empty[Model]) { case (existing, (opName, op)) =>
+  def collectUsedModels(namingStrategy: NamingStrategy, models: C2jModels): ModelMap = {
+    val rootShapes = OperationCollector.getFilteredOperations(models).foldLeft(Set.empty[Model]) { case (existing, (opName, op)) =>
       val requestName = namingStrategy.getRequestClassName(opName)
       val responseName = namingStrategy.getResponseClassName(opName)
 
@@ -27,22 +27,22 @@ object ModelCollector {
       (requestShapeName, responseShapeName) match {
         case (None, None) => Set.empty
         case (Some(requestShapeName), None) =>
-          Option(model.serviceModel().getShape(requestShapeName)) match {
+          Option(models.serviceModel().getShape(requestShapeName)) match {
             case Some(requestShape) =>
               existing + Model(requestName, requestShapeName.capitalize, requestShape, requestName)
             case None =>
               existing
           }
         case (None, Some(responseShapeName)) =>
-          Option(model.serviceModel().getShape(responseShapeName)) match {
+          Option(models.serviceModel().getShape(responseShapeName)) match {
             case Some(responseShape) =>
               existing + Model(responseName, responseShapeName.capitalize, responseShape, responseName)
             case None =>
               existing
           }
         case (Some(requestShapeName), Some(responseShapeName)) =>
-          val requestShapeOpt = Option(model.serviceModel().getShape(requestShapeName))
-          val responseShapeOpt = Option(model.serviceModel().getShape(responseShapeName))
+          val requestShapeOpt = Option(models.serviceModel().getShape(requestShapeName))
+          val responseShapeOpt = Option(models.serviceModel().getShape(responseShapeName))
 
           existing union requestShapeOpt.map { requestShape =>
             Model(requestName, requestShapeName.capitalize, requestShape, requestName)
@@ -52,20 +52,20 @@ object ModelCollector {
       }
     }
 
-    val rootShapesWithPagination = model.paginatorsModel().getPaginators.asScala.toList.foldLeft(rootShapes) { case (result, (name, paginator)) =>
+    val rootShapesWithPagination = models.paginatorsModel().getPaginators.asScala.toList.foldLeft(rootShapes) { case (result, (name, paginator)) =>
       if (paginator.isValid) {
         Option(paginator.getResultKey).flatMap(_.asScala.headOption) match {
           case Some(key) =>
-            val outputShape = model.serviceModel().getShape(model.serviceModel().getOperation(name).getOutput.getShape)
+            val outputShape = models.serviceModel().getShape(models.serviceModel().getOperation(name).getOutput.getShape)
             outputShape.getMembers.asScala.get(key) match {
               case Some(outputListMember) =>
-                val listShape = model.serviceModel().getShape(outputListMember.getShape)
+                val listShape = models.serviceModel().getShape(outputListMember.getShape)
                 Option(listShape.getListMember) match {
                   case Some(itemMember) =>
                     val itemShapeName = itemMember.getShape
-                    Option(model.serviceModel().getShape(itemShapeName)) match {
+                    Option(models.serviceModel().getShape(itemShapeName)) match {
                       case Some(itemShape) =>
-                        collectShapes(namingStrategy, model, result + modelFromShape(namingStrategy, itemShape, itemShapeName), Set.empty, itemShape)
+                        collectShapes(namingStrategy, models, result + modelFromShape(namingStrategy, itemShape, itemShapeName), Set.empty, itemShape, itemShapeName)
                       case None =>
                           result
                     }
@@ -83,8 +83,8 @@ object ModelCollector {
       }
     }
 
-    val all = rootShapesWithPagination.map(_.shape).foldLeft(rootShapesWithPagination) { case (result, shape) =>
-      collectShapes(namingStrategy, model, result, Set.empty, shape)
+    val all = rootShapesWithPagination.foldLeft(rootShapesWithPagination) { case (result, m) =>
+      collectShapes(namingStrategy, models, result, Set.empty, m.shape, m.serviceModelName)
     }
     val map = all.map { m => (m.serviceModelName, m) }.toMap
 
@@ -100,7 +100,7 @@ object ModelCollector {
     }
   }
 
-  private def collectShapes(namingStrategy: NamingStrategy, model: C2jModels, found: Set[Model], invalid: Set[String], shape: Shape): Set[Model] = {
+  private def collectShapes(namingStrategy: NamingStrategy, model: C2jModels, found: Set[Model], invalid: Set[String], shape: Shape, name: String): Set[Model] = {
     val subTypes =
       Option(shape.getMembers).map(_.asScala).getOrElse(Map.empty[String, Member]).values.map(_.getShape).toSet union
         Option(shape.getListMember).map(_.getShape).toSet union
@@ -111,7 +111,7 @@ object ModelCollector {
     val newModels = newShapes.flatMap(modelFromShapeName(namingStrategy, model, _))
     val newInvalids = invalid union (newShapes diff newModels.map(_.serviceModelName))
 
-    newModels.foldLeft(found) { case (result, m) => collectShapes(namingStrategy, model, result + m, newInvalids, m.shape) }
+    newModels.foldLeft(found) { case (result, m) => collectShapes(namingStrategy, model, result + m, newInvalids, m.shape, m.serviceModelName) }
   }
 
   private def modelFromShapeName(namingStrategy: NamingStrategy, model: C2jModels, shapeName: String): Option[Model] = {

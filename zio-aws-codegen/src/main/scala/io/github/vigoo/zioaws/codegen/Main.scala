@@ -14,7 +14,11 @@ object Main extends App {
 
   override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] = {
     val app = for {
-      ids <- loader.findModels().mapError(ReflectionError)
+      svcs <- config.parameters[Parameters].map(_.serviceList)
+      ids <- svcs match {
+        case Some(ids) => ZIO.succeed(ids.toSet)
+        case None => loader.findModels().mapError(ReflectionError)
+      }
       _ <- ZIO.foreachPar(ids) { id =>
         for {
           _ <- console.putStrLn(s"Generating $id")
@@ -28,7 +32,7 @@ object Main extends App {
     } yield ExitCode.success
 
     val cfg = config.fromArgsWithUsageInfo(args, Parameters.spec).mapError(ParserError)
-    val modules = loader.live ++ (cfg >>> generator.live)
+    val modules = loader.live ++ (cfg >+> generator.live)
     app.provideCustomLayer(modules).catchAll {
       case ReflectionError(exception) =>
         console.putStrErr(exception.toString).as(ExitCode.failure)

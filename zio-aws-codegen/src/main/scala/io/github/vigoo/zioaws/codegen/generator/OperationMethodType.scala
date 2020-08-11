@@ -1,7 +1,7 @@
 package io.github.vigoo.zioaws.codegen.generator
 
 import io.github.vigoo.zioaws.codegen.Main.GeneratorError
-import io.github.vigoo.zioaws.codegen.TypeMapping.toType
+import TypeMapping.toType
 
 import scala.jdk.CollectionConverters._
 import software.amazon.awssdk.codegen.C2jModels
