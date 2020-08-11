@@ -15,6 +15,7 @@ import zio._
 import zio.console.Console
 
 import scala.jdk.CollectionConverters._
+import scala.meta.Term
 
 package object generator {
   type Generator = Has[Generator.Service]
@@ -90,8 +91,7 @@ package object generator {
 
       private def generateServiceMethods(namingStrategy: NamingStrategy,
                                          models: C2jModels,
-                                         modelMap: ModelMap,
-                                         modelPkg: Term.Ref): ZIO[Console with GeneratorContext, GeneratorFailure, List[ServiceMethods]] = {
+                                         modelMap: ModelMap): ZIO[Console with GeneratorContext, GeneratorFailure, List[ServiceMethods]] = {
         val serviceNameT = Type.Name(namingStrategy.getServiceName)
 
         ZIO.foreach(OperationCollector.getFilteredOperations(models).toList) { case (opName, op) =>
@@ -99,114 +99,115 @@ package object generator {
           val requestName = opRequestName(namingStrategy, opName)
           val responseName = opResponseName(namingStrategy, opName)
 
-          OperationMethodType.get(models, modelMap, modelPkg, opName, op).flatMap {
-            case RequestResponse(pagination) =>
-              val raw = ServiceMethod(
-                interface =
-                  q"""def $methodName(request: $requestName): IO[AwsError, $responseName]""",
-                implementation =
-                  q"""def $methodName(request: $requestName): IO[AwsError, $responseName] =
+          ZIO.access[GeneratorContext](_.get.modelPkg).flatMap { modelPkg =>
+            OperationCollector.get(models, modelMap, opName, op).flatMap {
+              case RequestResponse(pagination) =>
+                val raw = ServiceMethod(
+                  interface =
+                    q"""def $methodName(request: $requestName): IO[AwsError, $responseName]""",
+                  implementation =
+                    q"""def $methodName(request: $requestName): IO[AwsError, $responseName] =
                         asyncRequestResponse[$requestName, $responseName](api.$methodName)(request)""",
-                accessor =
-                  q"""def $methodName(request: $requestName): ZIO[$serviceNameT, AwsError, $responseName] =
+                  accessor =
+                    q"""def $methodName(request: $requestName): ZIO[$serviceNameT, AwsError, $responseName] =
                         ZIO.accessM(_.get.$methodName(request))"""
-              )
-              pagination match {
-                case Some(pagination) =>
-                  val methodNameStream = Term.Name(methodName.value + "Stream")
-                  val itemType = safeTypeName(models.customizationConfig(), modelPkg, pagination.itemType)
-                  val paginatorMethodName = Term.Name(methodName.value + "Paginator")
-                  val publisherType = Type.Name(opName + "Publisher")
+                )
+                pagination match {
+                  case Some(pagination) =>
+                    val methodNameStream = Term.Name(methodName.value + "Stream")
+                    val itemType = safeTypeName(models.customizationConfig(), modelPkg, pagination.itemType)
+                    val paginatorMethodName = Term.Name(methodName.value + "Paginator")
+                    val publisherType = Type.Name(opName + "Publisher")
 
-                  val streamedPaginator = ServiceMethod(
-                    interface =
-                      q"""def $methodNameStream(request: $requestName): IO[AwsError, zio.stream.ZStream[Any, AwsError, $itemType]]""",
-                    implementation =
-                      q"""def $methodNameStream(request: $requestName): IO[AwsError, zio.stream.ZStream[Any, AwsError, $itemType]] =
+                    val streamedPaginator = ServiceMethod(
+                      interface =
+                        q"""def $methodNameStream(request: $requestName): IO[AwsError, zio.stream.ZStream[Any, AwsError, $itemType]]""",
+                      implementation =
+                        q"""def $methodNameStream(request: $requestName): IO[AwsError, zio.stream.ZStream[Any, AwsError, $itemType]] =
                             asyncPaginatedRequest[$requestName, $itemType, $publisherType](api.$paginatorMethodName, _.${Term.Name(pagination.name.uncapitalize)}())(request)""",
-                    accessor =
-                      q"""def $methodNameStream(request: $requestName): ZIO[$serviceNameT, AwsError, zio.stream.ZStream[Any, AwsError, $itemType]] =
+                      accessor =
+                        q"""def $methodNameStream(request: $requestName): ZIO[$serviceNameT, AwsError, zio.stream.ZStream[Any, AwsError, $itemType]] =
                             ZIO.accessM(_.get.$methodNameStream(request))"""
-                  )
+                    )
 
-                  ZIO.succeed(ServiceMethods(
-                    raw,
-                    streamedPaginator
-                  ))
-                case None =>
-                  ZIO.succeed(ServiceMethods(raw))
-              }
-            case StreamedInput =>
-              ZIO.succeed(ServiceMethods(
-                ServiceMethod(
-                  interface =
-                    q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Chunk[Byte]]): IO[AwsError, $responseName]""",
-                  implementation =
-                    q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Chunk[Byte]]): IO[AwsError, $responseName] =
-                      asyncRequestInputStream[$requestName, $responseName](api.$methodName)(request, body)""",
-                  accessor =
-                    q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Chunk[Byte]]): ZIO[$serviceNameT, AwsError, $responseName] =
-                          ZIO.accessM(_.get.$methodName(request, body))"""
-                )))
-            case StreamedOutput =>
-              ZIO.succeed(ServiceMethods(
-                ServiceMethod(
-                  interface =
-                    q"""def $methodName(request: $requestName): IO[AwsError, StreamingOutputResult[$responseName]]""",
-                  implementation =
-                    q"""def $methodName(request: $requestName): IO[AwsError, StreamingOutputResult[$responseName]] =
-                          asyncRequestOutputStream[$requestName, $responseName](api.$methodName[zio.Task[StreamingOutputResult[$responseName]]])(request)""",
-                  accessor =
-                    q"""def $methodName(request: $requestName): ZIO[$serviceNameT, AwsError, StreamingOutputResult[$responseName]] =
-                          ZIO.accessM(_.get.$methodName(request))"""
-                )))
-            case StreamedInputOutput =>
-              ZIO.succeed(ServiceMethods(
-                ServiceMethod(
-                  interface =
-                    q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Chunk[Byte]]): IO[AwsError, StreamingOutputResult[$responseName]]""",
-                  implementation =
-                    q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Chunk[Byte]]): IO[AwsError, StreamingOutputResult[$responseName]] =
-                          asyncRequestInputOutputStream[$requestName, $responseName](api.$methodName[zio.Task[StreamingOutputResult[$responseName]]])(request, body)""",
-                  accessor =
-                    q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Chunk[Byte]]): ZIO[$serviceNameT, AwsError, StreamingOutputResult[$responseName]] =
-                          ZIO.accessM(_.get.$methodName(request, body))"""
-                )))
-            case EventStreamInput =>
-              findEventStreamShape(models, op.getInput.getShape).flatMap { case (eventStreamName, _) =>
-                val eventT = safeTypeName(models.customizationConfig(), modelPkg, Type.Name(eventStreamName))
+                    ZIO.succeed(ServiceMethods(
+                      raw,
+                      streamedPaginator
+                    ))
+                  case None =>
+                    ZIO.succeed(ServiceMethods(raw))
+                }
+              case StreamedInput =>
                 ZIO.succeed(ServiceMethods(
                   ServiceMethod(
                     interface =
-                      q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, AwsError, $eventT]): IO[AwsError, $responseName]""",
+                      q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Chunk[Byte]]): IO[AwsError, $responseName]""",
                     implementation =
-                      q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, AwsError, $eventT]): IO[AwsError, $responseName] =
-                            asyncRequestEventInputStream[$requestName, $responseName, $eventT](api.$methodName)(requset, input)""",
+                      q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Chunk[Byte]]): IO[AwsError, $responseName] =
+                      asyncRequestInputStream[$requestName, $responseName](api.$methodName)(request, body)""",
                     accessor =
-                      q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, AwsError, $eventT]): ZIO[$serviceNameT, AwsError, $responseName] =
-                            ZIO.accessM(_.get.$methodName(request, input))"""
+                      q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Chunk[Byte]]): ZIO[$serviceNameT, AwsError, $responseName] =
+                          ZIO.accessM(_.get.$methodName(request, body))"""
                   )))
-              }
-            case EventStreamOutput =>
-              findEventStreamShape(models, op.getOutput.getShape).flatMap { case (eventStreamShapeName, eventStreamShape) =>
-                val eventStreamT = Type.Name(eventStreamShapeName)
-                val eventT = safeTypeName(models.customizationConfig(), modelPkg, Type.Name(eventStreamShape.getMembers.asScala.keys.head))
+              case StreamedOutput =>
+                ZIO.succeed(ServiceMethods(
+                  ServiceMethod(
+                    interface =
+                      q"""def $methodName(request: $requestName): IO[AwsError, StreamingOutputResult[$responseName]]""",
+                    implementation =
+                      q"""def $methodName(request: $requestName): IO[AwsError, StreamingOutputResult[$responseName]] =
+                          asyncRequestOutputStream[$requestName, $responseName](api.$methodName[zio.Task[StreamingOutputResult[$responseName]]])(request)""",
+                    accessor =
+                      q"""def $methodName(request: $requestName): ZIO[$serviceNameT, AwsError, StreamingOutputResult[$responseName]] =
+                          ZIO.accessM(_.get.$methodName(request))"""
+                  )))
+              case StreamedInputOutput =>
+                ZIO.succeed(ServiceMethods(
+                  ServiceMethod(
+                    interface =
+                      q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Chunk[Byte]]): IO[AwsError, StreamingOutputResult[$responseName]]""",
+                    implementation =
+                      q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Chunk[Byte]]): IO[AwsError, StreamingOutputResult[$responseName]] =
+                          asyncRequestInputOutputStream[$requestName, $responseName](api.$methodName[zio.Task[StreamingOutputResult[$responseName]]])(request, body)""",
+                    accessor =
+                      q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Chunk[Byte]]): ZIO[$serviceNameT, AwsError, StreamingOutputResult[$responseName]] =
+                          ZIO.accessM(_.get.$methodName(request, body))"""
+                  )))
+              case EventStreamInput =>
+                findEventStreamShape(models, op.getInput.getShape).flatMap { case (eventStreamName, _) =>
+                  val eventT = safeTypeName(models.customizationConfig(), modelPkg, Type.Name(eventStreamName))
+                  ZIO.succeed(ServiceMethods(
+                    ServiceMethod(
+                      interface =
+                        q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, AwsError, $eventT]): IO[AwsError, $responseName]""",
+                      implementation =
+                        q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, AwsError, $eventT]): IO[AwsError, $responseName] =
+                            asyncRequestEventInputStream[$requestName, $responseName, $eventT](api.$methodName)(requset, input)""",
+                      accessor =
+                        q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, AwsError, $eventT]): ZIO[$serviceNameT, AwsError, $responseName] =
+                            ZIO.accessM(_.get.$methodName(request, input))"""
+                    )))
+                }
+              case EventStreamOutput =>
+                findEventStreamShape(models, op.getOutput.getShape).flatMap { case (eventStreamShapeName, eventStreamShape) =>
+                  val eventStreamT = Type.Name(eventStreamShapeName)
+                  val eventT = safeTypeName(models.customizationConfig(), modelPkg, Type.Name(eventStreamShape.getMembers.asScala.keys.head))
 
-                val responseHandlerName = Term.Name(opName + "ResponseHandler")
-                val responseHandlerT = Type.Name(responseHandlerName.value)
-                val visitorInit = Init(Type.Select(responseHandlerName, Type.Name("Visitor")), Name.Anonymous(), List.empty)
+                  val responseHandlerName = Term.Name(opName + "ResponseHandler")
+                  val responseHandlerT = Type.Name(responseHandlerName.value)
+                  val visitorInit = Init(Type.Select(responseHandlerName, Type.Name("Visitor")), Name.Anonymous(), List.empty)
 
-                val visitor: Term.NewAnonymous =
-                  q"""new $visitorInit {
+                  val visitor: Term.NewAnonymous =
+                    q"""new $visitorInit {
                           override def visit(event: $eventT): Unit = runtime.unsafeRun(queue.offer(event))
                         }"""
 
-                ZIO.succeed(ServiceMethods(
-                  ServiceMethod(
-                    interface =
-                      q"""def $methodName(request: $requestName): IO[AwsError, zio.stream.ZStream[Any, AwsError, $eventT]]""",
-                    implementation =
-                      q"""def $methodName(request: $requestName): IO[AwsError, zio.stream.ZStream[Any, AwsError, $eventT]] =
+                  ZIO.succeed(ServiceMethods(
+                    ServiceMethod(
+                      interface =
+                        q"""def $methodName(request: $requestName): IO[AwsError, zio.stream.ZStream[Any, AwsError, $eventT]]""",
+                      implementation =
+                        q"""def $methodName(request: $requestName): IO[AwsError, zio.stream.ZStream[Any, AwsError, $eventT]] =
                           ZIO.runtime.flatMap { runtime: zio.Runtime[Any] =>
                             asyncRequestEventOutputStream[$requestName, $responseName, $responseHandlerT, $eventStreamT, $eventT](
                               (request: $requestName, handler: $responseHandlerT) => api.$methodName(request, handler),
@@ -217,33 +218,33 @@ package object generator {
                             )(request)
                           }
                         """,
-                    accessor =
-                      q"""def $methodName(request: $requestName): ZIO[$serviceNameT, AwsError, zio.stream.ZStream[Any, AwsError, $eventT]] =
+                      accessor =
+                        q"""def $methodName(request: $requestName): ZIO[$serviceNameT, AwsError, zio.stream.ZStream[Any, AwsError, $eventT]] =
                             ZIO.accessM(_.get.$methodName(request))"""
-                  )))
-              }
-            case EventStreamInputOutput =>
-              findEventStreamShape(models, op.getInput.getShape).flatMap { case (inputEventStreamName, _) =>
-                val inEventT = safeTypeName(models.customizationConfig(), modelPkg, Type.Name(inputEventStreamName))
+                    )))
+                }
+              case EventStreamInputOutput =>
+                findEventStreamShape(models, op.getInput.getShape).flatMap { case (inputEventStreamName, _) =>
+                  val inEventT = safeTypeName(models.customizationConfig(), modelPkg, Type.Name(inputEventStreamName))
 
-                findEventStreamShape(models, op.getOutput.getShape).flatMap { case (outputEventStreamShapeName, outputEventStreamShape) =>
-                  val outEventStreamT = Type.Name(outputEventStreamShapeName)
-                  val outEventT = safeTypeName(models.customizationConfig(), modelPkg, Type.Name(outputEventStreamShape.getMembers.asScala.keys.head))
-                  val responseHandlerName = Term.Name(opName + "ResponseHandler")
-                  val responseHandlerT = Type.Name(responseHandlerName.value)
-                  val visitorInit = Init(Type.Select(responseHandlerName, Type.Name("Visitor")), Name.Anonymous(), List.empty)
+                  findEventStreamShape(models, op.getOutput.getShape).flatMap { case (outputEventStreamShapeName, outputEventStreamShape) =>
+                    val outEventStreamT = Type.Name(outputEventStreamShapeName)
+                    val outEventT = safeTypeName(models.customizationConfig(), modelPkg, Type.Name(outputEventStreamShape.getMembers.asScala.keys.head))
+                    val responseHandlerName = Term.Name(opName + "ResponseHandler")
+                    val responseHandlerT = Type.Name(responseHandlerName.value)
+                    val visitorInit = Init(Type.Select(responseHandlerName, Type.Name("Visitor")), Name.Anonymous(), List.empty)
 
-                  val visitor: Term.NewAnonymous =
-                    q"""new $visitorInit {
+                    val visitor: Term.NewAnonymous =
+                      q"""new $visitorInit {
                           override def visit(event: $outEventT): Unit = runtime.unsafeRun(queue.offer(event))
                         }"""
 
-                  ZIO.succeed(ServiceMethods(
-                    ServiceMethod(
-                      interface =
-                        q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, AwsError, $inEventT]): IO[AwsError, zio.stream.ZStream[Any, AwsError, $outEventT]]""",
-                      implementation =
-                        q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, AwsError, $inEventT]): IO[AwsError, zio.stream.ZStream[Any, AwsError, $outEventT]] =
+                    ZIO.succeed(ServiceMethods(
+                      ServiceMethod(
+                        interface =
+                          q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, AwsError, $inEventT]): IO[AwsError, zio.stream.ZStream[Any, AwsError, $outEventT]]""",
+                        implementation =
+                          q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, AwsError, $inEventT]): IO[AwsError, zio.stream.ZStream[Any, AwsError, $outEventT]] =
                                  ZIO.runtime.flatMap { runtime: zio.Runtime[Any] =>
                                    asyncRequestEventInputOutputStream[$requestName, $responseName, $inEventT, $responseHandlerT, $outEventStreamT, $outEventT](
                                      (request: $requestName, input: Publisher[$inEventT], handler: $responseHandlerT) => api.$methodName(request, input, handler),
@@ -252,12 +253,13 @@ package object generator {
                                          .subscriber($visitor)
                                          .build())(request, input)
                                  }""",
-                      accessor =
-                        q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, AwsError, $inEventT]): ZIO[$serviceNameT, AwsError, zio.stream.ZStream[Any, AwsError, $outEventT]] =
+                        accessor =
+                          q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, AwsError, $inEventT]): ZIO[$serviceNameT, AwsError, zio.stream.ZStream[Any, AwsError, $outEventT]] =
                             ZIO.accessM(_.get.$methodName(request, input))"""
-                    )))
+                      )))
+                  }
                 }
-              }
+            }
           }
         }
       }
@@ -275,17 +277,18 @@ package object generator {
         val clientInterfaceSingleton = Term.Name(serviceName.value + "AsyncClient")
         val clientInterfaceBuilder = Type.Name(serviceName.value + "AsyncClientBuilder")
 
-        val modelPkg: Term.Ref = getSdkModelPackage(id, pkgName)
+        val modelPackage = getSdkModelPackage(id, pkgName)
         val modelMap = ModelCollector.collectUsedModels(namingStrategy, model)
 
         val generatorContext = ZLayer.succeed(new GeneratorContext.Service {
           override val serviceName: String = id.moduleName
+          override val modelPkg: Term.Ref = modelPackage
         })
 
-        generateServiceMethods(namingStrategy, model, modelMap, modelPkg)
+        generateServiceMethods(namingStrategy, model, modelMap)
           .flatMap { serviceMethods =>
             ZIO.foreach(model.serviceModel().getOperations.asScala.toList) { case (opName, op) =>
-              OperationMethodType.get(model, modelMap, modelPkg, opName, op).map {
+              OperationCollector.get(model, modelMap, opName, op).map {
                 case RequestResponse(Some(_)) => true
                 case _ => false
               }
@@ -297,9 +300,10 @@ package object generator {
               val serviceAccessors = serviceMethods.flatMap(_.methods.map(_.accessor))
 
               val imports = List(
+
                 Some(q"""import io.github.vigoo.zioaws.core._"""),
                 Some(q"""import io.github.vigoo.zioaws.core.config.AwsConfig"""),
-                Some(Import(List(Importer(modelPkg, List(Importee.Wildcard()))))),
+                Some(Import(List(Importer(modelPackage, List(Importee.Wildcard()))))),
                 if (hasPaginators) {
                   Some(id.subModuleName match {
                     case Some(submodule) if submodule != id.name =>
@@ -376,6 +380,7 @@ package object generator {
       }
 
       private def generateBuildSbtCode(ids: Set[ModelId]): String = {
+        val versionStr = Lit.String(config.parameters.version)
         val projects = ids.toList.map { id =>
           val name = Term.Name(id.moduleName)
           val nameStr = Lit.String(id.moduleName)
@@ -383,15 +388,23 @@ package object generator {
           val artifactStr = Lit.String(id.name)
           val nameP = Pat.Var(name)
 
+          val deps =
+            id.subModule match {
+              case Some(value) if value != id.name =>
+                val baseProject = Term.Name(id.name)
+                List(Term.Name("core"), baseProject)
+              case _ =>
+                List(Term.Name("core"))
+            }
+
           q"""lazy val $nameP = Project($fullNameStr, file($nameStr)).settings(commonSettings).settings(
                 libraryDependencies += "software.amazon.awssdk" % $artifactStr % awsVersion
-              ).dependsOn(core)
+              ).dependsOn(..$deps)
            """
         }
         val awsVersionStr = Lit.String(VersionInfo.SDK_VERSION)
         val zioVersionStr = Lit.String(config.parameters.zioVersion)
         val zioReactiveStreamsInteropVersionStr = Lit.String(config.parameters.zioInteropReactiveStreamsVersion)
-        val versionStr = Lit.String(config.parameters.version)
 
         val code =
           q"""
@@ -419,16 +432,23 @@ package object generator {
         code.toString.stripPrefix("{").stripSuffix("}")
       }
 
-      private def filterModels(models: Set[Model]): Set[Model] = {
-        models.filterNot { model =>
+      private def filterModels(models: C2jModels, modelSet: Set[Model]): Set[Model] = {
+        val excluded =
+          Option(models.customizationConfig.getShapeModifiers)
+            .map(_.asScala.collect { case (name, modifier) if modifier.isExcludeShape => name }.toSet)
+            .getOrElse(Set.empty)
+
+        modelSet.filterNot { model =>
+          excluded.contains(model.serviceModelName) ||
           model.shape.isException ||
-            TypeMapping.isBuiltIn(model.shapeName)
+          model.shape.isEventStream ||
+          TypeMapping.isBuiltIn(model.shapeName)
         }
       }
 
       private def wrapSdkValue(model: Model, term: Term, modelMap: ModelMap): ZIO[GeneratorContext, GeneratorFailure, Term] =
-        model.shape.getType match {
-          case "map" =>
+        model.typ match {
+          case ModelType.Map =>
             for {
               keyModel <- modelMap.get(model.shape.getMapKeyType.getShape)
               valueModel <- modelMap.get(model.shape.getMapValueType.getShape)
@@ -441,7 +461,7 @@ package object generator {
             } else {
               q"""$term.asScala.map { case (key, value) => $wrapKey -> $wrapValue }.toMap"""
             }
-          case "list" =>
+          case ModelType.List =>
             for {
               valueModel <- modelMap.get(model.shape.getListMember.getShape)
               item = Term.Name("item")
@@ -451,14 +471,16 @@ package object generator {
             } else {
               q"""$term.asScala.map { item => $wrapItem }.toList"""
             }
-          case "string" if Option(model.shape.getEnumValues).isDefined =>
+          case ModelType.Enum =>
             val nameTerm = Term.Name(model.name)
             ZIO.succeed(q"""$nameTerm.wrap($term)""")
-          case "blob" =>
+          case ModelType.Blob =>
             ZIO.succeed(q"""Chunk.fromByteBuffer($term.asByteBuffer())""")
-          case "structure" =>
+          case ModelType.Structure =>
             val nameTerm = Term.Name(model.name)
             ZIO.succeed(q"""$nameTerm.wrap($term)""")
+          case ModelType.Exception =>
+            ZIO.succeed(term)
           case _ if TypeMapping.isPrimitiveType(model.shape) && !TypeMapping.isBuiltIn(model.shapeName) =>
             ZIO.succeed(q"""$term : primitives.${Type.Name(model.name)}""")
           case _ =>
@@ -500,10 +522,66 @@ package object generator {
         }
       }
 
+      private def applyEnumModifiers(models: C2jModels, model: Model, enumValueList: List[String]): List[String] = {
+        val shapeModifiers = Option(models.customizationConfig().getShapeModifiers).map(_.asScala).getOrElse(Map.empty[String, ShapeModifier])
+        shapeModifiers.get(model.shapeName) match {
+          case Some(shapeModifier) =>
+            val renames = Option(shapeModifier.getModify)
+              .map(_.asScala.flatMap(_.asScala.toList))
+              .getOrElse(List.empty)
+              .toMap
+
+            enumValueList.map { enumValue =>
+              renames.get(enumValue) match {
+                case Some(modifier) if Option(modifier.getEmitEnumName).isDefined =>
+                  modifier.getEmitEnumName
+                case _ => enumValue
+              }
+            }
+          case None =>
+            enumValueList
+        }
+      }
+
+      private def adjustFieldType(models: C2jModels, model: Model, fieldName: String, fieldModel: Model): Model = {
+        val shapeModifiers = Option(models.customizationConfig().getShapeModifiers).map(_.asScala).getOrElse(Map.empty[String, ShapeModifier])
+        shapeModifiers.get(model.shapeName).flatMap { shapeModifier =>
+          val modifies = Option(shapeModifier.getModify).map(_.asScala).getOrElse(List.empty)
+          val matchingModifiers = modifies.flatMap { modifiesMap =>
+            modifiesMap.asScala.map { case (key, value) => (key.toLowerCase, value) }.get(fieldName.toLowerCase)
+          }.toList
+
+          matchingModifiers
+            .map(modifier => Option(modifier.getEmitAsType))
+            .find(_.isDefined)
+            .flatten
+            .map(ModelType.fromString)
+            .map {
+              newTyp =>
+                val resetedName = newTyp match {
+                  case ModelType.String => "String"
+                  case ModelType.Integer => "Int"
+                  case ModelType.Long => "Long"
+                  case ModelType.Float => "Float"
+                  case ModelType.Double => "Double"
+                  case ModelType.Boolean => "Boolean"
+                  case ModelType.Timestamp => "Instant"
+                  case ModelType.BigDecimal => "BigDecimal"
+                  case ModelType.Blob => "Chunk[Byte]"
+                  case _ => fieldModel.name
+                }
+                fieldModel.copy(
+                  name = resetedName,
+                  shapeName = resetedName,
+                  typ = newTyp
+                )
+            }
+        }.getOrElse(fieldModel)
+      }
+
       private def generateModel(namingStrategy: NamingStrategy,
                                 models: C2jModels,
                                 modelMap: ModelMap,
-                                modelPkg: Term.Ref,
                                 m: Model): ZIO[Console with GeneratorContext, GeneratorFailure, ModelWrapper] = {
         val shapeName = m.name
         val shape = m.shape
@@ -511,9 +589,9 @@ package object generator {
         val shapeNameTerm = Term.Name(shapeName)
 
         for {
-          awsShapeNameT <- TypeMapping.toType(m, modelMap, modelPkg)
-          wrapper <- shape.getType match {
-            case "structure" =>
+          awsShapeNameT <- TypeMapping.toType(m, modelMap)
+          wrapper <- m.typ match {
+            case ModelType.Structure =>
               val roT = Type.Name("ReadOnly")
               val shapeNameRoT = Type.Select(shapeNameTerm, roT)
               val shapeNameRoInit = Init(shapeNameRoT, Name.Anonymous(), List.empty)
@@ -525,51 +603,54 @@ package object generator {
                 fieldParams <- ZIO.foreach(fieldList) {
                   case (memberName, member) =>
                     modelMap.get(member.getShape).flatMap { fieldModel =>
-                      val property = propertyName(namingStrategy, models, m, fieldModel, memberName)
+                      val finalFieldModel = adjustFieldType(models, m, memberName, fieldModel)
+                      val property = propertyName(namingStrategy, models, m, finalFieldModel, memberName)
                       val propertyNameTerm = Term.Name(property)
 
-                      TypeMapping.toWrappedType(fieldModel, modelMap).map { memberT =>
+                      TypeMapping.toWrappedType(finalFieldModel, modelMap).map { memberT =>
                         if (required contains memberName) {
                           param"""$propertyNameTerm: $memberT"""
                         } else {
-                          param"""$propertyNameTerm: Option[$memberT] = None"""
+                          param"""$propertyNameTerm: scala.Option[$memberT] = None"""
                         }
                       }
                     }
                 }
                 fieldGetterInterfaces <- ZIO.foreach(fieldList) { case (memberName, member) =>
                   modelMap.get(member.getShape).flatMap { fieldModel =>
-                    val property = propertyName(namingStrategy, models, m, fieldModel, memberName)
+                    val finalFieldModel = adjustFieldType(models, m, memberName, fieldModel)
+                    val property = propertyName(namingStrategy, models, m, finalFieldModel, memberName)
                     val propertyNameTerm = Term.Name(property)
 
-                    TypeMapping.toWrappedTypeReadOnly(fieldModel, modelMap).map { memberT =>
+                    TypeMapping.toWrappedTypeReadOnly(finalFieldModel, modelMap).map { memberT =>
                       if (required contains memberName) {
                         q"""def ${propertyNameTerm}: $memberT"""
                       } else {
-                        q"""def ${propertyNameTerm}: Option[$memberT]"""
+                        q"""def ${propertyNameTerm}: scala.Option[$memberT]"""
                       }
                     }
                   }
                 }
                 fieldGetterImplementations <- ZIO.foreach(fieldList) { case (memberName, member) =>
                   modelMap.get(member.getShape).flatMap { fieldModel =>
-                    val property = propertyName(namingStrategy, models, m, fieldModel, memberName)
+                    val finalFieldModel = adjustFieldType(models, m, memberName, fieldModel)
+                    val property = propertyName(namingStrategy, models, m, finalFieldModel, memberName)
                     val propertyNameTerm = Term.Name(property)
                     val propertyNameP = Pat.Var(propertyNameTerm)
 
-                    TypeMapping.toWrappedTypeReadOnly(fieldModel, modelMap).flatMap { memberT =>
+                    TypeMapping.toWrappedTypeReadOnly(finalFieldModel, modelMap).flatMap { memberT =>
                       if (required contains memberName) {
-                        wrapSdkValue(fieldModel, Term.Apply(Term.Select(Term.Name("impl"), propertyNameTerm), List.empty), modelMap).map { wrappedGet =>
+                        wrapSdkValue(finalFieldModel, Term.Apply(Term.Select(Term.Name("impl"), propertyNameTerm), List.empty), modelMap).map { wrappedGet =>
                           q"""override val $propertyNameP: $memberT = $wrappedGet"""
                         }
                       } else {
                         val get = Term.Apply(Term.Select(Term.Name("impl"), propertyNameTerm), List.empty)
                         val valueTerm = Term.Name("value")
-                        wrapSdkValue(fieldModel, valueTerm, modelMap).map { wrappedGet =>
+                        wrapSdkValue(finalFieldModel, valueTerm, modelMap).map { wrappedGet =>
                           if (wrappedGet == valueTerm) {
-                            q"""override val $propertyNameP: Option[$memberT] = Option($get)"""
+                            q"""override val $propertyNameP: scala.Option[$memberT] = scala.Option($get)"""
                           } else {
-                            q"""override val $propertyNameP: Option[$memberT] = Option($get).map(value => $wrappedGet)"""
+                            q"""override val $propertyNameP: scala.Option[$memberT] = scala.Option($get).map(value => $wrappedGet)"""
                           }
                         }
                       }
@@ -592,14 +673,14 @@ package object generator {
                           }
                          """)
               )
-            case "list" =>
+            case ModelType.List =>
               for {
                 itemModel <- modelMap.get(shape.getListMember.getShape)
                 elemT <- TypeMapping.toWrappedType(itemModel, modelMap)
               } yield ModelWrapper(
                 code = List(q"""type $shapeNameT = List[$elemT]""")
               )
-            case "map" =>
+            case ModelType.Map =>
               for {
                 keyModel <- modelMap.get(shape.getMapKeyType.getShape)
                 valueModel <- modelMap.get(shape.getMapValueType.getShape)
@@ -608,69 +689,71 @@ package object generator {
               } yield ModelWrapper(
                 code = List(q"""type $shapeNameT = Map[$keyT, $valueT]""")
               )
-            case "string" if Option(shape.getEnumValues).isDefined =>
-              val shapeNameI = Init(shapeNameT, Name.Anonymous(), List.empty)
-              val enumValueList = "unknownToSdkVersion" :: shape.getEnumValues.asScala.toList
-              val enumValues = enumValueList.map { enumValue =>
-                val enumValueTerm = Term.Name(enumValue)
-                val enumValueScreaming = Term.Name(namingStrategy.getEnumValueName(enumValue))
-                q"""final case object $enumValueTerm extends $shapeNameI {
+            case ModelType.Enum =>
+              ZIO.access[GeneratorContext](_.get.modelPkg).flatMap { modelPkg =>
+                val shapeNameI = Init(shapeNameT, Name.Anonymous(), List.empty)
+                val enumValueList = "unknownToSdkVersion" :: applyEnumModifiers(models, m, shape.getEnumValues.asScala.toList)
+                val enumValues = enumValueList.map { enumValue =>
+                  val enumValueTerm = Term.Name(enumValue)
+                  val enumValueScreaming = Term.Name(namingStrategy.getEnumValueName(enumValue))
+                  q"""final case object $enumValueTerm extends $shapeNameI {
                             override def unwrap: $awsShapeNameT = ${Term.Select(modelPkg, Term.Name(shapeName))}.${enumValueScreaming}
                           }
                        """
-              }
-              val wrapPatterns =
-                Term.Match(Term.Name("value"),
-                  enumValueList.map { enumValue =>
-                    val enumValueTerm = Term.Name(enumValue)
-                    val enumValueScreaming = Term.Name(namingStrategy.getEnumValueName(enumValue))
-                    val term = Term.Select(Term.Select(modelPkg, Term.Name(shapeName)), enumValueScreaming)
-                    p"""case $term => $enumValueTerm"""
-                  })
+                }
+                val wrapPatterns =
+                  Term.Match(Term.Name("value"),
+                    enumValueList.map { enumValue =>
+                      val enumValueTerm = Term.Name(enumValue)
+                      val enumValueScreaming = Term.Name(namingStrategy.getEnumValueName(enumValue))
+                      val term = Term.Select(Term.Select(modelPkg, Term.Name(shapeName)), enumValueScreaming)
+                      p"""case $term => $enumValueTerm"""
+                    })
 
-              ZIO.succeed(ModelWrapper(
-                code = List(
-                  q"""sealed trait $shapeNameT {
+                ZIO.succeed(ModelWrapper(
+                  code = List(
+                    q"""sealed trait $shapeNameT {
                               def unwrap: $awsShapeNameT
                          }""",
-                  q"""object $shapeNameTerm {
+                    q"""object $shapeNameTerm {
                               def wrap(value: $awsShapeNameT): $shapeNameT =
                                 $wrapPatterns
 
                               ..$enumValues
                             }
                          """
-                )
-              ))
-            case "string" =>
+                  )
+                ))
+              }
+            case ModelType.String =>
               ZIO.succeed(ModelWrapper(
                 code = List(q"""type $shapeNameT = String""")
               ))
-            case "integer" =>
+            case ModelType.Integer =>
               ZIO.succeed(ModelWrapper(
                 code = List(q"""type $shapeNameT = Int""")
               ))
-            case "long" =>
+            case ModelType.Long =>
               ZIO.succeed(ModelWrapper(
                 code = List(q"""type $shapeNameT = Long""")
               ))
-            case "float" =>
+            case ModelType.Float =>
               ZIO.succeed(ModelWrapper(
                 code = List(q"""type $shapeNameT = Float""")
               ))
-            case "double" =>
+            case ModelType.Double =>
               ZIO.succeed(ModelWrapper(
                 code = List(q"""type $shapeNameT = Double""")
               ))
-            case "boolean" =>
+            case ModelType.Boolean =>
               ZIO.succeed(ModelWrapper(
                 code = List(q"""type $shapeNameT = Boolean""")
               ))
-            case "timestamp" =>
+            case ModelType.Timestamp =>
               ZIO.succeed(ModelWrapper(
                 code = List(q"""type $shapeNameT = Instant""")
               ))
-            case "blob" =>
+            case ModelType.Blob =>
               ZIO.succeed(ModelWrapper(
                 code = List(q"""type $shapeNameT = Chunk[Byte]""")
               ))
@@ -684,24 +767,40 @@ package object generator {
         val namingStrategy = new DefaultNamingStrategy(model.serviceModel(), model.customizationConfig())
         val pkgName = Term.Name(id.moduleName)
         val fullPkgName = Term.Select(q"io.github.vigoo.zioaws", pkgName)
-        val modelPkg: Term.Ref = getSdkModelPackage(id, pkgName)
+        val modelPackage: Term.Ref = getSdkModelPackage(id, pkgName)
 
         val modelMap = ModelCollector.collectUsedModels(namingStrategy, model)
 
         val generatorContext = ZLayer.succeed(new GeneratorContext.Service {
           override val serviceName: String = id.moduleName
+          override val modelPkg: Term.Ref = modelPackage
         })
 
-        val filteredModels = filterModels(modelMap.all)
-        val primitiveModels = filteredModels.filter(model => TypeMapping.isPrimitiveType(model.shape))
+        val filteredModels = filterModels(model, modelMap.all)
+        val primitiveModels =
+          filteredModels
+            .filter(model => TypeMapping.isPrimitiveType(model.shape))
+            .map(m => (m.name -> m)) // unifying by name, as some models have both 'Timestamp' and 'timestamp' for example
+            .toMap
+            .values
+            .toSet
         val complexModels = filteredModels diff primitiveModels
+
+        val parentModuleImport =
+          if (id.subModule.isDefined) {
+            val parentModelPackage = Import(List(Importer(Term.Select(Term.Select(q"io.github.vigoo.zioaws", Term.Name(id.name)), Term.Name("model")), List(Importee.Wildcard()))))
+            List(parentModelPackage)
+          } else {
+            List.empty
+          }
+
         for {
           primitiveModels <- ZIO.foreach(primitiveModels.toList) { m =>
-            generateModel(namingStrategy, model, modelMap, modelPkg, m)
+            generateModel(namingStrategy, model, modelMap, m)
               .provideSomeLayer[Console](generatorContext)
           }
           models <- ZIO.foreach(complexModels.toList) { m =>
-            generateModel(namingStrategy, model, modelMap, modelPkg, m)
+            generateModel(namingStrategy, model, modelMap, m)
               .provideSomeLayer[Console](generatorContext)
           }
         } yield
@@ -710,6 +809,8 @@ package object generator {
                     import scala.jdk.CollectionConverters._
                     import java.time.Instant
                     import zio.Chunk
+
+                    ..$parentModuleImport
 
                     package object model {
                       object primitives {
@@ -790,6 +891,7 @@ package object generator {
     // TODO: add model map and naming strategy
     trait Service {
       val serviceName: String
+      val modelPkg: Term.Ref
     }
 
   }
