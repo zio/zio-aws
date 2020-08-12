@@ -27,7 +27,9 @@ object Main extends App {
           _ <- generator.generateServiceModels(id, model).mapError(GeneratorError)
         } yield ()
       }
+      _ <- console.putStrLn(s"Generating build.sbt")
       _ <- generator.generateBuildSbt(ids).mapError(GeneratorError)
+      _ <- console.putStrLn(s"Copying zio-aws-core")
       _ <- generator.copyCoreProject().mapError(GeneratorError)
     } yield ExitCode.success
 

@@ -446,7 +446,7 @@ package object generator {
         }
       }
 
-      private def unwrapSdkValue(model: Model, term: Term, modelMap: ModelMap): ZIO[GeneratorContext, GeneratorFailure, Term] =
+      private def unwrapSdkValue(model: Model, term: Term, modelMap: ModelMap, forceToString: Boolean = false): ZIO[GeneratorContext, GeneratorFailure, Term] =
         model.typ match {
           case ModelType.Map =>
             for {
@@ -454,8 +454,8 @@ package object generator {
               valueModel <- modelMap.get(model.shape.getMapValueType.getShape)
               key = Term.Name("key")
               value = Term.Name("value")
-              unwrapKey <- unwrapSdkValue(keyModel, key, modelMap)
-              unwrapValue <- unwrapSdkValue(valueModel, value, modelMap)
+              unwrapKey <- unwrapSdkValue(keyModel, key, modelMap, forceToString = true)
+              unwrapValue <- unwrapSdkValue(valueModel, value, modelMap, forceToString = true)
             } yield if (unwrapKey == key && unwrapValue == value) {
               q"""$term.asJava"""
             } else {
@@ -465,7 +465,7 @@ package object generator {
             for {
               valueModel <- modelMap.get(model.shape.getListMember.getShape)
               item = Term.Name("item")
-              unwrapItem <- unwrapSdkValue(valueModel, item, modelMap)
+              unwrapItem <- unwrapSdkValue(valueModel, item, modelMap, forceToString = true)
             } yield if (unwrapItem == item) {
               q"""$term.asJava"""
             } else {
@@ -473,13 +473,19 @@ package object generator {
             }
           case ModelType.Enum =>
             val nameTerm = Term.Name(model.name)
-            ZIO.succeed(q"""$term.unwrap""")
+            if (forceToString) {
+              ZIO.succeed(q"""$term.unwrap.toString""")
+            } else {
+              ZIO.succeed(q"""$term.unwrap""")
+            }
           case ModelType.Blob =>
-            ZIO.succeed(q"""java.nio.ByteBuffer.wrap($term.toArray[Byte])""")
+            ZIO.succeed(q"""SdkBytes.fromByteArray($term.toArray[Byte])""")
           case ModelType.Structure =>
             ZIO.succeed(q"""$term.buildAwsValue()""")
           case ModelType.Exception =>
             ZIO.succeed(term)
+          case ModelType.BigDecimal =>
+            ZIO.succeed(q"""$term.bigDecimal""")
           case _ =>
             TypeMapping.toType(model, modelMap).map { typ =>
               q"""$term : $typ"""
@@ -682,6 +688,7 @@ package object generator {
                       val property = propertyName(namingStrategy, models, m, finalFieldModel, memberName)
                       val propertyNameTerm = Term.Name(property)
                       val propertyNameP = Pat.Var(propertyNameTerm)
+                      val fluentSetter = Term.Name(namingStrategy.getFluentSetterMethodName(property, m.shape, fieldModel.shape))
 
                       TypeMapping.toWrappedType(finalFieldModel, modelMap).flatMap { memberT =>
                         TypeMapping.toWrappedTypeReadOnly(finalFieldModel, modelMap).flatMap { memberRoT =>
@@ -694,7 +701,7 @@ package object generator {
                                       getterCall = toEditable,
                                       getterInterface = q"""def ${propertyNameTerm}: $memberRoT""",
                                       getterImplementation = q"""override val $propertyNameP: $memberRoT = $wrappedGet""",
-                                      applyToBuilder = builder => q"""$builder.$propertyNameTerm($unwrappedGet)"""
+                                      applyToBuilder = builder => q"""$builder.$fluentSetter($unwrappedGet)"""
                                     )
                                   }
                                 }
@@ -714,7 +721,7 @@ package object generator {
                                     } else {
                                       q"""override val $propertyNameP: scala.Option[$memberRoT] = scala.Option($get).map(value => $wrappedGet)"""
                                     },
-                                    applyToBuilder = builder => q"""$builder.optionallyWith($propertyNameTerm.map(value => $unwrappedGet))(_.$propertyNameTerm)"""
+                                    applyToBuilder = builder => q"""$builder.optionallyWith($propertyNameTerm.map(value => $unwrappedGet))(_.$fluentSetter)"""
                                   )
                                 }
                               }
@@ -732,12 +739,12 @@ package object generator {
                 code = List(
                   q"""case class $shapeNameT(..${fields.map(_.paramDef)}) extends $shapeNameRoInit {
                         def buildAwsValue(): $awsShapeNameT = {
-                          import $shapeNameTerm.builderHelper._
+                          import $shapeNameTerm.zioAwsBuilderHelper.BuilderOps
                           $builderChain.build()
                         }
                       }""",
                   q"""object $shapeNameTerm {
-                            private lazy val builderHelper: BuilderHelper[$awsShapeNameT] = BuilderHelper.apply
+                            private lazy val zioAwsBuilderHelper: io.github.vigoo.zioaws.core.BuilderHelper[$awsShapeNameT] = io.github.vigoo.zioaws.core.BuilderHelper.apply
                             trait $roT {
                               def editable: $shapeNameT = $shapeNameTerm(..${fields.map(_.getterCall)})
                               ..${fields.map(_.getterInterface)}
@@ -887,7 +894,7 @@ package object generator {
                     import scala.jdk.CollectionConverters._
                     import java.time.Instant
                     import zio.Chunk
-                    import io.github.vigoo.zioaws.core.BuilderHelper
+                    import software.amazon.awssdk.core.SdkBytes
 
                     ..$parentModuleImport
 
@@ -941,10 +948,12 @@ package object generator {
             os.remove.all(
               os.Path(config.parameters.targetRoot.resolve("zio-aws-core")))
           }.mapError(FailedToDelete)
+          targetSrc = config.parameters.targetRoot.resolve("zio-aws-core").resolve("src")
+          _ <- ZIO(Files.createDirectories(targetSrc)).mapError(FailedToCreateDirectories)
           _ <- ZIO {
             os.copy(
-              os.Path(config.parameters.sourceRoot.resolve("zio-aws-core")),
-              os.Path(config.parameters.targetRoot.resolve("zio-aws-core")),
+              os.Path(config.parameters.sourceRoot.resolve("zio-aws-core").resolve("src")),
+              os.Path(targetSrc),
               replaceExisting = true)
           }.mapError(FailedToCopy)
         } yield ()
