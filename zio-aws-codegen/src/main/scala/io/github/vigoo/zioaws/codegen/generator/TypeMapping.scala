@@ -43,17 +43,17 @@ object TypeMapping {
         case ModelType.Enum =>
           ZIO.succeed(Type.Select(modelPkg, Type.Name(model.name)))
         case ModelType.String =>
-          ZIO.succeed(t"""String""")
+          ZIO.succeed(t"""java.lang.String""")
         case ModelType.Integer =>
-          ZIO.succeed(t"""Int""")
+          ZIO.succeed(t"""java.lang.Integer""")
         case ModelType.Long =>
-          ZIO.succeed(t"""Long""")
+          ZIO.succeed(t"""java.lang.Long""")
         case ModelType.Float =>
-          ZIO.succeed(t"""Float""")
+          ZIO.succeed(t"""java.lang.Float""")
         case ModelType.Double =>
-          ZIO.succeed(t"""Double""")
+          ZIO.succeed(t"""java.lang.Double""")
         case ModelType.Boolean =>
-          ZIO.succeed(t"""Boolean""")
+          ZIO.succeed(t"""java.lang.Boolean""")
         case ModelType.Timestamp =>
           ZIO.succeed(t"""java.time.Instant""")
         case ModelType.BigDecimal =>

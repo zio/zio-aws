@@ -91,7 +91,7 @@ package object generator {
 
       private def generateServiceMethods(namingStrategy: NamingStrategy,
                                          models: C2jModels,
-                                         modelMap: ModelMap): ZIO[Console with GeneratorContext, GeneratorFailure, List[ServiceMethods]] = {
+                                         modelMap: ModelMap): ZIO[GeneratorContext, GeneratorFailure, List[ServiceMethods]] = {
         val serviceNameT = Type.Name(namingStrategy.getServiceName)
 
         ZIO.foreach(OperationCollector.getFilteredOperations(models).toList) { case (opName, op) =>
@@ -366,7 +366,7 @@ package object generator {
              """
               pkg.toString
             }
-          }.provideSomeLayer[Console](generatorContext)
+          }.provideLayer(generatorContext)
       }
 
       private def getSdkModelPackage(id: ModelId, pkgName: Term.Name) = {
@@ -445,6 +445,46 @@ package object generator {
           TypeMapping.isBuiltIn(model.shapeName)
         }
       }
+
+      private def unwrapSdkValue(model: Model, term: Term, modelMap: ModelMap): ZIO[GeneratorContext, GeneratorFailure, Term] =
+        model.typ match {
+          case ModelType.Map =>
+            for {
+              keyModel <- modelMap.get(model.shape.getMapKeyType.getShape)
+              valueModel <- modelMap.get(model.shape.getMapValueType.getShape)
+              key = Term.Name("key")
+              value = Term.Name("value")
+              unwrapKey <- unwrapSdkValue(keyModel, key, modelMap)
+              unwrapValue <- unwrapSdkValue(valueModel, value, modelMap)
+            } yield if (unwrapKey == key && unwrapValue == value) {
+              q"""$term.asJava"""
+            } else {
+              q"""$term.map { case (key, value) => $unwrapKey -> $unwrapValue }.asJava"""
+            }
+          case ModelType.List =>
+            for {
+              valueModel <- modelMap.get(model.shape.getListMember.getShape)
+              item = Term.Name("item")
+              unwrapItem <- unwrapSdkValue(valueModel, item, modelMap)
+            } yield if (unwrapItem == item) {
+              q"""$term.asJava"""
+            } else {
+              q"""$term.map { item => $unwrapItem }.asJava"""
+            }
+          case ModelType.Enum =>
+            val nameTerm = Term.Name(model.name)
+            ZIO.succeed(q"""$term.unwrap""")
+          case ModelType.Blob =>
+            ZIO.succeed(q"""java.nio.ByteBuffer.wrap($term.toArray[Byte])""")
+          case ModelType.Structure =>
+            ZIO.succeed(q"""$term.buildAwsValue()""")
+          case ModelType.Exception =>
+            ZIO.succeed(term)
+          case _ =>
+            TypeMapping.toType(model, modelMap).map { typ =>
+              q"""$term : $typ"""
+            }
+        }
 
       private def wrapSdkValue(model: Model, term: Term, modelMap: ModelMap): ZIO[GeneratorContext, GeneratorFailure, Term] =
         model.typ match {
@@ -579,10 +619,41 @@ package object generator {
         }.getOrElse(fieldModel)
       }
 
+      private def roToEditable(model: Model, term: Term, modelMap: ModelMap): ZIO[GeneratorContext, GeneratorFailure, Term] =
+        model.typ match {
+          case ModelType.Map =>
+            for {
+              keyModel <- modelMap.get(model.shape.getMapKeyType.getShape)
+              valueModel <- modelMap.get(model.shape.getMapValueType.getShape)
+              key = Term.Name("key")
+              value = Term.Name("value")
+              keyToEditable <- roToEditable(keyModel, key, modelMap)
+              valueToEditable <- roToEditable(valueModel, value, modelMap)
+            } yield if (keyToEditable == key && valueToEditable == value) {
+              term
+            } else {
+              q"""$term.map { case (key, value) => $keyToEditable -> $valueToEditable }"""
+            }
+          case ModelType.List =>
+            for {
+              valueModel <- modelMap.get(model.shape.getListMember.getShape)
+              item = Term.Name("item")
+              itemToEditable <- roToEditable(valueModel, item, modelMap)
+            } yield if (itemToEditable == item) {
+              term
+            } else {
+              q"""$term.map { item => $itemToEditable }"""
+            }
+          case ModelType.Structure =>
+            ZIO.succeed(q"""$term.editable""")
+          case _ =>
+            ZIO.succeed(term)
+        }
+
       private def generateModel(namingStrategy: NamingStrategy,
                                 models: C2jModels,
                                 modelMap: ModelMap,
-                                m: Model): ZIO[Console with GeneratorContext, GeneratorFailure, ModelWrapper] = {
+                                m: Model): ZIO[GeneratorContext, GeneratorFailure, ModelWrapper] = {
         val shapeName = m.name
         val shape = m.shape
         val shapeNameT = Type.Name(shapeName)
@@ -590,6 +661,10 @@ package object generator {
 
         for {
           awsShapeNameT <- TypeMapping.toType(m, modelMap)
+          awsShapeNameTerm = awsShapeNameT match {
+            case Type.Select(term, Type.Name(name)) => Term.Select(term, Term.Name(name))
+            case _ => Term.Name(m.name)
+          }
           wrapper <- m.typ match {
             case ModelType.Structure =>
               val roT = Type.Name("ReadOnly")
@@ -600,73 +675,76 @@ package object generator {
               val required = Option(shape.getRequired).map(_.asScala.toSet).getOrElse(Set.empty)
 
               for {
-                fieldParams <- ZIO.foreach(fieldList) {
+                fields <- ZIO.foreach(fieldList) {
                   case (memberName, member) =>
                     modelMap.get(member.getShape).flatMap { fieldModel =>
                       val finalFieldModel = adjustFieldType(models, m, memberName, fieldModel)
                       val property = propertyName(namingStrategy, models, m, finalFieldModel, memberName)
                       val propertyNameTerm = Term.Name(property)
+                      val propertyNameP = Pat.Var(propertyNameTerm)
 
-                      TypeMapping.toWrappedType(finalFieldModel, modelMap).map { memberT =>
-                        if (required contains memberName) {
-                          param"""$propertyNameTerm: $memberT"""
-                        } else {
-                          param"""$propertyNameTerm: scala.Option[$memberT] = None"""
-                        }
-                      }
-                    }
-                }
-                fieldGetterInterfaces <- ZIO.foreach(fieldList) { case (memberName, member) =>
-                  modelMap.get(member.getShape).flatMap { fieldModel =>
-                    val finalFieldModel = adjustFieldType(models, m, memberName, fieldModel)
-                    val property = propertyName(namingStrategy, models, m, finalFieldModel, memberName)
-                    val propertyNameTerm = Term.Name(property)
-
-                    TypeMapping.toWrappedTypeReadOnly(finalFieldModel, modelMap).map { memberT =>
-                      if (required contains memberName) {
-                        q"""def ${propertyNameTerm}: $memberT"""
-                      } else {
-                        q"""def ${propertyNameTerm}: scala.Option[$memberT]"""
-                      }
-                    }
-                  }
-                }
-                fieldGetterImplementations <- ZIO.foreach(fieldList) { case (memberName, member) =>
-                  modelMap.get(member.getShape).flatMap { fieldModel =>
-                    val finalFieldModel = adjustFieldType(models, m, memberName, fieldModel)
-                    val property = propertyName(namingStrategy, models, m, finalFieldModel, memberName)
-                    val propertyNameTerm = Term.Name(property)
-                    val propertyNameP = Pat.Var(propertyNameTerm)
-
-                    TypeMapping.toWrappedTypeReadOnly(finalFieldModel, modelMap).flatMap { memberT =>
-                      if (required contains memberName) {
-                        wrapSdkValue(finalFieldModel, Term.Apply(Term.Select(Term.Name("impl"), propertyNameTerm), List.empty), modelMap).map { wrappedGet =>
-                          q"""override val $propertyNameP: $memberT = $wrappedGet"""
-                        }
-                      } else {
-                        val get = Term.Apply(Term.Select(Term.Name("impl"), propertyNameTerm), List.empty)
-                        val valueTerm = Term.Name("value")
-                        wrapSdkValue(finalFieldModel, valueTerm, modelMap).map { wrappedGet =>
-                          if (wrappedGet == valueTerm) {
-                            q"""override val $propertyNameP: scala.Option[$memberT] = scala.Option($get)"""
-                          } else {
-                            q"""override val $propertyNameP: scala.Option[$memberT] = scala.Option($get).map(value => $wrappedGet)"""
+                      TypeMapping.toWrappedType(finalFieldModel, modelMap).flatMap { memberT =>
+                        TypeMapping.toWrappedTypeReadOnly(finalFieldModel, modelMap).flatMap { memberRoT =>
+                            if (required contains memberName) {
+                              unwrapSdkValue(finalFieldModel, propertyNameTerm, modelMap).flatMap { unwrappedGet =>
+                                wrapSdkValue(finalFieldModel, Term.Apply(Term.Select(Term.Name("impl"), propertyNameTerm), List.empty), modelMap).flatMap { wrappedGet =>
+                                  roToEditable(finalFieldModel, propertyNameTerm, modelMap).map { toEditable =>
+                                    ModelFieldFragments(
+                                      paramDef = param"""$propertyNameTerm: $memberT""",
+                                      getterCall = toEditable,
+                                      getterInterface = q"""def ${propertyNameTerm}: $memberRoT""",
+                                      getterImplementation = q"""override val $propertyNameP: $memberRoT = $wrappedGet""",
+                                      applyToBuilder = builder => q"""$builder.$propertyNameTerm($unwrappedGet)"""
+                                    )
+                                  }
+                                }
+                              }
+                            } else {
+                              val get = Term.Apply(Term.Select(Term.Name("impl"), propertyNameTerm), List.empty)
+                              val valueTerm = Term.Name("value")
+                              wrapSdkValue(finalFieldModel, valueTerm, modelMap).flatMap { wrappedGet =>
+                                unwrapSdkValue(finalFieldModel, valueTerm, modelMap).flatMap { unwrappedGet =>
+                                roToEditable(finalFieldModel, valueTerm, modelMap).map { toEditable =>
+                                  ModelFieldFragments(
+                                    paramDef = param"""$propertyNameTerm: scala.Option[$memberT] = None""",
+                                    getterCall = q"""$propertyNameTerm.map(value => $toEditable)""",
+                                    getterInterface = q"""def ${propertyNameTerm}: scala.Option[$memberRoT]""",
+                                    getterImplementation = if (wrappedGet == valueTerm) {
+                                      q"""override val $propertyNameP: scala.Option[$memberRoT] = scala.Option($get)"""
+                                    } else {
+                                      q"""override val $propertyNameP: scala.Option[$memberRoT] = scala.Option($get).map(value => $wrappedGet)"""
+                                    },
+                                    applyToBuilder = builder => q"""$builder.optionallyWith($propertyNameTerm.map(value => $unwrappedGet))(_.$propertyNameTerm)"""
+                                  )
+                                }
+                              }
+                            }
                           }
                         }
                       }
                     }
-                  }
+                }
+                createBuilderTerm = Term.Apply(Term.Select(awsShapeNameTerm, Term.Name("builder")), List.empty)
+                builderChain = fields.foldLeft(createBuilderTerm) { case (term, fieldFragments) =>
+                  fieldFragments.applyToBuilder(term)
                 }
               } yield ModelWrapper(
                 code = List(
-                  q"""case class $shapeNameT(..$fieldParams) extends $shapeNameRoInit {}""",
+                  q"""case class $shapeNameT(..${fields.map(_.paramDef)}) extends $shapeNameRoInit {
+                        def buildAwsValue(): $awsShapeNameT = {
+                          import $shapeNameTerm.builderHelper._
+                          $builderChain.build()
+                        }
+                      }""",
                   q"""object $shapeNameTerm {
+                            private lazy val builderHelper: BuilderHelper[$awsShapeNameT] = BuilderHelper.apply
                             trait $roT {
-                              ..$fieldGetterInterfaces
+                              def editable: $shapeNameT = $shapeNameTerm(..${fields.map(_.getterCall)})
+                              ..${fields.map(_.getterInterface)}
                             }
 
                             private class Wrapper(impl: $awsShapeNameT) extends $shapeNameRoInit {
-                              ..$fieldGetterImplementations
+                              ..${fields.map(_.getterImplementation)}
                             }
 
                             def wrap(impl: $awsShapeNameT): $roT = new Wrapper(impl)
@@ -758,7 +836,7 @@ package object generator {
                 code = List(q"""type $shapeNameT = Chunk[Byte]""")
               ))
             case typ =>
-              console.putStrLnErr(s"Unknown shape type: $typ").as(ModelWrapper(List(q"""type $shapeNameT = Unit""")))
+              ZIO.succeed(ModelWrapper(List(q"""type $shapeNameT = Unit""")))
           }
         } yield wrapper
       }
@@ -797,11 +875,11 @@ package object generator {
         for {
           primitiveModels <- ZIO.foreach(primitiveModels.toList) { m =>
             generateModel(namingStrategy, model, modelMap, m)
-              .provideSomeLayer[Console](generatorContext)
+              .provideLayer(generatorContext)
           }
           models <- ZIO.foreach(complexModels.toList) { m =>
             generateModel(namingStrategy, model, modelMap, m)
-              .provideSomeLayer[Console](generatorContext)
+              .provideLayer(generatorContext)
           }
         } yield
           q"""package $fullPkgName {
@@ -809,6 +887,7 @@ package object generator {
                     import scala.jdk.CollectionConverters._
                     import java.time.Instant
                     import zio.Chunk
+                    import io.github.vigoo.zioaws.core.BuilderHelper
 
                     ..$parentModuleImport
 

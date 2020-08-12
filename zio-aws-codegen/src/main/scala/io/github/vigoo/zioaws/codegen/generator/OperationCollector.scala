@@ -48,7 +48,7 @@ object OperationCollector {
   def outputIsEventStreamOf(models: C2jModels, op: Operation): Boolean =
     Option(op.getOutput).flatMap(output => Option(models.serviceModel().getShape(output.getShape))).exists(hasEventStreamMember(models, _))
 
-  def get(models: C2jModels, modelMap: ModelMap, opName: String, op: Operation): ZIO[Console with GeneratorContext, GeneratorFailure, OperationMethodType] = {
+  def get(models: C2jModels, modelMap: ModelMap, opName: String, op: Operation): ZIO[GeneratorContext, GeneratorFailure, OperationMethodType] = {
     val inputIsStreaming = inputIsStreamingOf(models, op)
     val outputIsStreaming = outputIsStreamingOf(models, op)
 
@@ -86,14 +86,10 @@ object OperationCollector {
                         itemType = itemType
                       )))
                     case None =>
-                      for {
-                        _ <- console.putStrLnErr(s"Could not find list item member for ${outputListMember.getShape}")
-                      } yield RequestResponse(pagination = None)
+                      ZIO.succeed(RequestResponse(pagination = None))
                   }
                 case None =>
-                  for {
-                    _ <- console.putStrLnErr(s"Could not find output shape ${op.getOutput.getShape}")
-                  } yield RequestResponse(pagination = None)
+                  ZIO.succeed(RequestResponse(pagination = None))
               }
             case None =>
               ZIO.succeed(RequestResponse(pagination = None))
