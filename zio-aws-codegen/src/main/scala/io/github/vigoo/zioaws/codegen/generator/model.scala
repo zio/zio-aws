@@ -50,3 +50,5 @@ case class Model(name: String,
                  typ: ModelType,
                  shape: Shape,
                  serviceModelName: String)
+
+case class NamedShape(name: String, shape: Shape)

@@ -1,6 +1,6 @@
 package io.github.vigoo.zioaws.codegen.generator
 
-import io.github.vigoo.zioaws.codegen.generator.context.{GeneratorContext, serviceName}
+import io.github.vigoo.zioaws.codegen.generator.context.{GeneratorContext, getServiceName}
 
 import scala.jdk.CollectionConverters._
 import software.amazon.awssdk.codegen.C2jModels
@@ -16,11 +16,11 @@ trait ModelMap {
 }
 
 object ModelCollector {
-  def tryFindEventStreamShape(models: C2jModels, outputShape: String, alreadyChecked: Set[Shape] = Set.empty): Option[(String, Shape)] = {
+  def tryFindEventStreamShape(models: C2jModels, outputShape: String, alreadyChecked: Set[Shape] = Set.empty): Option[NamedShape] = {
     Option(models.serviceModel().getShape(outputShape)) match {
       case Some(shape) if !(alreadyChecked.contains(shape)) =>
         if (shape.isEventStream) {
-          Some((outputShape, shape))
+          Some(NamedShape(outputShape, shape))
         } else {
           shape.getMembers
             .asScala
@@ -74,8 +74,8 @@ object ModelCollector {
       .toList
       .flatMap { case (opName, op) =>
         if (OperationCollector.inputIsEventStreamOf(models, op)) {
-          tryFindEventStreamShape(models, op.getInput.getShape).flatMap { case (eventStreamName, _) =>
-            modelFromShapeName(namingStrategy, models, eventStreamName)
+          tryFindEventStreamShape(models, op.getInput.getShape).flatMap { eventStream =>
+            modelFromShapeName(namingStrategy, models, eventStream.name)
           }
         } else {
           None
@@ -87,8 +87,8 @@ object ModelCollector {
       .toList
       .flatMap { case (opName, op) =>
         if (OperationCollector.outputIsEventStreamOf(models, op)) {
-          tryFindEventStreamShape(models, op.getOutput.getShape).flatMap { case (eventStreamShapeName, eventStreamShape) =>
-            val name = eventStreamShape.getMembers.asScala.keys.head
+          tryFindEventStreamShape(models, op.getOutput.getShape).flatMap { eventStream =>
+            val name = eventStream.shape.getMembers.asScala.keys.head
             modelFromShapeName(namingStrategy, models, name)
           }
         } else {
@@ -137,7 +137,7 @@ object ModelCollector {
       override def get(serviceModelName: String): ZIO[GeneratorContext, GeneratorFailure, Model] =
         substitutedMap.get(serviceModelName) match {
           case Some(value) => ZIO.succeed(value)
-          case None => serviceName.flatMap { serviceName =>
+          case None => getServiceName.flatMap { serviceName =>
             ZIO.fail(UnknownShapeReference(serviceName, serviceModelName))
           }
         }

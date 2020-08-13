@@ -23,11 +23,11 @@ package object context {
     }
   }
 
-  def service: ZIO[GeneratorContext, Nothing, ModelId] = ZIO.access(_.get.service)
-  def serviceName: ZIO[GeneratorContext, Nothing, String] = ZIO.access(_.get.service.name)
-  def modelPkg: ZIO[GeneratorContext, Nothing, Term.Ref] = ZIO.access(_.get.modelPkg)
-  def paginatorPkg: ZIO[GeneratorContext, Nothing, Term.Ref] = ZIO.access(_.get.paginatorPkg)
-  def namingStrategy: ZIO[GeneratorContext, Nothing, NamingStrategy] = ZIO.access(_.get.namingStrategy)
-  def modelMap: ZIO[GeneratorContext, Nothing, ModelMap] = ZIO.access(_.get.modelMap)
-  def models: ZIO[GeneratorContext, Nothing, C2jModels] = ZIO.access(_.get.models)
+  def getService: ZIO[GeneratorContext, Nothing, ModelId] = ZIO.access(_.get.service)
+  def getServiceName: ZIO[GeneratorContext, Nothing, String] = ZIO.access(_.get.service.name)
+  def getModelPkg: ZIO[GeneratorContext, Nothing, Term.Ref] = ZIO.access(_.get.modelPkg)
+  def getPaginatorPkg: ZIO[GeneratorContext, Nothing, Term.Ref] = ZIO.access(_.get.paginatorPkg)
+  def getNamingStrategy: ZIO[GeneratorContext, Nothing, NamingStrategy] = ZIO.access(_.get.namingStrategy)
+  def getModelMap: ZIO[GeneratorContext, Nothing, ModelMap] = ZIO.access(_.get.modelMap)
+  def getModels: ZIO[GeneratorContext, Nothing, C2jModels] = ZIO.access(_.get.models)
 }

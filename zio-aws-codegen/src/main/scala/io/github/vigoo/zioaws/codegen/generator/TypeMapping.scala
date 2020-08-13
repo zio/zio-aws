@@ -26,8 +26,8 @@ object TypeMapping {
   }
 
   def toType(model: Model): ZIO[GeneratorContext, GeneratorFailure, Type] = {
-    modelMap.flatMap { models =>
-      modelPkg.flatMap { modelPkg =>
+    getModelMap.flatMap { models =>
+      getModelPkg.flatMap { modelPkg =>
         val shape = model.shape
         model.typ match {
           case ModelType.Map =>
@@ -67,14 +67,14 @@ object TypeMapping {
           case ModelType.Structure =>
             ZIO.succeed(Type.Select(modelPkg, Type.Name(model.name)))
           case ModelType.Unknown(typ) =>
-            serviceName.flatMap(svc => ZIO.fail(UnknownType(svc, typ)))
+            getServiceName.flatMap(svc => ZIO.fail(UnknownType(svc, typ)))
         }
       }
     }
   }
 
   def toWrappedType(model: Model): ZIO[GeneratorContext, GeneratorFailure, Type] = {
-    modelMap.flatMap { models =>
+    getModelMap.flatMap { models =>
       model.typ match {
         case ModelType.Map =>
           for {
@@ -97,7 +97,7 @@ object TypeMapping {
   }
 
   def toWrappedTypeReadOnly(model: Model): ZIO[GeneratorContext, GeneratorFailure, Type] = {
-    modelMap.flatMap { models =>
+    getModelMap.flatMap { models =>
       model.typ match {
         case ModelType.Map =>
           for {

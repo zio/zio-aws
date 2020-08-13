@@ -49,8 +49,8 @@ object OperationCollector {
     Option(op.getOutput).flatMap(output => Option(models.serviceModel().getShape(output.getShape))).exists(hasEventStreamMember(models, _))
 
   def get(opName: String, op: Operation): ZIO[GeneratorContext, GeneratorFailure, OperationMethodType] = {
-    models.flatMap { models =>
-      modelMap.flatMap { modelMap =>
+    getModels.flatMap { models =>
+      getModelMap.flatMap { modelMap =>
         val inputIsStreaming = inputIsStreamingOf(models, op)
         val outputIsStreaming = outputIsStreamingOf(models, op)
 
