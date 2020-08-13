@@ -98,12 +98,7 @@ trait ServiceInterfaceGenerator {
       responseHandlerName = opName + "ResponseHandler"
       responseHandlerTerm = Term.Select(modelPkg, Term.Name(responseHandlerName))
       responseHandlerT = Type.Select(modelPkg, Type.Name(responseHandlerName))
-      visitorInit = Init(Type.Select(responseHandlerTerm, Type.Name("Visitor")), Name.Anonymous(), List.empty)
-
-      visitor: Term.NewAnonymous =
-      q"""new $visitorInit {
-            override def visit(event: $awsOutEventT): Unit = runtime.unsafeRun(queue.offer(event))
-          }"""
+      responseHandlerInit = Init(responseHandlerT, Name.Anonymous(), List.empty)
 
       wrappedItem <- wrapSdkValue(outEventModel, Term.Name("item"))
     } yield ServiceMethods(
@@ -113,12 +108,15 @@ trait ServiceInterfaceGenerator {
         implementation =
           q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, AwsError, $inEventT]): IO[AwsError, zio.stream.ZStream[Any, AwsError, $outEventRoT]] =
                 ZIO.runtime.flatMap { runtime: zio.Runtime[Any] =>
-                  asyncRequestEventInputOutputStream[$modelPkg.$requestName, $modelPkg.$responseName, $awsInEventStreamT, $responseHandlerT, $awsOutEventStreamT, $awsOutEventT](
+                  asyncRequestEventInputOutputStream[$modelPkg.$requestName, $modelPkg.$responseName, $awsInEventStreamT, $responseHandlerT, $awsOutEventStreamT](
                     (request: $modelPkg.$requestName, input: Publisher[$awsInEventStreamT], handler: $responseHandlerT) => api.$methodName(request, input, handler),
-                    (queue: zio.Queue[$awsOutEventT]) =>
-                      $responseHandlerTerm.builder()
-                        .subscriber($visitor)
-                        .build())(request.buildAwsValue(), input.map(_.buildAwsValue())).map(_.map(item => $wrappedItem))
+                    (impl: EventStreamResponseHandler[$modelPkg.$responseName, $awsOutEventStreamT]) =>
+                      new $responseHandlerInit {
+                        override def responseReceived(response: $modelPkg.$responseName): Unit = impl.responseReceived(response)
+                        override def onEventStream(publisher: SdkPublisher[$awsOutEventStreamT]): Unit = impl.onEventStream(publisher)
+                        override def exceptionOccurred(throwable: Throwable): Unit = impl.exceptionOccurred(throwable)
+                        override def complete(): Unit = impl.complete()
+                      })(request.buildAwsValue(), input.map(_.buildAwsValue())).map(_.map(item => $wrappedItem))
                }""",
         accessor =
           q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, AwsError, $inEventT]): ZIO[$serviceNameT, AwsError, zio.stream.ZStream[Any, AwsError, $outEventRoT]] =
@@ -137,12 +135,8 @@ trait ServiceInterfaceGenerator {
       responseHandlerName = opName + "ResponseHandler"
       responseHandlerTerm = Term.Select(modelPkg, Term.Name(responseHandlerName))
       responseHandlerT = Type.Select(modelPkg, Type.Name(responseHandlerName))
-      visitorInit = Init(Type.Select(responseHandlerTerm, Type.Name("Visitor")), Name.Anonymous(), List.empty)
 
-      visitor: Term.NewAnonymous =
-      q"""new $visitorInit {
-            override def visit(event: $awsEventT): Unit = runtime.unsafeRun(queue.offer(event))
-          }"""
+      responseHandlerInit = Init(responseHandlerT, Name.Anonymous(), List.empty)
 
       wrappedItem <- wrapSdkValue(eventItemModel, Term.Name("item"))
     } yield ServiceMethods(
@@ -151,15 +145,15 @@ trait ServiceInterfaceGenerator {
           q"""def $methodName(request: $requestName): IO[AwsError, zio.stream.ZStream[Any, AwsError, $eventRoT]]""",
         implementation =
           q"""def $methodName(request: $requestName): IO[AwsError, zio.stream.ZStream[Any, AwsError, $eventRoT]] =
-                ZIO.runtime.flatMap { runtime: zio.Runtime[Any] =>
                   asyncRequestEventOutputStream[$modelPkg.$requestName, $modelPkg.$responseName, $responseHandlerT, $awsEventStreamT, $awsEventT](
                     (request: $modelPkg.$requestName, handler: $responseHandlerT) => api.$methodName(request, handler),
-                    (queue: zio.Queue[$awsEventT]) =>
-                      $responseHandlerTerm.builder()
-                        .subscriber($visitor)
-                        .build()
-                  )(request.buildAwsValue()).map(_.map(item => $wrappedItem))
-                }
+                    (impl: EventStreamResponseHandler[$modelPkg.$responseName, $awsEventStreamT]) =>
+                      new $responseHandlerInit {
+                        override def responseReceived(response: $modelPkg.$responseName): Unit = impl.responseReceived(response)
+                        override def onEventStream(publisher: SdkPublisher[$awsEventStreamT]): Unit = impl.onEventStream(publisher)
+                        override def exceptionOccurred(throwable: Throwable): Unit = impl.exceptionOccurred(throwable)
+                        override def complete(): Unit = impl.complete()
+                      })(request.buildAwsValue()).map(_.map(item => $wrappedItem))
               """,
         accessor =
           q"""def $methodName(request: $requestName): ZIO[$serviceNameT, AwsError, zio.stream.ZStream[Any, AwsError, $eventRoT]] =
