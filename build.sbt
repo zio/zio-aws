@@ -1,4 +1,4 @@
-import scala.sys.process._
+import xerial.sbt.Sonatype._
 
 val zioVersion = "1.0.0"
 val zioCatsInteropVersion = "2.1.4.0"
@@ -21,7 +21,28 @@ lazy val commonSettings =
   Seq(
     scalaVersion := "2.13.3",
     organization := "io.github.vigoo",
-    version := zioAwsVersion
+    version := zioAwsVersion,
+
+    // Publishing
+    publishMavenStyle := true,
+    licenses := Seq("APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
+    publishTo := sonatypePublishTo.value,
+    sonatypeProjectHosting := Some(GitHubHosting("vigoo", "desert", "daniel.vigovszky@gmail.com")),
+    developers := List(
+      Developer(id = "vigoo", name = "Daniel Vigovszky", email = "daniel.vigovszky@gmail.com", url = url("https://vigoo.github.io"))
+    ),
+
+    credentials ++=
+      (for {
+        username <- Option(System.getenv().get("SONATYPE_USERNAME"))
+        password <- Option(System.getenv().get("SONATYPE_PASSWORD"))
+      } yield
+        Credentials(
+          "Sonatype Nexus Repository Manager",
+          "oss.sonatype.org",
+          username,
+          password)).toSeq,
+
   )
 
 lazy val root = Project("zio-aws", file(".")).settings(commonSettings).settings(

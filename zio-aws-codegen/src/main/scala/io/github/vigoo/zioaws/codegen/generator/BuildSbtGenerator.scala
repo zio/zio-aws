@@ -8,6 +8,12 @@ import scala.meta._
 trait BuildSbtGenerator {
   this: HasConfig =>
 
+  protected def generatePluginsSbtCode: String =
+    q"""
+     addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.9.4")
+     addSbtPlugin("com.jsuereth" % "sbt-pgp" % "2.0.1")
+     """.toString.stripPrefix("{").stripSuffix("}")
+
   protected def generateBuildSbtCode(ids: Set[ModelId]): String = {
     val versionStr = Lit.String(config.parameters.version)
     val projects = ids.toList.map { id =>
@@ -38,6 +44,7 @@ trait BuildSbtGenerator {
 
     val code =
       q"""
+        import xerial.sbt.Sonatype._
         val awsVersion = $awsVersionStr
 
         publishArtifact := false
@@ -50,6 +57,14 @@ trait BuildSbtGenerator {
             "dev.zio" %% "zio" % $zioVersionStr,
             "dev.zio" %% "zio-streams" % $zioVersionStr,
             "dev.zio" %% "zio-interop-reactivestreams" % $zioReactiveStreamsInteropVersionStr
+          ),
+          // Publishing
+          publishMavenStyle := true,
+          licenses := Seq("APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
+          publishTo := sonatypePublishTo.value,
+          sonatypeProjectHosting := Some(GitHubHosting("vigoo", "desert", "daniel.vigovszky@gmail.com")),
+          developers := List(
+            Developer(id = "vigoo", name = "Daniel Vigovszky", email = "daniel.vigovszky@gmail.com", url = url("https://vigoo.github.io"))
           )
         )
 

@@ -78,7 +78,15 @@ package object generator {
         for {
           code <- ZIO.succeed(generateBuildSbtCode(ids))
           buildFile = config.parameters.targetRoot.resolve("build.sbt")
+          projectDir = config.parameters.targetRoot.resolve("project")
+          pluginsSbtFile = projectDir.resolve("plugins.sbt")
           _ <- ZIO(Files.write(buildFile, code.getBytes(StandardCharsets.UTF_8))).mapError(FailedToWriteFile)
+          _ <- ZIO {
+            if (Files.notExists(projectDir)) {
+              Files.createDirectory(projectDir)
+            }
+          }.mapError(FailedToCreateDirectories)
+          _ <- ZIO(Files.write(pluginsSbtFile, generatePluginsSbtCode.getBytes(StandardCharsets.UTF_8))).mapError(FailedToWriteFile)
         } yield ()
 
       override def copyCoreProject(): IO[GeneratorFailure, Unit] =
