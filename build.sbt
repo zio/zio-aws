@@ -87,8 +87,12 @@ lazy val core = Project("zio-aws-core", file("zio-aws-core")).settings(commonSet
     "software.amazon.awssdk" % "aws-core" % awsVersion,
     "dev.zio" %% "zio" % zioVersion,
     "dev.zio" %% "zio-streams" % zioVersion,
-    "dev.zio" %% "zio-interop-reactivestreams" % zioReactiveStreamsInteropVersion
-  )
+    "dev.zio" %% "zio-interop-reactivestreams" % zioReactiveStreamsInteropVersion,
+
+    "dev.zio" %% "zio-test" % zioVersion % "test",
+    "dev.zio" %% "zio-test-sbt" % zioVersion % "test",
+  ),
+  testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
 )
 
 lazy val codegen = Project("zio-aws-codegen", file("zio-aws-codegen")).settings(commonSettings).settings(

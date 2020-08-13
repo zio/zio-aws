@@ -46,16 +46,35 @@ trait AwsServiceBase {
     Request,
     Response,
     ResponseHandler <: EventStreamResponseHandler[Response, EventI],
-    EventI,
-    Event](impl: (Request, ResponseHandler) => CompletableFuture[Void],
-           buildVisitor: Queue[Event] => ResponseHandler)
-          (request: Request): IO[AwsError, ZStream[Any, AwsError, Event]] = {
+    EventI](impl: (Request, ResponseHandler) => CompletableFuture[Void],
+            createHandler: (EventStreamResponseHandler[Response, EventI]) => ResponseHandler)
+           (request: Request): IO[AwsError, ZStream[Any, AwsError, EventI]] = {
     for {
-      queue <- ZQueue.unbounded[Event]
-      stream = ZStream
-        .fromQueue(queue)
-      _ <- ZIO.fromCompletionStage(impl(request, buildVisitor(queue))).mapError(AwsError.fromThrowable)
-      _ <- queue.shutdown
+      runtime <- ZIO.runtime[Any]
+      publisherPromise <- Promise.make[AwsError, Publisher[EventI]]
+      responsePromise <- Promise.make[AwsError, Response]
+      signalQueue <- ZQueue.bounded[Option[AwsError]](16)
+
+      _ <- ZIO.fromCompletionStage(impl(request, createHandler(ZEventStreamResponseHandler.create(
+        runtime,
+        signalQueue,
+        responsePromise,
+        publisherPromise
+      )))).mapError(AwsError.fromThrowable)
+      _ <- responsePromise.await
+      publisher <- publisherPromise.await
+
+      stream = publisher
+        .toStream()
+        .mapError(AwsError.fromThrowable)
+        .mergeEither(ZStream.fromQueueWithShutdown(signalQueue))
+        .map(_.swap)
+        .takeUntil(_.isLeft)
+        .flatMap {
+          case Left(None) => ZStream.empty
+          case Left(Some(error)) => ZStream.fail(error)
+          case Right(item) => ZStream.succeed(item)
+        }
     } yield stream
   }
 
@@ -71,17 +90,37 @@ trait AwsServiceBase {
     Response,
     InEvent,
     ResponseHandler <: EventStreamResponseHandler[Response, OutEventI],
-    OutEventI,
-    OutEvent](impl: (Request, Publisher[InEvent], ResponseHandler) => CompletableFuture[Void],
-           buildVisitor: Queue[OutEvent] => ResponseHandler)
-          (request: Request, input: ZStream[Any, AwsError, InEvent]): IO[AwsError, ZStream[Any, AwsError, OutEvent]] = {
+    OutEventI](impl: (Request, Publisher[InEvent], ResponseHandler) => CompletableFuture[Void],
+               createHandler: (EventStreamResponseHandler[Response, OutEventI]) => ResponseHandler)
+              (request: Request, input: ZStream[Any, AwsError, InEvent]): IO[AwsError, ZStream[Any, AwsError, OutEventI]] = {
     for {
       publisher <- input.mapError(_.toThrowable).toPublisher
-      queue <- ZQueue.unbounded[OutEvent]
-      stream = ZStream
-        .fromQueue(queue)
-      _ <- ZIO.fromCompletionStage(impl(request, publisher, buildVisitor(queue))).mapError(AwsError.fromThrowable)
-      _ <- queue.shutdown
+      runtime <- ZIO.runtime[Any]
+      outPublisherPromise <- Promise.make[AwsError, Publisher[OutEventI]]
+      responsePromise <- Promise.make[AwsError, Response]
+      signalQueue <- ZQueue.bounded[Option[AwsError]](16)
+
+      _ <- ZIO.fromCompletionStage(impl(
+        request,
+        publisher,
+        createHandler(ZEventStreamResponseHandler.create(
+          runtime,
+          signalQueue,
+          responsePromise,
+          outPublisherPromise
+        )))).mapError(AwsError.fromThrowable)
+      outPublisher <- outPublisherPromise.await
+      stream = outPublisher
+        .toStream()
+        .mapError(AwsError.fromThrowable)
+        .mergeEither(ZStream.fromQueueWithShutdown(signalQueue))
+        .map(_.swap)
+        .takeUntil(_.isLeft)
+        .flatMap {
+          case Left(None) => ZStream.empty
+          case Left(Some(error)) => ZStream.fail(error)
+          case Right(item) => ZStream.succeed(item)
+        }
     } yield stream
   }
 }
