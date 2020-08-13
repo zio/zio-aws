@@ -1,6 +1,6 @@
 package io.github.vigoo.zioaws.codegen.generator
 
-import io.github.vigoo.zioaws.codegen.generator.context.{GeneratorContext, getServiceName}
+import io.github.vigoo.zioaws.codegen.generator.context.{GeneratorContext, getModels, getServiceName}
 
 import scala.jdk.CollectionConverters._
 import software.amazon.awssdk.codegen.C2jModels
@@ -18,7 +18,7 @@ trait ModelMap {
 object ModelCollector {
   def tryFindEventStreamShape(models: C2jModels, outputShape: String, alreadyChecked: Set[Shape] = Set.empty): Option[NamedShape] = {
     Option(models.serviceModel().getShape(outputShape)) match {
-      case Some(shape) if !(alreadyChecked.contains(shape)) =>
+      case Some(shape) if !alreadyChecked.contains(shape) =>
         if (shape.isEventStream) {
           Some(NamedShape(outputShape, shape))
         } else {
@@ -72,7 +72,7 @@ object ModelCollector {
   private def collectInputEvents(namingStrategy: NamingStrategy, models: C2jModels, ops: Map[String, Operation]): Set[Model] =
     ops
       .toList
-      .flatMap { case (opName, op) =>
+      .flatMap { case (_, op) =>
         if (OperationCollector.inputIsEventStreamOf(models, op)) {
           tryFindEventStreamShape(models, op.getInput.getShape).flatMap { eventStream =>
             modelFromShapeName(namingStrategy, models, eventStream.name)
@@ -85,7 +85,7 @@ object ModelCollector {
   private def collectOutputEvents(namingStrategy: NamingStrategy, models: C2jModels, ops: Map[String, Operation]): Set[Model] =
     ops
       .toList
-      .flatMap { case (opName, op) =>
+      .flatMap { case (_, op) =>
         if (OperationCollector.outputIsEventStreamOf(models, op)) {
           tryFindEventStreamShape(models, op.getOutput.getShape).flatMap { eventStream =>
             val name = eventStream.shape.getMembers.asScala.keys.head
@@ -128,7 +128,7 @@ object ModelCollector {
         collectPaginations(namingStrategy, models)
 
     val all = rootShapes.foldLeft(rootShapes) { case (result, m) =>
-      collectShapes(namingStrategy, models, result, Set.empty, m.shape, m.serviceModelName)
+      collectShapes(namingStrategy, models, result, Set.empty, m.shape)
     }
     val map = all.map { m => (m.serviceModelName, m) }.toMap
     val substitutedMap = applySubstitutions(models, map)
@@ -146,7 +146,7 @@ object ModelCollector {
     }
   }
 
-  private def collectShapes(namingStrategy: NamingStrategy, models: C2jModels, found: Set[Model], invalid: Set[String], shape: Shape, name: String): Set[Model] = {
+  private def collectShapes(namingStrategy: NamingStrategy, models: C2jModels, found: Set[Model], invalid: Set[String], shape: Shape): Set[Model] = {
     val subTypes =
       Option(shape.getMembers).map(_.asScala).getOrElse(Map.empty[String, Member]).values.map(_.getShape).toSet union
         Option(shape.getListMember).map(_.getShape).toSet union
@@ -157,7 +157,7 @@ object ModelCollector {
     val newModels = newShapes.flatMap(modelFromShapeName(namingStrategy, models, _))
     val newInvalids = invalid union (newShapes diff newModels.map(_.serviceModelName))
 
-    newModels.foldLeft(found) { case (result, m) => collectShapes(namingStrategy, models, result + m, newInvalids, m.shape, m.serviceModelName) }
+    newModels.foldLeft(found) { case (result, m) => collectShapes(namingStrategy, models, result + m, newInvalids, m.shape) }
   }
 
   private def modelFromShapeName(namingStrategy: NamingStrategy, models: C2jModels, shapeName: String): Option[Model] = {
@@ -181,7 +181,7 @@ object ModelCollector {
   }
 
   private def applySubstitutions(models: C2jModels, map: Map[String, Model]): Map[String, Model] = {
-    val substitutions = Option(models.customizationConfig().getShapeSubstitutions()).map(_.asScala).getOrElse(Map.empty[String, ShapeSubstitution])
+    val substitutions = Option(models.customizationConfig().getShapeSubstitutions).map(_.asScala).getOrElse(Map.empty[String, ShapeSubstitution])
 
     if (substitutions.isEmpty) {
       map

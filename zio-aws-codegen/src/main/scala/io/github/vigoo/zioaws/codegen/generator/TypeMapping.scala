@@ -21,105 +21,100 @@ object TypeMapping {
   }
 
   private val builtIns = Set("String", "Boolean", "Int", "Integer", "Long", "Float", "Double", "BigDecimal")
+
   def isBuiltIn(name: String): Boolean = {
     builtIns.contains(name)
   }
 
-  def toType(model: Model): ZIO[GeneratorContext, GeneratorFailure, Type] = {
-    getModelMap.flatMap { models =>
-      getModelPkg.flatMap { modelPkg =>
-        val shape = model.shape
-        model.typ match {
-          case ModelType.Map =>
-            for {
-              keyModel <- models.get(shape.getMapKeyType.getShape)
-              keyType <- toType(keyModel)
-              valueModel <- models.get(shape.getMapValueType.getShape)
-              valueType <- toType(valueModel)
-            } yield t"""java.util.Map[$keyType, $valueType]"""
-          case ModelType.List =>
-            for {
-              itemModel <- models.get(shape.getListMember.getShape)
-              itemType <- toType(itemModel)
-            } yield t"""java.util.List[$itemType]"""
-          case ModelType.Enum =>
-            ZIO.succeed(Type.Select(modelPkg, Type.Name(model.name)))
-          case ModelType.String =>
-            ZIO.succeed(t"""java.lang.String""")
-          case ModelType.Integer =>
-            ZIO.succeed(t"""java.lang.Integer""")
-          case ModelType.Long =>
-            ZIO.succeed(t"""java.lang.Long""")
-          case ModelType.Float =>
-            ZIO.succeed(t"""java.lang.Float""")
-          case ModelType.Double =>
-            ZIO.succeed(t"""java.lang.Double""")
-          case ModelType.Boolean =>
-            ZIO.succeed(t"""java.lang.Boolean""")
-          case ModelType.Timestamp =>
-            ZIO.succeed(t"""java.time.Instant""")
-          case ModelType.BigDecimal =>
-            ZIO.succeed(t"""java.math.BigDecimal""")
-          case ModelType.Blob =>
-            ZIO.succeed(t"""SdkBytes""")
-          case ModelType.Exception =>
-            ZIO.succeed(Type.Select(modelPkg, Type.Name(model.name)))
-          case ModelType.Structure =>
-            ZIO.succeed(Type.Select(modelPkg, Type.Name(model.name)))
-          case ModelType.Unknown(typ) =>
-            getServiceName.flatMap(svc => ZIO.fail(UnknownType(svc, typ)))
-        }
+  def toJavaType(model: Model): ZIO[GeneratorContext, GeneratorFailure, Type] = {
+    getModelPkg.flatMap { modelPkg =>
+      val shape = model.shape
+      model.typ match {
+        case ModelType.Map =>
+          for {
+            keyModel <- get(shape.getMapKeyType.getShape)
+            keyType <- toJavaType(keyModel)
+            valueModel <- get(shape.getMapValueType.getShape)
+            valueType <- toJavaType(valueModel)
+          } yield t"""java.util.Map[$keyType, $valueType]"""
+        case ModelType.List =>
+          for {
+            itemModel <- get(shape.getListMember.getShape)
+            itemType <- toJavaType(itemModel)
+          } yield t"""java.util.List[$itemType]"""
+        case ModelType.Enum =>
+          ZIO.succeed(Type.Select(modelPkg, Type.Name(model.name)))
+        case ModelType.String =>
+          ZIO.succeed(t"""java.lang.String""")
+        case ModelType.Integer =>
+          ZIO.succeed(t"""java.lang.Integer""")
+        case ModelType.Long =>
+          ZIO.succeed(t"""java.lang.Long""")
+        case ModelType.Float =>
+          ZIO.succeed(t"""java.lang.Float""")
+        case ModelType.Double =>
+          ZIO.succeed(t"""java.lang.Double""")
+        case ModelType.Boolean =>
+          ZIO.succeed(t"""java.lang.Boolean""")
+        case ModelType.Timestamp =>
+          ZIO.succeed(t"""java.time.Instant""")
+        case ModelType.BigDecimal =>
+          ZIO.succeed(t"""java.math.BigDecimal""")
+        case ModelType.Blob =>
+          ZIO.succeed(t"""SdkBytes""")
+        case ModelType.Exception =>
+          ZIO.succeed(Type.Select(modelPkg, Type.Name(model.name)))
+        case ModelType.Structure =>
+          ZIO.succeed(Type.Select(modelPkg, Type.Name(model.name)))
+        case ModelType.Unknown(typ) =>
+          getServiceName.flatMap(svc => ZIO.fail(UnknownType(svc, typ)))
       }
     }
   }
 
   def toWrappedType(model: Model): ZIO[GeneratorContext, GeneratorFailure, Type] = {
-    getModelMap.flatMap { models =>
-      model.typ match {
-        case ModelType.Map =>
-          for {
-            keyModel <- models.get(model.shape.getMapKeyType.getShape)
-            keyType <- toWrappedType(keyModel)
-            valueModel <- models.get(model.shape.getMapValueType.getShape)
-            valueType <- toWrappedType(valueModel)
-          } yield t"""Map[$keyType, $valueType]"""
-        case ModelType.List =>
-          for {
-            itemModel <- models.get(model.shape.getListMember.getShape)
-            itemType <- toWrappedType(itemModel)
-          } yield t"""List[$itemType]"""
-        case _ if isPrimitiveType(model.shape) && !isBuiltIn(model.shapeName) =>
-          ZIO.succeed(Type.Select(Term.Name("primitives"), Type.Name(model.name)))
-        case _ =>
-          ZIO.succeed(Type.Name(model.name))
-      }
+    model.typ match {
+      case ModelType.Map =>
+        for {
+          keyModel <- get(model.shape.getMapKeyType.getShape)
+          keyType <- toWrappedType(keyModel)
+          valueModel <- get(model.shape.getMapValueType.getShape)
+          valueType <- toWrappedType(valueModel)
+        } yield t"""Map[$keyType, $valueType]"""
+      case ModelType.List =>
+        for {
+          itemModel <- get(model.shape.getListMember.getShape)
+          itemType <- toWrappedType(itemModel)
+        } yield t"""List[$itemType]"""
+      case _ if isPrimitiveType(model.shape) && !isBuiltIn(model.shapeName) =>
+        ZIO.succeed(Type.Select(Term.Name("primitives"), Type.Name(model.name)))
+      case _ =>
+        ZIO.succeed(Type.Name(model.name))
     }
   }
 
   def toWrappedTypeReadOnly(model: Model): ZIO[GeneratorContext, GeneratorFailure, Type] = {
-    getModelMap.flatMap { models =>
-      model.typ match {
-        case ModelType.Map =>
-          for {
-            keyModel <- models.get(model.shape.getMapKeyType.getShape)
-            keyType <- toWrappedTypeReadOnly(keyModel)
-            valueModel <- models.get(model.shape.getMapValueType.getShape)
-            valueType <- toWrappedTypeReadOnly(valueModel)
-          } yield t"""Map[$keyType, $valueType]"""
-        case ModelType.List =>
-          for {
-            itemModel <- models.get(model.shape.getListMember.getShape)
-            itemType <- toWrappedTypeReadOnly(itemModel)
-          } yield t"""List[$itemType]"""
-        case ModelType.Exception =>
-          toType(model)
-        case ModelType.Structure =>
-          ZIO.succeed(Type.Select(Term.Name(model.name), Type.Name("ReadOnly")))
-        case _ if isPrimitiveType(model.shape) && !isBuiltIn(model.shapeName) =>
-          ZIO.succeed(Type.Select(Term.Name("primitives"), Type.Name(model.name)))
-        case _ =>
-          ZIO.succeed(Type.Name(model.name))
-      }
+    model.typ match {
+      case ModelType.Map =>
+        for {
+          keyModel <- get(model.shape.getMapKeyType.getShape)
+          keyType <- toWrappedTypeReadOnly(keyModel)
+          valueModel <- get(model.shape.getMapValueType.getShape)
+          valueType <- toWrappedTypeReadOnly(valueModel)
+        } yield t"""Map[$keyType, $valueType]"""
+      case ModelType.List =>
+        for {
+          itemModel <- get(model.shape.getListMember.getShape)
+          itemType <- toWrappedTypeReadOnly(itemModel)
+        } yield t"""List[$itemType]"""
+      case ModelType.Exception =>
+        toJavaType(model)
+      case ModelType.Structure =>
+        ZIO.succeed(Type.Select(Term.Name(model.name), Type.Name("ReadOnly")))
+      case _ if isPrimitiveType(model.shape) && !isBuiltIn(model.shapeName) =>
+        ZIO.succeed(Type.Select(Term.Name("primitives"), Type.Name(model.name)))
+      case _ =>
+        ZIO.succeed(Type.Name(model.name))
     }
   }
 }
