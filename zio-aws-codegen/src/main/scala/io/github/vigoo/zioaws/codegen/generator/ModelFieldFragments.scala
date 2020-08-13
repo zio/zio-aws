@@ -5,5 +5,5 @@ import scala.meta._
 case class ModelFieldFragments(paramDef: Term.Param,
                                getterCall: Term,
                                getterInterface: Decl.Def,
-                               getterImplementation: Defn.Val,
+                               getterImplementation: Defn.Def,
                                applyToBuilder: Term.Apply => Term.Apply)

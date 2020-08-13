@@ -1,9 +1,11 @@
 package io.github.vigoo.zioaws.codegen.generator
 
+import io.github.vigoo.zioaws.codegen.generator.context.{GeneratorContext, serviceName}
+
 import scala.jdk.CollectionConverters._
 import software.amazon.awssdk.codegen.C2jModels
 import software.amazon.awssdk.codegen.model.config.customization.ShapeSubstitution
-import software.amazon.awssdk.codegen.model.service.{Member, Shape}
+import software.amazon.awssdk.codegen.model.service.{Member, Operation, Shape}
 import software.amazon.awssdk.codegen.naming.NamingStrategy
 import zio.ZIO
 
@@ -14,77 +16,118 @@ trait ModelMap {
 }
 
 object ModelCollector {
-  def collectUsedModels(namingStrategy: NamingStrategy, models: C2jModels): ModelMap = {
-    val rootShapes = OperationCollector.getFilteredOperations(models).foldLeft(Set.empty[Model]) { case (existing, (opName, op)) =>
-      val inputIsEventStream = OperationCollector.inputIsEventStreamOf(models, op)
-      val outputIsEventStream = OperationCollector.outputIsEventStreamOf(models, op)
-
-      val requestName = namingStrategy.getRequestClassName(opName)
-      val responseName = namingStrategy.getResponseClassName(opName)
-
-      val requestShapeName = if (inputIsEventStream) None else Option(op.getInput).map(_.getShape)
-      val responseShapeName = if (outputIsEventStream) None else Option(op.getOutput).map(_.getShape)
-
-      (requestShapeName, responseShapeName) match {
-        case (None, None) => Set.empty
-        case (Some(requestShapeName), None) =>
-          Option(models.serviceModel().getShape(requestShapeName)) match {
-            case Some(requestShape) =>
-              existing + Model(requestName, requestShapeName.capitalize, finalType(models, requestShape), requestShape, requestName)
-            case None =>
-              existing
-          }
-        case (None, Some(responseShapeName)) =>
-          Option(models.serviceModel().getShape(responseShapeName)) match {
-            case Some(responseShape) =>
-              existing + Model(responseName, responseShapeName.capitalize, finalType(models, responseShape), responseShape, responseName)
-            case None =>
-              existing
-          }
-        case (Some(requestShapeName), Some(responseShapeName)) =>
-          val requestShapeOpt = Option(models.serviceModel().getShape(requestShapeName))
-          val responseShapeOpt = Option(models.serviceModel().getShape(responseShapeName))
-
-          existing union requestShapeOpt.map { requestShape =>
-            Model(requestName, requestShapeName.capitalize, finalType(models, requestShape), requestShape, requestName)
-          }.toSet union responseShapeOpt.map { responseShape =>
-            Model(responseName, responseShapeName.capitalize, finalType(models, responseShape), responseShape, responseName)
-          }.toSet
-      }
-    }
-
-    val rootShapesWithPagination = models.paginatorsModel().getPaginators.asScala.toList.foldLeft(rootShapes) { case (result, (name, paginator)) =>
-      if (paginator.isValid) {
-        Option(paginator.getResultKey).flatMap(_.asScala.headOption) match {
-          case Some(key) =>
-            val outputShape = models.serviceModel().getShape(models.serviceModel().getOperation(name).getOutput.getShape)
-            outputShape.getMembers.asScala.get(key) match {
-              case Some(outputListMember) =>
-                val listShape = models.serviceModel().getShape(outputListMember.getShape)
-                Option(listShape.getListMember) match {
-                  case Some(itemMember) =>
-                    val itemShapeName = itemMember.getShape
-                    Option(models.serviceModel().getShape(itemShapeName)) match {
-                      case Some(itemShape) =>
-                        collectShapes(namingStrategy, models, result + modelFromShape(namingStrategy, models, itemShape, itemShapeName), Set.empty, itemShape, itemShapeName)
-                      case None =>
-                        result
-                    }
-                  case None =>
-                    result
-                }
-              case None =>
-                result
-            }
-          case None =>
-            result
+  def tryFindEventStreamShape(models: C2jModels, outputShape: String, alreadyChecked: Set[Shape] = Set.empty): Option[(String, Shape)] = {
+    Option(models.serviceModel().getShape(outputShape)) match {
+      case Some(shape) if !(alreadyChecked.contains(shape)) =>
+        if (shape.isEventStream) {
+          Some((outputShape, shape))
+        } else {
+          shape.getMembers
+            .asScala
+            .values
+            .map(member => tryFindEventStreamShape(models, member.getShape, alreadyChecked + shape))
+            .find(_.isDefined)
+            .flatten
         }
-      } else {
-        rootShapes
-      }
+      case _ =>
+        None
     }
+  }
 
-    val all = rootShapesWithPagination.foldLeft(rootShapesWithPagination) { case (result, m) =>
+  private def collectRequestResponseTypes(namingStrategy: NamingStrategy, models: C2jModels, ops: Map[String, Operation]): Set[Model] =
+    ops
+      .toList
+      .flatMap { case (opName, op) =>
+        val outputIsEventStream = OperationCollector.outputIsEventStreamOf(models, op)
+
+        val requestName = namingStrategy.getRequestClassName(opName)
+        val responseName = namingStrategy.getResponseClassName(opName)
+
+        val request = Option(op.getInput).map(_.getShape)
+        val response = if (outputIsEventStream) None else Option(op.getOutput).map(_.getShape)
+
+        (request, response) match {
+          case (None, None) => List.empty
+          case (Some(requestShapeName), None) =>
+            Option(models.serviceModel().getShape(requestShapeName)).map { requestShape =>
+              Model(requestName, requestShapeName.capitalize, finalType(models, requestShape), requestShape, requestName)
+            }.toList
+          case (None, Some(responseShapeName)) =>
+            Option(models.serviceModel().getShape(responseShapeName)).map { responseShape =>
+              Model(responseName, responseShapeName.capitalize, finalType(models, responseShape), responseShape, responseName)
+            }.toList
+          case (Some(requestShapeName), Some(responseShapeName)) =>
+            val requestShapeOpt = Option(models.serviceModel().getShape(requestShapeName))
+            val responseShapeOpt = Option(models.serviceModel().getShape(responseShapeName))
+
+
+            requestShapeOpt.map { requestShape =>
+              Model(requestName, requestShapeName.capitalize, finalType(models, requestShape), requestShape, requestName)
+            }.toList ::: responseShapeOpt.map { responseShape =>
+              Model(responseName, responseShapeName.capitalize, finalType(models, responseShape), responseShape, responseName)
+            }.toList
+        }
+      }.toSet
+
+  private def collectInputEvents(namingStrategy: NamingStrategy, models: C2jModels, ops: Map[String, Operation]): Set[Model] =
+    ops
+      .toList
+      .flatMap { case (opName, op) =>
+        if (OperationCollector.inputIsEventStreamOf(models, op)) {
+          tryFindEventStreamShape(models, op.getInput.getShape).flatMap { case (eventStreamName, _) =>
+            modelFromShapeName(namingStrategy, models, eventStreamName)
+          }
+        } else {
+          None
+        }
+      }.toSet
+
+  private def collectOutputEvents(namingStrategy: NamingStrategy, models: C2jModels, ops: Map[String, Operation]): Set[Model] =
+    ops
+      .toList
+      .flatMap { case (opName, op) =>
+        if (OperationCollector.outputIsEventStreamOf(models, op)) {
+          tryFindEventStreamShape(models, op.getOutput.getShape).flatMap { case (eventStreamShapeName, eventStreamShape) =>
+            val name = eventStreamShape.getMembers.asScala.keys.head
+            modelFromShapeName(namingStrategy, models, name)
+          }
+        } else {
+          None
+        }
+      }.toSet
+
+  private def collectPaginations(namingStrategy: NamingStrategy, models: C2jModels): Set[Model] =
+    models.paginatorsModel().getPaginators
+      .asScala
+      .toList
+      .flatMap { case (name, paginator) =>
+        if (paginator.isValid) {
+          Option(paginator.getResultKey).flatMap(_.asScala.headOption).flatMap { key =>
+            val outputShape = models.serviceModel().getShape(models.serviceModel().getOperation(name).getOutput.getShape)
+            outputShape.getMembers.asScala.get(key).flatMap { outputListMember =>
+              val listShape = models.serviceModel().getShape(outputListMember.getShape)
+              Option(listShape.getListMember).flatMap { itemMember =>
+                val itemShapeName = itemMember.getShape
+                Option(models.serviceModel().getShape(itemShapeName)).map { itemShape =>
+                  modelFromShape(namingStrategy, models, itemShape, itemShapeName)
+                }
+              }
+            }
+          }
+        } else {
+          None
+        }
+      }.toSet
+
+  def collectUsedModels(namingStrategy: NamingStrategy, models: C2jModels): ModelMap = {
+    val ops = OperationCollector.getFilteredOperations(models)
+    val rootShapes =
+      collectRequestResponseTypes(namingStrategy, models, ops) union
+        collectInputEvents(namingStrategy, models, ops) union
+        collectOutputEvents(namingStrategy, models, ops) union
+        collectPaginations(namingStrategy, models)
+
+    val all = rootShapes.foldLeft(rootShapes) { case (result, m) =>
       collectShapes(namingStrategy, models, result, Set.empty, m.shape, m.serviceModelName)
     }
     val map = all.map { m => (m.serviceModelName, m) }.toMap
@@ -94,7 +137,7 @@ object ModelCollector {
       override def get(serviceModelName: String): ZIO[GeneratorContext, GeneratorFailure, Model] =
         substitutedMap.get(serviceModelName) match {
           case Some(value) => ZIO.succeed(value)
-          case None => ZIO.access[GeneratorContext](_.get.serviceName).flatMap { serviceName =>
+          case None => serviceName.flatMap { serviceName =>
             ZIO.fail(UnknownShapeReference(serviceName, serviceModelName))
           }
         }

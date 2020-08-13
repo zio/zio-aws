@@ -1,13 +1,13 @@
 package io.github.vigoo.zioaws.codegen.generator
 
-import io.github.vigoo.zioaws.codegen.generator.TypeMapping.toType
-
-import scala.jdk.CollectionConverters._
+import io.github.vigoo.zioaws.codegen.generator.TypeMapping.{toType, toWrappedTypeReadOnly}
+import io.github.vigoo.zioaws.codegen.generator.context._
 import software.amazon.awssdk.codegen.C2jModels
 import software.amazon.awssdk.codegen.model.config.customization.CustomizationConfig
 import software.amazon.awssdk.codegen.model.service.{Operation, Shape}
-import zio.console.Console
-import zio.{ZIO, console}
+import zio.ZIO
+
+import scala.jdk.CollectionConverters._
 
 object OperationCollector {
   private def isExcluded(customizationConfig: CustomizationConfig, opName: String): Boolean =
@@ -48,54 +48,69 @@ object OperationCollector {
   def outputIsEventStreamOf(models: C2jModels, op: Operation): Boolean =
     Option(op.getOutput).flatMap(output => Option(models.serviceModel().getShape(output.getShape))).exists(hasEventStreamMember(models, _))
 
-  def get(models: C2jModels, modelMap: ModelMap, opName: String, op: Operation): ZIO[GeneratorContext, GeneratorFailure, OperationMethodType] = {
-    val inputIsStreaming = inputIsStreamingOf(models, op)
-    val outputIsStreaming = outputIsStreamingOf(models, op)
+  def get(opName: String, op: Operation): ZIO[GeneratorContext, GeneratorFailure, OperationMethodType] = {
+    models.flatMap { models =>
+      modelMap.flatMap { modelMap =>
+        val inputIsStreaming = inputIsStreamingOf(models, op)
+        val outputIsStreaming = outputIsStreamingOf(models, op)
 
-    val inputIsEventStream = inputIsEventStreamOf(models, op)
-    val outputIsEventStream = outputIsEventStreamOf(models, op)
+        val inputIsEventStream = inputIsEventStreamOf(models, op)
+        val outputIsEventStream = outputIsEventStreamOf(models, op)
 
-    if (inputIsStreaming && outputIsStreaming) {
-      ZIO.succeed(StreamedInputOutput)
-    } else if (inputIsStreaming) {
-      ZIO.succeed(StreamedInput)
-    } else if (outputIsStreaming) {
-      ZIO.succeed(StreamedOutput)
-    } else if (inputIsEventStream && outputIsEventStream) {
-      ZIO.succeed(EventStreamInputOutput)
-    } else if (inputIsEventStream) {
-      ZIO.succeed(EventStreamInput)
-    } else if (outputIsEventStream) {
-      ZIO.succeed(EventStreamOutput)
-    } else {
-      Option(models.paginatorsModel().getPaginatorDefinition(opName)) match {
-        case Some(paginator) if paginator.isValid =>
-          Option(paginator.getResultKey).flatMap(_.asScala.headOption) match {
-            case Some(key) =>
-              val outputShape = models.serviceModel().getShape(op.getOutput.getShape)
-              outputShape.getMembers.asScala.get(key) match {
-                case Some(outputListMember) =>
-                  val listShape = models.serviceModel().getShape(outputListMember.getShape)
-                  Option(listShape.getListMember) match {
-                    case Some(itemMember) =>
-                      for {
-                        itemModel <- modelMap.get(itemMember.getShape)
-                        itemType <- toType(itemModel, modelMap)
-                      } yield RequestResponse(pagination = Some(PaginationDefinition(
-                        name = key,
-                        itemType = itemType
-                      )))
+        if (inputIsStreaming && outputIsStreaming) {
+          ZIO.succeed(StreamedInputOutput)
+        } else if (inputIsStreaming) {
+          ZIO.succeed(StreamedInput)
+        } else if (outputIsStreaming) {
+          ZIO.succeed(StreamedOutput)
+        } else if (inputIsEventStream && outputIsEventStream) {
+          ZIO.succeed(EventStreamInputOutput)
+        } else if (inputIsEventStream) {
+          ZIO.succeed(EventStreamInput)
+        } else if (outputIsEventStream) {
+          ZIO.succeed(EventStreamOutput)
+        } else {
+          Option(models.paginatorsModel().getPaginatorDefinition(opName)) match {
+            case Some(paginator) if paginator.isValid =>
+              Option(paginator.getResultKey).flatMap(_.asScala.headOption) match {
+                case Some(key) =>
+                  val outputShape = models.serviceModel().getShape(op.getOutput.getShape)
+                  outputShape.getMembers.asScala.get(key) match {
+                    case Some(outputListMember) =>
+                      val listShape = models.serviceModel().getShape(outputListMember.getShape)
+                      Option(listShape.getListMember) match {
+                        case Some(itemMember) =>
+                          for {
+                            itemModel <- modelMap.get(itemMember.getShape)
+                            itemType <- toType(itemModel)
+                            wrappedTypeRo <- toWrappedTypeReadOnly(itemModel)
+                          } yield RequestResponse(pagination = Some(PaginationDefinition(
+                            name = key,
+                            model = itemModel,
+                            itemType = itemType,
+                            wrappedTypeRo = wrappedTypeRo
+                          )))
+                        case None =>
+                          ZIO.succeed(RequestResponse(pagination = None))
+                      }
                     case None =>
                       ZIO.succeed(RequestResponse(pagination = None))
                   }
                 case None =>
                   ZIO.succeed(RequestResponse(pagination = None))
               }
-            case None =>
-              ZIO.succeed(RequestResponse(pagination = None))
+            case _ =>
+              if (op.getOutput == null && op.getInput == null) {
+                ZIO.succeed(UnitToUnit)
+              } else if (op.getOutput == null) {
+                ZIO.succeed(RequestToUnit)
+              } else if (op.getInput == null) {
+                ZIO.succeed(UnitToResponse)
+              } else {
+                ZIO.succeed(RequestResponse(pagination = None))
+              }
           }
-        case _ =>
-          ZIO.succeed(RequestResponse(pagination = None))
+        }
       }
     }
   }

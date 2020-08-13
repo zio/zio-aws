@@ -23,8 +23,7 @@ object Main extends App {
         for {
           _ <- console.putStrLn(s"Generating $id")
           model <- loader.loadCodegenModel(id).mapError(ReflectionError)
-          _ <- generator.generateServiceModule(id, model).mapError(GeneratorError)
-          _ <- generator.generateServiceModels(id, model).mapError(GeneratorError)
+          _ <- generator.generateServiceCode(id, model).mapError(GeneratorError)
         } yield ()
       }
       _ <- console.putStrLn(s"Generating build.sbt")

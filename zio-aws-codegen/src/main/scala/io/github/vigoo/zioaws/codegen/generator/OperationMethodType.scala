@@ -1,14 +1,12 @@
 package io.github.vigoo.zioaws.codegen.generator
 
-import io.github.vigoo.zioaws.codegen.generator.TypeMapping.toType
-import software.amazon.awssdk.codegen.C2jModels
-import software.amazon.awssdk.codegen.model.service.{Operation, Shape}
-import zio.console.Console
-import zio.{ZIO, console}
-
-import scala.jdk.CollectionConverters._
-
 sealed trait OperationMethodType
+
+case object UnitToUnit extends OperationMethodType
+
+case object UnitToResponse extends OperationMethodType
+
+case object RequestToUnit extends OperationMethodType
 
 case class RequestResponse(pagination: Option[PaginationDefinition]) extends OperationMethodType
 
