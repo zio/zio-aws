@@ -627,23 +627,27 @@ package object generator {
         }
       }
 
-      private def propertyName(namingStrategy: NamingStrategy, models: C2jModels, model: Model, fieldModel: Model, name: String): String = {
-        val shapeModifiers = Option(models.customizationConfig().getShapeModifiers).map(_.asScala).getOrElse(Map.empty[String, ShapeModifier])
-        shapeModifiers.get(model.shapeName).flatMap { shapeModifier =>
-          val modifies = Option(shapeModifier.getModify).map(_.asScala).getOrElse(List.empty)
-          val matchingModifiers = modifies.flatMap { modifiesMap =>
-            modifiesMap.asScala.map { case (key, value) => (key.toLowerCase, value) }.get(name.toLowerCase)
-          }.toList
+      private def propertyName(model: Model, fieldModel: Model, name: String): ZIO[GeneratorContext, Nothing, String] = {
+        getNamingStrategy.flatMap { namingStrategy =>
+          getModels.map { models =>
+            val shapeModifiers = Option(models.customizationConfig().getShapeModifiers).map(_.asScala).getOrElse(Map.empty[String, ShapeModifier])
+            shapeModifiers.get(model.shapeName).flatMap { shapeModifier =>
+              val modifies = Option(shapeModifier.getModify).map(_.asScala).getOrElse(List.empty)
+              val matchingModifiers = modifies.flatMap { modifiesMap =>
+                modifiesMap.asScala.map { case (key, value) => (key.toLowerCase, value) }.get(name.toLowerCase)
+              }.toList
 
-          matchingModifiers
-            .map(modifier => Option(modifier.getEmitPropertyName))
-            .find(_.isDefined)
-            .flatten.map(_.uncapitalize)
-        }.getOrElse {
-          val getterMethod = namingStrategy.getFluentGetterMethodName(name, model.shape, fieldModel.shape)
-          getterMethod
-            .stripSuffix("AsString")
-            .stripSuffix("AsStrings")
+              matchingModifiers
+                .map(modifier => Option(modifier.getEmitPropertyName))
+                .find(_.isDefined)
+                .flatten.map(_.uncapitalize)
+            }.getOrElse {
+              val getterMethod = namingStrategy.getFluentGetterMethodName(name, model.shape, fieldModel.shape)
+              getterMethod
+                .stripSuffix("AsString")
+                .stripSuffix("AsStrings")
+            }
+          }
         }
       }
 
@@ -668,40 +672,42 @@ package object generator {
         }
       }
 
-      private def adjustFieldType(models: C2jModels, model: Model, fieldName: String, fieldModel: Model): Model = {
-        val shapeModifiers = Option(models.customizationConfig().getShapeModifiers).map(_.asScala).getOrElse(Map.empty[String, ShapeModifier])
-        shapeModifiers.get(model.shapeName).flatMap { shapeModifier =>
-          val modifies = Option(shapeModifier.getModify).map(_.asScala).getOrElse(List.empty)
-          val matchingModifiers = modifies.flatMap { modifiesMap =>
-            modifiesMap.asScala.map { case (key, value) => (key.toLowerCase, value) }.get(fieldName.toLowerCase)
-          }.toList
+      private def adjustFieldType(model: Model, fieldName: String, fieldModel: Model): ZIO[GeneratorContext, Nothing, Model] = {
+        getModels.map { models =>
+          val shapeModifiers = Option(models.customizationConfig().getShapeModifiers).map(_.asScala).getOrElse(Map.empty[String, ShapeModifier])
+          shapeModifiers.get(model.shapeName).flatMap { shapeModifier =>
+            val modifies = Option(shapeModifier.getModify).map(_.asScala).getOrElse(List.empty)
+            val matchingModifiers = modifies.flatMap { modifiesMap =>
+              modifiesMap.asScala.map { case (key, value) => (key.toLowerCase, value) }.get(fieldName.toLowerCase)
+            }.toList
 
-          matchingModifiers
-            .map(modifier => Option(modifier.getEmitAsType))
-            .find(_.isDefined)
-            .flatten
-            .map(ModelType.fromString)
-            .map {
-              newTyp =>
-                val resetedName = newTyp match {
-                  case ModelType.String => "String"
-                  case ModelType.Integer => "Int"
-                  case ModelType.Long => "Long"
-                  case ModelType.Float => "Float"
-                  case ModelType.Double => "Double"
-                  case ModelType.Boolean => "Boolean"
-                  case ModelType.Timestamp => "Instant"
-                  case ModelType.BigDecimal => "BigDecimal"
-                  case ModelType.Blob => "Chunk[Byte]"
-                  case _ => fieldModel.name
-                }
-                fieldModel.copy(
-                  name = resetedName,
-                  shapeName = resetedName,
-                  typ = newTyp
-                )
-            }
-        }.getOrElse(fieldModel)
+            matchingModifiers
+              .map(modifier => Option(modifier.getEmitAsType))
+              .find(_.isDefined)
+              .flatten
+              .map(ModelType.fromString)
+              .map {
+                newTyp =>
+                  val resetedName = newTyp match {
+                    case ModelType.String => "String"
+                    case ModelType.Integer => "Int"
+                    case ModelType.Long => "Long"
+                    case ModelType.Float => "Float"
+                    case ModelType.Double => "Double"
+                    case ModelType.Boolean => "Boolean"
+                    case ModelType.Timestamp => "Instant"
+                    case ModelType.BigDecimal => "BigDecimal"
+                    case ModelType.Blob => "Chunk[Byte]"
+                    case _ => fieldModel.name
+                  }
+                  fieldModel.copy(
+                    name = resetedName,
+                    shapeName = resetedName,
+                    typ = newTyp
+                  )
+              }
+          }.getOrElse(fieldModel)
+        }
       }
 
       private def roToEditable(model: Model, term: Term): ZIO[GeneratorContext, GeneratorFailure, Term] =
@@ -761,26 +767,45 @@ package object generator {
               for {
                 fieldList <- filterMembers(shapeName, shape.getMembers.asScala.toList)
                 required = Option(shape.getRequired).map(_.asScala.toSet).getOrElse(Set.empty)
+                fieldModels <- ZIO.foreach(fieldList) { case (memberName, member) =>
+                  for {
+                    fieldModel <- modelMap.get(member.getShape)
+                    finalFieldModel <- adjustFieldType(m, memberName, fieldModel)
+                  } yield (memberName -> finalFieldModel)
+                }.map(_.toMap)
+                fieldNames <- ZIO.foreach(fieldModels.toList) { case (memberName, fieldModel) =>
+                  for {
+                    property <- propertyName(m, fieldModel, memberName)
+                  } yield (memberName -> property)
+                }.map(_.toMap)
                 fields <- ZIO.foreach(fieldList) {
                   case (memberName, member) =>
-                    modelMap.get(member.getShape).flatMap { fieldModel =>
-                      val finalFieldModel = adjustFieldType(models, m, memberName, fieldModel)
-                      val property = propertyName(namingStrategy, models, m, finalFieldModel, memberName)
-                      val propertyNameTerm = Term.Name(property)
-                      val propertyNameP = Pat.Var(propertyNameTerm)
-                      val fluentSetter = Term.Name(namingStrategy.getFluentSetterMethodName(property, m.shape, fieldModel.shape))
+                    val finalFieldModel = fieldModels(memberName)
+                    val property = fieldNames(memberName)
+                    val propertyNameLit = Lit.String(property)
+                    val propertyNameTerm = Term.Name(property)
+
+                    val propertyValueNameTerm = if (fieldNames.values.toSet.contains(property + "Value")) {
+                      Term.Name(property + "Value_")
+                    } else {
+                      Term.Name(property + "Value")
+                    }
+
+                    val propertyNameP = Pat.Var(propertyNameTerm)
+                      val fluentSetter = Term.Name(namingStrategy.getFluentSetterMethodName(property, m.shape, finalFieldModel.shape))
 
                       TypeMapping.toWrappedType(finalFieldModel).flatMap { memberT =>
                         TypeMapping.toWrappedTypeReadOnly(finalFieldModel).flatMap { memberRoT =>
                             if (required contains memberName) {
                               unwrapSdkValue(finalFieldModel, propertyNameTerm).flatMap { unwrappedGet =>
                                 wrapSdkValue(finalFieldModel, Term.Apply(Term.Select(Term.Name("impl"), propertyNameTerm), List.empty)).flatMap { wrappedGet =>
-                                  roToEditable(finalFieldModel, propertyNameTerm).map { toEditable =>
+                                  roToEditable(finalFieldModel, propertyValueNameTerm).map { toEditable =>
                                     ModelFieldFragments(
                                       paramDef = param"""$propertyNameTerm: $memberT""",
                                       getterCall = toEditable,
-                                      getterInterface = q"""def ${propertyNameTerm}: $memberRoT""",
-                                      getterImplementation = q"""override def $propertyNameTerm: $memberRoT = $wrappedGet""",
+                                      getterInterface = q"""def $propertyValueNameTerm: $memberRoT""",
+                                      getterImplementation = q"""override def $propertyValueNameTerm: $memberRoT = $wrappedGet""",
+                                      zioGetterImplementation = q"""def $propertyNameTerm: ZIO[Any, Nothing, $memberRoT] = ZIO.succeed($propertyValueNameTerm)""",
                                       applyToBuilder = builder => q"""$builder.$fluentSetter($unwrappedGet)"""
                                     )
                                   }
@@ -794,19 +819,19 @@ package object generator {
                                 roToEditable(finalFieldModel, valueTerm).map { toEditable =>
                                   ModelFieldFragments(
                                     paramDef = param"""$propertyNameTerm: scala.Option[$memberT] = None""",
-                                    getterCall = q"""$propertyNameTerm.map(value => $toEditable)""",
-                                    getterInterface = q"""def ${propertyNameTerm}: scala.Option[$memberRoT]""",
+                                    getterCall = q"""$propertyValueNameTerm.map(value => $toEditable)""",
+                                    getterInterface = q"""def ${propertyValueNameTerm}: scala.Option[$memberRoT]""",
                                     getterImplementation = if (wrappedGet == valueTerm) {
-                                      q"""override def $propertyNameTerm: scala.Option[$memberRoT] = scala.Option($get)"""
+                                      q"""override def $propertyValueNameTerm: scala.Option[$memberRoT] = scala.Option($get)"""
                                     } else {
-                                      q"""override def $propertyNameTerm: scala.Option[$memberRoT] = scala.Option($get).map(value => $wrappedGet)"""
+                                      q"""override def $propertyValueNameTerm: scala.Option[$memberRoT] = scala.Option($get).map(value => $wrappedGet)"""
                                     },
+                                    zioGetterImplementation = q"""def $propertyNameTerm: ZIO[Any, io.github.vigoo.zioaws.core.AwsError, $memberRoT] = io.github.vigoo.zioaws.core.AwsError.unwrapOptionField($propertyNameLit, $propertyValueNameTerm)""",
                                     applyToBuilder = builder => q"""$builder.optionallyWith($propertyNameTerm.map(value => $unwrappedGet))(_.$fluentSetter)"""
                                   )
                                 }
                               }
                             }
-                          }
                         }
                       }
                     }
@@ -817,7 +842,7 @@ package object generator {
                 }
               } yield ModelWrapper(
                 code = List(
-                  q"""case class $shapeNameT(..${fields.map(_.paramDef)}) extends $shapeNameRoInit {
+                  q"""case class $shapeNameT(..${fields.map(_.paramDef)}) {
                         def buildAwsValue(): $awsShapeNameT = {
                           import $shapeNameTerm.zioAwsBuilderHelper.BuilderOps
                           $builderChain.build()
@@ -828,6 +853,7 @@ package object generator {
                             trait $roT {
                               def editable: $shapeNameT = $shapeNameTerm(..${fields.map(_.getterCall)})
                               ..${fields.map(_.getterInterface)}
+                              ..${fields.map(_.zioGetterImplementation)}
                             }
 
                             private class Wrapper(impl: $awsShapeNameT) extends $shapeNameRoInit {
@@ -971,7 +997,7 @@ package object generator {
 
                           import scala.jdk.CollectionConverters._
                           import java.time.Instant
-                          import zio.Chunk
+                          import zio.{Chunk, ZIO}
                           import software.amazon.awssdk.core.SdkBytes
 
                           ..$parentModuleImport
