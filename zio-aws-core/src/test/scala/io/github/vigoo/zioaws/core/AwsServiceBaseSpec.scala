@@ -157,7 +157,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with AwsServiceBase {
       }
 
       for {
-        resultStream <- asyncRequestEventOutputStream[String, Int, EventStreamResponseHandler[Int, Char], Char](
+        resultStream <- asyncRequestEventOutputStream[String, Int, EventStreamResponseHandler[Int, Char], Char, Char](
           fakeAwsCall,
           identity)("hello")
         result <- resultStream
@@ -235,7 +235,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with AwsServiceBase {
       }
 
       for {
-        resultStream <- asyncRequestEventInputOutputStream[String, Int, Char, EventStreamResponseHandler[Int, Char], Char](
+        resultStream <- asyncRequestEventInputOutputStream[String, Int, Char, EventStreamResponseHandler[Int, Char], Char, Char](
           fakeAwsCall,
           identity)("hello", ZStream.fromIterable("world"))
         result <- resultStream

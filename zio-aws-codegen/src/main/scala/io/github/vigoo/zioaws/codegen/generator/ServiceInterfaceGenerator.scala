@@ -96,7 +96,6 @@ trait ServiceInterfaceGenerator {
       awsOutEventStreamT = Type.Select(modelPkg, Type.Name(outputEventStream.name))
       outEventRoT = Type.Select(Term.Name(outEventModel.name), Type.Name("ReadOnly"))
       responseHandlerName = opName + "ResponseHandler"
-      responseHandlerTerm = Term.Select(modelPkg, Term.Name(responseHandlerName))
       responseHandlerT = Type.Select(modelPkg, Type.Name(responseHandlerName))
       responseHandlerInit = Init(responseHandlerT, Name.Anonymous(), List.empty)
 
@@ -107,17 +106,16 @@ trait ServiceInterfaceGenerator {
           q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, AwsError, $inEventT]): IO[AwsError, zio.stream.ZStream[Any, AwsError, $outEventRoT]]""",
         implementation =
           q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, AwsError, $inEventT]): IO[AwsError, zio.stream.ZStream[Any, AwsError, $outEventRoT]] =
-                ZIO.runtime.flatMap { runtime: zio.Runtime[Any] =>
-                  asyncRequestEventInputOutputStream[$modelPkg.$requestName, $modelPkg.$responseName, $awsInEventStreamT, $responseHandlerT, $awsOutEventStreamT](
+                  asyncRequestEventInputOutputStream[$modelPkg.$requestName, $modelPkg.$responseName, $awsInEventStreamT, $responseHandlerT, $awsOutEventStreamT, $awsOutEventT](
                     (request: $modelPkg.$requestName, input: Publisher[$awsInEventStreamT], handler: $responseHandlerT) => api.$methodName(request, input, handler),
-                    (impl: EventStreamResponseHandler[$modelPkg.$responseName, $awsOutEventStreamT]) =>
+                    (impl: software.amazon.awssdk.awscore.eventstream.EventStreamResponseHandler[$modelPkg.$responseName, $awsOutEventStreamT]) =>
                       new $responseHandlerInit {
                         override def responseReceived(response: $modelPkg.$responseName): Unit = impl.responseReceived(response)
-                        override def onEventStream(publisher: SdkPublisher[$awsOutEventStreamT]): Unit = impl.onEventStream(publisher)
+                        override def onEventStream(publisher: software.amazon.awssdk.core.async.SdkPublisher[$awsOutEventStreamT]): Unit = impl.onEventStream(publisher)
                         override def exceptionOccurred(throwable: Throwable): Unit = impl.exceptionOccurred(throwable)
                         override def complete(): Unit = impl.complete()
                       })(request.buildAwsValue(), input.map(_.buildAwsValue())).map(_.map(item => $wrappedItem))
-               }""",
+               """,
         accessor =
           q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, AwsError, $inEventT]): ZIO[$serviceNameT, AwsError, zio.stream.ZStream[Any, AwsError, $outEventRoT]] =
                 ZIO.accessM(_.get.$methodName(request, input))"""
@@ -133,7 +131,6 @@ trait ServiceInterfaceGenerator {
       eventRoT = Type.Select(Term.Name(eventItemModel.name), Type.Name("ReadOnly"))
       awsEventT <- TypeMapping.toJavaType(eventItemModel)
       responseHandlerName = opName + "ResponseHandler"
-      responseHandlerTerm = Term.Select(modelPkg, Term.Name(responseHandlerName))
       responseHandlerT = Type.Select(modelPkg, Type.Name(responseHandlerName))
 
       responseHandlerInit = Init(responseHandlerT, Name.Anonymous(), List.empty)
@@ -147,10 +144,10 @@ trait ServiceInterfaceGenerator {
           q"""def $methodName(request: $requestName): IO[AwsError, zio.stream.ZStream[Any, AwsError, $eventRoT]] =
                   asyncRequestEventOutputStream[$modelPkg.$requestName, $modelPkg.$responseName, $responseHandlerT, $awsEventStreamT, $awsEventT](
                     (request: $modelPkg.$requestName, handler: $responseHandlerT) => api.$methodName(request, handler),
-                    (impl: EventStreamResponseHandler[$modelPkg.$responseName, $awsEventStreamT]) =>
+                    (impl: software.amazon.awssdk.awscore.eventstream.EventStreamResponseHandler[$modelPkg.$responseName, $awsEventStreamT]) =>
                       new $responseHandlerInit {
                         override def responseReceived(response: $modelPkg.$responseName): Unit = impl.responseReceived(response)
-                        override def onEventStream(publisher: SdkPublisher[$awsEventStreamT]): Unit = impl.onEventStream(publisher)
+                        override def onEventStream(publisher: software.amazon.awssdk.core.async.SdkPublisher[$awsEventStreamT]): Unit = impl.onEventStream(publisher)
                         override def exceptionOccurred(throwable: Throwable): Unit = impl.exceptionOccurred(throwable)
                         override def complete(): Unit = impl.complete()
                       })(request.buildAwsValue()).map(_.map(item => $wrappedItem))
@@ -368,12 +365,14 @@ trait ServiceInterfaceGenerator {
             }
           }
 
-          val live: ZLayer[AwsConfig, Throwable, $serviceNameT] =
+          val live: ZLayer[AwsConfig, Throwable, $serviceNameT] = customized(identity)
+
+          def customized(customization: $clientInterfaceBuilder => $clientInterfaceBuilder): ZLayer[AwsConfig, Throwable, $serviceNameT] =
             (for {
               awsConfig <- ZIO.service[AwsConfig.Service]
               b0 <- awsConfig.configure[$clientInterface, $clientInterfaceBuilder]($clientInterfaceSingleton.builder())
               b1 <- awsConfig.configureHttpClient[$clientInterface, $clientInterfaceBuilder](b0)
-              client <- ZIO(b1.build())
+              client <- ZIO(customization(b1).build())
             } yield new ${Init(serviceTrait, Name.Anonymous(), List.empty)} with AwsServiceBase {
               val api: $clientInterface = client
 

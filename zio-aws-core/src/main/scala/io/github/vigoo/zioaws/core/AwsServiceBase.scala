@@ -9,6 +9,8 @@ import zio._
 import zio.interop.reactivestreams._
 import zio.stream.ZStream
 
+import scala.reflect.ClassTag
+
 trait AwsServiceBase {
   final def asyncRequestResponse[Request, Response](impl: Request => CompletableFuture[Response])(request: Request): IO[AwsError, Response] =
     ZIO.fromCompletionStage(impl(request)).mapError(AwsError.fromThrowable)
@@ -46,9 +48,11 @@ trait AwsServiceBase {
     Request,
     Response,
     ResponseHandler <: EventStreamResponseHandler[Response, EventI],
-    EventI](impl: (Request, ResponseHandler) => CompletableFuture[Void],
-            createHandler: (EventStreamResponseHandler[Response, EventI]) => ResponseHandler)
-           (request: Request): IO[AwsError, ZStream[Any, AwsError, EventI]] = {
+    EventI,
+    Event](impl: (Request, ResponseHandler) => CompletableFuture[Void],
+           createHandler: (EventStreamResponseHandler[Response, EventI]) => ResponseHandler)
+          (request: Request)
+          (implicit outEventTag: ClassTag[Event]): IO[AwsError, ZStream[Any, AwsError, Event]] = {
     for {
       runtime <- ZIO.runtime[Any]
       publisherPromise <- Promise.make[AwsError, Publisher[EventI]]
@@ -73,7 +77,8 @@ trait AwsServiceBase {
         .flatMap {
           case Left(None) => ZStream.empty
           case Left(Some(error)) => ZStream.fail(error)
-          case Right(item) => ZStream.succeed(item)
+          case Right(item: Event) => ZStream.succeed(item)
+          case Right(_) => ZStream.empty
         }
     } yield stream
   }
@@ -90,9 +95,11 @@ trait AwsServiceBase {
     Response,
     InEvent,
     ResponseHandler <: EventStreamResponseHandler[Response, OutEventI],
-    OutEventI](impl: (Request, Publisher[InEvent], ResponseHandler) => CompletableFuture[Void],
-               createHandler: (EventStreamResponseHandler[Response, OutEventI]) => ResponseHandler)
-              (request: Request, input: ZStream[Any, AwsError, InEvent]): IO[AwsError, ZStream[Any, AwsError, OutEventI]] = {
+    OutEventI,
+    OutEvent](impl: (Request, Publisher[InEvent], ResponseHandler) => CompletableFuture[Void],
+              createHandler: (EventStreamResponseHandler[Response, OutEventI]) => ResponseHandler)
+             (request: Request, input: ZStream[Any, AwsError, InEvent])
+             (implicit outEventTag: ClassTag[OutEvent]): IO[AwsError, ZStream[Any, AwsError, OutEvent]] = {
     for {
       publisher <- input.mapError(_.toThrowable).toPublisher
       runtime <- ZIO.runtime[Any]
@@ -119,7 +126,8 @@ trait AwsServiceBase {
         .flatMap {
           case Left(None) => ZStream.empty
           case Left(Some(error)) => ZStream.fail(error)
-          case Right(item) => ZStream.succeed(item)
+          case Right(item: OutEvent) => ZStream.succeed(item)
+          case Right(_) => ZStream.empty
         }
     } yield stream
   }
