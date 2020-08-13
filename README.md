@@ -1,11 +1,11 @@
 # zio-aws
 
-**WORK IN PROGRESS, NOT RELEASED YET**
-
 Low-level AWS wrapper for [ZIO](https://zio.dev) for _all_ AWS services using the AWS Java SDK v2.
 
 The goal is to have access to all AWS functionality for cases when only a simple, direct access is
-needed from a ZIO application, or to be used as a building block for higher level wrappers around specific services. 
+needed from a ZIO application, or to be used as a building block for higher level wrappers around specific services.
+
+Check the [list of available artifacts](DEPENDENCIES.md) to get started. 
 
 ### Features
 - Common configuration layer
@@ -13,9 +13,8 @@ needed from a ZIO application, or to be used as a building block for higher leve
 - Wrapper for all operations on all services
 - Http service implementations for functional Scala http libraries, injected through ZIO's module system
 - ZStream wrapper around paginated operations
-- **TODO** Service-specific extra configuration
-- **TODO** More idiomatic Scala request and response types wrapping the Java classes
-- **TODO** Generated error type
+- Service-specific extra configuration
+- More idiomatic Scala request and response types wrapping the Java classes
 
 ### Design
 The library consists of a core module and one generated library for _each_ AWS service, based on the official JSON
@@ -74,11 +73,62 @@ def scanStream(request: ScanRequest): ZIO[DynamoDb, AwsError, ZStream[Any, AwsEr
 ```
 
 #### Model wrappers
-Currently work in progress, Scala _wrappers_ will be provided for each model type providing the following functionality:
+For each model type a set of wrappers are generated, providing the following functionality:
 
 - Case classes with default parameter values instead of the _builder pattern_
 - Automatic conversion to Scala collection types
 - ADTs instead of the Java enums 
+- ZIO functions to "get or fail" the optional model fields
+- Primitive type aliases
+
+The following example from the `elasticsearch` module shows how the generated case classes look like, to be used as input for the service operations:
+
+```scala
+case class DescribePackagesFilter(name: scala.Option[DescribePackagesFilterName] = None, 
+                                  value: scala.Option[List[primitives.DescribePackagesFilterValue]] = None) {
+    def buildAwsValue(): software.amazon.awssdk.services.elasticsearch.model.DescribePackagesFilter = {
+      import DescribePackagesFilter.zioAwsBuilderHelper.BuilderOps
+      software.amazon.awssdk.services.elasticsearch.model.DescribePackagesFilter
+        .builder()
+        .optionallyWith(name.map(value => value.unwrap))(_.name)
+        .optionallyWith(value.map(value => value.map { item => item: java.lang.String }.asJava))(_.value)
+        .build()
+    }
+}
+```
+
+When processing the _results_ of the operations (either directly or though the `ZStream` wrappers), the AWS Java model types are wrapped
+by a _read-only wrapper interface_. The following example shows one from the `transcribe` module:
+
+```scala
+object CreateMedicalVocabularyResponse {
+  private lazy val zioAwsBuilderHelper: io.github.vigoo.zioaws.core.BuilderHelper[software.amazon.awssdk.services.transcribe.model.CreateMedicalVocabularyResponse] = io.github.vigoo.zioaws.core.BuilderHelper.apply
+  trait ReadOnly {
+    def editable: CreateMedicalVocabularyResponse = CreateMedicalVocabularyResponse(vocabularyNameValue.map(value => value), languageCodeValue.map(value => value), vocabularyStateValue.map(value => value), lastModifiedTimeValue.map(value => value), failureReasonValue.map(value => value))
+    def vocabularyNameValue: scala.Option[primitives.VocabularyName]
+    def languageCodeValue: scala.Option[LanguageCode]
+    def vocabularyStateValue: scala.Option[VocabularyState]
+    def lastModifiedTimeValue: scala.Option[primitives.DateTime]
+    def failureReasonValue: scala.Option[primitives.FailureReason]
+    def vocabularyName: ZIO[Any, io.github.vigoo.zioaws.core.AwsError, primitives.VocabularyName] = io.github.vigoo.zioaws.core.AwsError.unwrapOptionField("vocabularyName", vocabularyNameValue)
+    def languageCode: ZIO[Any, io.github.vigoo.zioaws.core.AwsError, LanguageCode] = io.github.vigoo.zioaws.core.AwsError.unwrapOptionField("languageCode", languageCodeValue)
+    def vocabularyState: ZIO[Any, io.github.vigoo.zioaws.core.AwsError, VocabularyState] = io.github.vigoo.zioaws.core.AwsError.unwrapOptionField("vocabularyState", vocabularyStateValue)
+    def lastModifiedTime: ZIO[Any, io.github.vigoo.zioaws.core.AwsError, primitives.DateTime] = io.github.vigoo.zioaws.core.AwsError.unwrapOptionField("lastModifiedTime", lastModifiedTimeValue)
+    def failureReason: ZIO[Any, io.github.vigoo.zioaws.core.AwsError, primitives.FailureReason] = io.github.vigoo.zioaws.core.AwsError.unwrapOptionField("failureReason", failureReasonValue)
+  }
+  private class Wrapper(impl: software.amazon.awssdk.services.transcribe.model.CreateMedicalVocabularyResponse) extends CreateMedicalVocabularyResponse.ReadOnly {
+    override def vocabularyNameValue: scala.Option[primitives.VocabularyName] = scala.Option(impl.vocabularyName()).map(value => value: primitives.VocabularyName)
+    override def languageCodeValue: scala.Option[LanguageCode] = scala.Option(impl.languageCode()).map(value => LanguageCode.wrap(value))
+    override def vocabularyStateValue: scala.Option[VocabularyState] = scala.Option(impl.vocabularyState()).map(value => VocabularyState.wrap(value))
+    override def lastModifiedTimeValue: scala.Option[primitives.DateTime] = scala.Option(impl.lastModifiedTime()).map(value => value: primitives.DateTime)
+    override def failureReasonValue: scala.Option[primitives.FailureReason] = scala.Option(impl.failureReason()).map(value => value: primitives.FailureReason)
+  }
+  def wrap(impl: software.amazon.awssdk.services.transcribe.model.CreateMedicalVocabularyResponse): ReadOnly = new Wrapper(impl)
+}
+```
+
+As a large part of the models in the AWS SDK are defined as _optional_, the generated wrapper also contains ZIO accessor functions,
+which lift the option value to make it more comfortable to chain the AWS operations.
  
 ### HTTP client
 By default the AWS Java SDK uses _netty_ under the hood to make the HTTP client calls. `zio-aws` defines the http client
@@ -103,49 +153,51 @@ The following example uses the ElasticBeanstalk and EC2 APIs to print some info.
  
 ```scala
 object Main extends App {
-
   val program: ZIO[Console with Ec2 with ElasticBeanstalk, AwsError, Unit] =
     for {
-      app <- elasticbeanstalk.describeApplications(
-        DescribeApplicationsRequest.builder()
-          .applicationNames("my-service")
-          .build()
-      ).map(_.applications().asScala.headOption)
+      appsResult <- elasticbeanstalk.describeApplications(DescribeApplicationsRequest(applicationNames = Some(List("my-service"))))
+      app <- appsResult.applications.map(_.headOption)
       _ <- app match {
         case Some(appDescription) =>
           for {
-            _ <- console.putStrLn(s"Got application description for ${appDescription.applicationName()}")
-            envs <- elasticbeanstalk.describeEnvironments(
-              DescribeEnvironmentsRequest.builder()
-                .applicationName(appDescription.applicationName())
-                .build()
-            ).map(_.environments().asScala.toList)
+            applicationName <- appDescription.applicationName
+            _ <- console.putStrLn(s"Got application description for $applicationName")
+
+            envsResult <- elasticbeanstalk.describeEnvironments(DescribeEnvironmentsRequest(applicationName = Some(applicationName)))
+            envs <- envsResult.environments
+
             _ <- ZIO.foreach(envs) { env =>
-              (for {
-                _ <- console.putStrLn(s"Getting the EB resources of ${env.environmentName()}")
-                instances <- elasticbeanstalk.describeEnvironmentResources(
-                  DescribeEnvironmentResourcesRequest.builder()
-                    .environmentId(env.environmentId())
-                    .build()).map(_.environmentResources().instances().asScala)
-                _ <- console.putStrLn(s"Getting the EC2 instances in ${env.environmentName()}")
-                instanceIds = instances.map(_.id())
-                _ <- console.putStrLn(s"Instance IDs are ${instanceIds.mkString(", ")}")
-                reservationsStream <- ec2.describeInstancesStream(
-                  DescribeInstancesRequest.builder()
-                    .instanceIds(instanceIds.asJavaCollection)
-                    .build())
-                _ <- reservationsStream.run(Sink.foreach {
-                  reservation =>
-                    ZIO.foreach(reservation.instances().asScala.toList) { instance =>
-                      for {
-                        _ <- console.putStrLn(s"  instance ${instance.instanceId()}:")
-                        _ <- console.putStrLn(s"    type: ${instance.instanceType()}")
-                        _ <- console.putStrLn(s"    launched at: ${instance.launchTime()}")
-                      } yield ()
-                    }
-                })
-              } yield ()).catchAll { error =>
-                console.putStrLnErr(s"Failed to get info for ${env.environmentName()}: $error")
+              env.environmentName.flatMap { environmentName =>
+                (for {
+                  environmentId <- env.environmentId
+                  _ <- console.putStrLn(s"Getting the EB resources of $environmentName")
+
+                  resourcesResult <- elasticbeanstalk.describeEnvironmentResources(DescribeEnvironmentResourcesRequest(environmentId = Some(environmentId)))
+                  resources <- resourcesResult.environmentResources
+                  _ <- console.putStrLn(s"Getting the EC2 instances in $environmentName")
+                  instances <- resources.instances
+                  instanceIds <- ZIO.foreach(instances)(_.id)
+                  _ <- console.putStrLn(s"Instance IDs are ${instanceIds.mkString(", ")}")
+
+                  reservationsStream <- ec2.describeInstancesStream(DescribeInstancesRequest(instanceIds = Some(instanceIds)))
+                  _ <- reservationsStream.run(Sink.foreach {
+                    reservation =>
+                      reservation.instances.flatMap { instances =>
+                        ZIO.foreach(instances) { instance =>
+                          for {
+                            id <- instance.instanceId
+                            typ <- instance.instanceType
+                            launchTime <- instance.launchTime
+                            _ <- console.putStrLn(s"  instance $id:")
+                            _ <- console.putStrLn(s"    type: $typ")
+                            _ <- console.putStrLn(s"    launched at: $launchTime")
+                          } yield ()
+                        }
+                      }
+                  })
+                } yield ()).catchAll { error =>
+                  console.putStrLnErr(s"Failed to get info for $environmentName: $error")
+                }
               }
             }
           } yield ()
