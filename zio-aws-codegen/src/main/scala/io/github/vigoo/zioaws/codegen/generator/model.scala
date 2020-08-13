@@ -1,0 +1,60 @@
+package io.github.vigoo.zioaws.codegen.generator
+
+import software.amazon.awssdk.codegen.model.service.Shape
+
+import scala.meta.{Term, Type}
+
+sealed trait ModelType
+object ModelType {
+  case object Map extends ModelType
+  case object List extends ModelType
+  case object Enum extends ModelType
+  case object String extends ModelType
+  case object Integer extends ModelType
+  case object Long extends ModelType
+  case object Float extends ModelType
+  case object Double extends ModelType
+  case object Boolean extends ModelType
+  case object Timestamp extends ModelType
+  case object BigDecimal extends ModelType
+  case object Blob extends ModelType
+  case object Structure extends ModelType
+  case object Exception extends ModelType
+  case class Unknown(name: String) extends ModelType
+
+  def fromString(typ: String): ModelType =
+    typ match {
+      case "map" => Map
+      case "list" => List
+      case "string" => String
+      case "integer" => Integer
+      case "long" => Long
+      case "float" => Float
+      case "double" => Double
+      case "boolean" => Boolean
+      case "timestamp" => Timestamp
+      case "bigdecimal" => BigDecimal
+      case "blob" => Blob
+      case "structure" => Structure
+      case _ => Unknown(typ)
+    }
+
+  def fromShape(shape: Shape): ModelType =
+    shape.getType match {
+      case "string" if Option(shape.getEnumValues).isDefined => Enum
+      case "structure" if shape.isException => Exception
+      case _ => fromString(shape.getType)
+    }
+}
+
+case class Model(name: String,
+                 shapeName: String,
+                 typ: ModelType,
+                 shape: Shape,
+                 serviceModelName: String) {
+
+  val asTerm: Term.Name = Term.Name(name)
+  val asType: Type.Name = Type.Name(name)
+}
+
+case class NamedShape(name: String, shape: Shape)

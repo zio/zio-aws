@@ -26,6 +26,11 @@ package object loader {
   case class ModelId(name: String, subModule: Option[String]) {
     val moduleName: String = subModule.getOrElse(name)
 
+    val subModuleName: Option[String] = subModule.flatMap { s =>
+      val stripped = s.stripPrefix(name)
+      if (stripped.isEmpty) None else Some(stripped)
+    }
+
     override def toString: String =
       subModule match {
         case Some(value) => s"$name:$value"
