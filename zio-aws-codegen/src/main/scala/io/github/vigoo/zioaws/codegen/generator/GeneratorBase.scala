@@ -1,7 +1,10 @@
 package io.github.vigoo.zioaws.codegen.generator
 
+import java.nio.charset.StandardCharsets
+import java.nio.file.{Files, Path}
+
 import io.github.vigoo.zioaws.codegen.generator.context._
-import zio.ZIO
+import zio.{Chunk, ZIO}
 
 import scala.meta._
 
@@ -95,4 +98,23 @@ trait GeneratorBase {
       case _ =>
         ZIO.succeed(q"""$term : ${Type.Name(model.name)}""")
     }
+
+  def writeIfDifferent(path: Path, contents: String): ZIO[Any, GeneratorFailure, Unit] =
+    ZIO(Files.exists(path)).mapError(FailedToReadFile).flatMap { exists =>
+      ZIO {
+        if (exists) {
+          Files.readAllBytes(path)
+        } else {
+          Array.empty[Byte]
+        }
+      }.map(Chunk.fromArray[Byte]).mapError(FailedToReadFile).flatMap { existingBytes =>
+        val contentsBytes = Chunk.fromArray(contents.getBytes(StandardCharsets.UTF_8))
+        if (existingBytes == contentsBytes) {
+          ZIO.unit
+        } else {
+          ZIO(Files.write(path, contentsBytes.toArray)).mapError(FailedToWriteFile).unit
+        }
+      }
+    }
+
 }

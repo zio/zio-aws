@@ -434,6 +434,6 @@ trait ServiceModelGenerator {
       modelsRoot = packageRoot.resolve("model")
       moduleFile = modelsRoot.resolve("package.scala")
       _ <- ZIO(Files.createDirectories(modelsRoot)).mapError(FailedToCreateDirectories)
-      _ <- ZIO(Files.write(moduleFile, code.getBytes(StandardCharsets.UTF_8))).mapError(FailedToWriteFile)
+      _ <- writeIfDifferent(moduleFile, code)
     } yield ()
 }

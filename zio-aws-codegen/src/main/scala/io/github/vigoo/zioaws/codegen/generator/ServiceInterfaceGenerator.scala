@@ -401,7 +401,7 @@ trait ServiceInterfaceGenerator {
       packageRoot = packageParent.resolve(moduleName)
       moduleFile = packageRoot.resolve("package.scala")
       _ <- ZIO(Files.createDirectories(packageRoot)).mapError(FailedToCreateDirectories)
-      _ <- ZIO(Files.write(moduleFile, code.getBytes(StandardCharsets.UTF_8))).mapError(FailedToWriteFile)
+      _ <- writeIfDifferent(moduleFile, code)
     } yield ()
 
 }
