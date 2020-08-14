@@ -61,7 +61,7 @@ trait BuildSbtGenerator {
           publishMavenStyle := true,
           licenses := Seq("APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
           publishTo := sonatypePublishTo.value,
-          sonatypeProjectHosting := Some(GitHubHosting("vigoo", "desert", "daniel.vigovszky@gmail.com")),
+          sonatypeProjectHosting := Some(GitHubHosting("vigoo", "zio-aws", "daniel.vigovszky@gmail.com")),
           developers := List(
             Developer(id = "vigoo", name = "Daniel Vigovszky", email = "daniel.vigovszky@gmail.com", url = url("https://vigoo.github.io"))
           )
