@@ -403,8 +403,8 @@ trait ServiceModelGenerator {
         List.empty
       }
 
-      primitiveModels <- ZIO.foreach(primitiveModels.toList)(generateModel)
-      models <- ZIO.foreach(complexModels.toList)(generateModel)
+      primitiveModels <- ZIO.foreach(primitiveModels.toList.sortBy(_.name))(generateModel)
+      models <- ZIO.foreach(complexModels.toList.sortBy(_.name))(generateModel)
     } yield q"""package $fullPkgName {
 
                   import scala.jdk.CollectionConverters._
