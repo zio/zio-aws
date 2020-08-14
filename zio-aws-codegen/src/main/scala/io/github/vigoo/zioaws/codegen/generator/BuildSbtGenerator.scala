@@ -34,7 +34,6 @@ trait BuildSbtGenerator {
 
       q"""lazy val $nameP = Project($fullNameStr, file($nameStr)).settings(commonSettings).settings(
             libraryDependencies += "software.amazon.awssdk" % $artifactStr % awsVersion,
-            publishArtifact in (Compile, packageDoc) := false
           ).dependsOn(..$deps)
            """
     }
