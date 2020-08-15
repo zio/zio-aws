@@ -103,9 +103,9 @@ trait ServiceInterfaceGenerator {
     } yield ServiceMethods(
       ServiceMethod(
         interface =
-          q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, AwsError, $inEventT]): IO[AwsError, zio.stream.ZStream[Any, AwsError, $outEventRoT]]""",
+          q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, AwsError, $inEventT]): zio.stream.ZStream[Any, AwsError, $outEventRoT]""",
         implementation =
-          q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, AwsError, $inEventT]): IO[AwsError, zio.stream.ZStream[Any, AwsError, $outEventRoT]] =
+          q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, AwsError, $inEventT]): zio.stream.ZStream[Any, AwsError, $outEventRoT] =
                   asyncRequestEventInputOutputStream[$modelPkg.$requestName, $modelPkg.$responseName, $awsInEventStreamT, $responseHandlerT, $awsOutEventStreamT, $awsOutEventT](
                     (request: $modelPkg.$requestName, input: Publisher[$awsInEventStreamT], handler: $responseHandlerT) => api.$methodName(request, input, handler),
                     (impl: software.amazon.awssdk.awscore.eventstream.EventStreamResponseHandler[$modelPkg.$responseName, $awsOutEventStreamT]) =>
@@ -114,11 +114,11 @@ trait ServiceInterfaceGenerator {
                         override def onEventStream(publisher: software.amazon.awssdk.core.async.SdkPublisher[$awsOutEventStreamT]): Unit = impl.onEventStream(publisher)
                         override def exceptionOccurred(throwable: Throwable): Unit = impl.exceptionOccurred(throwable)
                         override def complete(): Unit = impl.complete()
-                      })(request.buildAwsValue(), input.map(_.buildAwsValue())).map(_.map(item => $wrappedItem))
+                      })(request.buildAwsValue(), input.map(_.buildAwsValue())).map(item => $wrappedItem)
                """,
         accessor =
-          q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, AwsError, $inEventT]): ZIO[$serviceNameT, AwsError, zio.stream.ZStream[Any, AwsError, $outEventRoT]] =
-                ZIO.accessM(_.get.$methodName(request, input))"""
+          q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, AwsError, $inEventT]): zio.stream.ZStream[$serviceNameT, AwsError, $outEventRoT] =
+                ZStream.accessStream(_.get.$methodName(request, input))"""
       ))
   }
 
@@ -139,9 +139,9 @@ trait ServiceInterfaceGenerator {
     } yield ServiceMethods(
       ServiceMethod(
         interface =
-          q"""def $methodName(request: $requestName): IO[AwsError, zio.stream.ZStream[Any, AwsError, $eventRoT]]""",
+          q"""def $methodName(request: $requestName): zio.stream.ZStream[Any, AwsError, $eventRoT]""",
         implementation =
-          q"""def $methodName(request: $requestName): IO[AwsError, zio.stream.ZStream[Any, AwsError, $eventRoT]] =
+          q"""def $methodName(request: $requestName): zio.stream.ZStream[Any, AwsError, $eventRoT] =
                   asyncRequestEventOutputStream[$modelPkg.$requestName, $modelPkg.$responseName, $responseHandlerT, $awsEventStreamT, $awsEventT](
                     (request: $modelPkg.$requestName, handler: $responseHandlerT) => api.$methodName(request, handler),
                     (impl: software.amazon.awssdk.awscore.eventstream.EventStreamResponseHandler[$modelPkg.$responseName, $awsEventStreamT]) =>
@@ -150,11 +150,11 @@ trait ServiceInterfaceGenerator {
                         override def onEventStream(publisher: software.amazon.awssdk.core.async.SdkPublisher[$awsEventStreamT]): Unit = impl.onEventStream(publisher)
                         override def exceptionOccurred(throwable: Throwable): Unit = impl.exceptionOccurred(throwable)
                         override def complete(): Unit = impl.complete()
-                      })(request.buildAwsValue()).map(_.map(item => $wrappedItem))
+                      })(request.buildAwsValue()).map(item => $wrappedItem)
               """,
         accessor =
-          q"""def $methodName(request: $requestName): ZIO[$serviceNameT, AwsError, zio.stream.ZStream[Any, AwsError, $eventRoT]] =
-                ZIO.accessM(_.get.$methodName(request))"""
+          q"""def $methodName(request: $requestName): zio.stream.ZStream[$serviceNameT, AwsError, $eventRoT] =
+                ZStream.accessStream(_.get.$methodName(request))"""
       ))
   }
 
@@ -241,13 +241,13 @@ trait ServiceInterfaceGenerator {
           awsItemType <- TypeMapping.toJavaType(pagination.model)
           streamedPaginator = ServiceMethod(
             interface =
-              q"""def $methodNameStream(request: $requestName): IO[AwsError, zio.stream.ZStream[Any, AwsError, $wrappedItemType]]""",
+              q"""def $methodNameStream(request: $requestName): zio.stream.ZStream[Any, AwsError, $wrappedItemType]""",
             implementation =
-              q"""def $methodNameStream(request: $requestName): IO[AwsError, zio.stream.ZStream[Any, AwsError, $wrappedItemType]] =
-                                      asyncPaginatedRequest[$modelPkg.$requestName, $awsItemType, $paginatorPkg.$publisherType](api.$paginatorMethodName, _.${Term.Name(pagination.name.uncapitalize)}())(request.buildAwsValue()).map(_.map(item => $wrappedItem))""",
+              q"""def $methodNameStream(request: $requestName): zio.stream.ZStream[Any, AwsError, $wrappedItemType] =
+                                      asyncPaginatedRequest[$modelPkg.$requestName, $awsItemType, $paginatorPkg.$publisherType](api.$paginatorMethodName, _.${Term.Name(pagination.name.uncapitalize)}())(request.buildAwsValue()).map(item => $wrappedItem)""",
             accessor =
-              q"""def $methodNameStream(request: $requestName): ZIO[$serviceNameT, AwsError, zio.stream.ZStream[Any, AwsError, $wrappedItemType]] =
-                                      ZIO.accessM(_.get.$methodNameStream(request))"""
+              q"""def $methodNameStream(request: $requestName): zio.stream.ZStream[$serviceNameT, AwsError, $wrappedItemType] =
+                                      ZStream.accessStream(_.get.$methodNameStream(request))"""
           )
         } yield ServiceMethods(raw, streamedPaginator)
       case None =>
@@ -346,6 +346,7 @@ trait ServiceInterfaceGenerator {
                 Importee.Name(Name(clientInterfaceBuilder.value))))))
         }),
         Some(q"""import zio.{Chunk, Has, IO, ZIO, ZLayer}"""),
+        Some(q"""import zio.stream.ZStream"""),
         Some(q"""import org.reactivestreams.Publisher"""),
         Some(q"""import scala.jdk.CollectionConverters._""")
       ).flatten

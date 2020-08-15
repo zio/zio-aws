@@ -39,10 +39,11 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with AwsServiceBase {
         createCharPublisher(in)
       }
 
-      for {
-        resultStream <- asyncPaginatedRequest[String, Char, Publisher[Char]](fakeAwsCall, identity)("hello")
-        result <- resultStream.runCollect
-      } yield assert(result)(equalTo(Chunk('h', 'e', 'l', 'l', 'o')))
+      asyncPaginatedRequest[String, Char, Publisher[Char]](fakeAwsCall, identity)("hello")
+        .runCollect
+        .map { result =>
+          assert(result)(equalTo(Chunk('h', 'e', 'l', 'l', 'o'))) 
+        }
     },
 
     testM("asyncRequestOutputStream") {
@@ -156,14 +157,13 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with AwsServiceBase {
         cf
       }
 
-      for {
-        resultStream <- asyncRequestEventOutputStream[String, Int, EventStreamResponseHandler[Int, Char], Char, Char](
-          fakeAwsCall,
-          identity)("hello")
-        result <- resultStream
-          .runCollect
-          .map(_.mkString)
-      } yield assert(result)(equalTo("hello"))
+      asyncRequestEventOutputStream[String, Int, EventStreamResponseHandler[Int, Char], Char, Char](
+        fakeAwsCall,
+        identity)("hello")
+        .runCollect
+        .map { result =>
+          assert(result.mkString)(equalTo("hello"))
+        }
     },
 
     testM("asyncRequestEventInputStream") {
@@ -234,14 +234,13 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with AwsServiceBase {
         cf
       }
 
-      for {
-        resultStream <- asyncRequestEventInputOutputStream[String, Int, Char, EventStreamResponseHandler[Int, Char], Char, Char](
-          fakeAwsCall,
-          identity)("hello", ZStream.fromIterable("world"))
-        result <- resultStream
-          .runCollect
-          .map(_.mkString)
-      } yield assert(result)(equalTo("helloworld"))
+      asyncRequestEventInputOutputStream[String, Int, Char, EventStreamResponseHandler[Int, Char], Char, Char](
+        fakeAwsCall,
+        identity)("hello", ZStream.fromIterable("world"))
+        .runCollect
+        .map { result =>
+          assert(result.mkString)(equalTo("helloworld"))
+        }
     }
   )
 
