@@ -96,7 +96,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with AwsServiceBase {
       }
 
       for {
-        result <- asyncRequestInputStream(fakeAwsCall)(2, ZStream.fromIterable("hello".getBytes(StandardCharsets.US_ASCII)).grouped(2))
+        result <- asyncRequestInputStream(fakeAwsCall)(2, ZStream.fromIterable("hello".getBytes(StandardCharsets.US_ASCII)))
       } yield assert(result)(equalTo(10))
     },
 
@@ -137,7 +137,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with AwsServiceBase {
 
 
       for {
-        result <- asyncRequestInputOutputStream(fakeAwsCall)(2, ZStream.fromIterable("hello".getBytes(StandardCharsets.US_ASCII)).grouped(2))
+        result <- asyncRequestInputOutputStream(fakeAwsCall)(2, ZStream.fromIterable("hello".getBytes(StandardCharsets.US_ASCII)))
         streamResult <- result.output.runCollect.map(_.toVector)
       } yield assert(streamResult)(equalTo("hheelllloo".getBytes(StandardCharsets.US_ASCII).toVector)) &&
         assert(result.response)(equalTo(5))

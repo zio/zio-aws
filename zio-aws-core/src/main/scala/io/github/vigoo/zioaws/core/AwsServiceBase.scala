@@ -30,13 +30,13 @@ trait AwsServiceBase {
   }
 
   final def asyncRequestInputStream[Request, Response](impl: (Request, AsyncRequestBody) => CompletableFuture[Response])
-                                                      (request: Request, body: ZStream[Any, AwsError, Chunk[Byte]]): IO[AwsError, Response] =
+                                                      (request: Request, body: ZStream[Any, AwsError, Byte]): IO[AwsError, Response] =
     ZIO.runtime.flatMap { implicit runtime: Runtime[Any] =>
       ZIO.fromCompletionStage(impl(request, new ZStreamAsyncRequestBody(body))).mapError(AwsError.fromThrowable)
     }
 
   final def asyncRequestInputOutputStream[Request, Response](impl: (Request, AsyncRequestBody, AsyncResponseTransformer[Response, Task[StreamingOutputResult[Response]]]) => CompletableFuture[Task[StreamingOutputResult[Response]]])
-                                                            (request: Request, body: ZStream[Any, AwsError, Chunk[Byte]]): IO[AwsError, StreamingOutputResult[Response]] = {
+                                                            (request: Request, body: ZStream[Any, AwsError, Byte]): IO[AwsError, StreamingOutputResult[Response]] = {
     ZIO.runtime.flatMap { implicit runtime: Runtime[Any] =>
       for {
         transformer <- ZStreamAsyncResponseTransformer[Response]()
