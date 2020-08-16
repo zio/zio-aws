@@ -180,12 +180,12 @@ trait ServiceInterfaceGenerator {
     ZIO.succeed(ServiceMethods(
       ServiceMethod(
         interface =
-          q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Chunk[Byte]]): IO[AwsError, StreamingOutputResult[$responseTypeRo]]""",
+          q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Byte]): IO[AwsError, StreamingOutputResult[$responseTypeRo]]""",
         implementation =
-          q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Chunk[Byte]]): IO[AwsError, StreamingOutputResult[$responseTypeRo]] =
+          q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Byte]): IO[AwsError, StreamingOutputResult[$responseTypeRo]] =
                 asyncRequestInputOutputStream[$modelPkg.$requestName, $modelPkg.$responseName](api.$methodName[zio.Task[StreamingOutputResult[$modelPkg.$responseName]]])(request.buildAwsValue(), body).map(_.map($responseNameTerm.wrap))""",
         accessor =
-          q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Chunk[Byte]]): ZIO[$serviceNameT, AwsError, StreamingOutputResult[$responseTypeRo]] =
+          q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Byte]): ZIO[$serviceNameT, AwsError, StreamingOutputResult[$responseTypeRo]] =
                 ZIO.accessM(_.get.$methodName(request, body))"""
       )))
   }
@@ -208,12 +208,12 @@ trait ServiceInterfaceGenerator {
     ZIO.succeed(ServiceMethods(
       ServiceMethod(
         interface =
-          q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Chunk[Byte]]): IO[AwsError, $responseTypeRo]""",
+          q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Byte]): IO[AwsError, $responseTypeRo]""",
         implementation =
-          q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Chunk[Byte]]): IO[AwsError, $responseTypeRo] =
+          q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Byte]): IO[AwsError, $responseTypeRo] =
                 asyncRequestInputStream[$modelPkg.$requestName, $modelPkg.$responseName](api.$methodName)(request.buildAwsValue(), body).map($responseNameTerm.wrap)""",
         accessor =
-          q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Chunk[Byte]]): ZIO[$serviceNameT, AwsError, $responseTypeRo] =
+          q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Byte]): ZIO[$serviceNameT, AwsError, $responseTypeRo] =
                 ZIO.accessM(_.get.$methodName(request, body))"""
       )))
   }
