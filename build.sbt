@@ -17,13 +17,27 @@ val generateAll = taskKey[Unit]("Generates all AWS client libraries")
 val buildAll = taskKey[Unit]("Generates and builds all AWS client libraries")
 val publishLocalAll = taskKey[Unit]("Generates, builds and publishes all AWS client libraries")
 
+val scala212Version = "2.12.12"
+val scala213Version = "2.13.3"
+
+val scalacOptions212 = Seq("-Ypartial-unification", "-deprecation")
+val scalacOptions213 = Seq("-deprecation")
+
 lazy val commonSettings =
   Seq(
-    scalaVersion := "2.13.3",
+    scalaVersion := scala213Version,
+    crossScalaVersions := List(scala212Version, scala213Version),
+
     organization := "io.github.vigoo",
     version := zioAwsVersion,
 
-    // Publishing
+    scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, 12)) => scalacOptions212
+      case Some((2, 13)) => scalacOptions213
+      case _ => Nil
+    }),
+
+      // Publishing
     publishMavenStyle := true,
     licenses := Seq("APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
     publishTo := sonatypePublishTo.value,
@@ -49,8 +63,9 @@ lazy val root = Project("zio-aws", file(".")).settings(commonSettings).settings(
   publishArtifact := false,
   generateAll := Def.taskDyn {
     val root = baseDirectory.value.getAbsolutePath
+    val scalaVer = scalaVersion.value
     Def.task {
-      (codegen / Compile / run).toTask(s" --target-root ${root}/generated --source-root ${root} --version $zioAwsVersion --zio-version $zioVersion --zio-rs-version $zioReactiveStreamsInteropVersion").value
+      (codegen / Compile / run).toTask(s" --target-root ${root}/generated --source-root ${root} --version $zioAwsVersion --scala-version $scalaVer --zio-version $zioVersion --zio-rs-version $zioReactiveStreamsInteropVersion").value
     }
   }.value,
   buildAll := Def.taskDyn {
@@ -109,6 +124,7 @@ lazy val core = Project("zio-aws-core", file("zio-aws-core")).settings(commonSet
     "dev.zio" %% "zio" % zioVersion,
     "dev.zio" %% "zio-streams" % zioVersion,
     "dev.zio" %% "zio-interop-reactivestreams" % zioReactiveStreamsInteropVersion,
+    "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.6",
 
     "dev.zio" %% "zio-test" % zioVersion % "test",
     "dev.zio" %% "zio-test-sbt" % zioVersion % "test",
@@ -139,7 +155,8 @@ lazy val http4s = Project("zio-aws-http4s", file("zio-aws-http4s")).settings(com
     "dev.zio" %% "zio" % zioVersion,
     "dev.zio" %% "zio-interop-cats" % zioCatsInteropVersion,
     "co.fs2" %% "fs2-reactive-streams" % fs2Version,
-    "org.typelevel"   %% "cats-effect" % catsEffectVersion
+    "org.typelevel" %% "cats-effect" % catsEffectVersion,
+    "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.1",
   )
 ).dependsOn(core)
 

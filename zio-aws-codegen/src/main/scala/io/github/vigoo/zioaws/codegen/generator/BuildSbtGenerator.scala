@@ -40,6 +40,7 @@ trait BuildSbtGenerator {
     val awsVersionStr = Lit.String(VersionInfo.SDK_VERSION)
     val zioVersionStr = Lit.String(config.parameters.zioVersion)
     val zioReactiveStreamsInteropVersionStr = Lit.String(config.parameters.zioInteropReactiveStreamsVersion)
+    val scalaVersionStr = Lit.String(config.parameters.scalaVersion)
 
     val code =
       q"""
@@ -49,13 +50,14 @@ trait BuildSbtGenerator {
         publishArtifact := false
 
         lazy val commonSettings = Seq(
-          scalaVersion := "2.13.3",
+          scalaVersion := $scalaVersionStr,
           organization := "io.github.vigoo",
           version := $versionStr,
           libraryDependencies ++= Seq(
             "dev.zio" %% "zio" % $zioVersionStr,
             "dev.zio" %% "zio-streams" % $zioVersionStr,
-            "dev.zio" %% "zio-interop-reactivestreams" % $zioReactiveStreamsInteropVersionStr
+            "dev.zio" %% "zio-interop-reactivestreams" % $zioReactiveStreamsInteropVersionStr,
+            "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.6",
           ),
           // Publishing
           publishMavenStyle := true,
