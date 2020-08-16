@@ -16,7 +16,7 @@ import zio._
 import zio.interop.catz._
 
 import scala.jdk.CollectionConverters._
-import scala.jdk.FutureConverters._
+import scala.compat.java8.FutureConverters._
 
 class Http4sClient(client: Client[Task],
                    closeFn: () => Unit)
@@ -29,7 +29,7 @@ class Http4sClient(client: Client[Task],
     runtime.unsafeRunToFuture(
       client.fetch(
         toHttp4sRequest(request.request(), request.requestContentPublisher()))(processResponse(_, request.responseHandler()))
-    ).asJava.toCompletableFuture
+    ).toJava.toCompletableFuture
   }
 
   override def close(): Unit = {

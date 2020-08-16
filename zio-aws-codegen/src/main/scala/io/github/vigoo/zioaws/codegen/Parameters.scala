@@ -14,6 +14,7 @@ import io.github.vigoo.zioaws.codegen.loader.ModelId
 case class Parameters(targetRoot: Path,
                       sourceRoot: Path,
                       version: String,
+                      scalaVersion: String,
                       zioVersion: String,
                       zioInteropReactiveStreamsVersion: String,
                       serviceList: Option[List[ModelId]])
@@ -42,11 +43,12 @@ object Parameters {
     targetRoot <- namedParameter[File]("Target root directory", "DIR", "target-root")
     sourceRoot <- namedParameter[File]("Source root directory", "DIR", "source-root")
     version <- namedParameter[String]("Version", "VER", "version")
+    scalaVersion <- namedParameter[String]("Scala version", "VER", "scala-version")
     zioVersion <- namedParameter[String]("Version of ZIO", "VER", "zio-version")
     zioInteropReactiveStreamsVersion <- namedParameter[String]("Version of zio-interop-reactivestreams", "VER", "zio-rs-version")
     serviceList <- optional {
       namedParameter[List[ModelId]]("Explicit list of models to be generated", "SVCS", "services")
     }
-  } yield Parameters(targetRoot.toPath, sourceRoot.toPath, version, zioVersion, zioInteropReactiveStreamsVersion, serviceList)
+  } yield Parameters(targetRoot.toPath, sourceRoot.toPath, version, scalaVersion, zioVersion, zioInteropReactiveStreamsVersion, serviceList)
 
 }
