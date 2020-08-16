@@ -9,7 +9,7 @@ val awsVersion = s"2.$awsSubVersion"
 val http4sVersion = "0.21.0"
 val fs2Version = "2.2.2"
 
-val majorVersion = "1"
+val majorVersion = "2"
 val minorVersion = "1"
 val zioAwsVersion = s"$majorVersion.$awsSubVersion.$minorVersion"
 
