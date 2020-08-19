@@ -52,65 +52,77 @@ object OperationCollector {
     Option(op.getOutput).flatMap(output => Option(models.serviceModel().getShape(output.getShape))).exists(hasEventStreamMember(models, _))
 
   def get(opName: String, op: Operation): ZIO[GeneratorContext, GeneratorFailure, OperationMethodType] = {
-    getModels.flatMap { models =>
-      val inputIsStreaming = inputIsStreamingOf(models, op)
-      val outputIsStreaming = outputIsStreamingOf(models, op)
+    getService.flatMap { id =>
+      getModels.flatMap { models =>
+        val inputIsStreaming = inputIsStreamingOf(models, op)
+        val outputIsStreaming = outputIsStreamingOf(models, op)
 
-      val inputIsEventStream = inputIsEventStreamOf(models, op)
-      val outputIsEventStream = outputIsEventStreamOf(models, op)
+        val inputIsEventStream = inputIsEventStreamOf(models, op)
+        val outputIsEventStream = outputIsEventStreamOf(models, op)
 
-      if (inputIsStreaming && outputIsStreaming) {
-        ZIO.succeed(StreamedInputOutput)
-      } else if (inputIsStreaming) {
-        ZIO.succeed(StreamedInput)
-      } else if (outputIsStreaming) {
-        ZIO.succeed(StreamedOutput)
-      } else if (inputIsEventStream && outputIsEventStream) {
-        ZIO.succeed(EventStreamInputOutput)
-      } else if (inputIsEventStream) {
-        ZIO.succeed(EventStreamInput)
-      } else if (outputIsEventStream) {
-        ZIO.succeed(EventStreamOutput)
-      } else {
-        Option(models.paginatorsModel().getPaginatorDefinition(opName)) match {
-          case Some(paginator) if paginator.isValid =>
-            Option(paginator.getResultKey).flatMap(_.asScala.headOption) match {
-              case Some(key) =>
+        if (inputIsStreaming && outputIsStreaming) {
+          ZIO.succeed(StreamedInputOutput)
+        } else if (inputIsStreaming) {
+          ZIO.succeed(StreamedInput)
+        } else if (outputIsStreaming) {
+          ZIO.succeed(StreamedOutput)
+        } else if (inputIsEventStream && outputIsEventStream) {
+          ZIO.succeed(EventStreamInputOutput)
+        } else if (inputIsEventStream) {
+          ZIO.succeed(EventStreamInput)
+        } else if (outputIsEventStream) {
+          ZIO.succeed(EventStreamOutput)
+        } else {
+          Option(models.paginatorsModel().getPaginatorDefinition(opName)) match {
+            case Some(paginator) if paginator.isValid =>
+              Option(paginator.getResultKey).flatMap(_.asScala.headOption) match {
+                case Some(key) =>
+                  val outputShape = models.serviceModel().getShape(op.getOutput.getShape)
+                  outputShape.getMembers.asScala.get(key) match {
+                    case Some(outputListMember) =>
+                      val listShape = models.serviceModel().getShape(outputListMember.getShape)
+                      Option(listShape.getListMember) match {
+                        case Some(itemMember) =>
+                          for {
+                            itemModel <- context.get(itemMember.getShape)
+                            itemType <- toJavaType(itemModel)
+                            wrappedTypeRo <- toWrappedTypeReadOnly(itemModel)
+                          } yield RequestResponse(pagination = Some(PaginationDefinition(
+                            name = key,
+                            model = itemModel,
+                            itemType = itemType,
+                            wrappedTypeRo = wrappedTypeRo
+                          )))
+                        case None =>
+                          ZIO.succeed(RequestResponse(pagination = None))
+                      }
+                    case None =>
+                      ZIO.succeed(RequestResponse(pagination = None))
+                  }
+                case None =>
+                  ZIO.succeed(RequestResponse(pagination = None))
+              }
+            case _ =>
+              if (op.getOutput == null && op.getInput == null) {
+                ZIO.succeed(UnitToUnit)
+              } else if (op.getOutput == null) {
+                ZIO.succeed(RequestToUnit)
+              } else if (op.getInput == null) {
+                ZIO.succeed(UnitToResponse)
+              } else {
+
                 val outputShape = models.serviceModel().getShape(op.getOutput.getShape)
-                outputShape.getMembers.asScala.get(key) match {
-                  case Some(outputListMember) =>
-                    val listShape = models.serviceModel().getShape(outputListMember.getShape)
-                    Option(listShape.getListMember) match {
-                      case Some(itemMember) =>
-                        for {
-                          itemModel <- context.get(itemMember.getShape)
-                          itemType <- toJavaType(itemModel)
-                          wrappedTypeRo <- toWrappedTypeReadOnly(itemModel)
-                        } yield RequestResponse(pagination = Some(PaginationDefinition(
-                          name = key,
-                          model = itemModel,
-                          itemType = itemType,
-                          wrappedTypeRo = wrappedTypeRo
-                        )))
-                      case None =>
-                        ZIO.succeed(RequestResponse(pagination = None))
-                    }
-                  case None =>
-                    ZIO.succeed(RequestResponse(pagination = None))
+                val inputShape = models.serviceModel().getShape(op.getInput.getShape)
+
+                if (outputShape.getMembers.containsKey("NextToken") &&
+                  inputShape.getMembers.containsKey("NextToken")) {
+                  // TODO: custom pagination
+                  ZIO.succeed(RequestResponse(pagination = None))
+                } else {
+                  ZIO.succeed(RequestResponse(pagination = None))
                 }
-              case None =>
-                ZIO.succeed(RequestResponse(pagination = None))
-            }
-          case _ =>
-            if (op.getOutput == null && op.getInput == null) {
-              ZIO.succeed(UnitToUnit)
-            } else if (op.getOutput == null) {
-              ZIO.succeed(RequestToUnit)
-            } else if (op.getInput == null) {
-              ZIO.succeed(UnitToResponse)
-            } else {
-              ZIO.succeed(RequestResponse(pagination = None))
-            }
+              }
+          }
         }
       }
     }
