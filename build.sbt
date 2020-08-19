@@ -4,8 +4,9 @@ val zioVersion = "1.0.0"
 val zioCatsInteropVersion = "2.1.4.0"
 val zioReactiveStreamsInteropVersion = "1.0.3.5"
 val catsEffectVersion = "2.1.4"
-val awsSubVersion = "13.69"
-val awsVersion = s"2.$awsSubVersion"
+
+val awsVersion = "2.13.69"
+val awsSubVersion = awsVersion.drop(awsVersion.indexOf('.') + 1)
 val http4sVersion = "0.21.7"
 val fs2Version = "2.4.3"
 
