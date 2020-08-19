@@ -111,7 +111,7 @@ lazy val root = Project("zio-aws", file(".")).settings(commonSettings).settings(
       fork.run(
         "xsbt.boot.Boot",
         classpath = launcherFile :: Nil,
-        options = "publishLocal" :: Nil,
+        options = "set publishArtifact in (Compile, packageDoc) := false" :: "publishLocal" :: Nil,
         log = streams.value.log
       )
     }
