@@ -1,8 +1,8 @@
 language: scala
 scala:
   - 2.12.12
-  - 2.13.3
+  - 2.3.3
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION clean test publishLocalAll
+  - sbt ++$TRAVIS_SCALA_VERSION -jvm-opts travis/jvmopts clean test publishLocalAll
   - cd examples
   - sbt ++$TRAVIS_SCALA_VERSION compile
