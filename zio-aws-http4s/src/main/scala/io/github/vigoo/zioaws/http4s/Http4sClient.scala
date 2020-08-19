@@ -27,8 +27,7 @@ class Http4sClient(client: Client[Task],
 
   override def execute(request: AsyncExecuteRequest): CompletableFuture[Void] = {
     runtime.unsafeRunToFuture(
-      client.fetch(
-        toHttp4sRequest(request.request(), request.requestContentPublisher()))(processResponse(_, request.responseHandler()))
+      client.run(toHttp4sRequest(request.request(), request.requestContentPublisher())).use(processResponse(_, request.responseHandler()))
     ).toJava.toCompletableFuture
   }
 
