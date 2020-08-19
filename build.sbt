@@ -7,7 +7,7 @@ val catsEffectVersion = "2.1.4"
 val awsSubVersion = "13.69"
 val awsVersion = s"2.$awsSubVersion"
 val http4sVersion = "0.21.7"
-val fs2Version = "2.2.2"
+val fs2Version = "2.4.3"
 
 val majorVersion = "1"
 val minorVersion = "1"
