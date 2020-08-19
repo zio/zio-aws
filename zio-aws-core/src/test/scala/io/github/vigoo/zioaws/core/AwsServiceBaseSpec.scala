@@ -52,7 +52,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with AwsServiceBase {
           val cf = new CompletableFuture[Task[StreamingOutputResult[Int]]]()
           threadPool.submit(new Runnable {
             override def run(): Unit = {
-              transformer.prepare().thenApply { result =>
+              transformer.prepare().thenApply[Boolean] { (result: Task[StreamingOutputResult[Int]]) =>
                 transformer.onResponse(in.length)
                 transformer.onStream(createStringByteBufferPublisher(in))
                 cf.complete(result)
@@ -120,7 +120,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with AwsServiceBase {
                   cf.completeExceptionally(t)
 
                 override def onComplete(): Unit = {
-                  transformer.prepare().thenApply { result =>
+                  transformer.prepare().thenApply[Boolean] { (result: Task[StreamingOutputResult[Int]]) =>
                     transformer.onResponse(buffer.length)
                     transformer.onStream(createStringByteBufferPublisher(
                       new String(
