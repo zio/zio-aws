@@ -27,13 +27,22 @@ class ZStreamAsyncResponseTransformer[Response](resultStreamPromise: Promise[Thr
   }
 
   override def onStream(publisher: SdkPublisher[ByteBuffer]): Unit = {
-    runtime.unsafeRun(resultStreamPromise.complete(ZIO.succeed {
-      publisher
-        .toStream()
-        .interruptWhen(errorPromise)
-        .bimap(AwsError.fromThrowable, Chunk.fromByteBuffer)
-        .flattenChunks
-    }))
+    runtime.unsafeRun(
+      resultStreamPromise.complete(errorPromise.poll.flatMap { opt =>
+        opt.getOrElse(ZIO.unit) *> ZIO.effect(
+          publisher
+            .toStream()
+            .interruptWhen(errorPromise)
+            .map(Chunk.fromByteBuffer)
+            .flattenChunks
+            .concat(ZStream.fromEffectOption[Any, Throwable, Byte](
+              errorPromise.poll.flatMap {
+                case None => ZIO.fail(None)
+                case Some(p) => p.mapError(Some.apply) *> ZIO.fail(None)
+              }))
+            .mapError(AwsError.fromThrowable)
+        )
+      }))
   }
 
   override def exceptionOccurred(error: Throwable): Unit =
