@@ -137,12 +137,12 @@ object SimulatedPublisher {
       }
     }
 
-  def createStringByteBufferPublisher(in: String): SdkPublisher[ByteBuffer] = {
+  def createStringByteBufferPublisher(in: String, simulation: Chunk[Byte] => List[Action] = correctSequence): SdkPublisher[ByteBuffer] = {
     val inChunk = Chunk.fromArray(in.getBytes(StandardCharsets.US_ASCII))
     createSimulatedPublisher[Byte, ByteBuffer](
       inChunk,
       b => ByteBuffer.wrap(Array(b)),
-      correctSequence(inChunk))
+      simulation(inChunk))
   }
 
   def createCharPublisher(in: String, simulation: Chunk[Char] => List[Action] = correctSequence): SdkPublisher[Char] = {

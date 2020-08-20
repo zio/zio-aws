@@ -8,26 +8,51 @@ import software.amazon.awssdk.core.async.{AsyncResponseTransformer, SdkPublisher
 import zio.Task
 
 object SimulatedAsyncResponseTransformer {
-  sealed trait Action
-  case object Prepare extends Action
-  case object SetResponse extends Action
-  case object SetStream extends Action
-  case class ReportException(throwable: Throwable) extends Action
-  case object CompleteFuture extends Action
-  case object FailFuture extends Action
+  private def slowDown(): Unit = Thread.sleep(250)
+
+  case class FailureSpec(failBeforePrepare: Option[Throwable] = None,
+                         failTransformerBeforeStream: Option[Throwable] = None,
+                         failTransformerAfterStream: Option[Throwable] = None,
+                         failFutureAfterStream: Option[Throwable] = None)
+
 
   def useAsyncResponseTransformer[In, Out](in: In,
                                            transformer: AsyncResponseTransformer[Out, Task[StreamingOutputResult[Out]]],
                                            toResult: In => Out,
-                                           toPublisher: In => SdkPublisher[ByteBuffer])
+                                           toPublisher: In => SdkPublisher[ByteBuffer],
+                                           failureSpec: FailureSpec)
                                           (implicit threadPool: ExecutorService): CompletableFuture[Task[StreamingOutputResult[Out]]] = {
     val cf = new CompletableFuture[Task[StreamingOutputResult[Out]]]()
     threadPool.submit(new Runnable {
       override def run(): Unit = {
-        transformer.prepare().thenApply { result =>
-          transformer.onResponse(toResult(in))
-          transformer.onStream(toPublisher(in))
-          cf.complete(result)
+        failureSpec.failBeforePrepare match {
+          case Some(throwable) =>
+            cf.completeExceptionally(throwable)
+          case None =>
+            slowDown()
+            transformer.prepare().thenApply[Boolean] { (result: Task[StreamingOutputResult[Out]]) =>
+              slowDown()
+              transformer.onResponse(toResult(in))
+
+              slowDown()
+              failureSpec.failTransformerBeforeStream.foreach { throwable =>
+                transformer.exceptionOccurred(throwable)
+              }
+              slowDown()
+              transformer.onStream(toPublisher(in))
+
+              failureSpec.failTransformerAfterStream.foreach { throwable =>
+                transformer.exceptionOccurred(throwable)
+              }
+
+              slowDown()
+              failureSpec.failFutureAfterStream match {
+                case Some(throwable) =>
+                  cf.completeExceptionally(throwable)
+                case None =>
+                  cf.complete(result)
+              }
+            }
         }
       }
     })
