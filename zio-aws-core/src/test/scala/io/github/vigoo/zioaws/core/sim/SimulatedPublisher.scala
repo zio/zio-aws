@@ -29,7 +29,7 @@ object SimulatedPublisher {
   def wrapSubscriber[T](inner: Subscriber[T], simulation: List[Action]): Subscriber[T] =
     new Subscriber[T] {
       private val steps = mutable.Queue.empty[Action]
-      simulation.foreach(steps.enqueue)
+      simulation.foreach(step => steps.enqueue(step))
 
       @tailrec
       override def onSubscribe(s: Subscription): Unit = {
