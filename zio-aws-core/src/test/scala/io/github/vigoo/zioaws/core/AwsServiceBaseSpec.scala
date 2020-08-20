@@ -4,7 +4,7 @@ import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.{CompletableFuture, ExecutorService, Executors}
 
-import io.github.vigoo.zioaws.core.sim.{SimulatedAsyncResponseTransformer, SimulatedPublisher}
+import io.github.vigoo.zioaws.core.sim.{SimulatedAsyncBodyReceiver, SimulatedAsyncResponseTransformer, SimulatedPublisher}
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
 import software.amazon.awssdk.awscore.eventstream.EventStreamResponseHandler
 import software.amazon.awssdk.core.async.{AsyncRequestBody, AsyncResponseTransformer}
@@ -115,36 +115,32 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with AwsServiceBase {
         )
       ),
     ),
-    testM("asyncRequestInputStream") {
-      val fakeAwsCall: (Int, AsyncRequestBody) => CompletableFuture[Int] = { (multipler, asyncBody) =>
-        val cf = new CompletableFuture[Int]()
-        threadPool.submit(new Runnable {
-          override def run(): Unit = {
-            asyncBody.subscribe(new Subscriber[ByteBuffer] {
-              var sum: Int = 0
+    suite("asyncRequestInputStream")(
+      testM("success") {
+        val fakeAwsCall = SimulatedAsyncBodyReceiver.useAsyncBody()
 
-              override def onSubscribe(s: Subscription): Unit =
-                s.request(100)
+        for {
+          result <- asyncRequestInputStream(fakeAwsCall)(
+            2,
+            ZStream
+              .fromIterable("hello".getBytes(StandardCharsets.US_ASCII))
+              .chunkN(2))
+        } yield assert(result)(equalTo(10))
+      },
 
-              override def onNext(t: ByteBuffer): Unit =
-                sum += t.array().length
+      testM("failure on input stream") {
+        val fakeAwsCall = SimulatedAsyncBodyReceiver.useAsyncBody()
 
-              override def onError(t: Throwable): Unit =
-                cf.completeExceptionally(t)
-
-              override def onComplete(): Unit = {
-                cf.complete(multipler * sum)
-              }
-            })
-          }
-        })
-        cf
+        for {
+          result <- asyncRequestInputStream(fakeAwsCall)(
+            2,
+            ZStream
+              .fromIterable("hello".getBytes(StandardCharsets.US_ASCII))
+              .chunkN(2)
+              .concat(ZStream.fail(GenericAwsError(SimulatedException)))).run
+        } yield assert(result)(isAwsFailure)
       }
-
-      for {
-        result <- asyncRequestInputStream(fakeAwsCall)(2, ZStream.fromIterable("hello".getBytes(StandardCharsets.US_ASCII)))
-      } yield assert(result)(equalTo(10))
-    },
+    ),
 
     testM("asyncRequestInputOutputStream") {
       val fakeAwsCall: (Int, AsyncRequestBody, AsyncResponseTransformer[Int, Task[StreamingOutputResult[Int]]]) => CompletableFuture[Task[StreamingOutputResult[Int]]] = {
