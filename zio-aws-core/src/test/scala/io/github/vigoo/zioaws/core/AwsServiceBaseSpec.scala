@@ -1,10 +1,9 @@
 package io.github.vigoo.zioaws.core
 
-import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.{CompletableFuture, ExecutorService, Executors}
 
-import io.github.vigoo.zioaws.core.sim.{SimulatedAsyncBodyReceiver, SimulatedAsyncResponseTransformer, SimulatedPublisher}
+import io.github.vigoo.zioaws.core.sim.{SimulatedAsyncBodyReceiver, SimulatedAsyncResponseTransformer, SimulatedEventStreamResponseHandlerReceiver, SimulatedPublisher}
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
 import software.amazon.awssdk.awscore.eventstream.EventStreamResponseHandler
 import software.amazon.awssdk.core.async.{AsyncRequestBody, AsyncResponseTransformer}
@@ -54,31 +53,31 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with AwsServiceBase {
       testM("success")(
         assertM(
           runAsyncPaginatedRequest(SimulatedPublisher.correctSequence)
-        )(equalTo(Exit.Success(Chunk('h', 'e', 'l', 'l', 'o'))))
+        )(equalTo(Chunk('h', 'e', 'l', 'l', 'o')))
       ),
 
       testM("fail before subscribe")(
         assertM(runAsyncPaginatedRequest(
           in => SimulatedPublisher.Error(SimulatedException) :: SimulatedPublisher.correctSequence(in)
-        ))(isAwsFailure)),
+        ).run)(isAwsFailure)),
       testM("fail during emit")(
         assertM(runAsyncPaginatedRequest(
           in => SimulatedPublisher.correctSequence(in).splitAt(3) match {
             case (a, b) => a ::: List(SimulatedPublisher.Error(SimulatedException)) ::: b
           }
-        ))(isAwsFailure)),
+        ).run)(isAwsFailure)),
       testM("fail before complete")(
         assertM(runAsyncPaginatedRequest(
           in => SimulatedPublisher.correctSequence(in).init ::: List(SimulatedPublisher.Error(SimulatedException), SimulatedPublisher.Complete)
-        ))(isAwsFailure)),
+        ).run)(isAwsFailure)),
       testM("fail with no complete after")(
         assertM(runAsyncPaginatedRequest(
           in => SimulatedPublisher.correctSequence(in).init ::: List(SimulatedPublisher.Error(SimulatedException))
-        ))(isAwsFailure)),
+        ).run)(isAwsFailure)),
       testM("complete before subscribe is empty result")(
         assertM(runAsyncPaginatedRequest(
           in => SimulatedPublisher.Complete :: SimulatedPublisher.correctSequence(in)
-        ))(equalTo(Exit.Success(Chunk.empty))))
+        ).run)(equalTo(Exit.Success(Chunk.empty))))
     ),
 
     suite("asyncRequestOutputStream")(
@@ -135,146 +134,234 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with AwsServiceBase {
 
     suite("asyncRequestInputOutputStream")(
       testM("success")(
-        assertM(runAsyncRequestInputOutputRequest())(isCase(
-          "Success", {
-            case Exit.Success(value) => Some(Exit.Success(value))
-            case _ => None
-          },
-          hasField[Exit.Success[(StreamingOutputResult[Int], Vector[Byte])], Int]("1", _.value._1.response, equalTo(5)) &&
-            hasField[Exit.Success[(StreamingOutputResult[Int], Vector[Byte])], Vector[Byte]]("2", _.value._2, equalTo("hheelllloo".getBytes(StandardCharsets.US_ASCII).toVector))))),
+        assertM(runAsyncRequestInputOutputRequest())(
+          hasField[(StreamingOutputResult[Int], Vector[Byte]), Int]("1", _._1.response, equalTo(5)) &&
+            hasField[(StreamingOutputResult[Int], Vector[Byte]), Vector[Byte]]("2", _._2, equalTo("hheelllloo".getBytes(StandardCharsets.US_ASCII).toVector)))),
       testM("failure on input stream")(
-        assertM(runAsyncRequestInputOutputRequest(failOnInput = true))(
+        assertM(runAsyncRequestInputOutputRequest(failOnInput = true).run)(
           isAwsFailure
         )),
       testM("future fails before prepare")(
-        assertM(runAsyncRequestInputOutputRequest(SimulatedAsyncResponseTransformer.FailureSpec(failBeforePrepare = Some(SimulatedException))))(
+        assertM(runAsyncRequestInputOutputRequest(SimulatedAsyncResponseTransformer.FailureSpec(failBeforePrepare = Some(SimulatedException))).run)(
           isAwsFailure
         )),
       testM("report exception on transformer before stream")(
-        assertM(runAsyncRequestInputOutputRequest(SimulatedAsyncResponseTransformer.FailureSpec(failTransformerBeforeStream = Some(SimulatedException))))(
+        assertM(runAsyncRequestInputOutputRequest(SimulatedAsyncResponseTransformer.FailureSpec(failTransformerBeforeStream = Some(SimulatedException))).run)(
           isAwsFailure
         )),
       testM("report exception on transformer after stream")(
-        assertM(runAsyncRequestInputOutputRequest(SimulatedAsyncResponseTransformer.FailureSpec(failTransformerAfterStream = Some(SimulatedException))))(
+        assertM(runAsyncRequestInputOutputRequest(SimulatedAsyncResponseTransformer.FailureSpec(failTransformerAfterStream = Some(SimulatedException))).run)(
           isAwsFailure
         )
       ),
       testM("report exception on stream")(
-        assertM(runAsyncRequestInputOutputRequest(failOnStream = Some(SimulatedException)))(
+        assertM(runAsyncRequestInputOutputRequest(failOnStream = Some(SimulatedException)).run)(
           isAwsFailure
         )
       ),
       testM("fail future after stream")(
-        assertM(runAsyncRequestInputOutputRequest(SimulatedAsyncResponseTransformer.FailureSpec(failFutureAfterStream = Some(SimulatedException))))(
+        assertM(runAsyncRequestInputOutputRequest(SimulatedAsyncResponseTransformer.FailureSpec(failFutureAfterStream = Some(SimulatedException))).run)(
           isAwsFailure
         )
       ),
     ),
 
-    testM("asyncRequestEventOutputStream") {
-      val fakeAwsCall: (String, EventStreamResponseHandler[Int, Char]) => CompletableFuture[Void] = { (in, responseHandler) =>
-        val cf = new CompletableFuture[Void]()
-        threadPool.submit(new Runnable {
-          override def run(): Unit = {
-            cf.complete(null.asInstanceOf[Void])
-            responseHandler.responseReceived(in.length)
-            responseHandler.onEventStream(SimulatedPublisher.createCharPublisher(in))
-            responseHandler.complete()
+    suite("asyncRequestEventOutputStream")(
+      testM("success") {
+        assertM(runAsyncRequestEventOutputStream())(equalTo("hello"))
+      },
+      testM("response can go later than stream starts") {
+        import SimulatedEventStreamResponseHandlerReceiver._
+        assertM(runAsyncRequestEventOutputStream(
+          handlerSteps = List(
+            CompleteFuture,
+            EventStream,
+            ResponseReceived,
+          )
+        ).map(_.mkString))(equalTo("hello"))
+      },
+      testM("future can be completed later") {
+        import SimulatedEventStreamResponseHandlerReceiver._
+        assertM(runAsyncRequestEventOutputStream(
+          handlerSteps = List(
+            EventStream,
+            ResponseReceived,
+            CompleteFuture,
+          )
+        ).map(_.mkString))(equalTo("hello"))
+      },
+      testM("exception before stream") {
+        import SimulatedEventStreamResponseHandlerReceiver._
+        assertM(runAsyncRequestEventOutputStream(
+          handlerSteps = List(
+            ResponseReceived,
+            ReportException(SimulatedException),
+            EventStream,
+            CompleteFuture,
+          )
+        ).run)(isAwsFailure)
+      },
+      testM("exception after stream") {
+        import SimulatedEventStreamResponseHandlerReceiver._
+        assertM(runAsyncRequestEventOutputStream(
+          handlerSteps = List(
+            ResponseReceived,
+            EventStream,
+            ReportException(SimulatedException),
+            CompleteFuture,
+          )
+        ).run)(isAwsFailure)
+      },
+      testM("failed future before stream") {
+        import SimulatedEventStreamResponseHandlerReceiver._
+        assertM(runAsyncRequestEventOutputStream(
+          handlerSteps = List(
+            FailFuture(SimulatedException),
+            ResponseReceived,
+            EventStream,
+          )
+        ).run)(isAwsFailure)
+      },
+      testM("failed future after stream") {
+        import SimulatedEventStreamResponseHandlerReceiver._
+        assertM(runAsyncRequestEventOutputStream(
+          handlerSteps = List(
+            ResponseReceived,
+            EventStream,
+            FailFuture(SimulatedException),
+          )
+        ).run)(isAwsFailure)
+      },
+      testM("publisher fail before subscribe")(
+        assertM(runAsyncRequestEventOutputStream(
+          publisherSteps = in => SimulatedPublisher.Error(SimulatedException) :: SimulatedPublisher.correctSequence(in)
+        ).run)(isAwsFailure)),
+      testM("publisher fail during emit")(
+        assertM(runAsyncRequestEventOutputStream(
+          publisherSteps = in => SimulatedPublisher.correctSequence(in).splitAt(3) match {
+            case (a, b) => a ::: List(SimulatedPublisher.Error(SimulatedException)) ::: b
           }
-        })
-        cf
-      }
+        ).run)(isAwsFailure)),
+      testM("publisher fail before complete")(
+        assertM(runAsyncRequestEventOutputStream(
+          publisherSteps = in => SimulatedPublisher.correctSequence(in).init ::: List(SimulatedPublisher.Error(SimulatedException), SimulatedPublisher.Complete)
+        ).run)(isAwsFailure)),
+      testM("publisher fail with no complete after")(
+        assertM(runAsyncRequestEventOutputStream(
+          publisherSteps = in => SimulatedPublisher.correctSequence(in).init ::: List(SimulatedPublisher.Error(SimulatedException))
+        ).run)(isAwsFailure)),
+      testM("publisher complete before subscribe is empty result")(
+        assertM(runAsyncRequestEventOutputStream(
+          publisherSteps = in => SimulatedPublisher.Complete :: SimulatedPublisher.correctSequence(in)
+        ))(equalTo("")))
+    ),
 
-      asyncRequestEventOutputStream[String, Int, EventStreamResponseHandler[Int, Char], Char, Char](
-        fakeAwsCall,
-        identity)("hello")
-        .runCollect
-        .map { result =>
-          assert(result.mkString)(equalTo("hello"))
-        }
-    },
+    suite("asyncRequestEventInputStream")(
+      testM("success") {
+        assertM(runAsyncRequestEventInputStream())(equalTo("helloworld"))
+      },
+      testM("failure on input stream") {
+        assertM(runAsyncRequestEventInputStream(failInput = true).run)(isAwsFailure)
+      },
+    ),
 
-    testM("asyncRequestEventInputStream") {
-      val fakeAwsCall: (String, Publisher[Char]) => CompletableFuture[String] = {
-        (prefix, publisher) =>
-
-          val cf = new CompletableFuture[String]()
-          threadPool.submit(new Runnable {
-            override def run(): Unit = {
-              publisher.subscribe(new Subscriber[Char] {
-                val builder = new StringBuilder(prefix)
-
-                override def onSubscribe(s: Subscription): Unit = {
-                  s.request(100)
-                }
-
-                override def onNext(t: Char): Unit = {
-                  builder.append(t)
-                }
-
-                override def onError(t: Throwable): Unit =
-                  cf.completeExceptionally(t)
-
-                override def onComplete(): Unit =
-                  cf.complete(builder.toString)
-              })
-            }
-          })
-          cf
-      }
-
-      for {
-        result <- asyncRequestEventInputStream(fakeAwsCall)("hello", ZStream.fromIterable("world"))
-      } yield assert(result)(equalTo("helloworld"))
-    },
-
-    testM("asyncRequestEventInputOutputStream") {
-      val fakeAwsCall: (String, Publisher[Char], EventStreamResponseHandler[Int, Char]) => CompletableFuture[Void] = {
-        (in, publisher, responseHandler) =>
-
-          val cf = new CompletableFuture[Void]()
-          threadPool.submit(new Runnable {
-            override def run(): Unit = {
-              publisher.subscribe(new Subscriber[Char] {
-                val builder = new StringBuilder(in)
-
-                override def onSubscribe(s: Subscription): Unit = {
-                  s.request(100)
-                }
-
-                override def onNext(t: Char): Unit = {
-                  builder.append(t)
-                }
-
-                override def onError(t: Throwable): Unit =
-                  cf.completeExceptionally(t)
-
-                override def onComplete(): Unit = {
-                  cf.complete(null.asInstanceOf[Void])
-
-                  responseHandler.responseReceived(builder.length)
-                  responseHandler.onEventStream(SimulatedPublisher.createCharPublisher(builder.toString()))
-                  responseHandler.complete()
-                }
-              })
-            }
-          })
-          cf
-      }
-
-      asyncRequestEventInputOutputStream[String, Int, Char, EventStreamResponseHandler[Int, Char], Char, Char](
-        fakeAwsCall,
-        identity)("hello", ZStream.fromIterable("world"))
-        .runCollect
-        .map { result =>
-          assert(result.mkString)(equalTo("helloworld"))
-        }
-    }
+    suite("asyncRequestEventInputOutputStream")(
+      testM("success") {
+        assertM(runAsyncRequestEventInputOutputStream())(equalTo("helloworld"))
+      },
+      testM("failure on input stream") {
+        assertM(runAsyncRequestEventInputOutputStream(failInput = true).run)(isAwsFailure)
+      },
+      testM("response can go later than stream starts") {
+        import SimulatedEventStreamResponseHandlerReceiver._
+        assertM(runAsyncRequestEventInputOutputStream(
+          handlerSteps = List(
+            CompleteFuture,
+            EventStream,
+            ResponseReceived,
+          )
+        ).map(_.mkString))(equalTo("helloworld"))
+      },
+      testM("future can be completed later") {
+        import SimulatedEventStreamResponseHandlerReceiver._
+        assertM(runAsyncRequestEventInputOutputStream(
+          handlerSteps = List(
+            EventStream,
+            ResponseReceived,
+            CompleteFuture,
+          )
+        ).map(_.mkString))(equalTo("helloworld"))
+      },
+      testM("exception before stream") {
+        import SimulatedEventStreamResponseHandlerReceiver._
+        assertM(runAsyncRequestEventInputOutputStream(
+          handlerSteps = List(
+            ResponseReceived,
+            ReportException(SimulatedException),
+            EventStream,
+            CompleteFuture,
+          )
+        ).run)(isAwsFailure)
+      },
+      testM("exception after stream") {
+        import SimulatedEventStreamResponseHandlerReceiver._
+        assertM(runAsyncRequestEventInputOutputStream(
+          handlerSteps = List(
+            ResponseReceived,
+            EventStream,
+            ReportException(SimulatedException),
+            CompleteFuture,
+          )
+        ).run)(isAwsFailure)
+      },
+      testM("failed future before stream") {
+        import SimulatedEventStreamResponseHandlerReceiver._
+        assertM(runAsyncRequestEventInputOutputStream(
+          handlerSteps = List(
+            FailFuture(SimulatedException),
+            ResponseReceived,
+            EventStream,
+          )
+        ).run)(isAwsFailure)
+      },
+      testM("failed future after stream") {
+        import SimulatedEventStreamResponseHandlerReceiver._
+        assertM(runAsyncRequestEventInputOutputStream(
+          handlerSteps = List(
+            ResponseReceived,
+            EventStream,
+            FailFuture(SimulatedException),
+          )
+        ).run)(isAwsFailure)
+      },
+      testM("publisher fail before subscribe")(
+        assertM(runAsyncRequestEventInputOutputStream(
+          publisherSteps = in => SimulatedPublisher.Error(SimulatedException) :: SimulatedPublisher.correctSequence(in)
+        ).run)(isAwsFailure)),
+      testM("publisher fail during emit")(
+        assertM(runAsyncRequestEventInputOutputStream(
+          publisherSteps = in => SimulatedPublisher.correctSequence(in).splitAt(3) match {
+            case (a, b) => a ::: List(SimulatedPublisher.Error(SimulatedException)) ::: b
+          }
+        ).run)(isAwsFailure)),
+      testM("publisher fail before complete")(
+        assertM(runAsyncRequestEventInputOutputStream(
+          publisherSteps = in => SimulatedPublisher.correctSequence(in).init ::: List(SimulatedPublisher.Error(SimulatedException), SimulatedPublisher.Complete)
+        ).run)(isAwsFailure)),
+      testM("publisher fail with no complete after")(
+        assertM(runAsyncRequestEventInputOutputStream(
+          publisherSteps = in => SimulatedPublisher.correctSequence(in).init ::: List(SimulatedPublisher.Error(SimulatedException))
+        ).run)(isAwsFailure)),
+      testM("publisher complete before subscribe is empty result")(
+        assertM(runAsyncRequestEventInputOutputStream(
+          publisherSteps = in => SimulatedPublisher.Complete :: SimulatedPublisher.correctSequence(in)
+        ))(equalTo("")))
+    )
   )
 
   private def runAsyncRequestInputOutputRequest(failureSpec: SimulatedAsyncResponseTransformer.FailureSpec = SimulatedAsyncResponseTransformer.FailureSpec(),
                                                 failOnInput: Boolean = false,
-                                                failOnStream: Option[Throwable] = None): ZIO[Any, AwsError, Exit[AwsError, (StreamingOutputResult[Int], Vector[Byte])]] = {
+                                                failOnStream: Option[Throwable] = None): ZIO[Any, AwsError, (StreamingOutputResult[Int], Vector[Byte])] = {
     val fakeAwsCall: (Int, AsyncRequestBody, AsyncResponseTransformer[Int, Task[StreamingOutputResult[Int]]]) => CompletableFuture[Task[StreamingOutputResult[Int]]] =
       (multipler, asyncBody, transformer) =>
         SimulatedAsyncBodyReceiver.useAsyncBody[Task[StreamingOutputResult[Int]]](
@@ -302,21 +389,19 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with AwsServiceBase {
           }
         )(threadPool)(multipler, asyncBody)
 
-    val req = for {
+    for {
       result <- asyncRequestInputOutputStream(fakeAwsCall)(2, if (failOnInput) testByteStreamWithFailure else testByteStream)
       streamResult <- result.output.runCollect.map(_.toVector)
     } yield (result, streamResult)
-    req.run
   }
 
-  private def runAsyncPaginatedRequest(simulation: Chunk[Char] => List[SimulatedPublisher.Action]): URIO[Any, Exit[AwsError, Chunk[Char]]] = {
+  private def runAsyncPaginatedRequest(simulation: Chunk[Char] => List[SimulatedPublisher.Action]): ZIO[Any, AwsError, Chunk[Char]] = {
     val fakeAwsCall: String => Publisher[Char] = { in =>
       SimulatedPublisher.createCharPublisher(in, simulation)
     }
 
     asyncPaginatedRequest[String, Char, Publisher[Char]](fakeAwsCall, identity)("hello")
       .runCollect
-      .run
   }
 
   private def runAsyncRequestOutput(failureSpec: SimulatedAsyncResponseTransformer.FailureSpec = SimulatedAsyncResponseTransformer.FailureSpec(),
@@ -344,6 +429,119 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with AwsServiceBase {
       streamResult <- result.output.runCollect.map(_.toVector)
     } yield (result, streamResult)
     req.run
+  }
+
+  private def runAsyncRequestEventOutputStream(publisherSteps: Chunk[Char] => List[SimulatedPublisher.Action] = SimulatedPublisher.correctSequence,
+                                               handlerSteps: List[SimulatedEventStreamResponseHandlerReceiver.Action] = SimulatedEventStreamResponseHandlerReceiver.defaultSteps): ZIO[Any, AwsError, String] = {
+    val fakeAwsCall = (in: String, responseHandler: EventStreamResponseHandler[Int, Char]) =>
+      SimulatedEventStreamResponseHandlerReceiver.useEventStreamResponseHandler[String, Int, Char](
+        in,
+        responseHandler,
+        _.length,
+        (in, onComplete) => SimulatedPublisher.createCharPublisher(in, publisherSteps, onComplete),
+        handlerSteps
+      )
+
+    asyncRequestEventOutputStream[String, Int, EventStreamResponseHandler[Int, Char], Char, Char](
+      fakeAwsCall,
+      identity)("hello")
+      .runCollect
+      .map(_.mkString)
+  }
+
+  private def runAsyncRequestEventInputStream(failInput: Boolean = false): IO[AwsError, String] = {
+    val fakeAwsCall: (String, Publisher[Char]) => CompletableFuture[String] = {
+      (prefix, publisher) =>
+
+        val cf = new CompletableFuture[String]()
+        threadPool.submit(new Runnable {
+          override def run(): Unit = {
+            publisher.subscribe(new Subscriber[Char] {
+              val builder = new StringBuilder(prefix)
+
+              override def onSubscribe(s: Subscription): Unit = {
+                s.request(100)
+              }
+
+              override def onNext(t: Char): Unit = {
+                builder.append(t)
+              }
+
+              override def onError(t: Throwable): Unit =
+                cf.completeExceptionally(t)
+
+              override def onComplete(): Unit =
+                cf.complete(builder.toString)
+            })
+          }
+        })
+        cf
+    }
+
+    asyncRequestEventInputStream(fakeAwsCall)(
+      "hello",
+      testCharStream(failInput)
+    )
+  }
+
+  private def testCharStream(failInput: Boolean) = {
+    if (failInput) {
+      ZStream
+        .fromIterable("world")
+        .chunkN(2)
+        .concat(ZStream.fail(GenericAwsError(SimulatedException)))
+    } else {
+      ZStream
+        .fromIterable("world")
+        .chunkN(2)
+    }
+  }
+
+  private def runAsyncRequestEventInputOutputStream(publisherSteps: Chunk[Char] => List[SimulatedPublisher.Action] = SimulatedPublisher.correctSequence,
+                                                    handlerSteps: List[SimulatedEventStreamResponseHandlerReceiver.Action] = SimulatedEventStreamResponseHandlerReceiver.defaultSteps,
+                                                    failInput: Boolean = false): ZIO[Any, AwsError, String] = {
+    val fakeAwsCall: (String, Publisher[Char], EventStreamResponseHandler[Int, Char]) => CompletableFuture[Void] = {
+      (in, publisher, responseHandler) =>
+
+        val cf = new CompletableFuture[Void]()
+        threadPool.submit(new Runnable {
+          override def run(): Unit = {
+            publisher.subscribe(new Subscriber[Char] {
+              val builder = new StringBuilder(in)
+
+              override def onSubscribe(s: Subscription): Unit = {
+                s.request(100)
+              }
+
+              override def onNext(t: Char): Unit = {
+                builder.append(t)
+              }
+
+              override def onError(t: Throwable): Unit =
+                cf.completeExceptionally(t)
+
+              override def onComplete(): Unit = {
+                SimulatedEventStreamResponseHandlerReceiver.useEventStreamResponseHandlerImpl[String, Int, Char](
+                  cf,
+                  builder.toString(),
+                  responseHandler,
+                  _.length,
+                  (in, onComplete) => SimulatedPublisher.createCharPublisher(in, publisherSteps, onComplete),
+                  handlerSteps
+                )
+              }
+            })
+          }
+        })
+        cf
+    }
+
+
+    asyncRequestEventInputOutputStream[String, Int, Char, EventStreamResponseHandler[Int, Char], Char, Char](
+      fakeAwsCall,
+      identity)("hello", testCharStream(failInput))
+      .runCollect
+      .map(_.mkString)
   }
 
   private def isAwsFailure[A]: Assertion[Exit[AwsError, A]] = fails(equalTo(GenericAwsError(SimulatedException)))

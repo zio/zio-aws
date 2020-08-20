@@ -8,7 +8,7 @@ import software.amazon.awssdk.core.async.{AsyncResponseTransformer, SdkPublisher
 import zio.Task
 
 object SimulatedAsyncResponseTransformer {
-  private def slowDown(): Unit = Thread.sleep(250)
+  private def slowDown(): Unit = Thread.sleep(100) // slow down a bit to have a better chance to find issues
 
   case class FailureSpec(failBeforePrepare: Option[Throwable] = None,
                          failTransformerBeforeStream: Option[Throwable] = None,

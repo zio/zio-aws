@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import org.reactivestreams.{Subscriber, Subscription}
 import software.amazon.awssdk.core.async.SdkPublisher
-import zio.Chunk
+import zio.{Chunk, Promise}
 
 import scala.annotation.tailrec
 import scala.collection.mutable
@@ -109,7 +109,8 @@ object SimulatedPublisher {
 
   def createSimulatedPublisher[InElem, OutElem](in: Chunk[InElem],
                                                 convert: InElem => OutElem,
-                                                simulation: List[Action]): SdkPublisher[OutElem] =
+                                                simulation: List[Action],
+                                                onComplete: () => Unit): SdkPublisher[OutElem] =
     new SdkPublisher[OutElem] {
       val idx: AtomicInteger = new AtomicInteger(0)
 
@@ -129,28 +130,37 @@ object SimulatedPublisher {
             }
             if (idx.get() == in.length) {
               wrapped.onComplete()
+              onComplete()
             }
           }
 
-          override def cancel(): Unit =
+          override def cancel(): Unit = {
             wrapped.onComplete()
+            onComplete()
+          }
         })
       }
     }
 
-  def createStringByteBufferPublisher(in: String, simulation: Chunk[Byte] => List[Action] = correctSequence): SdkPublisher[ByteBuffer] = {
+  def createStringByteBufferPublisher(in: String,
+                                      simulation: Chunk[Byte] => List[Action] = correctSequence,
+                                      onComplete: () => Unit = () => {}): SdkPublisher[ByteBuffer] = {
     val inChunk = Chunk.fromArray(in.getBytes(StandardCharsets.US_ASCII))
     createSimulatedPublisher[Byte, ByteBuffer](
       inChunk,
       b => ByteBuffer.wrap(Array(b)),
-      simulation(inChunk))
+      simulation(inChunk),
+      onComplete)
   }
 
-  def createCharPublisher(in: String, simulation: Chunk[Char] => List[Action] = correctSequence): SdkPublisher[Char] = {
+  def createCharPublisher(in: String,
+                          simulation: Chunk[Char] => List[Action] = correctSequence,
+                          onComplete: () => Unit = () => {}): SdkPublisher[Char] = {
     val inChunk = Chunk.fromIterable(in)
     createSimulatedPublisher[Char, Char](
       inChunk,
       identity,
-      simulation(inChunk))
+      simulation(inChunk),
+      onComplete)
   }
 }
