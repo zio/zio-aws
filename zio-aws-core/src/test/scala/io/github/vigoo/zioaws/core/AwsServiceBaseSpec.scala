@@ -153,7 +153,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with AwsServiceBase {
                   cf.completeExceptionally(t)
 
                 override def onComplete(): Unit = {
-                  transformer.prepare().thenApply { result =>
+                  transformer.prepare().thenApply[Boolean] { (result: Task[StreamingOutputResult[Int]]) =>
                     transformer.onResponse(buffer.length)
                     transformer.onStream(SimulatedPublisher.createStringByteBufferPublisher(
                       new String(
