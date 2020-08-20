@@ -117,73 +117,59 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with AwsServiceBase {
     ),
     suite("asyncRequestInputStream")(
       testM("success") {
-        val fakeAwsCall = SimulatedAsyncBodyReceiver.useAsyncBody()
+        val fakeAwsCall = SimulatedAsyncBodyReceiver.useAsyncBody[Int]((in, cf, buffer) => cf.complete(in * buffer.length))
 
         for {
-          result <- asyncRequestInputStream(fakeAwsCall)(
-            2,
-            ZStream
-              .fromIterable("hello".getBytes(StandardCharsets.US_ASCII))
-              .chunkN(2))
+          result <- asyncRequestInputStream(fakeAwsCall)(2, testByteStream)
         } yield assert(result)(equalTo(10))
       },
 
       testM("failure on input stream") {
-        val fakeAwsCall = SimulatedAsyncBodyReceiver.useAsyncBody()
+        val fakeAwsCall = SimulatedAsyncBodyReceiver.useAsyncBody[Int]((in, cf, buffer) => cf.complete(in * buffer.length))
 
         for {
-          result <- asyncRequestInputStream(fakeAwsCall)(
-            2,
-            ZStream
-              .fromIterable("hello".getBytes(StandardCharsets.US_ASCII))
-              .chunkN(2)
-              .concat(ZStream.fail(GenericAwsError(SimulatedException)))).run
+          result <- asyncRequestInputStream(fakeAwsCall)(2, testByteStreamWithFailure).run
         } yield assert(result)(isAwsFailure)
       }
     ),
 
-    testM("asyncRequestInputOutputStream") {
-      val fakeAwsCall: (Int, AsyncRequestBody, AsyncResponseTransformer[Int, Task[StreamingOutputResult[Int]]]) => CompletableFuture[Task[StreamingOutputResult[Int]]] = {
-        (multipler, asyncBody, transformer) =>
-
-          val cf = new CompletableFuture[Task[StreamingOutputResult[Int]]]()
-          threadPool.submit(new Runnable {
-            override def run(): Unit = {
-              asyncBody.subscribe(new Subscriber[ByteBuffer] {
-                val buffer = new ArrayBuffer[Byte]()
-
-                override def onSubscribe(s: Subscription): Unit =
-                  s.request(100)
-
-                override def onNext(t: ByteBuffer): Unit =
-                  buffer.appendAll(t.array())
-
-                override def onError(t: Throwable): Unit =
-                  cf.completeExceptionally(t)
-
-                override def onComplete(): Unit = {
-                  transformer.prepare().thenApply[Boolean] { (result: Task[StreamingOutputResult[Int]]) =>
-                    transformer.onResponse(buffer.length)
-                    transformer.onStream(SimulatedPublisher.createStringByteBufferPublisher(
-                      new String(
-                        buffer.toVector.flatMap(b => (0 until multipler).toVector.map(_ => b)).toArray,
-                        StandardCharsets.US_ASCII)))
-                    cf.complete(result)
-                  }
-                }
-              })
-            }
-          })
-          cf
-      }
-
-
-      for {
-        result <- asyncRequestInputOutputStream(fakeAwsCall)(2, ZStream.fromIterable("hello".getBytes(StandardCharsets.US_ASCII)))
-        streamResult <- result.output.runCollect.map(_.toVector)
-      } yield assert(streamResult)(equalTo("hheelllloo".getBytes(StandardCharsets.US_ASCII).toVector)) &&
-        assert(result.response)(equalTo(5))
-    },
+    suite("asyncRequestInputOutputStream")(
+      testM("success")(
+        assertM(runAsyncRequestInputOutputRequest())(isCase(
+          "Success", {
+            case Exit.Success(value) => Some(Exit.Success(value))
+            case _ => None
+          },
+          hasField[Exit.Success[(StreamingOutputResult[Int], Vector[Byte])], Int]("1", _.value._1.response, equalTo(5)) &&
+            hasField[Exit.Success[(StreamingOutputResult[Int], Vector[Byte])], Vector[Byte]]("2", _.value._2, equalTo("hheelllloo".getBytes(StandardCharsets.US_ASCII).toVector))))),
+      testM("failure on input stream")(
+        assertM(runAsyncRequestInputOutputRequest(failOnInput = true))(
+          isAwsFailure
+        )),
+      testM("future fails before prepare")(
+        assertM(runAsyncRequestInputOutputRequest(SimulatedAsyncResponseTransformer.FailureSpec(failBeforePrepare = Some(SimulatedException))))(
+          isAwsFailure
+        )),
+      testM("report exception on transformer before stream")(
+        assertM(runAsyncRequestInputOutputRequest(SimulatedAsyncResponseTransformer.FailureSpec(failTransformerBeforeStream = Some(SimulatedException))))(
+          isAwsFailure
+        )),
+      testM("report exception on transformer after stream")(
+        assertM(runAsyncRequestInputOutputRequest(SimulatedAsyncResponseTransformer.FailureSpec(failTransformerAfterStream = Some(SimulatedException))))(
+          isAwsFailure
+        )
+      ),
+      testM("report exception on stream")(
+        assertM(runAsyncRequestInputOutputRequest(failOnStream = Some(SimulatedException)))(
+          isAwsFailure
+        )
+      ),
+      testM("fail future after stream")(
+        assertM(runAsyncRequestInputOutputRequest(SimulatedAsyncResponseTransformer.FailureSpec(failFutureAfterStream = Some(SimulatedException))))(
+          isAwsFailure
+        )
+      ),
+    ),
 
     testM("asyncRequestEventOutputStream") {
       val fakeAwsCall: (String, EventStreamResponseHandler[Int, Char]) => CompletableFuture[Void] = { (in, responseHandler) =>
@@ -286,6 +272,43 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with AwsServiceBase {
     }
   )
 
+  private def runAsyncRequestInputOutputRequest(failureSpec: SimulatedAsyncResponseTransformer.FailureSpec = SimulatedAsyncResponseTransformer.FailureSpec(),
+                                                failOnInput: Boolean = false,
+                                                failOnStream: Option[Throwable] = None): ZIO[Any, AwsError, Exit[AwsError, (StreamingOutputResult[Int], Vector[Byte])]] = {
+    val fakeAwsCall: (Int, AsyncRequestBody, AsyncResponseTransformer[Int, Task[StreamingOutputResult[Int]]]) => CompletableFuture[Task[StreamingOutputResult[Int]]] =
+      (multipler, asyncBody, transformer) =>
+        SimulatedAsyncBodyReceiver.useAsyncBody[Task[StreamingOutputResult[Int]]](
+          (in, cf, buffer) => {
+            SimulatedAsyncResponseTransformer.useAsyncResponseTransformerImpl[Int, ArrayBuffer[Byte]](
+              buffer,
+              transformer,
+              _.length,
+              buf => SimulatedPublisher.createStringByteBufferPublisher(
+                new String(
+                  buf.toVector.flatMap(b => (0 until in).toVector.map(_ => b)).toArray,
+                  StandardCharsets.US_ASCII),
+                inChunk => failOnStream match {
+                  case Some(throwable) =>
+                    SimulatedPublisher.correctSequence(inChunk).splitAt(3) match {
+                      case (a, b) => a ::: List(SimulatedPublisher.Error(throwable)) ::: b
+                    }
+                  case None =>
+                    SimulatedPublisher.correctSequence(inChunk)
+                }
+              ),
+              failureSpec,
+              cf
+            )
+          }
+        )(threadPool)(multipler, asyncBody)
+
+    val req = for {
+      result <- asyncRequestInputOutputStream(fakeAwsCall)(2, if (failOnInput) testByteStreamWithFailure else testByteStream)
+      streamResult <- result.output.runCollect.map(_.toVector)
+    } yield (result, streamResult)
+    req.run
+  }
+
   private def runAsyncPaginatedRequest(simulation: Chunk[Char] => List[SimulatedPublisher.Action]): URIO[Any, Exit[AwsError, Chunk[Char]]] = {
     val fakeAwsCall: String => Publisher[Char] = { in =>
       SimulatedPublisher.createCharPublisher(in, simulation)
@@ -324,4 +347,15 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with AwsServiceBase {
   }
 
   private def isAwsFailure[A]: Assertion[Exit[AwsError, A]] = fails(equalTo(GenericAwsError(SimulatedException)))
+
+  private val testByteStream =
+    ZStream
+      .fromIterable("hello".getBytes(StandardCharsets.US_ASCII))
+      .chunkN(2)
+
+  private val testByteStreamWithFailure =
+    ZStream
+      .fromIterable("hello".getBytes(StandardCharsets.US_ASCII))
+      .chunkN(2)
+      .concat(ZStream.fail(GenericAwsError(SimulatedException)))
 }
