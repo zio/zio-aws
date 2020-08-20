@@ -31,7 +31,7 @@ class ZStreamAsyncResponseTransformer[Response](resultStreamPromise: Promise[Thr
       resultStreamPromise.complete(errorPromise.poll.flatMap { opt =>
         opt.getOrElse(ZIO.unit) *> ZIO.effect(
           publisher
-            .toStream(4)
+            .toStream()
             .interruptWhen(errorPromise)
             .map(Chunk.fromByteBuffer)
             .flattenChunks
