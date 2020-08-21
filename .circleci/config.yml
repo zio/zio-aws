@@ -28,10 +28,10 @@ jobs:
 workflows:
   build:
     jobs:
-      - build_all
+      - build_all:
           name: 2.12.12
           version: 2.12.12
-      - build_all
+      - build_all:
           name: 2.13.3
           version: 2.13.3
 
