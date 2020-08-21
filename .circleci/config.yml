@@ -35,3 +35,11 @@ jobs:
     <<: *env
     <<: *scala212
     <<: *build_all    
+
+workflows:
+  build:
+    jobs:
+      - build_212
+      - build_213
+
+  
