@@ -19,11 +19,11 @@ jobs:
     <<: *env
     steps:
       - checkout
-      - run: cat /dev/null | sbt ++${SCALA_VERSION}! clean test publishLocalAll  
+      - run: cat /dev/null | sbt ++<< parameters.scala_version >> clean test publishLocalAll  
       - run:
           command: |
             cd examples
-            cat /dev/null | sbt ++${SCALA_VERSION}! compile
+            cat /dev/null | sbt ++<< parameters.scala_version >> compile
 
 workflows:
   build:
