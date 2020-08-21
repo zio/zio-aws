@@ -12,7 +12,7 @@ env: &env
 jobs:
   build_all:
     parameters:
-      version:
+      scala_version:
         description: "Scala version"
         default: 2.13.3
         type: string
@@ -30,8 +30,8 @@ workflows:
     jobs:
       - build_all:
           name: 2.12.12
-          version: 2.12.12
+          scala_version: 2.12.12
       - build_all:
           name: 2.13.3
-          version: 2.13.3
+          scala_version: 2.13.3
 
