@@ -180,12 +180,12 @@ trait ServiceInterfaceGenerator {
     ZIO.succeed(ServiceMethods(
       ServiceMethod(
         interface =
-          q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Byte]): IO[AwsError, StreamingOutputResult[$responseTypeRo]]""",
+          q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Byte]): IO[AwsError, StreamingOutputResult[$responseTypeRo, Byte]]""",
         implementation =
-          q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Byte]): IO[AwsError, StreamingOutputResult[$responseTypeRo]] =
-                asyncRequestInputOutputStream[$modelPkg.$requestName, $modelPkg.$responseName](api.$methodName[zio.Task[StreamingOutputResult[$modelPkg.$responseName]]])(request.buildAwsValue(), body).map(_.map($responseNameTerm.wrap))""",
+          q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Byte]): IO[AwsError, StreamingOutputResult[$responseTypeRo, Byte]] =
+                asyncRequestInputOutputStream[$modelPkg.$requestName, $modelPkg.$responseName](api.$methodName[zio.Task[StreamingOutputResult[$modelPkg.$responseName, Byte]]])(request.buildAwsValue(), body).map(_.mapResponse($responseNameTerm.wrap))""",
         accessor =
-          q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Byte]): ZIO[$serviceNameT, AwsError, StreamingOutputResult[$responseTypeRo]] =
+          q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Byte]): ZIO[$serviceNameT, AwsError, StreamingOutputResult[$responseTypeRo, Byte]] =
                 ZIO.accessM(_.get.$methodName(request, body))"""
       )))
   }
@@ -194,12 +194,12 @@ trait ServiceInterfaceGenerator {
     ZIO.succeed(ServiceMethods(
       ServiceMethod(
         interface =
-          q"""def $methodName(request: $requestName): IO[AwsError, StreamingOutputResult[$responseTypeRo]]""",
+          q"""def $methodName(request: $requestName): IO[AwsError, StreamingOutputResult[$responseTypeRo, Byte]]""",
         implementation =
-          q"""def $methodName(request: $requestName): IO[AwsError, StreamingOutputResult[$responseTypeRo]] =
-                asyncRequestOutputStream[$modelPkg.$requestName, $modelPkg.$responseName](api.$methodName[zio.Task[StreamingOutputResult[$modelPkg.$responseName]]])(request.buildAwsValue()).map(_.map($responseNameTerm.wrap))""",
+          q"""def $methodName(request: $requestName): IO[AwsError, StreamingOutputResult[$responseTypeRo, Byte]] =
+                asyncRequestOutputStream[$modelPkg.$requestName, $modelPkg.$responseName](api.$methodName[zio.Task[StreamingOutputResult[$modelPkg.$responseName, Byte]]])(request.buildAwsValue()).map(_.mapResponse($responseNameTerm.wrap))""",
         accessor =
-          q"""def $methodName(request: $requestName): ZIO[$serviceNameT, AwsError, StreamingOutputResult[$responseTypeRo]] =
+          q"""def $methodName(request: $requestName): ZIO[$serviceNameT, AwsError, StreamingOutputResult[$responseTypeRo, Byte]] =
                 ZIO.accessM(_.get.$methodName(request))"""
       )))
   }
@@ -219,39 +219,178 @@ trait ServiceInterfaceGenerator {
   }
 
   private def generateRequestToResponse(opName: String, serviceNameT: Type.Name, methodName: Term.Name, requestName: Type.Name, responseName: Type.Name, responseNameTerm: Term.Name, responseTypeRo: Type.Select, modelPkg: Term.Ref, pagination: Option[PaginationDefinition]) = {
-    val raw = ServiceMethod(
-      interface =
-        q"""def $methodName(request: $requestName): IO[AwsError, $responseTypeRo]""",
-      implementation =
-        q"""def $methodName(request: $requestName): IO[AwsError, $responseTypeRo] =
-              asyncRequestResponse[$modelPkg.$requestName, $modelPkg.$responseName](api.$methodName)(request.buildAwsValue()).map($responseNameTerm.wrap)""",
-      accessor =
-        q"""def $methodName(request: $requestName): ZIO[$serviceNameT, AwsError, $responseTypeRo] =
-              ZIO.accessM(_.get.$methodName(request))"""
-    )
     pagination match {
-      case Some(pagination) =>
+      case Some(JavaSdkPaginationDefinition(paginationName, itemModel, _, wrappedItemType)) =>
         for {
           paginatorPkg <- getPaginatorPkg
-          methodNameStream = Term.Name(methodName.value + "Stream")
-          wrappedItemType = pagination.wrappedTypeRo
           paginatorMethodName = Term.Name(methodName.value + "Paginator")
           publisherType = Type.Name(opName + "Publisher")
-          wrappedItem <- wrapSdkValue(pagination.model, Term.Name("item"))
-          awsItemType <- TypeMapping.toJavaType(pagination.model)
+          wrappedItem <- wrapSdkValue(itemModel, Term.Name("item"))
+          awsItemType <- TypeMapping.toJavaType(itemModel)
           streamedPaginator = ServiceMethod(
             interface =
-              q"""def $methodNameStream(request: $requestName): zio.stream.ZStream[Any, AwsError, $wrappedItemType]""",
+              q"""def $methodName(request: $requestName): zio.stream.ZStream[Any, AwsError, $wrappedItemType]""",
             implementation =
-              q"""def $methodNameStream(request: $requestName): zio.stream.ZStream[Any, AwsError, $wrappedItemType] =
-                                      asyncPaginatedRequest[$modelPkg.$requestName, $awsItemType, $paginatorPkg.$publisherType](api.$paginatorMethodName, _.${Term.Name(pagination.name.uncapitalize)}())(request.buildAwsValue()).map(item => $wrappedItem)""",
+              q"""def $methodName(request: $requestName): zio.stream.ZStream[Any, AwsError, $wrappedItemType] =
+                    asyncJavaPaginatedRequest[$modelPkg.$requestName, $awsItemType, $paginatorPkg.$publisherType](api.$paginatorMethodName, _.${Term.Name(paginationName.uncapitalize)}())(request.buildAwsValue()).map(item => $wrappedItem)""",
             accessor =
-              q"""def $methodNameStream(request: $requestName): zio.stream.ZStream[$serviceNameT, AwsError, $wrappedItemType] =
-                                      ZStream.accessStream(_.get.$methodNameStream(request))"""
+              q"""def $methodName(request: $requestName): zio.stream.ZStream[$serviceNameT, AwsError, $wrappedItemType] =
+                    ZStream.accessStream(_.get.$methodName(request))"""
           )
-        } yield ServiceMethods(raw, streamedPaginator)
+        } yield ServiceMethods(streamedPaginator)
+      case Some(ListPaginationDefinition(memberName, listModel, itemModel, isSimple)) =>
+        for {
+          wrappedItem <- wrapSdkValue(itemModel, Term.Name("item"))
+          itemTypeRo <- TypeMapping.toWrappedTypeReadOnly(itemModel)
+          awsItemType <- TypeMapping.toJavaType(itemModel)
+          responseModel <- context.get(responseName.value)
+          property <- propertyName(responseModel, listModel, memberName)
+          propertyNameTerm = Term.Name(property)
+          streamedPaginator = if (isSimple) {
+            ServiceMethod(
+              interface =
+                q"""def $methodName(request: $requestName): ZStream[Any, AwsError, $itemTypeRo]""",
+              implementation =
+                q"""def $methodName(request: $requestName): ZStream[Any, AwsError, $itemTypeRo] =
+                    asyncSimplePaginatedRequest[$modelPkg.$requestName, $modelPkg.$responseName, $awsItemType](
+                      api.$methodName,
+                      (r, token) => r.toBuilder().nextToken(token).build(),
+                      r => Option(r.nextToken()),
+                      r => Chunk.fromIterable(r.$propertyNameTerm().asScala)
+                    )(request.buildAwsValue()).map(item => $wrappedItem)
+               """,
+              accessor =
+                q"""def $methodName(request: $requestName): ZStream[$serviceNameT, AwsError, $itemTypeRo] =
+                    ZStream.accessStream(_.get.$methodName(request))
+               """
+            )
+          } else {
+            ServiceMethod(
+              interface =
+                q"""def $methodName(request: $requestName): ZIO[Any, AwsError, StreamingOutputResult[$responseTypeRo, $itemTypeRo]]""",
+              implementation =
+                q"""def $methodName(request: $requestName): ZIO[Any, AwsError, StreamingOutputResult[$responseTypeRo, $itemTypeRo]] =
+                    asyncPaginatedRequest[$modelPkg.$requestName, $modelPkg.$responseName, $awsItemType](
+                      api.$methodName,
+                      (r, token) => r.toBuilder().nextToken(token).build(),
+                      r => Option(r.nextToken()),
+                      r => Chunk.fromIterable(r.$propertyNameTerm().asScala)
+                    )(request.buildAwsValue()).map(result => result.mapResponse($responseNameTerm.wrap).mapOutput(_.map(item => $wrappedItem)))
+               """,
+              accessor =
+                q"""def $methodName(request: $requestName): ZIO[$serviceNameT, AwsError, StreamingOutputResult[$responseTypeRo, $itemTypeRo]] =
+                    ZIO.accessM(_.get.$methodName(request))
+               """
+            )
+          }
+        } yield ServiceMethods(streamedPaginator)
+      case Some(MapPaginationDefinition(memberName, mapModel, keyModel, valueModel, isSimple)) =>
+        for {
+          wrappedKey <- wrapSdkValue(keyModel, Term.Name("key"))
+          keyTypeRo <- TypeMapping.toWrappedTypeReadOnly(keyModel)
+          awsKeyType <- TypeMapping.toJavaType(keyModel)
+          wrappedValue <- wrapSdkValue(valueModel, Term.Name("value"))
+          valueTypeRo <- TypeMapping.toWrappedTypeReadOnly(valueModel)
+          awsValueType <- TypeMapping.toJavaType(valueModel)
+
+          responseModel <- context.get(responseName.value)
+          property <- propertyName(responseModel, mapModel, memberName)
+          propertyNameTerm = Term.Name(property)
+          streamedPaginator = if (isSimple) {
+            ServiceMethod(
+              interface =
+                q"""def $methodName(request: $requestName): ZStream[Any, AwsError, ($keyTypeRo, $valueTypeRo)]""",
+              implementation =
+                q"""def $methodName(request: $requestName): ZStream[Any, AwsError, ($keyTypeRo, $valueTypeRo)] =
+                    asyncSimplePaginatedRequest[$modelPkg.$requestName, $modelPkg.$responseName, ($awsKeyType, $awsValueType)](
+                      api.$methodName,
+                      (r, token) => r.toBuilder().nextToken(token).build(),
+                      r => Option(r.nextToken()),
+                      r => Chunk.fromIterable(r.$propertyNameTerm().asScala)
+                    )(request.buildAwsValue()).map { case (key, value) => $wrappedKey -> $wrappedValue }
+               """,
+              accessor =
+                q"""def $methodName(request: $requestName): ZStream[$serviceNameT, AwsError, ($keyTypeRo, $valueTypeRo)] =
+                    ZStream.accessStream(_.get.$methodName(request))
+               """
+            )
+          } else {
+            ServiceMethod(
+              interface =
+                q"""def $methodName(request: $requestName): ZIO[Any, AwsError, StreamingOutputResult[$responseTypeRo, ($keyTypeRo, $valueTypeRo)]]""",
+              implementation =
+                q"""def $methodName(request: $requestName): ZIO[Any, AwsError, StreamingOutputResult[$responseTypeRo, ($keyTypeRo, $valueTypeRo)]] =
+                    asyncPaginatedRequest[$modelPkg.$requestName, $modelPkg.$responseName, ($awsKeyType, $awsValueType)](
+                      api.$methodName,
+                      (r, token) => r.toBuilder().nextToken(token).build(),
+                      r => Option(r.nextToken()),
+                      r => Chunk.fromIterable(r.$propertyNameTerm().asScala)
+                    )(request.buildAwsValue()).map(result => result.mapResponse($responseNameTerm.wrap).mapOutput(_.map { case (key, value) => $wrappedKey -> $wrappedValue }))
+               """,
+              accessor =
+                q"""def $methodName(request: $requestName): ZIO[$serviceNameT, AwsError, StreamingOutputResult[$responseTypeRo, ($keyTypeRo, $valueTypeRo)]] =
+                    ZIO.accessM(_.get.$methodName(request))
+               """
+            )
+          }
+        } yield ServiceMethods(streamedPaginator)
+      case Some(StringPaginationDefinition(memberName, stringModel, isSimple)) =>
+        for {
+          wrappedItem <- wrapSdkValue(stringModel, Term.Name("item"))
+          itemTypeRo <- TypeMapping.toWrappedTypeReadOnly(stringModel)
+          awsItemType <- TypeMapping.toJavaType(stringModel)
+          responseModel <- context.get(responseName.value)
+          property <- propertyName(responseModel, stringModel, memberName)
+          propertyNameTerm = Term.Name(property)
+          streamedPaginator = if (isSimple) {
+            ServiceMethod(
+              interface =
+                q"""def $methodName(request: $requestName): ZStream[Any, AwsError, $itemTypeRo]""",
+              implementation =
+                q"""def $methodName(request: $requestName): ZStream[Any, AwsError, $itemTypeRo] =
+                    asyncSimplePaginatedRequest[$modelPkg.$requestName, $modelPkg.$responseName, $awsItemType](
+                      api.$methodName,
+                      (r, token) => r.toBuilder().nextToken(token).build(),
+                      r => Option(r.nextToken()),
+                      r => Chunk(r.$propertyNameTerm())
+                    )(request.buildAwsValue()).map(item => $wrappedItem)
+               """,
+              accessor =
+                q"""def $methodName(request: $requestName): ZStream[$serviceNameT, AwsError, $itemTypeRo] =
+                    ZStream.accessStream(_.get.$methodName(request))
+               """
+            )
+          } else {
+            ServiceMethod(
+              interface =
+                q"""def $methodName(request: $requestName): ZIO[Any, AwsError, StreamingOutputResult[$responseTypeRo, $itemTypeRo]]""",
+              implementation =
+                q"""def $methodName(request: $requestName): ZIO[Any, AwsError, StreamingOutputResult[$responseTypeRo, $itemTypeRo]] =
+                    asyncPaginatedRequest[$modelPkg.$requestName, $modelPkg.$responseName, $awsItemType](
+                      api.$methodName,
+                      (r, token) => r.toBuilder().nextToken(token).build(),
+                      r => Option(r.nextToken()),
+                      r => Chunk(r.$propertyNameTerm())
+                    )(request.buildAwsValue()).map(result => result.mapResponse($responseNameTerm.wrap).mapOutput(_.map(item => $wrappedItem)))
+               """,
+              accessor =
+                q"""def $methodName(request: $requestName): ZIO[$serviceNameT, AwsError, StreamingOutputResult[$responseTypeRo, $itemTypeRo]] =
+                    ZIO.accessM(_.get.$methodName(request))
+               """
+            )
+          }
+        } yield ServiceMethods(streamedPaginator)
       case None =>
-        ZIO.succeed(ServiceMethods(raw))
+        ZIO.succeed(ServiceMethods(ServiceMethod(
+          interface =
+            q"""def $methodName(request: $requestName): IO[AwsError, $responseTypeRo]""",
+          implementation =
+            q"""def $methodName(request: $requestName): IO[AwsError, $responseTypeRo] =
+              asyncRequestResponse[$modelPkg.$requestName, $modelPkg.$responseName](api.$methodName)(request.buildAwsValue()).map($responseNameTerm.wrap)""",
+          accessor =
+            q"""def $methodName(request: $requestName): ZIO[$serviceNameT, AwsError, $responseTypeRo] =
+              ZIO.accessM(_.get.$methodName(request))"""
+        )))
     }
   }
 
@@ -315,13 +454,13 @@ trait ServiceInterfaceGenerator {
 
       serviceMethods <- generateServiceMethods()
       ops <- awsModel.getOperations
-      paginations <- ZIO.foreach(ops) { case (opName, op) =>
+      javaSdkPaginations <- ZIO.foreach(ops) { case (opName, op) =>
         OperationCollector.get(opName, op).map {
-          case RequestResponse(Some(_)) => true
+          case RequestResponse(Some(JavaSdkPaginationDefinition(_, _, _, _))) => true
           case _ => false
         }
       }
-      hasPaginators = paginations.exists(identity)
+      usesJavaSdkPaginators = javaSdkPaginations.exists(identity)
 
       serviceMethodIfaces = serviceMethods.flatMap(_.methods.map(_.interface))
       serviceMethodImpls = serviceMethods.flatMap(_.methods.map(_.implementation))
@@ -330,7 +469,7 @@ trait ServiceInterfaceGenerator {
       imports = List(
         Some(q"""import io.github.vigoo.zioaws.core._"""),
         Some(q"""import io.github.vigoo.zioaws.core.config.AwsConfig"""),
-        if (hasPaginators)
+        if (usesJavaSdkPaginators)
           Some(Import(List(Importer(paginatorPackage, List(Importee.Wildcard())))))
         else None,
         Some(id.subModuleName match {

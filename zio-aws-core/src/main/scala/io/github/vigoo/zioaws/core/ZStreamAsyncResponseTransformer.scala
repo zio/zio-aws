@@ -12,9 +12,9 @@ class ZStreamAsyncResponseTransformer[Response](resultStreamPromise: Promise[Thr
                                                 responsePromise: Promise[Throwable, Response],
                                                 errorPromise: Promise[Throwable, Unit])
                                                (implicit runtime: Runtime[Any])
-  extends AsyncResponseTransformer[Response, Task[StreamingOutputResult[Response]]] {
+  extends AsyncResponseTransformer[Response, Task[StreamingOutputResult[Response, Byte]]] {
 
-  override def prepare(): CompletableFuture[Task[StreamingOutputResult[Response]]] =
+  override def prepare(): CompletableFuture[Task[StreamingOutputResult[Response, Byte]]] =
     CompletableFuture.completedFuture {
       for {
         response <- responsePromise.await
