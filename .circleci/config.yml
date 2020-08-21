@@ -1,0 +1,37 @@
+version: 2.1
+
+env: &env
+  docker:
+    - image: circleci/openjdk:8-jdk
+  working_directory: ~/repo
+
+  environment:    
+    JVM_OPTS: -Xmx8192M -Xms2048M -Xss16M
+    TERM: dumb
+
+scala_212: &scala212
+  environment:
+    SCALA_VERSION: 2.12.12
+scala_213: &scala213
+  environment:
+    SCALA_VERSION: 2.13.3
+
+build_all: &build_all
+  steps:
+    - checkout
+    - run: cat /dev/null | sbt ++${SCALA_VERSION}! clean test publishLocalAll  
+    - run:
+        command: |
+          cd examples
+          cat /dev/null | sbt ++${SCALA_VERSION}! compile
+
+jobs:
+  build_212:
+    <<: *env
+    <<: *scala212
+    <<: *build_all
+
+  build_213:
+    <<: *env
+    <<: *scala212
+    <<: *build_all    
