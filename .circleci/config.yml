@@ -6,40 +6,32 @@ env: &env
   working_directory: ~/repo
 
   environment:    
-    JVM_OPTS: -Xmx8192M -Xms2048M -Xss16M
+    JVM_OPTS: -Xmx3584M -Xms1024M -Xss16M
     TERM: dumb
 
-scala_212: &scala212
-  environment:
-    SCALA_VERSION: 2.12.12
-scala_213: &scala213
-  environment:
-    SCALA_VERSION: 2.13.3
-
-build_all: &build_all
-  steps:
-    - checkout
-    - run: cat /dev/null | sbt ++${SCALA_VERSION}! clean test publishLocalAll  
-    - run:
-        command: |
-          cd examples
-          cat /dev/null | sbt ++${SCALA_VERSION}! compile
-
 jobs:
-  build_212:
+  build_all:
+    parameters:
+      version:
+        description: "Scala version"
+        default: 2.13.3
+        type: string
     <<: *env
-    <<: *scala212
-    <<: *build_all
-
-  build_213:
-    <<: *env
-    <<: *scala212
-    <<: *build_all    
+    steps:
+      - checkout
+      - run: cat /dev/null | sbt ++${SCALA_VERSION}! clean test publishLocalAll  
+      - run:
+          command: |
+            cd examples
+            cat /dev/null | sbt ++${SCALA_VERSION}! compile
 
 workflows:
   build:
     jobs:
-      - build_212
-      - build_213
+      - build_all
+          name: 2.12.12
+          version: 2.12.12
+      - build_all
+          name: 2.13.3
+          version: 2.13.3
 
-  
