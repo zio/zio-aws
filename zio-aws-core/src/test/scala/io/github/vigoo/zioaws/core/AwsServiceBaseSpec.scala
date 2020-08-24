@@ -3,7 +3,8 @@ package io.github.vigoo.zioaws.core
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.{CompletableFuture, ExecutorService, Executors}
 
-import io.github.vigoo.zioaws.core.sim.{SimulatedAsyncBodyReceiver, SimulatedAsyncResponseTransformer, SimulatedEventStreamResponseHandlerReceiver, SimulatedPublisher}
+import io.github.vigoo.zioaws.core.sim.SimulatedPagination.PaginatedRequest
+import io.github.vigoo.zioaws.core.sim.{SimulatedAsyncBodyReceiver, SimulatedAsyncResponseTransformer, SimulatedEventStreamResponseHandlerReceiver, SimulatedPagination, SimulatedPublisher}
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
 import software.amazon.awssdk.awscore.eventstream.EventStreamResponseHandler
 import software.amazon.awssdk.core.async.{AsyncRequestBody, AsyncResponseTransformer}
@@ -78,6 +79,52 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with AwsServiceBase {
         assertM(runAsyncJavaPaginatedRequest(
           in => SimulatedPublisher.Complete :: SimulatedPublisher.correctSequence(in)
         ).run)(equalTo(Exit.Success(Chunk.empty))))
+    ),
+
+    suite("asyncSimplePaginatedRequest")(
+      testM("success")(
+        assertM(
+          runAsyncSimplePaginatedRequest("hello")
+        )(equalTo(Chunk('h', 'e', 'l', 'l', 'o')))
+      ),
+      testM("success in single-page case")(
+        assertM(
+          runAsyncSimplePaginatedRequest("x")
+        )(equalTo(Chunk('x')))
+      ),
+      testM("fail on first page")(
+        assertM(
+          runAsyncSimplePaginatedRequest("hello", failAfter = Some(0)).run
+        )(isAwsFailure)
+      ),
+      testM("fail on other page")(
+        assertM(
+          runAsyncSimplePaginatedRequest("hello", failAfter = Some(3)).run
+        )(isAwsFailure)
+      )
+    ),
+
+    suite("asyncPaginatedRequest")(
+      testM("success")(
+        assertM(
+          runAsyncPaginatedRequest("hello")
+        )(equalTo(Chunk('h', 'e', 'l', 'l', 'o')))
+      ),
+      testM("success in single-page case")(
+        assertM(
+          runAsyncPaginatedRequest("x")
+        )(equalTo(Chunk('x')))
+      ),
+      testM("fail on first page")(
+        assertM(
+          runAsyncPaginatedRequest("hello", failAfter = Some(0)).run
+        )(isAwsFailure)
+      ),
+      testM("fail on other page")(
+        assertM(
+          runAsyncPaginatedRequest("hello", failAfter = Some(3)).run
+        )(isAwsFailure)
+      )
     ),
 
     suite("asyncRequestOutputStream")(
@@ -403,6 +450,26 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with AwsServiceBase {
     asyncJavaPaginatedRequest[String, Char, Publisher[Char]](fakeAwsCall, identity)("hello")
       .runCollect
   }
+
+  private def runAsyncSimplePaginatedRequest(test: String, failAfter: Option[Int] = None): ZIO[Any, AwsError, Chunk[Char]] = {
+    asyncSimplePaginatedRequest[SimulatedPagination.PaginatedRequest, SimulatedPagination.PaginatedResult, Char](
+      SimulatedPagination.simplePagination(failAfter, SimulatedException),
+      (req, token) => req.copy(token = Some(token)),
+      _.next,
+      rsp => Chunk.fromIterable(rsp.output),
+    )(PaginatedRequest(test, None)).runCollect
+  }
+
+  private def runAsyncPaginatedRequest(test: String, failAfter: Option[Int] = None): ZIO[Any, AwsError, Chunk[Char]] =
+    for {
+      response <- asyncPaginatedRequest[SimulatedPagination.PaginatedRequest, SimulatedPagination.PaginatedResult, Char](
+        SimulatedPagination.simplePagination(failAfter, SimulatedException),
+        (req, token) => req.copy(token = Some(token)),
+        _.next,
+        rsp => Chunk.fromIterable(rsp.output),
+      )(PaginatedRequest(test, None))
+      streamResult <- response.output.runCollect
+    } yield streamResult
 
   private def runAsyncRequestOutput(failureSpec: SimulatedAsyncResponseTransformer.FailureSpec = SimulatedAsyncResponseTransformer.FailureSpec(),
                                     failOnStream: Option[Throwable] = None): ZIO[Any, AwsError, Exit[AwsError, (StreamingOutputResult[Int, Byte], Vector[Byte])]] = {

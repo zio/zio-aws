@@ -48,7 +48,7 @@ trait AwsServiceBase {
                 } yield chunk
               } yield pull
             }
-            ZIO.succeed(stream)
+            ZIO.succeed(ZStream.fromChunk(getItems(response)).concat(stream))
           case None =>
             // No pagination
             ZIO.succeed(ZStream.fromChunk(getItems(response)))
@@ -82,7 +82,7 @@ trait AwsServiceBase {
               } yield chunk
             } yield pull
           }
-          ZIO.succeed(StreamingOutputResult(response, stream))
+          ZIO.succeed(StreamingOutputResult(response, ZStream.fromChunk(getItems(response)).concat(stream)))
         case None =>
           // No pagination
           ZIO.succeed(StreamingOutputResult(response, ZStream.fromChunk(getItems(response))))
