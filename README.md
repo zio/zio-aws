@@ -231,7 +231,7 @@ object Main extends App {
 ``` 
 
 ### Version history
-#### 2.14.2.0
+#### 2.14.3.0
 API breaking changes to make the streaming interface more ergonomic:
 - Input/output byte streams are now flat (`ZStream[Any, AwsError, Byte]` instead of `ZStream[Any, AwsError, Chunk[Byte]`)
 - Streaming operations return a `ZStream` that performs the request on first pull instead of a `ZIO[..., ZStream[...]]`

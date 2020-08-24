@@ -3,7 +3,7 @@ val commonSettings = Seq(
   scalaVersion := "2.13.3"
 )
 
-val zioAwsVersion = "2.14.2.0"
+val zioAwsVersion = "2.14.3.0"
 
 lazy val example1 = Project("example1", file("example1")).settings(commonSettings).settings(
   libraryDependencies ++= Seq(
