@@ -168,10 +168,9 @@ object Main extends App {
             applicationName <- appDescription.applicationName
             _ <- console.putStrLn(s"Got application description for $applicationName")
 
-            envsResult <- elasticbeanstalk.describeEnvironments(DescribeEnvironmentsRequest(applicationName = Some(applicationName)))
-            envs <- envsResult.environments
+            envStream = elasticbeanstalk.describeEnvironments(DescribeEnvironmentsRequest(applicationName = Some(applicationName)))
 
-            _ <- ZIO.foreach(envs) { env =>
+            _ <- envStream.run(Sink.foreach { env =>
               env.environmentName.flatMap { environmentName =>
                 (for {
                   environmentId <- env.environmentId
@@ -184,7 +183,7 @@ object Main extends App {
                   instanceIds <- ZIO.foreach(instances)(_.id)
                   _ <- console.putStrLn(s"Instance IDs are ${instanceIds.mkString(", ")}")
 
-                  reservationsStream <- ec2.describeInstancesStream(DescribeInstancesRequest(instanceIds = Some(instanceIds)))
+                  reservationsStream = ec2.describeInstances(DescribeInstancesRequest(instanceIds = Some(instanceIds)))
                   _ <- reservationsStream.run(Sink.foreach {
                     reservation =>
                       reservation.instances.flatMap { instances =>
@@ -204,7 +203,7 @@ object Main extends App {
                   console.putStrLnErr(s"Failed to get info for $environmentName: $error")
                 }
               }
-            }
+            })
           } yield ()
         case None =>
           ZIO.unit

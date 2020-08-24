@@ -13,16 +13,85 @@ import zio.stream.ZStream.TerminationStrategy
 import scala.reflect.ClassTag
 
 trait AwsServiceBase {
-  final def asyncRequestResponse[Request, Response](impl: Request => CompletableFuture[Response])(request: Request): IO[AwsError, Response] =
+  final protected def asyncRequestResponse[Request, Response](impl: Request => CompletableFuture[Response])(request: Request): IO[AwsError, Response] =
     ZIO.fromCompletionStage(impl(request)).mapError(AwsError.fromThrowable)
 
-  final def asyncPaginatedRequest[Request, Item, Response](impl: Request => Response, selector: Response => Publisher[Item])(request: Request): ZStream[Any, AwsError, Item] =
+  final protected def asyncJavaPaginatedRequest[Request, Item, Response](impl: Request => Response, selector: Response => Publisher[Item])(request: Request): ZStream[Any, AwsError, Item] =
     ZStream.unwrap {
       ZIO(selector(impl(request)).toStream().mapError(AwsError.fromThrowable)).mapError(AwsError.fromThrowable)
     }
 
-  final def asyncRequestOutputStream[Request, Response](impl: (Request, AsyncResponseTransformer[Response, Task[StreamingOutputResult[Response]]]) => CompletableFuture[Task[StreamingOutputResult[Response]]])
-                                                       (request: Request): IO[AwsError, StreamingOutputResult[Response]] = {
+  final protected def asyncSimplePaginatedRequest[Request, Response, Item](impl: Request => CompletableFuture[Response],
+                                                                           setNextToken: (Request, String) => Request,
+                                                                           getNextToken: Response => Option[String],
+                                                                           getItems: Response => Chunk[Item])
+                                                                          (request: Request): ZStream[Any, AwsError, Item] =
+    ZStream.unwrap {
+      ZIO.fromCompletionStage(impl(request)).mapError(AwsError.fromThrowable).flatMap { response =>
+        getNextToken(response) match {
+          case Some(nextToken) =>
+            val stream = ZStream {
+              for {
+                nextTokenRef <- Ref.make[Option[String]](Some(nextToken)).toManaged_
+                pull = for {
+                  token <- nextTokenRef.get
+                  chunk <- token match {
+                    case Some(t) =>
+                      for {
+                        nextRequest <- ZIO.effect(setNextToken(request, t)).mapError(t => Some(GenericAwsError(t)))
+                        rsp <- ZIO.fromCompletionStage(impl(nextRequest)).mapError(t => Some(GenericAwsError(t)))
+                        _ <- nextTokenRef.set(getNextToken(rsp))
+                      } yield getItems(rsp)
+                    case None =>
+                      IO.fail(None)
+                  }
+                } yield chunk
+              } yield pull
+            }
+            ZIO.succeed(ZStream.fromChunk(getItems(response)).concat(stream))
+          case None =>
+            // No pagination
+            ZIO.succeed(ZStream.fromChunk(getItems(response)))
+        }
+      }
+    }
+
+  final protected def asyncPaginatedRequest[Request, Response, Item](impl: Request => CompletableFuture[Response],
+                                                                     setNextToken: (Request, String) => Request,
+                                                                     getNextToken: Response => Option[String],
+                                                                     getItems: Response => Chunk[Item])
+                                                                    (request: Request): IO[AwsError, StreamingOutputResult[Response, Item]] = {
+      ZIO.fromCompletionStage(impl(request)).mapError(AwsError.fromThrowable).flatMap { response =>
+      getNextToken(response) match {
+        case Some(nextToken) =>
+          val stream = ZStream {
+            for {
+              nextTokenRef <- Ref.make[Option[String]](Some(nextToken)).toManaged_
+              pull = for {
+                token <- nextTokenRef.get
+                chunk <- token match {
+                  case Some(t) =>
+                    for {
+                      nextRequest <- ZIO.effect(setNextToken(request, t)).mapError(t => Some(GenericAwsError(t)))
+                      rsp <- ZIO.fromCompletionStage(impl(nextRequest)).mapError(t => Some(GenericAwsError(t)))
+                      _ <- nextTokenRef.set(getNextToken(rsp))
+                    } yield getItems(rsp)
+                  case None =>
+                    IO.fail(None)
+                }
+              } yield chunk
+            } yield pull
+          }
+          ZIO.succeed(StreamingOutputResult(response, ZStream.fromChunk(getItems(response)).concat(stream)))
+        case None =>
+          // No pagination
+          ZIO.succeed(StreamingOutputResult(response, ZStream.fromChunk(getItems(response))))
+      }
+    }
+  }
+
+  final protected def asyncRequestOutputStream[Request, Response](impl: (Request, AsyncResponseTransformer[Response, Task[StreamingOutputResult[Response, Byte]]]) => CompletableFuture[Task[StreamingOutputResult[Response, Byte]]])
+                                                                 (request: Request): IO[AwsError, StreamingOutputResult[Response, Byte]] = {
     for {
       transformer <- ZStreamAsyncResponseTransformer[Response]()
       streamingOutputResultTask <- ZIO.fromCompletionStage(impl(request, transformer)).mapError(AwsError.fromThrowable)
@@ -30,14 +99,14 @@ trait AwsServiceBase {
     } yield streamingOutputResult
   }
 
-  final def asyncRequestInputStream[Request, Response](impl: (Request, AsyncRequestBody) => CompletableFuture[Response])
-                                                      (request: Request, body: ZStream[Any, AwsError, Byte]): IO[AwsError, Response] =
+  final protected def asyncRequestInputStream[Request, Response](impl: (Request, AsyncRequestBody) => CompletableFuture[Response])
+                                                                (request: Request, body: ZStream[Any, AwsError, Byte]): IO[AwsError, Response] =
     ZIO.runtime.flatMap { implicit runtime: Runtime[Any] =>
       ZIO.fromCompletionStage(impl(request, new ZStreamAsyncRequestBody(body))).mapError(AwsError.fromThrowable)
     }
 
-  final def asyncRequestInputOutputStream[Request, Response](impl: (Request, AsyncRequestBody, AsyncResponseTransformer[Response, Task[StreamingOutputResult[Response]]]) => CompletableFuture[Task[StreamingOutputResult[Response]]])
-                                                            (request: Request, body: ZStream[Any, AwsError, Byte]): IO[AwsError, StreamingOutputResult[Response]] = {
+  final protected def asyncRequestInputOutputStream[Request, Response](impl: (Request, AsyncRequestBody, AsyncResponseTransformer[Response, Task[StreamingOutputResult[Response, Byte]]]) => CompletableFuture[Task[StreamingOutputResult[Response, Byte]]])
+                                                                      (request: Request, body: ZStream[Any, AwsError, Byte]): IO[AwsError, StreamingOutputResult[Response, Byte]] = {
     ZIO.runtime.flatMap { implicit runtime: Runtime[Any] =>
       for {
         transformer <- ZStreamAsyncResponseTransformer[Response]()
@@ -47,7 +116,7 @@ trait AwsServiceBase {
     }
   }
 
-  final def asyncRequestEventOutputStream[
+  final protected def asyncRequestEventOutputStream[
     Request,
     Response,
     ResponseHandler <: EventStreamResponseHandler[Response, EventI],
@@ -88,14 +157,14 @@ trait AwsServiceBase {
     }
   }
 
-  final def asyncRequestEventInputStream[Request, Response, Event](impl: (Request, Publisher[Event]) => CompletableFuture[Response])
-                                                                  (request: Request, input: ZStream[Any, AwsError, Event]): IO[AwsError, Response] =
+  final protected def asyncRequestEventInputStream[Request, Response, Event](impl: (Request, Publisher[Event]) => CompletableFuture[Response])
+                                                                            (request: Request, input: ZStream[Any, AwsError, Event]): IO[AwsError, Response] =
     for {
       publisher <- input.mapError(_.toThrowable).toPublisher
       response <- ZIO.fromCompletionStage(impl(request, publisher)).mapError(AwsError.fromThrowable)
     } yield response
 
-  final def asyncRequestEventInputOutputStream[
+  final protected def asyncRequestEventInputOutputStream[
     Request,
     Response,
     InEvent,

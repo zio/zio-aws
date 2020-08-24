@@ -10,8 +10,8 @@ val awsSubVersion = awsVersion.drop(awsVersion.indexOf('.') + 1)
 val http4sVersion = "0.21.7"
 val fs2Version = "2.2.2"
 
-val majorVersion = "1"
-val minorVersion = "1"
+val majorVersion = "2"
+val minorVersion = "0"
 val zioAwsVersion = s"$majorVersion.$awsSubVersion.$minorVersion"
 
 val generateAll = taskKey[Unit]("Generates all AWS client libraries")

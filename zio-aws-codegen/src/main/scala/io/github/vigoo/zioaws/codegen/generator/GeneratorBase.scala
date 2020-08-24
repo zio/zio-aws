@@ -4,8 +4,11 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
 
 import io.github.vigoo.zioaws.codegen.generator.context._
+import io.github.vigoo.zioaws.codegen.generator.syntax._
+import software.amazon.awssdk.codegen.model.config.customization.ShapeModifier
 import zio.{Chunk, ZIO}
 
+import scala.jdk.CollectionConverters._
 import scala.meta._
 
 trait GeneratorBase {
@@ -99,7 +102,31 @@ trait GeneratorBase {
         ZIO.succeed(q"""$term : ${Type.Name(model.name)}""")
     }
 
-  def writeIfDifferent(path: Path, contents: String): ZIO[Any, GeneratorFailure, Unit] =
+  protected def propertyName(model: Model, fieldModel: Model, name: String): ZIO[GeneratorContext, Nothing, String] = {
+    getNamingStrategy.flatMap { namingStrategy =>
+      getModels.map { models =>
+        val shapeModifiers = Option(models.customizationConfig().getShapeModifiers).map(_.asScala).getOrElse(Map.empty[String, ShapeModifier])
+        shapeModifiers.get(model.shapeName).flatMap { shapeModifier =>
+          val modifies = Option(shapeModifier.getModify).map(_.asScala).getOrElse(List.empty)
+          val matchingModifiers = modifies.flatMap { modifiesMap =>
+            modifiesMap.asScala.map { case (key, value) => (key.toLowerCase, value) }.get(name.toLowerCase)
+          }.toList
+
+          matchingModifiers
+            .map(modifier => Option(modifier.getEmitPropertyName))
+            .find(_.isDefined)
+            .flatten.map(_.uncapitalize)
+        }.getOrElse {
+          val getterMethod = namingStrategy.getFluentGetterMethodName(name, model.shape, fieldModel.shape)
+          getterMethod
+            .stripSuffix("AsString")
+            .stripSuffix("AsStrings")
+        }
+      }
+    }
+  }
+
+  protected def writeIfDifferent(path: Path, contents: String): ZIO[Any, GeneratorFailure, Unit] =
     ZIO(Files.exists(path)).mapError(FailedToReadFile).flatMap { exists =>
       ZIO {
         if (exists) {

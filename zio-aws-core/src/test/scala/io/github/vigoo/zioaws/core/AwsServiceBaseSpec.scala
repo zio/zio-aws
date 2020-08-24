@@ -3,7 +3,8 @@ package io.github.vigoo.zioaws.core
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.{CompletableFuture, ExecutorService, Executors}
 
-import io.github.vigoo.zioaws.core.sim.{SimulatedAsyncBodyReceiver, SimulatedAsyncResponseTransformer, SimulatedEventStreamResponseHandlerReceiver, SimulatedPublisher}
+import io.github.vigoo.zioaws.core.sim.SimulatedPagination.PaginatedRequest
+import io.github.vigoo.zioaws.core.sim.{SimulatedAsyncBodyReceiver, SimulatedAsyncResponseTransformer, SimulatedEventStreamResponseHandlerReceiver, SimulatedPagination, SimulatedPublisher}
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
 import software.amazon.awssdk.awscore.eventstream.EventStreamResponseHandler
 import software.amazon.awssdk.core.async.{AsyncRequestBody, AsyncResponseTransformer}
@@ -49,35 +50,81 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with AwsServiceBase {
         assertM(call.run)(fails(equalTo(GenericAwsError(SimulatedException))))
       }
     ),
-    suite("asyncPaginatedRequest")(
+    suite("asyncJavaPaginatedRequest")(
       testM("success")(
         assertM(
-          runAsyncPaginatedRequest(SimulatedPublisher.correctSequence)
+          runAsyncJavaPaginatedRequest(SimulatedPublisher.correctSequence)
         )(equalTo(Chunk('h', 'e', 'l', 'l', 'o')))
       ),
 
       testM("fail before subscribe")(
-        assertM(runAsyncPaginatedRequest(
+        assertM(runAsyncJavaPaginatedRequest(
           in => SimulatedPublisher.Error(SimulatedException) :: SimulatedPublisher.correctSequence(in)
         ).run)(isAwsFailure)),
       testM("fail during emit")(
-        assertM(runAsyncPaginatedRequest(
+        assertM(runAsyncJavaPaginatedRequest(
           in => SimulatedPublisher.correctSequence(in).splitAt(3) match {
             case (a, b) => a ::: List(SimulatedPublisher.Error(SimulatedException)) ::: b
           }
         ).run)(isAwsFailure)),
       testM("fail before complete")(
-        assertM(runAsyncPaginatedRequest(
+        assertM(runAsyncJavaPaginatedRequest(
           in => SimulatedPublisher.correctSequence(in).init ::: List(SimulatedPublisher.Error(SimulatedException), SimulatedPublisher.Complete)
         ).run)(isAwsFailure)),
       testM("fail with no complete after")(
-        assertM(runAsyncPaginatedRequest(
+        assertM(runAsyncJavaPaginatedRequest(
           in => SimulatedPublisher.correctSequence(in).init ::: List(SimulatedPublisher.Error(SimulatedException))
         ).run)(isAwsFailure)),
       testM("complete before subscribe is empty result")(
-        assertM(runAsyncPaginatedRequest(
+        assertM(runAsyncJavaPaginatedRequest(
           in => SimulatedPublisher.Complete :: SimulatedPublisher.correctSequence(in)
         ).run)(equalTo(Exit.Success(Chunk.empty))))
+    ),
+
+    suite("asyncSimplePaginatedRequest")(
+      testM("success")(
+        assertM(
+          runAsyncSimplePaginatedRequest("hello")
+        )(equalTo(Chunk('h', 'e', 'l', 'l', 'o')))
+      ),
+      testM("success in single-page case")(
+        assertM(
+          runAsyncSimplePaginatedRequest("x")
+        )(equalTo(Chunk('x')))
+      ),
+      testM("fail on first page")(
+        assertM(
+          runAsyncSimplePaginatedRequest("hello", failAfter = Some(0)).run
+        )(isAwsFailure)
+      ),
+      testM("fail on other page")(
+        assertM(
+          runAsyncSimplePaginatedRequest("hello", failAfter = Some(3)).run
+        )(isAwsFailure)
+      )
+    ),
+
+    suite("asyncPaginatedRequest")(
+      testM("success")(
+        assertM(
+          runAsyncPaginatedRequest("hello")
+        )(equalTo(Chunk('h', 'e', 'l', 'l', 'o')))
+      ),
+      testM("success in single-page case")(
+        assertM(
+          runAsyncPaginatedRequest("x")
+        )(equalTo(Chunk('x')))
+      ),
+      testM("fail on first page")(
+        assertM(
+          runAsyncPaginatedRequest("hello", failAfter = Some(0)).run
+        )(isAwsFailure)
+      ),
+      testM("fail on other page")(
+        assertM(
+          runAsyncPaginatedRequest("hello", failAfter = Some(3)).run
+        )(isAwsFailure)
+      )
     ),
 
     suite("asyncRequestOutputStream")(
@@ -88,8 +135,8 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with AwsServiceBase {
               case Exit.Success(value) => Some(Exit.Success(value))
               case _ => None
             },
-            hasField[Exit.Success[(StreamingOutputResult[Int], Vector[Byte])], Int]("1", _.value._1.response, equalTo(5)) &&
-              hasField[Exit.Success[(StreamingOutputResult[Int], Vector[Byte])], Vector[Byte]]("2", _.value._2, equalTo("hello".getBytes(StandardCharsets.US_ASCII).toVector))))),
+            hasField[Exit.Success[(StreamingOutputResult[Int, Byte], Vector[Byte])], Int]("1", _.value._1.response, equalTo(5)) &&
+              hasField[Exit.Success[(StreamingOutputResult[Int, Byte], Vector[Byte])], Vector[Byte]]("2", _.value._2, equalTo("hello".getBytes(StandardCharsets.US_ASCII).toVector))))),
       testM("future fails before prepare")(
         assertM(runAsyncRequestOutput(SimulatedAsyncResponseTransformer.FailureSpec(failBeforePrepare = Some(SimulatedException))))(
           isAwsFailure
@@ -135,8 +182,8 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with AwsServiceBase {
     suite("asyncRequestInputOutputStream")(
       testM("success")(
         assertM(runAsyncRequestInputOutputRequest())(
-          hasField[(StreamingOutputResult[Int], Vector[Byte]), Int]("1", _._1.response, equalTo(5)) &&
-            hasField[(StreamingOutputResult[Int], Vector[Byte]), Vector[Byte]]("2", _._2, equalTo("hheelllloo".getBytes(StandardCharsets.US_ASCII).toVector)))),
+          hasField[(StreamingOutputResult[Int, Byte], Vector[Byte]), Int]("1", _._1.response, equalTo(5)) &&
+            hasField[(StreamingOutputResult[Int, Byte], Vector[Byte]), Vector[Byte]]("2", _._2, equalTo("hheelllloo".getBytes(StandardCharsets.US_ASCII).toVector)))),
       testM("failure on input stream")(
         assertM(runAsyncRequestInputOutputRequest(failOnInput = true).run)(
           isAwsFailure
@@ -361,10 +408,10 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with AwsServiceBase {
 
   private def runAsyncRequestInputOutputRequest(failureSpec: SimulatedAsyncResponseTransformer.FailureSpec = SimulatedAsyncResponseTransformer.FailureSpec(),
                                                 failOnInput: Boolean = false,
-                                                failOnStream: Option[Throwable] = None): ZIO[Any, AwsError, (StreamingOutputResult[Int], Vector[Byte])] = {
-    val fakeAwsCall: (Int, AsyncRequestBody, AsyncResponseTransformer[Int, Task[StreamingOutputResult[Int]]]) => CompletableFuture[Task[StreamingOutputResult[Int]]] =
+                                                failOnStream: Option[Throwable] = None): ZIO[Any, AwsError, (StreamingOutputResult[Int, Byte], Vector[Byte])] = {
+    val fakeAwsCall: (Int, AsyncRequestBody, AsyncResponseTransformer[Int, Task[StreamingOutputResult[Int, Byte]]]) => CompletableFuture[Task[StreamingOutputResult[Int, Byte]]] =
       (multipler, asyncBody, transformer) =>
-        SimulatedAsyncBodyReceiver.useAsyncBody[Task[StreamingOutputResult[Int]]](
+        SimulatedAsyncBodyReceiver.useAsyncBody[Task[StreamingOutputResult[Int, Byte]]](
           (in, cf, buffer) => {
             SimulatedAsyncResponseTransformer.useAsyncResponseTransformerImpl[Int, ArrayBuffer[Byte]](
               buffer,
@@ -395,18 +442,38 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with AwsServiceBase {
     } yield (result, streamResult)
   }
 
-  private def runAsyncPaginatedRequest(simulation: Chunk[Char] => List[SimulatedPublisher.Action]): ZIO[Any, AwsError, Chunk[Char]] = {
+  private def runAsyncJavaPaginatedRequest(simulation: Chunk[Char] => List[SimulatedPublisher.Action]): ZIO[Any, AwsError, Chunk[Char]] = {
     val fakeAwsCall: String => Publisher[Char] = { in =>
       SimulatedPublisher.createCharPublisher(in, simulation)
     }
 
-    asyncPaginatedRequest[String, Char, Publisher[Char]](fakeAwsCall, identity)("hello")
+    asyncJavaPaginatedRequest[String, Char, Publisher[Char]](fakeAwsCall, identity)("hello")
       .runCollect
   }
 
+  private def runAsyncSimplePaginatedRequest(test: String, failAfter: Option[Int] = None): ZIO[Any, AwsError, Chunk[Char]] = {
+    asyncSimplePaginatedRequest[SimulatedPagination.PaginatedRequest, SimulatedPagination.PaginatedResult, Char](
+      SimulatedPagination.simplePagination(failAfter, SimulatedException),
+      (req, token) => req.copy(token = Some(token)),
+      _.next,
+      rsp => Chunk.fromIterable(rsp.output),
+    )(PaginatedRequest(test, None)).runCollect
+  }
+
+  private def runAsyncPaginatedRequest(test: String, failAfter: Option[Int] = None): ZIO[Any, AwsError, Chunk[Char]] =
+    for {
+      response <- asyncPaginatedRequest[SimulatedPagination.PaginatedRequest, SimulatedPagination.PaginatedResult, Char](
+        SimulatedPagination.simplePagination(failAfter, SimulatedException),
+        (req, token) => req.copy(token = Some(token)),
+        _.next,
+        rsp => Chunk.fromIterable(rsp.output),
+      )(PaginatedRequest(test, None))
+      streamResult <- response.output.runCollect
+    } yield streamResult
+
   private def runAsyncRequestOutput(failureSpec: SimulatedAsyncResponseTransformer.FailureSpec = SimulatedAsyncResponseTransformer.FailureSpec(),
-                                    failOnStream: Option[Throwable] = None): ZIO[Any, AwsError, Exit[AwsError, (StreamingOutputResult[Int], Vector[Byte])]] = {
-    val fakeAwsCall = (in: String, transformer: AsyncResponseTransformer[Int, Task[StreamingOutputResult[Int]]]) =>
+                                    failOnStream: Option[Throwable] = None): ZIO[Any, AwsError, Exit[AwsError, (StreamingOutputResult[Int, Byte], Vector[Byte])]] = {
+    val fakeAwsCall = (in: String, transformer: AsyncResponseTransformer[Int, Task[StreamingOutputResult[Int, Byte]]]) =>
       SimulatedAsyncResponseTransformer.useAsyncResponseTransformer[String, Int](
         in,
         transformer,

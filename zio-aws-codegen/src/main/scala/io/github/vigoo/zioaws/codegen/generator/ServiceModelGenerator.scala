@@ -57,30 +57,6 @@ trait ServiceModelGenerator {
     }
   }
 
-  private def propertyName(model: Model, fieldModel: Model, name: String): ZIO[GeneratorContext, Nothing, String] = {
-    getNamingStrategy.flatMap { namingStrategy =>
-      getModels.map { models =>
-        val shapeModifiers = Option(models.customizationConfig().getShapeModifiers).map(_.asScala).getOrElse(Map.empty[String, ShapeModifier])
-        shapeModifiers.get(model.shapeName).flatMap { shapeModifier =>
-          val modifies = Option(shapeModifier.getModify).map(_.asScala).getOrElse(List.empty)
-          val matchingModifiers = modifies.flatMap { modifiesMap =>
-            modifiesMap.asScala.map { case (key, value) => (key.toLowerCase, value) }.get(name.toLowerCase)
-          }.toList
-
-          matchingModifiers
-            .map(modifier => Option(modifier.getEmitPropertyName))
-            .find(_.isDefined)
-            .flatten.map(_.uncapitalize)
-        }.getOrElse {
-          val getterMethod = namingStrategy.getFluentGetterMethodName(name, model.shape, fieldModel.shape)
-          getterMethod
-            .stripSuffix("AsString")
-            .stripSuffix("AsStrings")
-        }
-      }
-    }
-  }
-
   private def applyEnumModifiers(model: Model, enumValueList: List[String]): ZIO[GeneratorContext, Nothing, List[String]] = {
     getModels.map { models =>
       val shapeModifiers = Option(models.customizationConfig().getShapeModifiers).map(_.asScala).getOrElse(Map.empty[String, ShapeModifier])
