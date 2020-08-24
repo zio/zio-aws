@@ -1,11 +1,11 @@
 
 scalaVersion := "2.13.3"
 
-val zioAwsVersion = "2.14.2.1"
+val zioAwsVersion = "2.14.2.0"
 
 libraryDependencies ++= Seq(
-  "io.github.vigoo" %% "zio-aws-core" % "2.14.2.2",
-  "io.github.vigoo" %% "zio-aws-http4s" % "2.14.2.2",
+  "io.github.vigoo" %% "zio-aws-core" % zioAwsVersion,
+  "io.github.vigoo" %% "zio-aws-http4s" % zioAwsVersion,
   "io.github.vigoo" %% "zio-aws-netty" % zioAwsVersion,
   "io.github.vigoo" %% "zio-aws-s3" % zioAwsVersion,
   "io.github.vigoo" %% "zio-aws-dynamodb" % zioAwsVersion,

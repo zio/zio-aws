@@ -55,27 +55,29 @@ For operations where either the input or the output or both are _byte streams_, 
 
 ```scala
 def getObject(request: GetObjectRequest): ZIO[S3, AwsError, StreamingOutputResult[GetObjectResponse]]
-def putObject(request: PutObjectRequest, body: ZStream[Any, AwsError, Chunk[Byte]])
+def putObject(request: PutObjectRequest, body: ZStream[Any, AwsError, Byte])
 ```
 
 where the output is a stream packed together with additional response data:
 
 ```scala
 case class StreamingOutputResult[Response](response: Response,
-                                           output: ZStream[Any, AwsError, Chunk[Byte]])
+                                           output: ZStream[Any, AwsError, Byte])
 ```
 
 For operations with _event streams_ a `ZStream` of a model type gets generated:
 
 ```scala
-def startStreamTranscription(request: StartStreamTranscriptionRequest, input: ZStream[Any, AwsError, AudioStream]): ZIO[TranscribeStreaming, AwsError, ZStream[Any, AwsError, TranscriptEvent]]
+def startStreamTranscription(request: StartStreamTranscriptionRequest, input: ZStream[Any, AwsError, AudioStream]): ZStream[TranscribeStreaming, AwsError, TranscriptEvent]
 ```
 
-And for all operations that supports _pagination_, an alternative streaming wrappers gets generated with the postfix `Stream`:
+And for all operations that supports _pagination_, streaming wrappers gets generated:
 
 ```scala
-def scanStream(request: ScanRequest): ZIO[DynamoDb, AwsError, ZStream[Any, AwsError, java.util.Map[String, AttributeValue]]]
+def scan(request: ScanRequest): ZStream[DynamoDb, AwsError, Map[String, AttributeValue]]
 ```
+
+Note that for event streaming or paginating operations returning a `ZStream` the actual AWS call happens when the stream gets pulled.
 
 #### Model wrappers
 For each model type a set of wrappers are generated, providing the following functionality:
@@ -227,3 +229,20 @@ object Main extends App {
   }
 }
 ``` 
+
+### Version history
+#### 2.14.2.0
+API breaking changes to make the streaming interface more ergonomic:
+- Input/output byte streams are now flat (`ZStream[Any, AwsError, Byte]` instead of `ZStream[Any, AwsError, Chunk[Byte]`)
+- Streaming operations return a `ZStream` that performs the request on first pull instead of a `ZIO[..., ZStream[...]]`
+- Streaming for paginated operations that does not have a paginator in the Java SDK
+- No `xxxStream` variants, streaming is the default and only interface for paginable operaitons
+- Updated to AWS SDK 2.14.2
+- Fixed handling of some error cases
+- Scala 2.12 version is now available
+
+#### 1.13.69.1
+Initial release republished with fixed metadata in POMs
+
+#### 1.13.69.0
+Initial release based on AWS Java SDK 2.13.69  
