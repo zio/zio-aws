@@ -22,6 +22,7 @@ class ZStreamAsyncRequestBody(stream: ZStream[Any, AwsError, Byte])(implicit run
           .mapChunks(chunk => Chunk(ByteBuffer.wrap(chunk.toArray)))
           .run(sink)
           .catchAll(errorP.fail)
+          .forkDaemon
       } yield ()
     }
 }
