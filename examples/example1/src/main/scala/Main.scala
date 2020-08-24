@@ -1,18 +1,12 @@
-import scala.jdk.CollectionConverters._
-import zio._
-import zio.console
+import io.github.vigoo.zioaws.core.AwsError
+import io.github.vigoo.zioaws.ec2.Ec2
+import io.github.vigoo.zioaws.ec2.model._
+import io.github.vigoo.zioaws.elasticbeanstalk.ElasticBeanstalk
+import io.github.vigoo.zioaws.elasticbeanstalk.model._
+import io.github.vigoo.zioaws.{core, ec2, elasticbeanstalk, http4s}
+import zio.{console, _}
 import zio.console._
 import zio.stream._
-import io.github.vigoo.zioaws.core
-import io.github.vigoo.zioaws.http4s
-import io.github.vigoo.zioaws.netty
-import io.github.vigoo.zioaws.ec2
-import io.github.vigoo.zioaws.ec2.model._
-import io.github.vigoo.zioaws.ec2.Ec2
-import io.github.vigoo.zioaws.elasticbeanstalk
-import io.github.vigoo.zioaws.elasticbeanstalk.model._
-import io.github.vigoo.zioaws.elasticbeanstalk.ElasticBeanstalk
-import io.github.vigoo.zioaws.core.AwsError
 
 object Main extends App {
   val program: ZIO[Console with Ec2 with ElasticBeanstalk, AwsError, Unit] =
@@ -25,10 +19,9 @@ object Main extends App {
             applicationName <- appDescription.applicationName
             _ <- console.putStrLn(s"Got application description for $applicationName")
 
-            envsResult <- elasticbeanstalk.describeEnvironments(DescribeEnvironmentsRequest(applicationName = Some(applicationName)))
-            envs <- envsResult.environments
+            envStream = elasticbeanstalk.describeEnvironments(DescribeEnvironmentsRequest(applicationName = Some(applicationName)))
 
-            _ <- ZIO.foreach(envs) { env =>
+            _ <- envStream.run(Sink.foreach { env =>
               env.environmentName.flatMap { environmentName =>
                 (for {
                   environmentId <- env.environmentId
@@ -41,7 +34,7 @@ object Main extends App {
                   instanceIds <- ZIO.foreach(instances)(_.id)
                   _ <- console.putStrLn(s"Instance IDs are ${instanceIds.mkString(", ")}")
 
-                  reservationsStream <- ec2.describeInstancesStream(DescribeInstancesRequest(instanceIds = Some(instanceIds)))
+                  reservationsStream = ec2.describeInstances(DescribeInstancesRequest(instanceIds = Some(instanceIds)))
                   _ <- reservationsStream.run(Sink.foreach {
                     reservation =>
                       reservation.instances.flatMap { instances =>
@@ -61,7 +54,7 @@ object Main extends App {
                   console.putStrLnErr(s"Failed to get info for $environmentName: $error")
                 }
               }
-            }
+            })
           } yield ()
         case None =>
           ZIO.unit
