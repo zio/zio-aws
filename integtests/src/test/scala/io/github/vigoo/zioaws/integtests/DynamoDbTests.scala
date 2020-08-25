@@ -2,6 +2,7 @@ package io.github.vigoo.zioaws.integtests
 
 import java.net.URI
 
+import akka.actor.ActorSystem
 import io.github.vigoo.zioaws.core._
 import io.github.vigoo.zioaws.{dynamodb, _}
 import io.github.vigoo.zioaws.dynamodb.model._
@@ -15,6 +16,8 @@ object DynamoDbTests extends DefaultRunnableSpec {
 
   val nettyClient = netty.client()
   val http4sClient = http4s.client()
+  val actorSystem = ActorSystem("test") // ZLayer.fromAcquireRelease(ZIO.effect(ActorSystem("test")))(sys => ZIO.fromFuture(_ => sys.terminate()).orDie)
+  val akkaHttpClient = akkahttp.client(actorSystem)
   val awsConfig = config.default
   val dynamoDb = dynamodb.customized(
     _.credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("dummy", "key")))
@@ -137,6 +140,9 @@ object DynamoDbTests extends DefaultRunnableSpec {
       suite("with http4s")(
         tests: _*
       ).provideCustomLayer((http4sClient >>> awsConfig >>> dynamoDb).mapError(TestFailure.die)),
+      suite("with akka-http")(
+        tests: _*
+      ).provideCustomLayer((akkaHttpClient >>> awsConfig >>> dynamoDb).mapError(TestFailure.die)),
     )
   }
 }

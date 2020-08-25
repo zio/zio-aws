@@ -1,20 +1,28 @@
 package io.github.vigoo.zioaws.integtests
 
 import java.net.URI
+import java.nio.ByteBuffer
 
-import io.github.vigoo.zioaws.core.config
+import akka.actor.ActorSystem
+import io.github.vigoo.zioaws.core.{AwsError, ZStreamAsyncRequestBody, config}
 import io.github.vigoo.zioaws.s3.model._
-import io.github.vigoo.zioaws.{http4s, netty, s3}
+import io.github.vigoo.zioaws.{akkahttp, http4s, netty, s3}
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
+import software.amazon.awssdk.core.async.AsyncRequestBody
 import zio.stream.ZStream
+import zio.interop.reactivestreams._
 import zio.test.Assertion._
 import zio.test.environment.TestRandom
 import zio.test._
-import zio.{ZIO, ZManaged, console, random}
+import zio.{Chunk, Runtime, URIO, ZIO, ZLayer, ZManaged, console, random}
 
 object S3Tests  extends DefaultRunnableSpec {
   val nettyClient = netty.client()
   val http4sClient = http4s.client()
+
+  val actorSystem = ActorSystem("test") // ZLayer.fromAcquireRelease(ZIO.effect(ActorSystem("test")))(sys => ZIO.fromFuture(_ => sys.terminate()).orDie)
+  val akkaHttpClient = akkahttp.client(actorSystem)
+
   val awsConfig = config.default
   val s3Client = s3.customized(
     _.credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("dummy", "key")))
@@ -51,10 +59,10 @@ object S3Tests  extends DefaultRunnableSpec {
 
       assertM(steps.run)(succeeds(isUnit))
     },
-    testM("can upload and download items as byte streams") {
+    testM("can upload and download items as byte streams with known content length") {
       // streaming input and streaming output calls
       val steps = for {
-        testData <- random.nextBytes(4096)
+        testData <- random.nextBytes(65536)
         bucket <- testBucket
         key <- generateName
         receivedData <- bucket.use { bucketName =>
@@ -63,10 +71,11 @@ object S3Tests  extends DefaultRunnableSpec {
             _ <- s3.putObject(PutObjectRequest(
               bucket = bucketName,
               key = key,
+              contentLength = Some(65536L) // Remove to test https://github.com/vigoo/zio-aws/issues/24
             ), ZStream
               .fromIterable(testData)
-              .tap(_ => ZIO.succeed(console.putStr(".")))
-              .chunkN(1024))
+              .chunkN(1024)
+            )
             _ <- console.putStrLn("Downloading")
             getResponse <- s3.getObject(GetObjectRequest(
               bucket = bucketName,
@@ -103,6 +112,9 @@ object S3Tests  extends DefaultRunnableSpec {
       suite("with http4s")(
         tests: _*
       ).provideCustomLayer((http4sClient >>> awsConfig >>> s3Client).mapError(TestFailure.die)),
+      suite("with akka-http")(
+        tests: _*
+      ).provideCustomLayer((akkaHttpClient >>> awsConfig >>> s3Client).mapError(TestFailure.die)),
     )
   }
 }
