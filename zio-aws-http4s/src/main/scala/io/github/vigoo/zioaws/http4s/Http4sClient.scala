@@ -49,8 +49,13 @@ class Http4sClient(client: Client[Task],
       case SdkHttpMethod.OPTIONS => captureCanHaveBody(Method.OPTIONS)
     }
 
-  private def toHeaders(name: String, values: Iterable[String]): List[Header] =
-    values.map(Header(name, _)).toList
+  private def toHeaders(name: String, values: Iterable[String]): List[Header] = {
+    if (name == "Expect" && values.toSet == Set("100-continue")) {
+      List.empty // skipping
+    } else {
+      values.map(Header(name, _)).toList
+    }
+  }
 
   private def toEntity(method: ExtendedMethod, publisher: SdkHttpContentPublisher): EntityBody[Task] =
     if (method.canHaveBody) {
