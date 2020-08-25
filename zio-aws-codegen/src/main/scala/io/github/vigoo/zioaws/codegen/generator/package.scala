@@ -19,15 +19,13 @@ package object generator {
     trait Service {
       def generateServiceCode(id: ModelId, model: C2jModels): ZIO[Console, GeneratorFailure, Unit]
 
-      def generateBuildSbt(ids: Set[ModelId]): ZIO[Console, GeneratorFailure, Unit]
-
-      def copyCoreProject(): ZIO[Console, GeneratorFailure, Unit]
+      def generateSubprojectsSbt(ids: Set[ModelId]): ZIO[Console, GeneratorFailure, Unit]
     }
 
   }
 
   val live: ZLayer[ClippConfig[Parameters], Nothing, Generator] = ZLayer.fromService { cfg =>
-    new Generator.Service with GeneratorBase with ServiceInterfaceGenerator with ServiceModelGenerator with BuildSbtGenerator with HasConfig {
+    new Generator.Service with GeneratorBase with ServiceInterfaceGenerator with ServiceModelGenerator with SbtGenerator with HasConfig {
       import scala.meta._
 
       val config: ClippConfig.Service[Parameters] = cfg
@@ -74,35 +72,12 @@ package object generator {
         generate.provideLayer(createGeneratorContext(id, model))
       }
 
-      override def generateBuildSbt(ids: Set[ModelId]): ZIO[Console, GeneratorFailure, Unit] =
+      override def generateSubprojectsSbt(ids: Set[ModelId]): ZIO[Console, GeneratorFailure, Unit] =
         for {
-          code <- ZIO.succeed(generateBuildSbtCode(ids))
-          buildFile = config.parameters.targetRoot.resolve("build.sbt")
-          projectDir = config.parameters.targetRoot.resolve("project")
-          pluginsSbtFile = projectDir.resolve("plugins.sbt")
-          _ <- ZIO(Files.write(buildFile, code.getBytes(StandardCharsets.UTF_8))).mapError(FailedToWriteFile)
-          _ <- ZIO {
-            if (Files.notExists(projectDir)) {
-              Files.createDirectory(projectDir)
-            }
-          }.mapError(FailedToCreateDirectories)
-          _ <- ZIO(Files.write(pluginsSbtFile, generatePluginsSbtCode.getBytes(StandardCharsets.UTF_8))).mapError(FailedToWriteFile)
-        } yield ()
-
-      override def copyCoreProject(): IO[GeneratorFailure, Unit] =
-        for {
-          _ <- ZIO {
-            os.remove.all(
-              os.Path(config.parameters.targetRoot.resolve("zio-aws-core")))
-          }.mapError(FailedToDelete)
-          targetSrc = config.parameters.targetRoot.resolve("zio-aws-core").resolve("src")
-          _ <- ZIO(Files.createDirectories(targetSrc)).mapError(FailedToCreateDirectories)
-          _ <- ZIO {
-            os.copy(
-              os.Path(config.parameters.sourceRoot.resolve("zio-aws-core").resolve("src")),
-              os.Path(targetSrc),
-              replaceExisting = true)
-          }.mapError(FailedToCopy)
+          code <- ZIO.succeed(generateSubprojectsSbtCode(ids))
+          sbtFile = config.parameters.targetRoot.resolve("subprojects.sbt")
+          _ <- console.putStrLn(s"Generating $sbtFile")
+          _ <- ZIO(Files.write(sbtFile, code.getBytes(StandardCharsets.UTF_8))).mapError(FailedToWriteFile)
         } yield ()
     }
   }
@@ -110,9 +85,6 @@ package object generator {
   def generateServiceCode(id: ModelId, model: C2jModels): ZIO[Generator with Console, GeneratorFailure, Unit] =
     ZIO.accessM(_.get.generateServiceCode(id, model))
 
-  def generateBuildSbt(ids: Set[ModelId]): ZIO[Generator with Console, GeneratorFailure, Unit] =
-    ZIO.accessM(_.get.generateBuildSbt(ids))
-
-  def copyCoreProject(): ZIO[Generator with Console, GeneratorFailure, Unit] =
-    ZIO.accessM(_.get.copyCoreProject())
+  def generateSubprojectsSbt(ids: Set[ModelId]): ZIO[Generator with Console, GeneratorFailure, Unit] =
+    ZIO.accessM(_.get.generateSubprojectsSbt(ids))
 }
