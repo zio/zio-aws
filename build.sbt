@@ -3,11 +3,11 @@ import Core._
 
 enablePlugins(ZioAwsCodegenPlugin)
 
+lazy val core = Project("zio-aws-core", file("zio-aws-core")).settings(commonSettings).settings(coreSettings)
+
 lazy val root = Project("zio-aws", file(".")).settings(commonSettings).settings(
   publishArtifact := false,
 ) aggregate(core, http4s, netty, akkahttp)
-
-lazy val core = Project("zio-aws-core", file("zio-aws-core")).settings(commonSettings).settings(coreSettings)
 
 lazy val http4s = Project("zio-aws-http4s", file("zio-aws-http4s")).settings(commonSettings).settings(
   libraryDependencies ++= Seq(

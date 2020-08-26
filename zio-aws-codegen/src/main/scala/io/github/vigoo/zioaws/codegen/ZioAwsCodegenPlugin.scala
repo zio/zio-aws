@@ -42,6 +42,23 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
     getAllModelIds := getAllModelIdsTask.value,
   )
 
+  override lazy val extraProjects = Seq(
+    Project(
+      "zio-aws-barikutya",
+      file("generated") / "barikutya")
+      .settings(
+        //commonSettings
+        scalaVersion := "2.13.3"
+      )
+      .settings(
+        libraryDependencies += "software.amazon.awssdk" % "apigateway" % "2.14.3",
+        awsLibraryId := "barikutya",
+        Compile / sourceGenerators += generateSources.taskValue)
+      .dependsOn(
+        LocalProject("zio-aws-core")
+      )
+  )
+
   lazy val getAllModelIdsTask =
     Def.task {
       zio.Runtime.default.unsafeRun {

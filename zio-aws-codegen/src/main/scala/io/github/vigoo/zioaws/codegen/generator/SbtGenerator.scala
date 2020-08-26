@@ -38,8 +38,7 @@ trait SbtGenerator {
     val code =
       q"""
         import Common._
-        import Core._
-        lazy val core = Project("zio-aws-core", file("zio-aws-core")).settings(commonSettings).settings(coreSettings)
+        lazy val core = LocalProject("zio-aws-core")
 
         ..$projects
        """
