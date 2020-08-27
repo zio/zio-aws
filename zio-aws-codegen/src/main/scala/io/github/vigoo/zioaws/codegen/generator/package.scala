@@ -1,13 +1,9 @@
 package io.github.vigoo.zioaws.codegen
 
 import java.io.File
-import java.nio.charset.StandardCharsets
-import java.nio.file.Files
 
-import io.github.vigoo.clipp.zioapi.config.ClippConfig
 import io.github.vigoo.zioaws.codegen.generator.context._
 import io.github.vigoo.zioaws.codegen.loader.ModelId
-import sbt.Project
 import software.amazon.awssdk.codegen.C2jModels
 import software.amazon.awssdk.codegen.naming.{DefaultNamingStrategy, NamingStrategy}
 import zio._

@@ -1,7 +1,5 @@
 package io.github.vigoo.zioaws.codegen
 
-import io.github.vigoo.clipp.zioapi.config._
-import io.github.vigoo.zioaws.codegen._
 import io.github.vigoo.zioaws.codegen.loader._
 import io.github.vigoo.zioaws.codegen.generator._
 import sbt.Keys._
