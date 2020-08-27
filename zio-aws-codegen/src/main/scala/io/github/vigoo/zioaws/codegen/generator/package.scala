@@ -1,7 +1,11 @@
 package io.github.vigoo.zioaws.codegen
 
 import java.io.File
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
 
+import io.circe.yaml.parser._
+import io.circe.yaml.syntax._
 import io.github.vigoo.zioaws.codegen.generator.context._
 import io.github.vigoo.zioaws.codegen.loader.ModelId
 import software.amazon.awssdk.codegen.C2jModels
@@ -16,12 +20,13 @@ package object generator {
 
     trait Service {
       def generateServiceCode(id: ModelId, model: C2jModels): ZIO[Console, GeneratorFailure, Set[File]]
+      def generateTravisYaml(ids: Set[ModelId]): ZIO[Console, GeneratorFailure, Unit]
     }
 
   }
 
   val live: ZLayer[Has[Parameters], Nothing, Generator] = ZLayer.fromService { cfg =>
-    new Generator.Service with GeneratorBase with ServiceInterfaceGenerator with ServiceModelGenerator with HasConfig {
+    new Generator.Service with GeneratorBase with ServiceInterfaceGenerator with ServiceModelGenerator with TravisYamlGenerator with HasConfig {
       import scala.meta._
 
       val config: Parameters = cfg
@@ -67,9 +72,22 @@ package object generator {
 
         generate.provideLayer(createGeneratorContext(id, model))
       }
+
+      override def generateTravisYaml(ids: Set[ModelId]): ZIO[Console, GeneratorFailure, Unit] =
+        for {
+          rawSource <- ZIO.effect(new String(Files.readAllBytes(config.travisSource), StandardCharsets.UTF_8))
+            .mapError(FailedToReadFile)
+          source <- ZIO.fromEither(parse(rawSource))
+            .mapError(FailedToParseYaml)
+          result = generateTravisYaml(ids, config.parallelTravisJobs, source)
+          _ <- writeIfDifferent(config.travisTarget, result.asYaml.spaces2)
+        } yield ()
     }
   }
 
   def generateServiceCode(id: ModelId, model: C2jModels): ZIO[Generator with Console, GeneratorFailure, Set[File]] =
     ZIO.accessM(_.get.generateServiceCode(id, model))
+
+  def generateTravisYaml(ids: Set[ModelId]): ZIO[Generator with Console, GeneratorFailure, Unit] =
+    ZIO.accessM(_.get.generateTravisYaml(ids))
 }

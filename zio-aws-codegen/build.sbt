@@ -7,6 +7,8 @@ scalacOptions := Seq("-Ypartial-unification", "-deprecation")
 libraryDependencies ++= Seq(
   "dev.zio" %% "zio" % zioVersion,
 
+  "io.circe" %% "circe-yaml" % "0.13.1",
+
   "software.amazon.awssdk" % "codegen" % awsVersion,
   "software.amazon.awssdk" % "aws-sdk-java" % awsVersion,
 

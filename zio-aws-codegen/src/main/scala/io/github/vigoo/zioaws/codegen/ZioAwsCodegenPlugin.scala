@@ -12,6 +12,11 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
   object autoImport {
     val awsLibraryId = settingKey[String]("Selects the AWS library to generate sources for")
     val awsLibraryVersion = settingKey[String]("Specifies the version of the  AWS Java SDK to depend on")
+    val travisParallelJobs = settingKey[Int]("Number of parallel jobs in the generated travis file")
+    val travisSource = settingKey[File]("Travis source file")
+    val travisTarget = settingKey[File]("Travis target file")
+
+    val generateTravisYaml = taskKey[Unit]("Regenerates the .travis.yml file")
 
     lazy val generateSources =
       Def.task {
@@ -24,8 +29,15 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
         }
 
         val targetRoot = (sourceManaged in Compile).value
+        val travisSrc = travisSource.value
+        val travisDst = travisTarget.value
+        val parallelJobs = travisParallelJobs.value
+
         val params = Parameters(
           targetRoot = targetRoot.toPath,
+          travisSource = travisSrc.toPath,
+          travisTarget = travisDst.toPath,
+          parallelTravisJobs = parallelJobs
         )
 
         zio.Runtime.default.unsafeRun {
@@ -53,6 +65,10 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
 
   case class GeneratorError(error: GeneratorFailure) extends Error
 
+  override lazy val projectSettings = {
+    generateTravisYaml := generateTravisYamlTask.value
+  }
+
   override lazy val extraProjects: Seq[Project] = {
     zio.Runtime.default.unsafeRun {
       val env = loader.live
@@ -62,6 +78,36 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
 
       task.provideCustomLayer(env).catchAll { generatorError =>
         zio.console.putStrLnErr(s"Code generator failure: ${generatorError}").as(Seq.empty)
+      }
+    }
+  }
+
+  private lazy val generateTravisYamlTask = Def.task {
+    val log = streams.value.log
+
+    val targetRoot = (sourceManaged in Compile).value
+    val travisSrc = travisSource.value
+    val travisDst = travisTarget.value
+    val parallelJobs = travisParallelJobs.value
+
+    val params = Parameters(
+      targetRoot = targetRoot.toPath,
+      travisSource = travisSrc.toPath,
+      travisTarget = travisDst.toPath,
+      parallelTravisJobs = parallelJobs
+    )
+
+    zio.Runtime.default.unsafeRun {
+      val cfg = ZLayer.succeed(params)
+      val env = loader.live ++ (cfg >+> generator.live)
+      val task =
+        for {
+          _ <- ZIO.effect(log.info(s"Regenerating $travisDst"))
+          ids <- loader.findModels()
+          _ <- generator.generateTravisYaml(ids)
+        } yield ()
+      task.provideCustomLayer(env).catchAll { generatorError =>
+        ZIO.effect(log.error(s"Code generator failure: ${generatorError}")).as(Seq.empty)
       }
     }
   }

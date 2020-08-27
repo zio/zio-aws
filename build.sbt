@@ -1,5 +1,9 @@
 enablePlugins(Common, ZioAwsCodegenPlugin)
 
+ThisBuild / travisParallelJobs := 16
+ThisBuild / travisSource := file(".travis.base.yml")
+ThisBuild / travisTarget := file(".travis.yml")
+
 lazy val core = Project("zio-aws-core", file("zio-aws-core"))
   .settings(
     libraryDependencies ++= Seq(

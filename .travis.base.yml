@@ -1,0 +1,10 @@
+language: scala
+scala:
+  - 2.12.12
+  - 2.13.3
+
+env:
+  - COMMANDS=clean zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
+
+script:
+  - sbt ++$TRAVIS_SCALA_VERSION -jvm-opts travis/jvmopts $COMMANDS
