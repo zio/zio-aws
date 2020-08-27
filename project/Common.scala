@@ -3,29 +3,34 @@ import Keys._
 import xerial.sbt.Sonatype._
 import xerial.sbt.Sonatype.SonatypeKeys._
 
-object Common {
-  val zioVersion = "1.0.1"
-  val zioCatsInteropVersion = "2.1.4.0"
-  val zioReactiveStreamsInteropVersion = "1.0.3.5"
-  val catsEffectVersion = "2.1.4"
+object Common extends AutoPlugin {
 
-  val awsVersion = "2.14.3"
-  val awsSubVersion = awsVersion.drop(awsVersion.indexOf('.') + 1)
-  val http4sVersion = "0.21.7"
-  val fs2Version = "2.2.2"
+  object autoImport {
+    val zioVersion = "1.0.1"
+    val zioCatsInteropVersion = "2.1.4.0"
+    val zioReactiveStreamsInteropVersion = "1.0.3.5"
+    val catsEffectVersion = "2.1.4"
 
-  val majorVersion = "2"
-  val minorVersion = "1"
-  val zioAwsVersion = s"$majorVersion.$awsSubVersion.$minorVersion"
+    val awsVersion = "2.14.3"
+    val awsSubVersion = awsVersion.drop(awsVersion.indexOf('.') + 1)
+    val http4sVersion = "0.21.7"
+    val fs2Version = "2.2.2"
 
-  val scala212Version = "2.12.12"
-  val scala213Version = "2.13.3"
+    val majorVersion = "2"
+    val minorVersion = "1"
+    val zioAwsVersion = s"$majorVersion.$awsSubVersion.$minorVersion"
 
-  val scalacOptions212 = Seq("-Ypartial-unification", "-deprecation")
-  val scalacOptions213 = Seq("-deprecation")
+    val scala212Version = "2.12.12"
+    val scala213Version = "2.13.3"
 
+    val scalacOptions212 = Seq("-Ypartial-unification", "-deprecation")
+    val scalacOptions213 = Seq("-deprecation")
+  }
 
-  lazy val commonSettings =
+  import autoImport._
+
+  override val trigger = allRequirements
+  override lazy val projectSettings =
     Seq(
       scalaVersion := scala213Version,
       crossScalaVersions := List(scala212Version, scala213Version),

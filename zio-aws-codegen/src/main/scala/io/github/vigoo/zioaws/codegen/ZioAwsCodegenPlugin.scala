@@ -1,7 +1,7 @@
 package io.github.vigoo.zioaws.codegen
 
 import sbt.Keys._
-import sbt._
+import sbt.{Def, _}
 import _root_.io.github.vigoo.zioaws.codegen._
 import _root_.io.github.vigoo.zioaws.codegen.loader._
 import _root_.io.github.vigoo.zioaws.codegen.generator._
@@ -27,6 +27,8 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
         println(s"Generating sources for $id ($idStr)")
         Seq.empty[File]
       }
+
+
   }
 
   import autoImport._
@@ -46,10 +48,6 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
     Project(
       "zio-aws-barikutya",
       file("generated") / "barikutya")
-      .settings(
-        //commonSettings
-        scalaVersion := "2.13.3"
-      )
       .settings(
         libraryDependencies += "software.amazon.awssdk" % "apigateway" % "2.14.3",
         awsLibraryId := "barikutya",
