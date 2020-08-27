@@ -1,5 +1,6 @@
 package io.github.vigoo.zioaws.codegen
 
+import java.io.File
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 
@@ -18,7 +19,7 @@ package object generator {
   object Generator {
 
     trait Service {
-      def generateServiceCode(id: ModelId, model: C2jModels): ZIO[Console, GeneratorFailure, Unit]
+      def generateServiceCode(id: ModelId, model: C2jModels): ZIO[Console, GeneratorFailure, Set[File]]
     }
 
   }
@@ -62,17 +63,17 @@ package object generator {
           }
         }
 
-      override def generateServiceCode(id: ModelId, model: C2jModels): ZIO[Console, GeneratorFailure, Unit] = {
+      override def generateServiceCode(id: ModelId, model: C2jModels): ZIO[Console, GeneratorFailure, Set[File]] = {
         val generate = for {
-          _ <- generateServiceModule()
-          _ <- generateServiceModels()
-        } yield ()
+          moduleFile <- generateServiceModule()
+          modelFile <- generateServiceModels()
+        } yield Set(moduleFile, modelFile)
 
         generate.provideLayer(createGeneratorContext(id, model))
       }
     }
   }
 
-  def generateServiceCode(id: ModelId, model: C2jModels): ZIO[Generator with Console, GeneratorFailure, Unit] =
+  def generateServiceCode(id: ModelId, model: C2jModels): ZIO[Generator with Console, GeneratorFailure, Set[File]] =
     ZIO.accessM(_.get.generateServiceCode(id, model))
 }

@@ -1,11 +1,11 @@
 package io.github.vigoo.zioaws.codegen
 
+import io.github.vigoo.clipp.zioapi.config._
+import io.github.vigoo.zioaws.codegen._
+import io.github.vigoo.zioaws.codegen.loader._
+import io.github.vigoo.zioaws.codegen.generator._
 import sbt.Keys._
 import sbt.{Compile, Def, _}
-import _root_.io.github.vigoo.zioaws.codegen._
-import _root_.io.github.vigoo.zioaws.codegen.loader._
-import _root_.io.github.vigoo.zioaws.codegen.generator._
-import _root_.io.github.vigoo.clipp.zioapi.config._
 import zio._
 
 object ZioAwsCodegenPlugin extends AutoPlugin {
@@ -16,18 +16,37 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
 
     lazy val generateSources =
       Def.task {
+        val log = streams.value.log
+
         val idStr = awsLibraryId.value
         val id = ModelId.parse(idStr) match {
           case Left(failure) => sys.error(failure)
           case Right(value) => value
         }
 
-        println(s"Generating sources for $id ($idStr)")
-        Seq.empty[File]
+        val targetRoot = (sourceManaged in Compile).value
+        val params = Parameters(
+          targetRoot = targetRoot.toPath,
+        )
+
+        zio.Runtime.default.unsafeRun {
+          val cfg = ZLayer.succeed(new ClippConfig.Service[Parameters] {
+            override val parameters: Parameters = params
+          })
+          val env = loader.live ++ (cfg >+> generator.live)
+          val task =
+            for {
+              _ <- ZIO.effect(log.info(s"Generating sources for $id"))
+              model <- loader.loadCodegenModel(id)
+              files <- generator.generateServiceCode(id, model)
+            } yield files.toSeq
+          task.provideCustomLayer(env).catchAll { generatorError =>
+            ZIO.effect(log.error(s"Code generator failure: ${generatorError}")).as(Seq.empty)
+          }
+        }
       }
-
-
   }
+
 
   import autoImport._
 
