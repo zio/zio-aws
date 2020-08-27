@@ -1,7 +1,7 @@
 package io.github.vigoo.zioaws.codegen
 
 import sbt.Keys._
-import sbt.{Def, _}
+import sbt.{Compile, Def, _}
 import _root_.io.github.vigoo.zioaws.codegen._
 import _root_.io.github.vigoo.zioaws.codegen.loader._
 import _root_.io.github.vigoo.zioaws.codegen.generator._
@@ -11,10 +11,8 @@ import zio._
 object ZioAwsCodegenPlugin extends AutoPlugin {
 
   object autoImport {
-    val getAllModelIds = taskKey[Set[ModelId]]("Gets all the AWS models on the classpath")
-    val generateSubprojectsSbt = taskKey[Unit]("Generates the subprojects.sbt file")
-
     val awsLibraryId = settingKey[String]("Selects the AWS library to generate sources for")
+    val awsLibraryVersion = settingKey[String]("Specifies the version of the  AWS Java SDK to depend on")
 
     lazy val generateSources =
       Def.task {
@@ -39,54 +37,55 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
 
   case class GeneratorError(error: GeneratorFailure) extends Error
 
-  override lazy val buildSettings = Seq(
-    generateSubprojectsSbt := generateSubprojectsSbtTask.value,
-    getAllModelIds := getAllModelIdsTask.value,
-  )
+  override lazy val extraProjects: Seq[Project] = {
+    zio.Runtime.default.unsafeRun {
+      val env = loader.live
+      val task = for {
+        ids <- loader.findModels()
+      } yield generateSbtSubprojects(ids)
 
-  override lazy val extraProjects = Seq(
-    Project(
-      "zio-aws-barikutya",
-      file("generated") / "barikutya")
-      .settings(
-        libraryDependencies += "software.amazon.awssdk" % "apigateway" % "2.14.3",
-        awsLibraryId := "barikutya",
-        Compile / sourceGenerators += generateSources.taskValue)
-      .dependsOn(
-        LocalProject("zio-aws-core")
-      )
-  )
-
-  lazy val getAllModelIdsTask =
-    Def.task {
-      zio.Runtime.default.unsafeRun {
-        val env = loader.live
-        val task = loader.findModels().mapError(ReflectionError)
-        task.provideCustomLayer(env).catchAll {
-          case ReflectionError(exception) =>
-            zio.console.putStrErr(exception.toString).as(Set.empty[ModelId])
-        }
+      task.provideCustomLayer(env).catchAll { generatorError =>
+        zio.console.putStrLnErr(s"Code generator failure: ${generatorError}").as(Seq.empty)
       }
     }
+  }
 
-  lazy val generateSubprojectsSbtTask =
-    Def.task {
-      val targetRoot = baseDirectory.value
-
-      val ids = getAllModelIdsTask.value
-      val params = Parameters(
-        targetRoot = targetRoot.toPath,
-      )
-
-      zio.Runtime.default.unsafeRun {
-        val cfg = ZLayer.succeed(new ClippConfig.Service[Parameters] {
-          override val parameters: Parameters = params
-        })
-        val env = loader.live ++ (cfg >+> generator.live)
-        val task = generator.generateSubprojectsSbt(ids)
-        task.provideCustomLayer(env).catchAll { generatorError =>
-          zio.console.putStrLnErr(s"Code generator failure: ${generatorError}")
+  protected def generateSbtSubprojects(ids: Set[ModelId]): Seq[Project] = {
+    val map = ids
+      .toSeq
+      .sortWith { case (a, b) =>
+        val aIsDependent = a.subModuleName match {
+          case Some(value) if value != a.name => true
+          case _ => false
         }
+        val bIsDependent = b.subModuleName match {
+          case Some(value) if value != b.name => true
+          case _ => false
+        }
+
+        bIsDependent || (!aIsDependent && a.toString < b.toString)
       }
-    }
+      .foldLeft(Map.empty[ModelId, Project]) { (mapping, id) =>
+        val name = id.moduleName
+        val fullName = s"zio-aws-$name"
+        val deps: Seq[ClasspathDep[ProjectReference]] = id.subModule match {
+          case Some(value) if value != id.name =>
+            Seq(ClasspathDependency(LocalProject("zio-aws-core"), None),
+              ClasspathDependency(mapping(ModelId(id.name, Some(id.name))), None))
+          case _ =>
+            Seq(ClasspathDependency(LocalProject("zio-aws-core"), None))
+        }
+
+        val project = Project(fullName, file("generated") / name)
+          .settings(
+            libraryDependencies += "software.amazon.awssdk" % id.name % awsLibraryVersion.value,
+            awsLibraryId := id.toString,
+            Compile / sourceGenerators += generateSources.taskValue)
+          .dependsOn(deps: _*)
+
+        mapping.updated(id, project)
+      }
+
+    map.values.toSeq
+  }
 }

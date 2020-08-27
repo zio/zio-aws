@@ -16,7 +16,6 @@ import zio._
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 import scala.util.Try
-import scala.util.matching.Regex
 
 package object loader {
   type Loader = Has[Loader.Service]

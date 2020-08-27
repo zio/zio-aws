@@ -1,3 +1,5 @@
+
+import io.github.vigoo.zioaws.codegen.ZioAwsCodegenPlugin.autoImport._
 import sbt._
 import Keys._
 import xerial.sbt.Sonatype._
@@ -37,6 +39,8 @@ object Common extends AutoPlugin {
 
       organization := "io.github.vigoo",
       version := zioAwsVersion,
+
+      awsLibraryVersion := awsVersion,
 
       scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
         case Some((2, 12)) => scalacOptions212
