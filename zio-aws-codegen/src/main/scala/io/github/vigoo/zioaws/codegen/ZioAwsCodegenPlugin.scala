@@ -5,6 +5,7 @@ import io.github.vigoo.zioaws.codegen._
 import io.github.vigoo.zioaws.codegen.loader._
 import io.github.vigoo.zioaws.codegen.generator._
 import sbt.Keys._
+import sbt.Project.projectToRef
 import sbt.{Compile, Def, _}
 import zio._
 
@@ -105,6 +106,10 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
         mapping.updated(id, project)
       }
 
-    map.values.toSeq
+    val projects = map.values.toSeq
+    val aggregated = Project("all", file("generated") / "all")
+      .aggregate(projects.map(projectToRef): _*)
+
+    projects :+ aggregated
   }
 }
