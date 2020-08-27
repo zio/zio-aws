@@ -536,7 +536,7 @@ trait ServiceInterfaceGenerator {
       code <- generateServiceModuleCode()
       id <- getService
       moduleName = id.moduleName
-      targetRoot = config.parameters.targetRoot
+      targetRoot = config.targetRoot
       packageParent = targetRoot.resolve("io/github/vigoo/zioaws")
       packageRoot = packageParent.resolve(moduleName)
       moduleFile = packageRoot.resolve("package.scala")

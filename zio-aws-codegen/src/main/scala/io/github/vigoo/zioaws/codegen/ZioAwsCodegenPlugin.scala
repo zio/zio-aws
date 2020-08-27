@@ -31,9 +31,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
         )
 
         zio.Runtime.default.unsafeRun {
-          val cfg = ZLayer.succeed(new ClippConfig.Service[Parameters] {
-            override val parameters: Parameters = params
-          })
+          val cfg = ZLayer.succeed(params)
           val env = loader.live ++ (cfg >+> generator.live)
           val task =
             for {

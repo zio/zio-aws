@@ -24,11 +24,11 @@ package object generator {
 
   }
 
-  val live: ZLayer[ClippConfig[Parameters], Nothing, Generator] = ZLayer.fromService { cfg =>
+  val live: ZLayer[Has[Parameters], Nothing, Generator] = ZLayer.fromService { cfg =>
     new Generator.Service with GeneratorBase with ServiceInterfaceGenerator with ServiceModelGenerator with HasConfig {
       import scala.meta._
 
-      val config: ClippConfig.Service[Parameters] = cfg
+      val config: Parameters = cfg
 
       private def getSdkModelPackage(id: ModelId, pkgName: Term.Name): Term.Ref = {
         val modelPkg: Term.Ref = id.subModuleName match {
