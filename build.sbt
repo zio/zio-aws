@@ -52,7 +52,7 @@ lazy val netty = Project("zio-aws-netty", file("zio-aws-netty")).settings(
 
 lazy val examples = Project("examples", file("examples")).settings(
   publishArtifact := false,
-) aggregate(example1)
+) aggregate (example1)
 
 lazy val example1 = Project("example1", file("examples") / "example1")
   .dependsOn(
@@ -62,3 +62,24 @@ lazy val example1 = Project("example1", file("examples") / "example1")
     LocalProject("zio-aws-elasticbeanstalk"),
     LocalProject("zio-aws-ec2")
   )
+
+lazy val integtests = Project("integtests", file("integtests")).settings(
+  libraryDependencies ++= Seq(
+    "dev.zio" %% "zio" % "1.0.1",
+    "dev.zio" %% "zio-test" % "1.0.1",
+    "dev.zio" %% "zio-test-sbt" % "1.0.1",
+
+    "org.apache.logging.log4j" % "log4j-1.2-api" % "2.13.3",
+    "org.apache.logging.log4j" % "log4j-core" % "2.13.3",
+    "org.apache.logging.log4j" % "log4j-api" % "2.13.3",
+    "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.13.3",
+  ),
+  testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
+).dependsOn(
+  core,
+  http4s,
+  netty,
+  akkahttp,
+  LocalProject("zio-aws-s3"),
+  LocalProject("zio-aws-dynamodb")
+)
