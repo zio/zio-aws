@@ -1,6 +1,6 @@
 package io.github.vigoo.zioaws.codegen
 
-import java.nio.file.Path
+import zio.nio.core.file.Path
 
 case class Parameters(targetRoot: Path,
                       travisSource: Path,

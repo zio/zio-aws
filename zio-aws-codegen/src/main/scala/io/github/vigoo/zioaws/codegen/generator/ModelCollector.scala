@@ -19,7 +19,7 @@ object ModelCollector {
   def tryFindEventStreamShape(models: C2jModels, outputShape: String, alreadyChecked: Set[Shape] = Set.empty): Option[NamedShape] = {
     Option(models.serviceModel().getShape(outputShape)) match {
       case Some(shape) if !alreadyChecked.contains(shape) =>
-        if (shape.isEventStream) {
+        if (shape.isEventstream) {
           Some(NamedShape(outputShape, shape))
         } else {
           shape.getMembers
@@ -97,7 +97,7 @@ object ModelCollector {
       }.toSet
 
   private def collectPaginations(namingStrategy: NamingStrategy, models: C2jModels): Set[Model] =
-    models.paginatorsModel().getPaginators
+    models.paginatorsModel().getPagination
       .asScala
       .toList
       .flatMap { case (name, paginator) =>

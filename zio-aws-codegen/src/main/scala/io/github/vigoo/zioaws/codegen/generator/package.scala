@@ -2,7 +2,6 @@ package io.github.vigoo.zioaws.codegen
 
 import java.io.File
 import java.nio.charset.StandardCharsets
-import java.nio.file.Files
 
 import io.circe.yaml.parser._
 import io.circe.yaml.syntax._
@@ -11,7 +10,9 @@ import io.github.vigoo.zioaws.codegen.loader.ModelId
 import software.amazon.awssdk.codegen.C2jModels
 import software.amazon.awssdk.codegen.naming.{DefaultNamingStrategy, NamingStrategy}
 import zio._
+import zio.blocking.Blocking
 import zio.console.Console
+import zio.nio.file.Files
 
 package object generator {
   type Generator = Has[Generator.Service]
@@ -19,8 +20,8 @@ package object generator {
   object Generator {
 
     trait Service {
-      def generateServiceCode(id: ModelId, model: C2jModels): ZIO[Console, GeneratorFailure, Set[File]]
-      def generateTravisYaml(ids: Set[ModelId]): ZIO[Console, GeneratorFailure, Unit]
+      def generateServiceCode(id: ModelId, model: C2jModels): ZIO[Console with Blocking, GeneratorFailure, Set[File]]
+      def generateTravisYaml(ids: Set[ModelId]): ZIO[Console with Blocking, GeneratorFailure, Unit]
     }
 
   }
@@ -64,19 +65,20 @@ package object generator {
           }
         }
 
-      override def generateServiceCode(id: ModelId, model: C2jModels): ZIO[Console, GeneratorFailure, Set[File]] = {
+      override def generateServiceCode(id: ModelId, model: C2jModels): ZIO[Console with Blocking, GeneratorFailure, Set[File]] = {
         val generate = for {
           moduleFile <- generateServiceModule()
           modelFile <- generateServiceModels()
         } yield Set(moduleFile, modelFile)
 
-        generate.provideLayer(createGeneratorContext(id, model))
+        generate
+          .provideSomeLayer[Blocking](createGeneratorContext(id, model))
       }
 
-      override def generateTravisYaml(ids: Set[ModelId]): ZIO[Console, GeneratorFailure, Unit] =
+      override def generateTravisYaml(ids: Set[ModelId]): ZIO[Console with Blocking, GeneratorFailure, Unit] =
         for {
-          rawSource <- ZIO.effect(new String(Files.readAllBytes(config.travisSource), StandardCharsets.UTF_8))
-            .mapError(FailedToReadFile)
+          rawSource <- Files.readAllBytes(config.travisSource)
+            .bimap(FailedToReadFile, bytes => new String(bytes.toArray, StandardCharsets.UTF_8))
           source <- ZIO.fromEither(parse(rawSource))
             .mapError(FailedToParseYaml)
           result = generateTravisYaml(ids, config.parallelTravisJobs, source)
@@ -85,9 +87,9 @@ package object generator {
     }
   }
 
-  def generateServiceCode(id: ModelId, model: C2jModels): ZIO[Generator with Console, GeneratorFailure, Set[File]] =
+  def generateServiceCode(id: ModelId, model: C2jModels): ZIO[Generator with Console with Blocking, GeneratorFailure, Set[File]] =
     ZIO.accessM(_.get.generateServiceCode(id, model))
 
-  def generateTravisYaml(ids: Set[ModelId]): ZIO[Generator with Console, GeneratorFailure, Unit] =
+  def generateTravisYaml(ids: Set[ModelId]): ZIO[Generator with Console with Blocking, GeneratorFailure, Unit] =
     ZIO.accessM(_.get.generateTravisYaml(ids))
 }

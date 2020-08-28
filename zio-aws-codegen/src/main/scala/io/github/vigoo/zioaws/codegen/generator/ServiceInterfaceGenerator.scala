@@ -2,12 +2,13 @@ package io.github.vigoo.zioaws.codegen.generator
 
 import java.io.File
 import java.nio.charset.StandardCharsets
-import java.nio.file.Files
 
 import io.github.vigoo.zioaws.codegen.generator.context._
 import io.github.vigoo.zioaws.codegen.generator.syntax._
 import software.amazon.awssdk.codegen.model.service.Operation
 import zio.ZIO
+import zio.blocking.Blocking
+import zio.nio.file.Files
 
 import scala.jdk.CollectionConverters._
 import scala.meta._
@@ -531,16 +532,16 @@ trait ServiceInterfaceGenerator {
           """
     } yield pkg.toString
 
-  protected def generateServiceModule(): ZIO[GeneratorContext, GeneratorFailure, File] =
+  protected def generateServiceModule(): ZIO[GeneratorContext with Blocking, GeneratorFailure, File] =
     for {
       code <- generateServiceModuleCode()
       id <- getService
       moduleName = id.moduleName
       targetRoot = config.targetRoot
-      packageParent = targetRoot.resolve("io/github/vigoo/zioaws")
-      packageRoot = packageParent.resolve(moduleName)
-      moduleFile = packageRoot.resolve("package.scala")
-      _ <- ZIO(Files.createDirectories(packageRoot)).mapError(FailedToCreateDirectories)
+      packageParent = targetRoot / "io/github/vigoo/zioaws"
+      packageRoot = packageParent / moduleName
+      moduleFile = packageRoot / "package.scala"
+      _ <- Files.createDirectories(packageRoot).mapError(FailedToCreateDirectories)
       _ <- writeIfDifferent(moduleFile, code)
     } yield moduleFile.toFile
 

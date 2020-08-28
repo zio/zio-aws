@@ -2,7 +2,6 @@ package io.github.vigoo.zioaws.codegen.generator
 
 import java.io.File
 import java.nio.charset.StandardCharsets
-import java.nio.file.Files
 
 import io.github.vigoo.zioaws.codegen.generator.context._
 import io.github.vigoo.zioaws.codegen.generator.syntax._
@@ -10,6 +9,8 @@ import io.github.vigoo.zioaws.codegen.generator.syntax._
 import scala.jdk.CollectionConverters._
 import software.amazon.awssdk.codegen.model.config.customization.ShapeModifier
 import zio.ZIO
+import zio.blocking.Blocking
+import zio.nio.file.Files
 
 import scala.meta._
 
@@ -34,7 +35,7 @@ trait ServiceModelGenerator {
       result = modelMap.all.filterNot { model =>
         excluded.contains(model.serviceModelName) ||
           model.shape.isException ||
-          model.shape.isEventStream ||
+          model.shape.isEventstream ||
           TypeMapping.isBuiltIn(model.shapeName)
       }
     } yield result
@@ -52,7 +53,7 @@ trait ServiceModelGenerator {
           localExcludes.contains(memberName.toLowerCase) ||
           member.isStreaming || {
           val shape = models.serviceModel().getShape(member.getShape)
-          shape.isStreaming || shape.isEventStream
+          shape.isStreaming || shape.isEventstream
         }
       })
     }
@@ -399,17 +400,17 @@ trait ServiceModelGenerator {
                   ..${models.flatMap(_.code)}
                   }}""".toString
 
-  protected def generateServiceModels(): ZIO[GeneratorContext, GeneratorFailure, File] =
+  protected def generateServiceModels(): ZIO[GeneratorContext with Blocking, GeneratorFailure, File] =
     for {
       code <- generateServiceModelsCode()
       id <- getService
       moduleName = id.moduleName
       targetRoot = config.targetRoot
-      packageParent = targetRoot.resolve("io/github/vigoo/zioaws")
-      packageRoot = packageParent.resolve(moduleName)
-      modelsRoot = packageRoot.resolve("model")
-      modelFile = modelsRoot.resolve("package.scala")
-      _ <- ZIO(Files.createDirectories(modelsRoot)).mapError(FailedToCreateDirectories)
+      packageParent = targetRoot / "io/github/vigoo/zioaws"
+      packageRoot = packageParent / moduleName
+      modelsRoot = packageRoot / "model"
+      modelFile = modelsRoot / "package.scala"
+      _ <- Files.createDirectories(modelsRoot).mapError(FailedToCreateDirectories)
       _ <- writeIfDifferent(modelFile, code)
     } yield modelFile.toFile
 }
