@@ -1,8 +1,93 @@
-language: scala
 scala:
-  - 2.12.12
-  - 2.13.3
+- 2.12.12
+- 2.13.3
+before_install:
+- if [ "$COMMANDS" = "clean integtests/test" ]; then docker pull localstack/localstack;
+  fi
+- if [ "$COMMANDS" = "clean integtests/test" ]; then docker run -d -p 4566:4566 localstack/localstack;
+  fi
+env:
+- COMMANDS="clean zio-aws-accessanalyzer/compile zio-aws-acm/compile zio-aws-acmpca/compile
+  zio-aws-alexaforbusiness/compile zio-aws-amplify/compile zio-aws-apigateway/compile
+  zio-aws-apigatewaymanagementapi/compile zio-aws-apigatewayv2/compile zio-aws-appconfig/compile
+  zio-aws-applicationautoscaling/compile zio-aws-applicationdiscovery/compile zio-aws-applicationinsights/compile
+  zio-aws-appmesh/compile zio-aws-appstream/compile zio-aws-appsync/compile zio-aws-athena/compile
+  zio-aws-autoscaling/compile zio-aws-autoscalingplans/compile zio-aws-backup/compile
+  zio-aws-batch/compile zio-aws-braket/compile zio-aws-budgets/compile zio-aws-chime/compile
+  zio-aws-cloud9/compile zio-aws-clouddirectory/compile zio-aws-cloudformation/compile
+  zio-aws-cloudfront/compile zio-aws-cloudhsm/compile zio-aws-cloudhsmv2/compile"
+- COMMANDS="clean zio-aws-cloudsearch/compile zio-aws-cloudsearchdomain/compile zio-aws-cloudtrail/compile
+  zio-aws-cloudwatch/compile zio-aws-cloudwatchevents/compile zio-aws-cloudwatchlogs/compile
+  zio-aws-codeartifact/compile zio-aws-codebuild/compile zio-aws-codecommit/compile
+  zio-aws-codedeploy/compile zio-aws-codeguruprofiler/compile zio-aws-codegurureviewer/compile
+  zio-aws-codepipeline/compile zio-aws-codestar/compile zio-aws-codestarconnections/compile
+  zio-aws-codestarnotifications/compile zio-aws-cognitoidentity/compile zio-aws-cognitoidentityprovider/compile
+  zio-aws-cognitosync/compile zio-aws-comprehend/compile zio-aws-comprehendmedical/compile
+  zio-aws-computeoptimizer/compile zio-aws-config/compile zio-aws-connect/compile
+  zio-aws-connectparticipant/compile zio-aws-costandusagereport/compile zio-aws-costexplorer/compile
+  zio-aws-databasemigration/compile zio-aws-dataexchange/compile"
+- COMMANDS="clean zio-aws-datapipeline/compile zio-aws-datasync/compile zio-aws-dax/compile
+  zio-aws-detective/compile zio-aws-devicefarm/compile zio-aws-directconnect/compile
+  zio-aws-directory/compile zio-aws-dlm/compile zio-aws-docdb/compile zio-aws-dynamodb/compile
+  zio-aws-dynamodbstreams/compile zio-aws-ebs/compile zio-aws-ec2/compile zio-aws-ec2instanceconnect/compile
+  zio-aws-ecr/compile zio-aws-ecs/compile zio-aws-efs/compile zio-aws-eks/compile
+  zio-aws-elasticache/compile zio-aws-elasticbeanstalk/compile zio-aws-elasticinference/compile
+  zio-aws-elasticloadbalancing/compile zio-aws-elasticloadbalancingv2/compile zio-aws-elasticsearch/compile
+  zio-aws-elastictranscoder/compile zio-aws-emr/compile zio-aws-eventbridge/compile
+  zio-aws-firehose/compile zio-aws-fms/compile"
+- COMMANDS="clean zio-aws-forecast/compile zio-aws-forecastquery/compile zio-aws-frauddetector/compile
+  zio-aws-fsx/compile zio-aws-gamelift/compile zio-aws-glacier/compile zio-aws-globalaccelerator/compile
+  zio-aws-glue/compile zio-aws-greengrass/compile zio-aws-groundstation/compile zio-aws-guardduty/compile
+  zio-aws-health/compile zio-aws-honeycode/compile zio-aws-iam/compile zio-aws-identitystore/compile
+  zio-aws-imagebuilder/compile zio-aws-inspector/compile zio-aws-iot/compile zio-aws-iot1clickdevices/compile
+  zio-aws-iot1clickprojects/compile zio-aws-iotanalytics/compile zio-aws-iotdataplane/compile
+  zio-aws-iotevents/compile zio-aws-ioteventsdata/compile zio-aws-iotjobsdataplane/compile
+  zio-aws-iotsecuretunneling/compile zio-aws-iotsitewise/compile zio-aws-iotthingsgraph/compile
+  zio-aws-ivs/compile"
+- COMMANDS="clean zio-aws-kafka/compile zio-aws-kendra/compile zio-aws-kinesis/compile
+  zio-aws-kinesisanalytics/compile zio-aws-kinesisanalyticsv2/compile zio-aws-kinesisvideo/compile
+  zio-aws-kinesisvideoarchivedmedia/compile zio-aws-kinesisvideomedia/compile zio-aws-kinesisvideosignaling/compile
+  zio-aws-kms/compile zio-aws-lakeformation/compile zio-aws-lambda/compile zio-aws-lexmodelbuilding/compile
+  zio-aws-lexruntime/compile zio-aws-licensemanager/compile zio-aws-lightsail/compile
+  zio-aws-machinelearning/compile zio-aws-macie/compile zio-aws-macie2/compile zio-aws-managedblockchain/compile
+  zio-aws-marketplacecatalog/compile zio-aws-marketplacecommerceanalytics/compile
+  zio-aws-marketplaceentitlement/compile zio-aws-marketplacemetering/compile zio-aws-mediaconnect/compile
+  zio-aws-mediaconvert/compile zio-aws-medialive/compile zio-aws-mediapackage/compile
+  zio-aws-mediapackagevod/compile"
+- COMMANDS="clean zio-aws-mediastore/compile zio-aws-mediastoredata/compile zio-aws-mediatailor/compile
+  zio-aws-migrationhub/compile zio-aws-migrationhubconfig/compile zio-aws-mobile/compile
+  zio-aws-mq/compile zio-aws-mturk/compile zio-aws-neptune/compile zio-aws-networkmanager/compile
+  zio-aws-opsworks/compile zio-aws-opsworkscm/compile zio-aws-organizations/compile
+  zio-aws-outposts/compile zio-aws-personalize/compile zio-aws-personalizeevents/compile
+  zio-aws-personalizeruntime/compile zio-aws-pi/compile zio-aws-pinpoint/compile zio-aws-pinpointemail/compile
+  zio-aws-pinpointsmsvoice/compile zio-aws-polly/compile zio-aws-pricing/compile zio-aws-qldb/compile
+  zio-aws-qldbsession/compile zio-aws-quicksight/compile zio-aws-ram/compile zio-aws-rds/compile
+  zio-aws-rdsdata/compile"
+- COMMANDS="clean zio-aws-redshift/compile zio-aws-rekognition/compile zio-aws-resourcegroups/compile
+  zio-aws-resourcegroupstaggingapi/compile zio-aws-robomaker/compile zio-aws-route53/compile
+  zio-aws-route53domains/compile zio-aws-route53resolver/compile zio-aws-s3/compile
+  zio-aws-s3control/compile zio-aws-sagemaker/compile zio-aws-sagemakera2iruntime/compile
+  zio-aws-sagemakerruntime/compile zio-aws-savingsplans/compile zio-aws-schemas/compile
+  zio-aws-secretsmanager/compile zio-aws-securityhub/compile zio-aws-serverlessapplicationrepository/compile
+  zio-aws-servicecatalog/compile zio-aws-servicediscovery/compile zio-aws-servicequotas/compile
+  zio-aws-ses/compile zio-aws-sesv2/compile zio-aws-sfn/compile zio-aws-shield/compile
+  zio-aws-signer/compile zio-aws-sms/compile zio-aws-snowball/compile zio-aws-sns/compile"
+- COMMANDS="clean zio-aws-sqs/compile zio-aws-ssm/compile zio-aws-sso/compile zio-aws-ssooidc/compile
+  zio-aws-storagegateway/compile zio-aws-sts/compile zio-aws-support/compile zio-aws-swf/compile
+  zio-aws-synthetics/compile zio-aws-textract/compile zio-aws-transcribe/compile zio-aws-transcribestreaming/compile
+  zio-aws-transfer/compile zio-aws-translate/compile zio-aws-waf/compile zio-aws-wafregional/compile
+  zio-aws-wafv2/compile zio-aws-workdocs/compile zio-aws-worklink/compile zio-aws-workmail/compile
+  zio-aws-workmailmessageflow/compile zio-aws-workspaces/compile zio-aws-xray/compile"
+- COMMANDS="clean zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test"
+- COMMANDS="clean examples/compile"
+- COMMANDS="clean integtests/test"
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION -jvm-opts travis/jvmopts clean test publishLocalAll
-  - cd examples
-  - sbt ++$TRAVIS_SCALA_VERSION compile
+- sbt ++$TRAVIS_SCALA_VERSION -jvm-opts travis/jvmopts $COMMANDS
+cache:
+  directories:
+  - $HOME/.cache/coursier
+  - $HOME/.ivy2/cache
+  - $HOME/.sbt
+language: scala
+services:
+- docker

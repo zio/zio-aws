@@ -1,5 +1,6 @@
 package io.github.vigoo.zioaws.codegen.generator
 
+import java.io.File
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 
@@ -398,18 +399,17 @@ trait ServiceModelGenerator {
                   ..${models.flatMap(_.code)}
                   }}""".toString
 
-  protected def generateServiceModels(): ZIO[GeneratorContext, GeneratorFailure, Unit] =
+  protected def generateServiceModels(): ZIO[GeneratorContext, GeneratorFailure, File] =
     for {
       code <- generateServiceModelsCode()
       id <- getService
       moduleName = id.moduleName
-      moduleRoot = config.parameters.targetRoot.resolve(moduleName)
-      scalaRoot = moduleRoot.resolve("src/main/scala")
-      packageParent = scalaRoot.resolve("io/github/vigoo/zioaws")
+      targetRoot = config.targetRoot
+      packageParent = targetRoot.resolve("io/github/vigoo/zioaws")
       packageRoot = packageParent.resolve(moduleName)
       modelsRoot = packageRoot.resolve("model")
-      moduleFile = modelsRoot.resolve("package.scala")
+      modelFile = modelsRoot.resolve("package.scala")
       _ <- ZIO(Files.createDirectories(modelsRoot)).mapError(FailedToCreateDirectories)
-      _ <- writeIfDifferent(moduleFile, code)
-    } yield ()
+      _ <- writeIfDifferent(modelFile, code)
+    } yield modelFile.toFile
 }

@@ -5,8 +5,6 @@ import java.net.URL
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.{FileSystem, FileSystemNotFoundException, FileSystems, FileVisitResult, FileVisitor, Files, Path, Paths, SimpleFileVisitor}
 
-import io.github.vigoo.zioaws.codegen.Main.getClass
-
 import scala.jdk.CollectionConverters._
 import software.amazon.awssdk.codegen.C2jModels
 import software.amazon.awssdk.codegen.internal.Jackson
@@ -18,7 +16,6 @@ import zio._
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 import scala.util.Try
-import scala.util.matching.Regex
 
 package object loader {
   type Loader = Has[Loader.Service]
@@ -35,6 +32,15 @@ package object loader {
       subModule match {
         case Some(value) => s"$name:$value"
         case None => name
+      }
+  }
+
+  object ModelId {
+    def parse(value: String): Either[String, ModelId] =
+      value.split(':').toList match {
+        case List(single) => Right(ModelId(single, None))
+        case List(main, sub) => Right(ModelId(main, Some(sub)))
+        case _ => Left(s"Failed to parse $value as ModelId, use 'svc' or 'svc:subsvc' syntax.")
       }
   }
 

@@ -10,3 +10,4 @@ case class CannotFindEventStreamInShape(service: String, name: String) extends G
 case class UnknownShapeReference(service: String, name: String) extends GeneratorFailure
 case class UnknownType(service: String, typ: String) extends GeneratorFailure
 case class InvalidPaginatedOperation(service: String, name: String) extends GeneratorFailure
+case class FailedToParseYaml(reason: io.circe.ParsingFailure) extends GeneratorFailure

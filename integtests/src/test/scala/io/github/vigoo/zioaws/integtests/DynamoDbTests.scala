@@ -7,10 +7,11 @@ import io.github.vigoo.zioaws.core._
 import io.github.vigoo.zioaws.{dynamodb, _}
 import io.github.vigoo.zioaws.dynamodb.model._
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
+import software.amazon.awssdk.regions.Region
 import zio._
 import zio.test.Assertion._
 import zio.test._
-import zio.test.environment.TestRandom
+import zio.test.TestAspect._
 
 object DynamoDbTests extends DefaultRunnableSpec {
 
@@ -21,16 +22,18 @@ object DynamoDbTests extends DefaultRunnableSpec {
   val awsConfig = config.default
   val dynamoDb = dynamodb.customized(
     _.credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("dummy", "key")))
+      .region(Region.US_WEST_2)
       .endpointOverride(new URI("http://localhost:4566"))
   )
 
-  private def testTable = {
+  private def testTable(prefix: String) = {
     for {
-      _ <- TestRandom.setSeed(scala.util.Random.nextLong())
-      tableName <- generateName
-      env <- ZIO.environment[dynamodb.DynamoDb]
+      env <- ZIO.environment[dynamodb.DynamoDb with zio.console.Console]
+      postfix <- random.nextInt.map(Math.abs)
+      tableName = s"${prefix}_$postfix"
     } yield ZManaged.make(
       for {
+        _ <- console.putStrLn(s"Creating table $tableName")
         tableData <- dynamodb.createTable(CreateTableRequest(
           tableName = tableName,
           attributeDefinitions = List(
@@ -48,17 +51,20 @@ object DynamoDbTests extends DefaultRunnableSpec {
       } yield tableDesc
     )(tableDescription =>
       tableDescription.tableName.flatMap { tableName =>
-        dynamodb.deleteTable(DeleteTableRequest(tableName))
+        for {
+          _ <- console.putStrLn(s"Deleting table $tableName")
+          _ <- dynamodb.deleteTable(DeleteTableRequest(tableName))
+        } yield ()
       }.provide(env)
        .catchAll(error => ZIO.die(error.toThrowable))
        .unit)
   }
 
-  def tests = Seq(
+  def tests(prefix: String) = Seq(
     testM("can create and delete a table") {
       // simple request/response calls
       val steps = for {
-        table <- testTable
+        table <- testTable(s"${prefix}_cd")
         _ <- table.use { _ =>
           ZIO.unit
         }
@@ -71,7 +77,7 @@ object DynamoDbTests extends DefaultRunnableSpec {
 
       val N = 100
       val steps = for {
-        table <- testTable
+        table <- testTable(s"${prefix}_scn")
         result <- table.use { tableDescription =>
           val put =
             for {
@@ -105,7 +111,7 @@ object DynamoDbTests extends DefaultRunnableSpec {
       // simple paginated streaming
       val N = 1000
       val steps = for {
-        table <- testTable
+        table <- testTable(s"${prefix}_lt")
         result <- table.use { tableDescription =>
           for {
             arn <- tableDescription.tableArn
@@ -126,23 +132,17 @@ object DynamoDbTests extends DefaultRunnableSpec {
     }
   )
 
-  private def generateName =
-    ZIO.foreach((0 to 8).toList) { _ =>
-      random.nextIntBetween('a'.toInt, 'z'.toInt).map(_.toChar)
-    }.map(_.mkString)
-
-
   override def spec = {
     suite("DynamoDB")(
       suite("with Netty")(
-        tests: _*
+        tests("netty"): _*
       ).provideCustomLayer((nettyClient >>> awsConfig >>> dynamoDb).mapError(TestFailure.die)),
       suite("with http4s")(
-        tests: _*
+        tests("http4s"): _*
       ).provideCustomLayer((http4sClient >>> awsConfig >>> dynamoDb).mapError(TestFailure.die)),
       suite("with akka-http")(
-        tests: _*
+        tests("akkahttp"): _*
       ).provideCustomLayer((akkaHttpClient >>> awsConfig >>> dynamoDb).mapError(TestFailure.die)),
-    )
+    ) @@ nondeterministic @@ sequential @@ flaky(3)
   }
 }
