@@ -9,6 +9,7 @@ import io.github.vigoo.zioaws.s3.model._
 import io.github.vigoo.zioaws.{akkahttp, http4s, netty, s3}
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
 import software.amazon.awssdk.core.async.AsyncRequestBody
+import software.amazon.awssdk.regions.Region
 import zio.stream.ZStream
 import zio.interop.reactivestreams._
 import zio.test.Assertion._
@@ -27,6 +28,7 @@ object S3Tests  extends DefaultRunnableSpec {
   val awsConfig = config.default
   val s3Client = s3.customized(
     _.credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("dummy", "key")))
+      .region(Region.US_WEST_2)
       .endpointOverride(new URI("http://localhost:4566"))
   )
 

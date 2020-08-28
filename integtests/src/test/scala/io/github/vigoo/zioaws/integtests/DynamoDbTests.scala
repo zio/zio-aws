@@ -7,6 +7,7 @@ import io.github.vigoo.zioaws.core._
 import io.github.vigoo.zioaws.{dynamodb, _}
 import io.github.vigoo.zioaws.dynamodb.model._
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
+import software.amazon.awssdk.regions.Region
 import zio._
 import zio.test.Assertion._
 import zio.test._
@@ -21,6 +22,7 @@ object DynamoDbTests extends DefaultRunnableSpec {
   val awsConfig = config.default
   val dynamoDb = dynamodb.customized(
     _.credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("dummy", "key")))
+      .region(Region.US_WEST_2)
       .endpointOverride(new URI("http://localhost:4566"))
   )
 
