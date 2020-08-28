@@ -60,7 +60,7 @@ class Http4sClient(client: Client[Task],
   private def toEntity(method: ExtendedMethod, publisher: SdkHttpContentPublisher): EntityBody[Task] =
     if (method.canHaveBody) {
       publisher
-        .toStream()
+        .toStream
         .map(fs2.Chunk.byteBuffer)
         .flatMap(Stream.chunk)
     } else {
@@ -107,7 +107,7 @@ class Http4sClient(client: Client[Task],
             case ExitCase.Canceled => streamFinished.succeed(()).unit
             case ExitCase.Error(throwable) => streamFinished.fail(throwable).unit
           }
-          .toUnicastPublisher()))
+          .toUnicastPublisher))
       _ <- streamFinished.await
     } yield null.asInstanceOf[Void]
   }
