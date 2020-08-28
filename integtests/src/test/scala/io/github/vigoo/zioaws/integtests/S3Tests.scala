@@ -22,8 +22,8 @@ object S3Tests extends DefaultRunnableSpec {
   val nettyClient = netty.client()
   val http4sClient = http4s.client()
 
-  val actorSystem = ActorSystem("test") // ZLayer.fromAcquireRelease(ZIO.effect(ActorSystem("test")))(sys => ZIO.fromFuture(_ => sys.terminate()).orDie)
-  val akkaHttpClient = akkahttp.client(actorSystem)
+  val actorSystem = ZLayer.fromAcquireRelease(ZIO.effect(ActorSystem("test")))(sys => ZIO.fromFuture(_ => sys.terminate()).orDie)
+  val akkaHttpClient = akkahttp.client()
 
   val awsConfig = config.default
   val s3Client = s3.customized(
@@ -115,7 +115,7 @@ object S3Tests extends DefaultRunnableSpec {
       ).provideCustomLayer((http4sClient >>> awsConfig >>> s3Client).mapError(TestFailure.die)),
       suite("with akka-http")(
         tests("akkahttp", ignoreUpload = true): _*
-      ).provideCustomLayer((akkaHttpClient >>> awsConfig >>> s3Client).mapError(TestFailure.die)),
+      ).provideCustomLayer((actorSystem >>> akkaHttpClient >>> awsConfig >>> s3Client).mapError(TestFailure.die)),
     ) @@ nondeterministic @@ sequential @@ flaky(3)
   }
 }
