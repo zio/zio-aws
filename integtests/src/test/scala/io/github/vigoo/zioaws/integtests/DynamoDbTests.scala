@@ -10,7 +10,7 @@ import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCrede
 import zio._
 import zio.test.Assertion._
 import zio.test._
-import zio.test.environment.TestRandom
+import zio.test.TestAspect._
 
 object DynamoDbTests extends DefaultRunnableSpec {
 
@@ -26,7 +26,6 @@ object DynamoDbTests extends DefaultRunnableSpec {
 
   private def testTable = {
     for {
-      _ <- TestRandom.setSeed(scala.util.Random.nextLong())
       tableName <- generateName
       env <- ZIO.environment[dynamodb.DynamoDb]
     } yield ZManaged.make(
@@ -143,6 +142,6 @@ object DynamoDbTests extends DefaultRunnableSpec {
       suite("with akka-http")(
         tests: _*
       ).provideCustomLayer((akkaHttpClient >>> awsConfig >>> dynamoDb).mapError(TestFailure.die)),
-    )
+    ) @@ nondeterministic @@ sequential
   }
 }

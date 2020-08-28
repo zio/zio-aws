@@ -14,6 +14,7 @@ import zio.interop.reactivestreams._
 import zio.test.Assertion._
 import zio.test.environment.TestRandom
 import zio.test._
+import zio.test.TestAspect._
 import zio.{Chunk, Runtime, URIO, ZIO, ZLayer, ZManaged, console, random}
 
 object S3Tests  extends DefaultRunnableSpec {
@@ -31,7 +32,6 @@ object S3Tests  extends DefaultRunnableSpec {
 
   private def testBucket = {
     for {
-      _ <- TestRandom.setSeed(scala.util.Random.nextLong())
       bucketName <- generateName
       env <- ZIO.environment[s3.S3]
     } yield ZManaged.make(
@@ -47,7 +47,7 @@ object S3Tests  extends DefaultRunnableSpec {
         .unit)
   }
 
-  def tests = Seq(
+  def tests(ignoreUpload: Boolean = false) = Seq(
     testM("can create and delete a bucket") {
       // simple request/response calls
       val steps = for {
@@ -95,7 +95,7 @@ object S3Tests  extends DefaultRunnableSpec {
       } yield testData == receivedData
 
       assertM(steps)(isTrue)
-    }
+    } @@ (if (ignoreUpload) ignore else identity)
   )
 
   private def generateName =
@@ -107,14 +107,14 @@ object S3Tests  extends DefaultRunnableSpec {
   override def spec = {
     suite("S3")(
       suite("with Netty")(
-        tests: _*
+        tests(): _*
       ).provideCustomLayer((nettyClient >>> awsConfig >>> s3Client).mapError(TestFailure.die)),
       suite("with http4s")(
-        tests: _*
+        tests(): _*
       ).provideCustomLayer((http4sClient >>> awsConfig >>> s3Client).mapError(TestFailure.die)),
       suite("with akka-http")(
-        tests: _*
+        tests(ignoreUpload = true): _*
       ).provideCustomLayer((akkaHttpClient >>> awsConfig >>> s3Client).mapError(TestFailure.die)),
-    )
+    ) @@ nondeterministic @@ sequential
   }
 }
