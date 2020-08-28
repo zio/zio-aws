@@ -6,6 +6,7 @@ import sbt.Keys._
 import sbt.Project.projectToRef
 import sbt.{Compile, Def, _}
 import zio._
+import zio.nio.core.file.Path
 
 object ZioAwsCodegenPlugin extends AutoPlugin {
 
@@ -34,9 +35,9 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
         val parallelJobs = travisParallelJobs.value
 
         val params = Parameters(
-          targetRoot = targetRoot.toPath,
-          travisSource = travisSrc.toPath,
-          travisTarget = travisDst.toPath,
+          targetRoot = Path.fromJava(targetRoot.toPath),
+          travisSource = Path.fromJava(travisSrc.toPath),
+          travisTarget = Path.fromJava(travisDst.toPath),
           parallelTravisJobs = parallelJobs
         )
 
@@ -91,9 +92,9 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
     val parallelJobs = travisParallelJobs.value
 
     val params = Parameters(
-      targetRoot = targetRoot.toPath,
-      travisSource = travisSrc.toPath,
-      travisTarget = travisDst.toPath,
+      targetRoot = Path.fromJava(targetRoot.toPath),
+      travisSource = Path.fromJava(travisSrc.toPath),
+      travisTarget = Path.fromJava(travisDst.toPath),
       parallelTravisJobs = parallelJobs
     )
 

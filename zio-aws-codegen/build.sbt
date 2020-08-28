@@ -1,11 +1,12 @@
 val zioVersion = "1.0.1"
-val awsVersion = "2.14.3"
+val awsVersion = "2.14.6"
 
 sbtPlugin := true
 organization := "io.github.vigoo"
 scalacOptions := Seq("-Ypartial-unification", "-deprecation")
 libraryDependencies ++= Seq(
   "dev.zio" %% "zio" % zioVersion,
+  "dev.zio" %% "zio-nio" % "1.0.0-RC9",
 
   "io.circe" %% "circe-yaml" % "0.13.1",
 

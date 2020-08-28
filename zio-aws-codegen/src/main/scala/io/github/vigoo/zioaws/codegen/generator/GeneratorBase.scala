@@ -1,12 +1,14 @@
 package io.github.vigoo.zioaws.codegen.generator
 
 import java.nio.charset.StandardCharsets
-import java.nio.file.{Files, Path}
 
 import io.github.vigoo.zioaws.codegen.generator.context._
 import io.github.vigoo.zioaws.codegen.generator.syntax._
 import software.amazon.awssdk.codegen.model.config.customization.ShapeModifier
+import zio.blocking
 import zio.{Chunk, ZIO}
+import zio.nio.file.Files
+import zio.nio.core.file.Path
 
 import scala.jdk.CollectionConverters._
 import scala.meta._
@@ -126,22 +128,20 @@ trait GeneratorBase {
     }
   }
 
-  protected def writeIfDifferent(path: Path, contents: String): ZIO[Any, GeneratorFailure, Unit] =
-    ZIO(Files.exists(path)).mapError(FailedToReadFile).flatMap { exists =>
-      ZIO {
-        if (exists) {
-          Files.readAllBytes(path)
+  protected def writeIfDifferent(path: Path, contents: String): ZIO[blocking.Blocking, GeneratorFailure, Unit] =
+    Files.exists(path).flatMap { exists =>
+      for {
+        existingBytes <- if (exists) {
+          Files.readAllBytes(path).mapError(FailedToReadFile)
         } else {
-          Array.empty[Byte]
+          ZIO.succeed(Chunk.empty[Byte])
         }
-      }.map(Chunk.fromArray[Byte]).mapError(FailedToReadFile).flatMap { existingBytes =>
-        val contentsBytes = Chunk.fromArray(contents.getBytes(StandardCharsets.UTF_8))
-        if (existingBytes == contentsBytes) {
+        contentsBytes = Chunk.fromArray(contents.getBytes(StandardCharsets.UTF_8))
+        _ <- if (existingBytes == contentsBytes) {
           ZIO.unit
         } else {
-          ZIO(Files.write(path, contentsBytes.toArray)).mapError(FailedToWriteFile).unit
+          Files.writeBytes(path, contentsBytes).mapError(FailedToWriteFile)
         }
-      }
+      } yield ()
     }
-
 }

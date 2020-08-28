@@ -225,7 +225,7 @@ object OperationCollector {
     if (alreadyChecked(shape)) {
       false
     } else {
-      shape.isEventStream || shape.getMembers.asScala.values.exists { member =>
+      shape.isEventstream || shape.getMembers.asScala.values.exists { member =>
         hasEventStreamMember(models, models.serviceModel().getShape(member.getShape), alreadyChecked + shape)
       }
     }
