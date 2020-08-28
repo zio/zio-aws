@@ -18,7 +18,7 @@ env:
 
 before_install:
   - if [ "$COMMANDS" = "clean integtests/test" ]; then docker pull localstack/localstack; fi
-  - if [ "$COMMANDS" = "clean integtests/test" ]; then docker run -p 4566:4566 localstack/localstack; fi
+  - if [ "$COMMANDS" = "clean integtests/test" ]; then docker run -d -p 4566:4566 localstack/localstack; fi
 
 script:
   - sbt ++$TRAVIS_SCALA_VERSION -jvm-opts travis/jvmopts $COMMANDS

@@ -1,18 +1,11 @@
-script:
-- sbt ++$TRAVIS_SCALA_VERSION -jvm-opts travis/jvmopts $COMMANDS
 scala:
 - 2.12.12
 - 2.13.3
 before_install:
 - if [ "$COMMANDS" = "clean integtests/test" ]; then docker pull localstack/localstack;
   fi
-- if [ "$COMMANDS" = "clean integtests/test" ]; then docker run -p 4566:4566 localstack/localstack;
+- if [ "$COMMANDS" = "clean integtests/test" ]; then docker run -d -p 4566:4566 localstack/localstack;
   fi
-cache:
-  directories:
-  - $HOME/.cache/coursier
-  - $HOME/.ivy2/cache
-  - $HOME/.sbt
 env:
 - COMMANDS="clean zio-aws-accessanalyzer/compile zio-aws-acm/compile zio-aws-acmpca/compile
   zio-aws-alexaforbusiness/compile zio-aws-amplify/compile zio-aws-apigateway/compile
@@ -88,6 +81,13 @@ env:
 - COMMANDS="clean zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test"
 - COMMANDS="clean examples/compile"
 - COMMANDS="clean integtests/test"
+script:
+- sbt ++$TRAVIS_SCALA_VERSION -jvm-opts travis/jvmopts $COMMANDS
+cache:
+  directories:
+  - $HOME/.cache/coursier
+  - $HOME/.ivy2/cache
+  - $HOME/.sbt
+language: scala
 services:
 - docker
-language: scala
