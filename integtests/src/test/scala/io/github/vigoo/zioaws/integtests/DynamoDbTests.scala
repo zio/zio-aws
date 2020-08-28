@@ -17,8 +17,8 @@ object DynamoDbTests extends DefaultRunnableSpec {
 
   val nettyClient = netty.client()
   val http4sClient = http4s.client()
-  val actorSystem = ActorSystem("test") // ZLayer.fromAcquireRelease(ZIO.effect(ActorSystem("test")))(sys => ZIO.fromFuture(_ => sys.terminate()).orDie)
-  val akkaHttpClient = akkahttp.client(actorSystem)
+  val actorSystem = ZLayer.fromAcquireRelease(ZIO.effect(ActorSystem("test")))(sys => ZIO.fromFuture(_ => sys.terminate()).orDie)
+  val akkaHttpClient = akkahttp.client()
   val awsConfig = config.default
   val dynamoDb = dynamodb.customized(
     _.credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("dummy", "key")))
@@ -142,7 +142,7 @@ object DynamoDbTests extends DefaultRunnableSpec {
       ).provideCustomLayer((http4sClient >>> awsConfig >>> dynamoDb).mapError(TestFailure.die)),
       suite("with akka-http")(
         tests("akkahttp"): _*
-      ).provideCustomLayer((akkaHttpClient >>> awsConfig >>> dynamoDb).mapError(TestFailure.die)),
+      ).provideCustomLayer((actorSystem >>> akkaHttpClient >>> awsConfig >>> dynamoDb).mapError(TestFailure.die)),
     ) @@ nondeterministic @@ sequential @@ flaky(3)
   }
 }
