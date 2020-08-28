@@ -1,6 +1,6 @@
 enablePlugins(Common, ZioAwsCodegenPlugin)
 
-ThisBuild / travisParallelJobs := 16
+ThisBuild / travisParallelJobs := 8
 ThisBuild / travisSource := file(".travis.base.yml")
 ThisBuild / travisTarget := file(".travis.yml")
 
