@@ -1,3 +1,8 @@
+cache:
+  directories:
+  - $HOME/.cache/coursier
+  - $HOME/.ivy2/cache
+  - $HOME/.sbt
 env:
 - COMMANDS=clean zio-aws-accessanalyzer/compile zio-aws-acm/compile zio-aws-acmpca/compile
   zio-aws-alexaforbusiness/compile zio-aws-amplify/compile zio-aws-apigateway/compile
@@ -74,9 +79,10 @@ env:
   zio-aws-workdocs/compile zio-aws-worklink/compile zio-aws-workmail/compile zio-aws-workmailmessageflow/compile
   zio-aws-workspaces/compile
 - COMMANDS=clean zio-aws-xray/compile
-language: scala
+- COMMANDS=clean zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
 scala:
 - 2.12.12
 - 2.13.3
 script:
 - sbt ++$TRAVIS_SCALA_VERSION -jvm-opts travis/jvmopts $COMMANDS
+language: scala

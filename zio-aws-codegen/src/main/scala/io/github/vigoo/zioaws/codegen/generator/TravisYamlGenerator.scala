@@ -13,11 +13,11 @@ trait TravisYamlGenerator {
     val grouped = sortedProjectNames.grouped(Math.ceil(ids.size.toDouble / parallelJobs.toDouble).toInt)
     val envDefs = grouped.map(group =>
     s"COMMANDS=clean ${group.map(name => s"$name/compile").mkString(" ")}"
-    ).toList
+    ).toVector
 
     source.deepMerge(Json.obj(
       "env" := Json.fromValues(
-        envDefs.map(Json.fromString)
+        envDefs.map(Json.fromString) ++ source.asObject.flatMap(_("env")).flatMap(_.asArray).getOrElse(Vector.empty)
       )
     ))
   }
