@@ -1,5 +1,6 @@
 package io.github.vigoo.zioaws.codegen.generator
 
+import java.io.File
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 
@@ -54,30 +55,6 @@ trait ServiceModelGenerator {
           shape.isStreaming || shape.isEventStream
         }
       })
-    }
-  }
-
-  private def propertyName(model: Model, fieldModel: Model, name: String): ZIO[GeneratorContext, Nothing, String] = {
-    getNamingStrategy.flatMap { namingStrategy =>
-      getModels.map { models =>
-        val shapeModifiers = Option(models.customizationConfig().getShapeModifiers).map(_.asScala).getOrElse(Map.empty[String, ShapeModifier])
-        shapeModifiers.get(model.shapeName).flatMap { shapeModifier =>
-          val modifies = Option(shapeModifier.getModify).map(_.asScala).getOrElse(List.empty)
-          val matchingModifiers = modifies.flatMap { modifiesMap =>
-            modifiesMap.asScala.map { case (key, value) => (key.toLowerCase, value) }.get(name.toLowerCase)
-          }.toList
-
-          matchingModifiers
-            .map(modifier => Option(modifier.getEmitPropertyName))
-            .find(_.isDefined)
-            .flatten.map(_.uncapitalize)
-        }.getOrElse {
-          val getterMethod = namingStrategy.getFluentGetterMethodName(name, model.shape, fieldModel.shape)
-          getterMethod
-            .stripSuffix("AsString")
-            .stripSuffix("AsStrings")
-        }
-      }
     }
   }
 
@@ -422,18 +399,17 @@ trait ServiceModelGenerator {
                   ..${models.flatMap(_.code)}
                   }}""".toString
 
-  protected def generateServiceModels(): ZIO[GeneratorContext, GeneratorFailure, Unit] =
+  protected def generateServiceModels(): ZIO[GeneratorContext, GeneratorFailure, File] =
     for {
       code <- generateServiceModelsCode()
       id <- getService
       moduleName = id.moduleName
-      moduleRoot = config.parameters.targetRoot.resolve(moduleName)
-      scalaRoot = moduleRoot.resolve("src/main/scala")
-      packageParent = scalaRoot.resolve("io/github/vigoo/zioaws")
+      targetRoot = config.targetRoot
+      packageParent = targetRoot.resolve("io/github/vigoo/zioaws")
       packageRoot = packageParent.resolve(moduleName)
       modelsRoot = packageRoot.resolve("model")
-      moduleFile = modelsRoot.resolve("package.scala")
+      modelFile = modelsRoot.resolve("package.scala")
       _ <- ZIO(Files.createDirectories(modelsRoot)).mapError(FailedToCreateDirectories)
-      _ <- writeIfDifferent(moduleFile, code)
-    } yield ()
+      _ <- writeIfDifferent(modelFile, code)
+    } yield modelFile.toFile
 }

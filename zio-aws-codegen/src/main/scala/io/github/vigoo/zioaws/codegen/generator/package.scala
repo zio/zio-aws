@@ -1,9 +1,11 @@
 package io.github.vigoo.zioaws.codegen
 
+import java.io.File
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 
-import io.github.vigoo.clipp.zioapi.config.ClippConfig
+import io.circe.yaml.parser._
+import io.circe.yaml.syntax._
 import io.github.vigoo.zioaws.codegen.generator.context._
 import io.github.vigoo.zioaws.codegen.loader.ModelId
 import software.amazon.awssdk.codegen.C2jModels
@@ -17,20 +19,17 @@ package object generator {
   object Generator {
 
     trait Service {
-      def generateServiceCode(id: ModelId, model: C2jModels): ZIO[Console, GeneratorFailure, Unit]
-
-      def generateBuildSbt(ids: Set[ModelId]): ZIO[Console, GeneratorFailure, Unit]
-
-      def copyCoreProject(): ZIO[Console, GeneratorFailure, Unit]
+      def generateServiceCode(id: ModelId, model: C2jModels): ZIO[Console, GeneratorFailure, Set[File]]
+      def generateTravisYaml(ids: Set[ModelId]): ZIO[Console, GeneratorFailure, Unit]
     }
 
   }
 
-  val live: ZLayer[ClippConfig[Parameters], Nothing, Generator] = ZLayer.fromService { cfg =>
-    new Generator.Service with GeneratorBase with ServiceInterfaceGenerator with ServiceModelGenerator with BuildSbtGenerator with HasConfig {
+  val live: ZLayer[Has[Parameters], Nothing, Generator] = ZLayer.fromService { cfg =>
+    new Generator.Service with GeneratorBase with ServiceInterfaceGenerator with ServiceModelGenerator with TravisYamlGenerator with HasConfig {
       import scala.meta._
 
-      val config: ClippConfig.Service[Parameters] = cfg
+      val config: Parameters = cfg
 
       private def getSdkModelPackage(id: ModelId, pkgName: Term.Name): Term.Ref = {
         val modelPkg: Term.Ref = id.subModuleName match {
@@ -65,54 +64,30 @@ package object generator {
           }
         }
 
-      override def generateServiceCode(id: ModelId, model: C2jModels): ZIO[Console, GeneratorFailure, Unit] = {
+      override def generateServiceCode(id: ModelId, model: C2jModels): ZIO[Console, GeneratorFailure, Set[File]] = {
         val generate = for {
-          _ <- generateServiceModule()
-          _ <- generateServiceModels()
-        } yield ()
+          moduleFile <- generateServiceModule()
+          modelFile <- generateServiceModels()
+        } yield Set(moduleFile, modelFile)
 
         generate.provideLayer(createGeneratorContext(id, model))
       }
 
-      override def generateBuildSbt(ids: Set[ModelId]): ZIO[Console, GeneratorFailure, Unit] =
+      override def generateTravisYaml(ids: Set[ModelId]): ZIO[Console, GeneratorFailure, Unit] =
         for {
-          code <- ZIO.succeed(generateBuildSbtCode(ids))
-          buildFile = config.parameters.targetRoot.resolve("build.sbt")
-          projectDir = config.parameters.targetRoot.resolve("project")
-          pluginsSbtFile = projectDir.resolve("plugins.sbt")
-          _ <- ZIO(Files.write(buildFile, code.getBytes(StandardCharsets.UTF_8))).mapError(FailedToWriteFile)
-          _ <- ZIO {
-            if (Files.notExists(projectDir)) {
-              Files.createDirectory(projectDir)
-            }
-          }.mapError(FailedToCreateDirectories)
-          _ <- ZIO(Files.write(pluginsSbtFile, generatePluginsSbtCode.getBytes(StandardCharsets.UTF_8))).mapError(FailedToWriteFile)
-        } yield ()
-
-      override def copyCoreProject(): IO[GeneratorFailure, Unit] =
-        for {
-          _ <- ZIO {
-            os.remove.all(
-              os.Path(config.parameters.targetRoot.resolve("zio-aws-core")))
-          }.mapError(FailedToDelete)
-          targetSrc = config.parameters.targetRoot.resolve("zio-aws-core").resolve("src")
-          _ <- ZIO(Files.createDirectories(targetSrc)).mapError(FailedToCreateDirectories)
-          _ <- ZIO {
-            os.copy(
-              os.Path(config.parameters.sourceRoot.resolve("zio-aws-core").resolve("src")),
-              os.Path(targetSrc),
-              replaceExisting = true)
-          }.mapError(FailedToCopy)
+          rawSource <- ZIO.effect(new String(Files.readAllBytes(config.travisSource), StandardCharsets.UTF_8))
+            .mapError(FailedToReadFile)
+          source <- ZIO.fromEither(parse(rawSource))
+            .mapError(FailedToParseYaml)
+          result = generateTravisYaml(ids, config.parallelTravisJobs, source)
+          _ <- writeIfDifferent(config.travisTarget, result.asYaml.spaces2)
         } yield ()
     }
   }
 
-  def generateServiceCode(id: ModelId, model: C2jModels): ZIO[Generator with Console, GeneratorFailure, Unit] =
+  def generateServiceCode(id: ModelId, model: C2jModels): ZIO[Generator with Console, GeneratorFailure, Set[File]] =
     ZIO.accessM(_.get.generateServiceCode(id, model))
 
-  def generateBuildSbt(ids: Set[ModelId]): ZIO[Generator with Console, GeneratorFailure, Unit] =
-    ZIO.accessM(_.get.generateBuildSbt(ids))
-
-  def copyCoreProject(): ZIO[Generator with Console, GeneratorFailure, Unit] =
-    ZIO.accessM(_.get.copyCoreProject())
+  def generateTravisYaml(ids: Set[ModelId]): ZIO[Generator with Console, GeneratorFailure, Unit] =
+    ZIO.accessM(_.get.generateTravisYaml(ids))
 }
