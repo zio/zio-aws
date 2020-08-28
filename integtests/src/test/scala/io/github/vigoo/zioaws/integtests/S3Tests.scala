@@ -18,7 +18,7 @@ import zio.test._
 import zio.test.TestAspect._
 import zio.{Chunk, Runtime, URIO, ZIO, ZLayer, ZManaged, console, random}
 
-object S3Tests  extends DefaultRunnableSpec {
+object S3Tests extends DefaultRunnableSpec {
   val nettyClient = netty.client()
   val http4sClient = http4s.client()
 
@@ -32,28 +32,33 @@ object S3Tests  extends DefaultRunnableSpec {
       .endpointOverride(new URI("http://localhost:4566"))
   )
 
-  private def testBucket = {
+  private def testBucket(prefix: String) = {
     for {
-      bucketName <- generateName
-      env <- ZIO.environment[s3.S3]
+      env <- ZIO.environment[s3.S3 with zio.console.Console]
+      postfix <- random.nextInt.map(Math.abs)
+      bucketName = s"${prefix}-$postfix"
     } yield ZManaged.make(
       for {
+        _ <- console.putStrLn(s"Creating bucket $bucketName")
         _ <- s3.createBucket(CreateBucketRequest(
           bucket = bucketName,
         ))
       } yield bucketName
     )(bucketName =>
-      s3.deleteBucket(DeleteBucketRequest(bucketName))
+      (for {
+        _ <- console.putStrLn(s"Deleting bucket $bucketName")
+        _ <- s3.deleteBucket(DeleteBucketRequest(bucketName))
+      } yield ())
         .provide(env)
         .catchAll(error => ZIO.die(error.toThrowable))
         .unit)
   }
 
-  def tests(ignoreUpload: Boolean = false) = Seq(
+  def tests(prefix: String, ignoreUpload: Boolean = false) = Seq(
     testM("can create and delete a bucket") {
       // simple request/response calls
       val steps = for {
-        bucket <- testBucket
+        bucket <- testBucket(s"${prefix}-cd")
         _ <- bucket.use { bucketName =>
           ZIO.unit
         }
@@ -65,8 +70,8 @@ object S3Tests  extends DefaultRunnableSpec {
       // streaming input and streaming output calls
       val steps = for {
         testData <- random.nextBytes(65536)
-        bucket <- testBucket
-        key <- generateName
+        bucket <- testBucket(s"${prefix}-ud")
+        key = "testdata"
         receivedData <- bucket.use { bucketName =>
           for {
             _ <- console.putStrLn(s"Uploading $key to $bucketName")
@@ -100,23 +105,17 @@ object S3Tests  extends DefaultRunnableSpec {
     } @@ (if (ignoreUpload) ignore else identity)
   )
 
-  private def generateName =
-    ZIO.foreach((0 to 8).toList) { _ =>
-      random.nextIntBetween('a'.toInt, 'z'.toInt).map(_.toChar)
-    }.map(_.mkString)
-
-
   override def spec = {
     suite("S3")(
       suite("with Netty")(
-        tests(): _*
+        tests("netty"): _*
       ).provideCustomLayer((nettyClient >>> awsConfig >>> s3Client).mapError(TestFailure.die)),
       suite("with http4s")(
-        tests(): _*
+        tests("http4s"): _*
       ).provideCustomLayer((http4sClient >>> awsConfig >>> s3Client).mapError(TestFailure.die)),
       suite("with akka-http")(
-        tests(ignoreUpload = true): _*
+        tests("akkahttp", ignoreUpload = true): _*
       ).provideCustomLayer((akkaHttpClient >>> awsConfig >>> s3Client).mapError(TestFailure.die)),
-    ) @@ nondeterministic @@ sequential
+    ) @@ nondeterministic @@ sequential @@ flaky(3)
   }
 }
