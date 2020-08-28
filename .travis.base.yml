@@ -12,9 +12,9 @@ cache:
     - $HOME/.sbt
 
 env:
-  - COMMANDS=clean zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
-  - COMMANDS=clean examples/compile
-  - COMMANDS=clean integtests/test
+  - COMMANDS="clean zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test"
+  - COMMANDS="clean examples/compile"
+  - COMMANDS="clean integtests/test"
 
 before_install:
   - if [ "$COMMANDS" = "clean integtests/test" ]; then docker pull localstack/localstack; fi
