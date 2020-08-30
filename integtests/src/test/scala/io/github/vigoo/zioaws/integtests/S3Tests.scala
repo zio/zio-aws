@@ -1,22 +1,18 @@
 package io.github.vigoo.zioaws.integtests
 
 import java.net.URI
-import java.nio.ByteBuffer
 
 import akka.actor.ActorSystem
-import io.github.vigoo.zioaws.core.{AwsError, ZStreamAsyncRequestBody, config}
+import io.github.vigoo.zioaws.core.config
 import io.github.vigoo.zioaws.s3.model._
 import io.github.vigoo.zioaws.{akkahttp, http4s, netty, s3}
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
-import software.amazon.awssdk.core.async.AsyncRequestBody
 import software.amazon.awssdk.regions.Region
+import zio._
 import zio.stream.ZStream
-import zio.interop.reactivestreams._
 import zio.test.Assertion._
-import zio.test.environment.TestRandom
-import zio.test._
 import zio.test.TestAspect._
-import zio.{Chunk, Runtime, URIO, ZIO, ZLayer, ZManaged, console, random}
+import zio.test._
 
 object S3Tests extends DefaultRunnableSpec {
   val nettyClient = netty.client()
@@ -65,7 +61,7 @@ object S3Tests extends DefaultRunnableSpec {
       } yield ()
 
       assertM(steps.run)(succeeds(isUnit))
-    },
+    } @@ nondeterministic @@ flaky,
     testM("can upload and download items as byte streams with known content length") {
       // streaming input and streaming output calls
       val steps = for {
@@ -102,20 +98,20 @@ object S3Tests extends DefaultRunnableSpec {
       } yield testData == receivedData
 
       assertM(steps)(isTrue)
-    } @@ (if (ignoreUpload) ignore else identity)
+    } @@ (if (ignoreUpload) ignore else identity) @@ nondeterministic @@ flaky
   )
 
   override def spec = {
     suite("S3")(
       suite("with Netty")(
         tests("netty"): _*
-      ).provideCustomLayer((nettyClient >>> awsConfig >>> s3Client).mapError(TestFailure.die)),
+      ).provideCustomLayer((nettyClient >>> awsConfig >>> s3Client).mapError(TestFailure.die)) @@ sequential,
       suite("with http4s")(
         tests("http4s"): _*
-      ).provideCustomLayer((http4sClient >>> awsConfig >>> s3Client).mapError(TestFailure.die)),
+      ).provideCustomLayer((http4sClient >>> awsConfig >>> s3Client).mapError(TestFailure.die)) @@ sequential,
       suite("with akka-http")(
         tests("akkahttp", ignoreUpload = true): _*
-      ).provideCustomLayer((actorSystem >>> akkaHttpClient >>> awsConfig >>> s3Client).mapError(TestFailure.die)),
-    ) @@ nondeterministic @@ sequential @@ flaky(3)
+      ).provideCustomLayer((actorSystem >>> akkaHttpClient >>> awsConfig >>> s3Client).mapError(TestFailure.die)) @@ sequential,
+    ) @@ sequential
   }
 }

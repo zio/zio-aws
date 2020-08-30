@@ -4,14 +4,14 @@ import java.net.URI
 
 import akka.actor.ActorSystem
 import io.github.vigoo.zioaws.core._
-import io.github.vigoo.zioaws.{dynamodb, _}
 import io.github.vigoo.zioaws.dynamodb.model._
+import io.github.vigoo.zioaws.{dynamodb, _}
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
 import software.amazon.awssdk.regions.Region
 import zio._
 import zio.test.Assertion._
-import zio.test._
 import zio.test.TestAspect._
+import zio.test._
 
 object DynamoDbTests extends DefaultRunnableSpec {
 
@@ -71,7 +71,7 @@ object DynamoDbTests extends DefaultRunnableSpec {
       } yield ()
 
       assertM(steps.run)(succeeds(isUnit))
-    },
+    } @@ nondeterministic @@ flaky,
     testM("scan") {
       // java paginator based streaming
 
@@ -106,7 +106,7 @@ object DynamoDbTests extends DefaultRunnableSpec {
       } yield result.length
 
       assertM(steps)(equalTo(N))
-    },
+    } @@ nondeterministic @@ flaky,
     testM("listTagsOfResource") {
       // simple paginated streaming
       val N = 1000
@@ -129,20 +129,20 @@ object DynamoDbTests extends DefaultRunnableSpec {
       } yield result.length
 
       assertM(steps)(equalTo(N))
-    }
+    } @@ nondeterministic @@ flaky
   )
 
   override def spec = {
     suite("DynamoDB")(
       suite("with Netty")(
         tests("netty"): _*
-      ).provideCustomLayer((nettyClient >>> awsConfig >>> dynamoDb).mapError(TestFailure.die)),
+      ).provideCustomLayer((nettyClient >>> awsConfig >>> dynamoDb).mapError(TestFailure.die)) @@ sequential,
       suite("with http4s")(
         tests("http4s"): _*
-      ).provideCustomLayer((http4sClient >>> awsConfig >>> dynamoDb).mapError(TestFailure.die)),
+      ).provideCustomLayer((http4sClient >>> awsConfig >>> dynamoDb).mapError(TestFailure.die)) @@ sequential,
       suite("with akka-http")(
         tests("akkahttp"): _*
-      ).provideCustomLayer((actorSystem >>> akkaHttpClient >>> awsConfig >>> dynamoDb).mapError(TestFailure.die)),
-    ) @@ nondeterministic @@ sequential @@ flaky(3)
+      ).provideCustomLayer((actorSystem >>> akkaHttpClient >>> awsConfig >>> dynamoDb).mapError(TestFailure.die)) @@ sequential,
+    ) @@ sequential
   }
 }
