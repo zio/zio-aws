@@ -85,7 +85,7 @@ object TypeMapping {
         for {
           itemModel <- get(model.shape.getListMember.getShape)
           itemType <- toWrappedType(itemModel)
-        } yield t"""List[$itemType]"""
+        } yield t"""Iterable[$itemType]"""
       case _ if isPrimitiveType(model.shape) && !isBuiltIn(model.shapeName) =>
         ZIO.succeed(Type.Select(Term.Name("primitives"), Type.Name(model.name)))
       case _ =>
