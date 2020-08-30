@@ -38,9 +38,9 @@ trait GeneratorBase {
           item = Term.Name("item")
           unwrapItem <- unwrapSdkValue(valueModel, item, forceToString = true)
         } yield if (unwrapItem == item) {
-          q"""$term.asJava"""
+          q"""$term.asJavaCollection"""
         } else {
-          q"""$term.map { item => $unwrapItem }.asJava"""
+          q"""$term.map { item => $unwrapItem }.asJavaCollection"""
         }
       case ModelType.Enum =>
         val nameTerm = Term.Name(model.name)
