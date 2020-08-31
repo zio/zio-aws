@@ -92,7 +92,7 @@ The following example from the `elasticsearch` module shows how the generated ca
 
 ```scala
 case class DescribePackagesFilter(name: scala.Option[DescribePackagesFilterName] = None, 
-                                  value: scala.Option[List[primitives.DescribePackagesFilterValue]] = None) {
+                                  value: scala.Option[Iterable[primitives.DescribePackagesFilterValue]] = None) {
     def buildAwsValue(): software.amazon.awssdk.services.elasticsearch.model.DescribePackagesFilter = {
       import DescribePackagesFilter.zioAwsBuilderHelper.BuilderOps
       software.amazon.awssdk.services.elasticsearch.model.DescribePackagesFilter
@@ -227,13 +227,21 @@ object Main extends App {
 ``` 
 
 ### Version history
+#### 2.14.7.0
+
+- Updated to AWS SDK 2.14.7
+- Fix an [issue](https://github.com/vigoo/zio-aws/issues/23) with http4s streaming uploads
+- `Iterable` in place of `List` in the request models
+- The akka-http client now gets the _actor system_ from the environment
+- Code generator rewritten as an sbt plugin
+
 #### 2.14.3.0
 API breaking changes to make the streaming interface more ergonomic:
 - Input/output byte streams are now flat (`ZStream[Any, AwsError, Byte]` instead of `ZStream[Any, AwsError, Chunk[Byte]`)
 - Streaming operations return a `ZStream` that performs the request on first pull instead of a `ZIO[..., ZStream[...]]`
 - Streaming for paginated operations that does not have a paginator in the Java SDK
 - No `xxxStream` variants, streaming is the default and only interface for paginable operaitons
-- Updated to AWS SDK 2.14.2
+- Updated to AWS SDK 2.14.3
 - Fixed handling of some error cases
 - Scala 2.12 version is now available
 

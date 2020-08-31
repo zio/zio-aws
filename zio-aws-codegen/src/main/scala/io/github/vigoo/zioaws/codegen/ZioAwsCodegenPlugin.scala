@@ -151,6 +151,9 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
 
     val projects = map.values.toSeq
     val aggregated = Project("all", file("generated") / "all")
+      .settings(
+        publishArtifact := false,
+      )
       .aggregate(projects.map(projectToRef): _*)
 
     projects :+ aggregated

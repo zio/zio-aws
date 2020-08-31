@@ -20,7 +20,7 @@ object Common extends AutoPlugin {
     val fs2Version = "2.4.4"
 
     val majorVersion = "2"
-    val minorVersion = "1"
+    val minorVersion = "0"
     val zioAwsVersion = s"$majorVersion.$awsSubVersion.$minorVersion"
 
     val scala212Version = "2.12.12"
