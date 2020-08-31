@@ -2,6 +2,7 @@
 import io.github.vigoo.zioaws.codegen.ZioAwsCodegenPlugin.autoImport._
 import sbt._
 import Keys._
+import xerial.sbt.Sonatype
 import xerial.sbt.Sonatype._
 import xerial.sbt.Sonatype.SonatypeKeys._
 
@@ -32,6 +33,9 @@ object Common extends AutoPlugin {
   import autoImport._
 
   override val trigger = allRequirements
+
+  override val requires = Sonatype
+
   override lazy val projectSettings =
     Seq(
       scalaVersion := scala213Version,
@@ -50,12 +54,18 @@ object Common extends AutoPlugin {
 
       // Publishing
       publishMavenStyle := true,
+
+      description := "Low-level AWS wrapper for ZIO",
       licenses := Seq("APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
-      publishTo := sonatypePublishTo.value,
-      sonatypeProjectHosting := Some(GitHubHosting("vigoo", "zio-aws", "daniel.vigovszky@gmail.com")),
+
       developers := List(
         Developer(id = "vigoo", name = "Daniel Vigovszky", email = "daniel.vigovszky@gmail.com", url = url("https://vigoo.github.io"))
       ),
+
+      publishTo := sonatypePublishToBundle.value,
+      sonatypeTimeoutMillis := 300 * 60 * 1000,
+
+      sonatypeProjectHosting := Some(GitHubHosting("vigoo", "zio-aws", "daniel.vigovszky@gmail.com")),
 
       credentials ++=
         (for {
