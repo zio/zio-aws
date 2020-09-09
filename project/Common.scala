@@ -14,7 +14,7 @@ object Common extends AutoPlugin {
     val zioReactiveStreamsInteropVersion = "1.0.3.5"
     val catsEffectVersion = "2.2.0"
 
-    val awsVersion = "2.14.12"
+    val awsVersion = "2.14.13"
     val awsSubVersion = awsVersion.drop(awsVersion.indexOf('.') + 1)
     val http4sVersion = "0.21.7"
     val fs2Version = "2.4.4"
