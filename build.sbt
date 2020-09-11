@@ -15,7 +15,7 @@ lazy val core = Project("zio-aws-core", file("zio-aws-core"))
       "dev.zio" %% "zio" % zioVersion,
       "dev.zio" %% "zio-streams" % zioVersion,
       "dev.zio" %% "zio-interop-reactivestreams" % zioReactiveStreamsInteropVersion,
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.6",
+      "org.scala-lang.modules" %% "scala-collection-compat" % "2.2.0",
 
       "dev.zio" %% "zio-test" % zioVersion % "test",
       "dev.zio" %% "zio-test-sbt" % zioVersion % "test",
