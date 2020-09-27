@@ -12,6 +12,8 @@ needed from a ZIO application, or to be used as a building block for higher leve
 
 Check the [list of available artifacts](DEPENDENCIES.md) to get started. 
 
+There is a [blog post](https://vigoo.github.io/posts/2020-09-23-zioaws-code-generation.html) explaining how the code generator is implemented.
+
 ### Features
 - Common configuration layer
 - ZIO module layer per AWS service
