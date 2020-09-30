@@ -15,6 +15,7 @@ lazy val core = Project("zio-aws-core", file("zio-aws-core"))
       "dev.zio" %% "zio" % zioVersion,
       "dev.zio" %% "zio-streams" % zioVersion,
       "dev.zio" %% "zio-interop-reactivestreams" % zioReactiveStreamsInteropVersion,
+      "dev.zio" %% "zio-config" % zioConfigVersion,
       "org.scala-lang.modules" %% "scala-collection-compat" % "2.2.0",
 
       "dev.zio" %% "zio-test" % zioVersion % "test",
@@ -30,6 +31,7 @@ lazy val http4s = Project("zio-aws-http4s", file("zio-aws-http4s")).settings(
     "software.amazon.awssdk" % "http-client-spi" % awsVersion,
     "dev.zio" %% "zio" % zioVersion,
     "dev.zio" %% "zio-interop-cats" % zioCatsInteropVersion,
+    "dev.zio" %% "zio-config" % zioConfigVersion,
     "co.fs2" %% "fs2-reactive-streams" % fs2Version,
     "org.typelevel" %% "cats-effect" % catsEffectVersion,
     "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.1",
