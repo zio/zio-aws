@@ -40,7 +40,7 @@ lazy val akkahttp = Project("zio-aws-akka-http", file("zio-aws-akka-http")).sett
   libraryDependencies ++= Seq(
     "com.typesafe.akka" %% "akka-stream" % "2.6.9",
     "com.typesafe.akka" %% "akka-http" % "10.2.0",
-    "com.github.matsluni" %% "aws-spi-akka-http" % "0.0.9",
+    "com.github.matsluni" %% "aws-spi-akka-http" % "0.0.10",
   )
 ).dependsOn(core)
 
