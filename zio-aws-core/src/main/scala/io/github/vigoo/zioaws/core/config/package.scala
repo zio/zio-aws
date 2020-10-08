@@ -89,7 +89,7 @@ package object config {
                 import clientOverrideBuilderHelper._
                 val overrideBuilder =
                   ClientOverrideConfiguration.builder()
-                    .headers(commonClientConfig.extraHeaders.view.mapValues(_.asJava).toMap.asJava)
+                    .headers(commonClientConfig.extraHeaders.map { case (key, value) => key -> value.asJava }.toMap.asJava)
                     .optionallyWith(commonClientConfig.retryPolicy)(_.retryPolicy)
                     .optionallyWith(commonClientConfig.apiCallTimeout.map(zio.duration.Duration.fromScala))(_.apiCallTimeout)
                     .optionallyWith(commonClientConfig.apiCallAttemptTimeout.map(zio.duration.Duration.fromScala))(_.apiCallAttemptTimeout)
