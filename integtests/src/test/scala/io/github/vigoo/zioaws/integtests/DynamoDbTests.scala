@@ -4,6 +4,7 @@ import java.net.URI
 
 import akka.actor.ActorSystem
 import io.github.vigoo.zioaws.core._
+import io.github.vigoo.zioaws.core.config
 import io.github.vigoo.zioaws.dynamodb.model._
 import io.github.vigoo.zioaws.{dynamodb, _}
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}

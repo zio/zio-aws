@@ -20,6 +20,8 @@ lazy val core = Project("zio-aws-core", file("zio-aws-core"))
 
       "dev.zio" %% "zio-test" % zioVersion % "test",
       "dev.zio" %% "zio-test-sbt" % zioVersion % "test",
+      "dev.zio" %% "zio-test-intellij" % zioVersion % "test",
+      "dev.zio" %% "zio-config-typesafe" % zioConfigVersion % "test",
     ),
     testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
   )
