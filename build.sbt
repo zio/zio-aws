@@ -65,9 +65,9 @@ lazy val example1 = Project("example1", file("examples") / "example1")
 
 lazy val integtests = Project("integtests", file("integtests")).settings(
   libraryDependencies ++= Seq(
-    "dev.zio" %% "zio" % "1.0.1",
-    "dev.zio" %% "zio-test" % "1.0.1",
-    "dev.zio" %% "zio-test-sbt" % "1.0.1",
+    "dev.zio" %% "zio" % "1.0.3",
+    "dev.zio" %% "zio-test" % "1.0.3",
+    "dev.zio" %% "zio-test-sbt" % "1.0.3",
 
     "org.apache.logging.log4j" % "log4j-1.2-api" % "2.13.3",
     "org.apache.logging.log4j" % "log4j-core" % "2.13.3",
