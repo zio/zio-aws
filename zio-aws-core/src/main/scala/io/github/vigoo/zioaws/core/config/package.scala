@@ -3,17 +3,16 @@ package io.github.vigoo.zioaws.core
 import java.net.URI
 
 import io.github.vigoo.zioaws.core.httpclient.HttpClient
-import software.amazon.awssdk.auth.credentials.{AnonymousCredentialsProvider, AwsBasicCredentials, AwsCredentials, AwsCredentialsProvider, DefaultCredentialsProvider, StaticCredentialsProvider}
+import software.amazon.awssdk.auth.credentials._
 import software.amazon.awssdk.awscore.client.builder.{AwsAsyncClientBuilder, AwsClientBuilder}
 import software.amazon.awssdk.awscore.retry.conditions.RetryOnErrorCodeCondition
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration
-import software.amazon.awssdk.core.internal.retry.DefaultTokenBucketExceptionCostFunction
 import software.amazon.awssdk.core.retry.backoff.{BackoffStrategy, EqualJitterBackoffStrategy, FixedDelayBackoffStrategy, FullJitterBackoffStrategy}
-import software.amazon.awssdk.core.retry.conditions.{AndRetryCondition, MaxNumberOfRetriesCondition, OrRetryCondition, RetryCondition, RetryOnClockSkewCondition, RetryOnExceptionsCondition, RetryOnStatusCodeCondition, RetryOnThrottlingCondition, TokenBucketExceptionCostFunction, TokenBucketRetryCondition}
+import software.amazon.awssdk.core.retry.conditions._
 import software.amazon.awssdk.core.retry.{RetryMode, RetryPolicy, RetryPolicyContext}
 import software.amazon.awssdk.regions.Region
-import zio.config._
 import zio.config.ConfigDescriptor._
+import zio.config._
 import zio.duration._
 import zio.{Has, Task, ZIO, ZLayer}
 
@@ -224,10 +223,9 @@ package object config {
           (c: RetryCondition) => if (c == RetryCondition.defaultRetryCondition()) Right("default") else Left("Not the default retry condition")
         )
         val none: ConfigDescriptor[RetryCondition] = string.xmapEither(
-          s => if (s == "default") Right(RetryCondition.none()) else Left("Not 'none'"),
-          (c: RetryCondition) => if (c == RetryCondition.none()) Right("default") else Left("Not the 'none' retry condition")
+          s => if (s == "none") Right(RetryCondition.none()) else Left("Not 'none'"),
+          (c: RetryCondition) => if (c == RetryCondition.none()) Right("none") else Left("Not the 'none' retry condition")
         )
-        /*
         val or: ConfigDescriptor[RetryCondition] =
           nested("or")(list(retryCondition)(
             lst => OrRetryCondition.create(lst: _*),
@@ -237,7 +235,8 @@ package object config {
           nested("and")(list(retryCondition)(
             lst => AndRetryCondition.create(lst: _*),
             _ => None // NOTE: Cannot extract conditions without reflection
-          ))*/
+          ))
+
         val maxNumberOfRetries: ConfigDescriptor[RetryCondition] =
           int("maxNumberOfRetries")(
             n => MaxNumberOfRetriesCondition.create(n),
@@ -297,7 +296,7 @@ package object config {
             ))
 
         // NOTE: `or` and `and` to be reenabled once zio-config supports recursive data structures
-        default <> none /*<> or <> and*/ <> maxNumberOfRetries <> retryOn <> retryOnErrorCodes <> retryOnExceptions <> retryOnStatusCodes <> tokenBucket
+        default <> none <> or <> and <> maxNumberOfRetries <> retryOn <> retryOnErrorCodes <> retryOnExceptions <> retryOnStatusCodes <> tokenBucket
       }
 
       val custom: ConfigDescriptor[RetryPolicy] =
