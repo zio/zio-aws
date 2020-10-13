@@ -22,7 +22,7 @@ package object httpclient {
 
 
   case class OptionValue[T](key: SocketOption[T], value: T)
-  case class ChannelOptions(options: Vector[OptionValue[_]])
+  case class ChannelOptions(options: Vector[OptionValue[Any]])
 
   object descriptors {
 
@@ -63,7 +63,7 @@ package object httpclient {
         ).tupled.xmap(
         tuple => ChannelOptions(
           tuple.productIterator.collect {
-            case Some(opt: OptionValue[_]) => opt
+            case Some(opt: OptionValue[_]) => opt.asInstanceOf[OptionValue[Any]]
           }.toVector),
         channelOptions => (
           findOpt(channelOptions, SO_BROADCAST),
