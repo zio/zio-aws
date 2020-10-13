@@ -16,8 +16,8 @@ import zio.test._
 
 object DynamoDbTests extends DefaultRunnableSpec {
 
-  val nettyClient = netty.client()
-  val http4sClient = http4s.client()
+  val nettyClient = netty.default
+  val http4sClient = http4s.default
   val actorSystem = ZLayer.fromAcquireRelease(ZIO.effect(ActorSystem("test")))(sys => ZIO.fromFuture(_ => sys.terminate()).orDie)
   val akkaHttpClient = akkahttp.client()
   val awsConfig = config.default
