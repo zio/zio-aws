@@ -12,7 +12,7 @@ trait TravisYamlGenerator {
     val sortedProjectNames = ids.map(id => s"zio-aws-${id.moduleName}").toList.sorted
     val grouped = sortedProjectNames.grouped(Math.ceil(ids.size.toDouble / parallelJobs.toDouble).toInt)
     val envDefs = grouped.map(group =>
-    s"""COMMANDS="clean ${group.map(name => s"$name/compile").mkString(" ")}""""
+    s"""COMMANDS="clean ${group.map(name => s"$name/compile").mkString(" ")} ${group.map(name => s"$name/ciReleaseSonatype").mkString(" ")}""""
     ).toVector
 
     source.deepMerge(Json.obj(
