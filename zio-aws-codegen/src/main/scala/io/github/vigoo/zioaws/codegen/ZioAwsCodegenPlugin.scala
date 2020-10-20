@@ -158,10 +158,6 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
             libraryDependencies += "software.amazon.awssdk" % id.name % awsLibraryVersion.value,
             awsLibraryId := id.toString,
             Compile / sourceGenerators += generateSources.taskValue,
-            addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.8"),
-            addSbtPlugin("com.jsuereth" % "sbt-pgp" % "2.0.0"),
-            addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "1.0.0"),
-            addSbtPlugin("io.shiftleft" % "sbt-ci-release-early" % "1.2.4")
           )
           .dependsOn(deps: _*)
 
