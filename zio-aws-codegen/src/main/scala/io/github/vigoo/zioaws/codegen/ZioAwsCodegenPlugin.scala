@@ -9,7 +9,6 @@ import zio._
 import zio.nio.core.file.Path
 
 object ZioAwsCodegenPlugin extends AutoPlugin {
-
   object autoImport {
     val awsLibraryId =
       settingKey[String]("Selects the AWS library to generate sources for")
@@ -160,6 +159,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
             Compile / sourceGenerators += generateSources.taskValue,
           )
           .dependsOn(deps: _*)
+          .enablePlugins(ci.release.early.Plugin)
 
         mapping.updated(id, project)
       }
