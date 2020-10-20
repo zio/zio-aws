@@ -1,4 +1,3 @@
-
 import io.github.vigoo.zioaws.codegen.ZioAwsCodegenPlugin.autoImport._
 import sbt._
 import Keys._
@@ -34,49 +33,48 @@ object Common extends AutoPlugin {
 
   override val trigger = allRequirements
 
-  override val requires = Sonatype
+  override val requires = Sonatype && ci.release.early.Plugin
 
   override lazy val projectSettings =
     Seq(
       scalaVersion := scala213Version,
       crossScalaVersions := List(scala212Version, scala213Version),
-
       organization := "io.github.vigoo",
       version := zioAwsVersion,
-
       awsLibraryVersion := awsVersion,
-
       scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
         case Some((2, 12)) => scalacOptions212
         case Some((2, 13)) => scalacOptions213
-        case _ => Nil
+        case _             => Nil
       }),
-
       // Publishing
       publishMavenStyle := true,
-
       description := "Low-level AWS wrapper for ZIO",
-      licenses := Seq("APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
-
-      developers := List(
-        Developer(id = "vigoo", name = "Daniel Vigovszky", email = "daniel.vigovszky@gmail.com", url = url("https://vigoo.github.io"))
+      licenses := Seq(
+        "APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")
       ),
-
+      developers := List(
+        Developer(
+          id = "vigoo",
+          name = "Daniel Vigovszky",
+          email = "daniel.vigovszky@gmail.com",
+          url = url("https://vigoo.github.io")
+        )
+      ),
       publishTo := sonatypePublishToBundle.value,
       sonatypeTimeoutMillis := 300 * 60 * 1000,
-
-      sonatypeProjectHosting := Some(GitHubHosting("vigoo", "zio-aws", "daniel.vigovszky@gmail.com")),
-
+      sonatypeProjectHosting := Some(
+        GitHubHosting("vigoo", "zio-aws", "daniel.vigovszky@gmail.com")
+      ),
       credentials ++=
         (for {
           username <- Option(System.getenv().get("SONATYPE_USERNAME"))
           password <- Option(System.getenv().get("SONATYPE_PASSWORD"))
-        } yield
-          Credentials(
-            "Sonatype Nexus Repository Manager",
-            "oss.sonatype.org",
-            username,
-            password)).toSeq,
-
+        } yield Credentials(
+          "Sonatype Nexus Repository Manager",
+          "oss.sonatype.org",
+          username,
+          password
+        )).toSeq
     )
 }
