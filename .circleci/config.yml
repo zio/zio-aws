@@ -31,6 +31,9 @@ filter_tags: &filter_tags
   tags:
     only: /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
 
+java_opts: &java_opts
+  JAVA_OPTS: -J-Xmx3g -J-Xms3g -J-Dfile.encoding=UTF8 -J-Xss16M -J-XX:+UseParallelGC -J-XX:ReservedCodeCacheSize=512M
+
 save_test_results: &save_test_results
   - run:
       command: |
@@ -96,7 +99,8 @@ jobs:
     docker:
       - image: hseeberger/scala-sbt:8u265_1.3.13_2.13.3
     environment:
-      SCALA_VERSION: << parameters.scala_version >>
+      - SCALA_VERSION: << parameters.scala_version >>
+      - <<: *java_opts
     steps:
       - checkout
       - <<: *load_cache
