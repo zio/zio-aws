@@ -85,16 +85,23 @@ jobs:
       - store_test_results:
           path: test-reports
 
-  compile_sdk_projects_213:
+  compile_sdk_projects:
+    parameters:
+      commands:
+        description: SBT commands to run
+        type: string
+      scala_version:
+        description: Scala version
+        type: string
     docker:
       - image: hseeberger/scala-sbt:8u265_1.3.13_2.13.3
     environment:
-      - <<: *scala_213
+      SCALA_VERSION: << parameters.scala_version >>
     steps:
       - checkout
       - <<: *load_cache
-      - run: sbt -J-Xmx2g all/compile
-      - <<: *save_cache
+      - run: sbt -J-Xmx2g << parameters.commands >>
+#      - <<: *save_cache
 
   tests_core_212:
     docker:
@@ -249,11 +256,22 @@ workflows:
       - tests_core_213:
           filters:
             <<: *filter_tags
-      - compile_sdk_projects_213:
+      - compile_sdk_projects:
           requires:
             - tests_core_213
           filters:
             <<: *filter_tags
+          scala_version: 2.13.3
+          commands: "zio-aws-accessanalyzer/compile zio-aws-acm/compile zio-aws-acmpca/compile
+                       zio-aws-alexaforbusiness/compile zio-aws-amplify/compile zio-aws-apigateway/compile
+                       zio-aws-apigatewaymanagementapi/compile zio-aws-apigatewayv2/compile zio-aws-appconfig/compile
+                       zio-aws-applicationautoscaling/compile zio-aws-applicationdiscovery/compile zio-aws-applicationinsights/compile
+                       zio-aws-appmesh/compile zio-aws-appstream/compile zio-aws-appsync/compile zio-aws-athena/compile
+                       zio-aws-autoscaling/compile zio-aws-autoscalingplans/compile zio-aws-backup/compile
+                       zio-aws-batch/compile zio-aws-braket/compile zio-aws-budgets/compile zio-aws-chime/compile
+                       zio-aws-cloud9/compile zio-aws-clouddirectory/compile zio-aws-cloudformation/compile
+                       zio-aws-cloudfront/compile zio-aws-cloudhsm/compile zio-aws-cloudhsmv2/compile"
+
       - integration_tests_213:
           requires:
             - tests_core_213
