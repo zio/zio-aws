@@ -76,7 +76,7 @@ jobs:
     steps:
       - checkout
       - <<: *load_cache
-      - run: sbt -J-Xmx3g -J-Xms3g examples/compile integtests/test
+      - run: sbt -J-Xmx2g examples/compile integtests/test
       - <<: *save_cache
       - <<: *save_test_results
       - store_test_results:
