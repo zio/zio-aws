@@ -31,6 +31,8 @@ filter_tags: &filter_tags
   tags:
     only: /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
 
+save_test_results: &save_test_results
+
 localstack: &localstack
   - image: localstack/localstack
     environment:
@@ -57,8 +59,13 @@ jobs:
       - <<: *load_cache
       - run: sbt -J-Xmx3g -J-Xms3g zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test examples/compile integtests/test
       - <<: *save_cache
+      - run:
+          command: |
+            mkdir -p test-reports
+            find . -type f -regex ".*/target/test-reports/.*xml" -exec cp {} test-reports/ \;
+          name: Save test results
       - store_test_results:
-          path: target/test-reports
+          path: test-reports
 
 #  test213_jdk11:
 #    docker:
