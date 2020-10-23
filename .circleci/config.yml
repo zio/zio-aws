@@ -62,12 +62,12 @@ jobs:
       - image: hseeberger/scala-sbt:8u265_1.3.13_2.13.3
     environment:
       - <<: *scala_213
+      - <<: *java_opts
     steps:
       - checkout
       - attach_workspace:
           at: ~/project
       - <<: *load_cache
-      - <<: *java_opts
       - run: sbt -J-Xmx3g -J-Xms3g zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
       - <<: *save_cache
       - <<: *save_test_results
@@ -87,12 +87,12 @@ jobs:
       - <<: *localstack
     environment:
       - <<: *scala_213
+      - <<: *java_opts
     steps:
       - checkout
       - attach_workspace:
           at: ~/project
       - <<: *load_cache
-      - <<: *java_opts
       - run: sbt -J-Xmx2g examples/compile integtests/test
       - <<: *save_cache
       - <<: *save_test_results
