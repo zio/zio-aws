@@ -1,0 +1,213 @@
+version: 2.1
+
+# Some reusable YAML definitions
+save_cache: &save_cache
+  - save_cache:
+      key: sbt-cache-{{ checksum "build.sbt" }}-{{ checksum "project/build.properties" }}-{{ checksum "project/plugins.sbt" }}-1
+      paths:
+        - "~/.ivy2/cache"
+        - "~/.sbt"
+        - "~/.m2"
+        - "~/.cache"
+        - "~/website/node_modules"
+
+load_cache: &load_cache
+  - restore_cache:
+      key: sbt-cache-{{ checksum "build.sbt" }}-{{ checksum "project/build.properties" }}-{{ checksum "project/plugins.sbt" }}-1
+
+scala_212: &scala_212
+  SCALA_VERSION: 2.12.12
+
+scala_213: &scala_213
+  SCALA_VERSION: 2.13.3
+
+jdk_8: &jdk_8
+  JDK_VERSION: 8
+
+jdk_11: &jdk_11
+  JDK_VERSION: 11
+
+filter_tags: &filter_tags
+  tags:
+    only: /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
+
+localstack: &localstack
+  - image: localstack/localstack
+    environment:
+      LOCALSTACK_HOST: localstack
+      SERVICES: 's3'
+      USE_SSL: "false"
+      DEFAULT_REGION: 'us-east-1'
+      AWS_DEFAULT_REGION: "us-east-1"
+      AWS_ACCESS_KEY_ID: dummy-key
+      AWS_SECRET_ACCESS_KEY: dummy-key
+      DEBUG: "1"
+
+# CircleCI jobs
+
+jobs:
+  lint:
+    docker:
+      - image: hseeberger/scala-sbt:11.0.8_1.3.13_2.13.3
+    steps:
+      - checkout
+      - <<: *load_cache
+      - run: sbt ++2.13.3! check
+      - <<: *save_cache
+
+  test213_jdk8:
+    docker:
+      - image: hseeberger/scala-sbt:8u265_1.3.13_2.13.3
+      - <<: *localstack
+    steps:
+      - checkout
+      - <<: *load_cache
+      - run: sbt zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
+      - <<: *save_cache
+#  test213_jdk11:
+#    docker:
+#      - image: hseeberger/scala-sbt:11.0.8_1.3.13_2.13.3
+#      - image: localstack/localstack
+#        environment:
+#          LOCALSTACK_HOST: localstack
+#          SERVICES: 'kinesis,cloudwatch,dynamodb'
+#          USE_SSL: "false"
+#          DEFAULT_REGION: 'us-east-1'
+#          AWS_DEFAULT_REGION: "us-east-1"
+#          AWS_ACCESS_KEY_ID: dummy-key
+#          AWS_SECRET_ACCESS_KEY: dummy-key
+#          DEBUG: "1"
+#    steps:
+#      - checkout
+#      - restore_cache:
+#          key: sbt-cache-{{ checksum "build.sbt" }}-{{ checksum "project/build.properties" }}-{{ checksum "project/plugins.sbt" }}
+#      - run: apt update && apt install -y protobuf-compiler
+#      - run: sbt ++2.13.3! test
+#      - store_test_results:
+#          path: target/test-reports
+#      - save_cache:
+#          key: sbt-cache-{{ checksum "build.sbt" }}-{{ checksum "project/build.properties" }}-{{ checksum "project/plugins.sbt" }}
+#          paths:
+#            - "~/.ivy2/cache"
+#            - "~/.sbt"
+#            - "~/.m2"
+#  test212_jdk8:
+#    docker:
+#      - image: hseeberger/scala-sbt:8u265_1.3.13_2.12.12
+#      - image: localstack/localstack
+#        environment:
+#          LOCALSTACK_HOST: localstack
+#          SERVICES: 'kinesis,cloudwatch,dynamodb'
+#          USE_SSL: "false"
+#          DEFAULT_REGION: 'us-east-1'
+#          AWS_DEFAULT_REGION: "us-east-1"
+#          AWS_ACCESS_KEY_ID: dummy-key
+#          AWS_SECRET_ACCESS_KEY: dummy-key
+#          DEBUG: "1"
+#    steps:
+#      - checkout
+#      - restore_cache:
+#          key: sbt-cache-{{ checksum "build.sbt" }}-{{ checksum "project/build.properties" }}-{{ checksum "project/plugins.sbt" }}
+#      - run: apt update && apt install -y protobuf-compiler
+#      - run: sbt ++2.12.11! test
+#      - save_cache:
+#          key: sbt-cache-{{ checksum "build.sbt" }}-{{ checksum "project/build.properties" }}-{{ checksum "project/plugins.sbt" }}
+#          paths:
+#            - "~/.ivy2/cache"
+#            - "~/.sbt"
+#            - "~/.m2"
+#  test212_jdk11:
+#    docker:
+#      - image: hseeberger/scala-sbt:11.0.7_1.3.13_2.12.12
+#      - image: localstack/localstack
+#        environment:
+#          LOCALSTACK_HOST: localstack
+#          SERVICES: 'kinesis,cloudwatch,dynamodb'
+#          USE_SSL: "false"
+#          DEFAULT_REGION: 'us-east-1'
+#          AWS_DEFAULT_REGION: "us-east-1"
+#          AWS_ACCESS_KEY_ID: dummy-key
+#          AWS_SECRET_ACCESS_KEY: dummy-key
+#          DEBUG: "1"
+#    steps:
+#      - checkout
+#      - restore_cache:
+#          key: sbt-cache-{{ checksum "build.sbt" }}-{{ checksum "project/build.properties" }}-{{ checksum "project/plugins.sbt" }}
+#      - run: apt update && apt install -y protobuf-compiler
+#      - run: sbt ++2.12.11! test
+#      - save_cache:
+#          key: sbt-cache-{{ checksum "build.sbt" }}-{{ checksum "project/build.properties" }}-{{ checksum "project/plugins.sbt" }}
+#          paths:
+#            - "~/.ivy2/cache"
+#            - "~/.sbt"
+#            - "~/.m2"
+#  release:
+#    docker:
+#      - image: hseeberger/scala-sbt:11.0.7_1.3.13_2.12.12
+#    steps:
+#      - checkout
+#      - run:
+#          name: Fetch git tags
+#          command: git fetch --tags
+#            - <<: *load_cache
+#            - run:
+#                name: Write sonatype credentials
+#                command: echo "credentials += Credentials(\"Sonatype Nexus Repository Manager\", \"oss.sonatype.org\", \"${SONATYPE_USER}\", \"${SONATYPE_PASSWORD}\")" > ~/.sbt/1.0/sonatype.sbt
+#            - run:
+#                name: Write PGP public key
+#                command: echo -n "${PGP_PUBLIC}" | base64 -di > /tmp/public.asc
+#            - run:
+#                name: Write PGP secret key
+#                command: echo -n "${PGP_SECRET}" | base64 -di > /tmp/secret.asc
+#            - run:
+#                name: Release artifacts
+#                command: |
+#                  mkdir -p $HOME/bin
+#                  sudo apt-get update && sudo apt-get -y install gnupg2
+#                  echo pinentry-mode loopback >> ~/.gnupg/gpg.conf
+#                  echo allow-loopback-pinentry >> ~/.gnupg/gpg-agent.conf
+#                  chmod 600 ~/.gnupg/*
+#                  ln -s /usr/bin/gpg2 $HOME/bin/gpg
+#                  $HOME/bin/gpg --version
+#                  echo RELOADAGENT | gpg-connect-agent
+#                  echo $PGP_SECRET | base64 -di | gpg2 --import --no-tty --batch --yes
+#                  PATH=$HOME/bin:$PATH ./sbt ++${SCALA_VERSION}! +publish
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - lint:
+          filters:
+            <<: *filter_tags
+      - test213_jdk8:
+          requires:
+            - lint
+          filters:
+            <<: *filter_tags
+#      - test213_jdk11:
+#          requires:
+#            - lint
+#          filters:
+#            <<: *filter_tags
+#      - test212_jdk8:
+#          requires:
+#            - lint
+#          filters:
+#            <<: *filter_tags
+#      - test212_jdk11:
+#          requires:
+#            - lint
+#          filters:
+#            <<: *filter_tags
+#      - release:
+#          requires:
+#            - test213_jdk8
+#            - test213_jdk11
+#            - test212_jdk8
+#            - test212_jdk11
+#          filters:
+#            <<: *filter_tags
+#            branches:
+#              only:
+#                - master
