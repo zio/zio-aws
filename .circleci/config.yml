@@ -104,7 +104,7 @@ jobs:
     steps:
       - checkout
       - <<: *load_cache
-      - run: sbt -J-Xmx2g << parameters.commands >>
+      - run: sbt << parameters.commands >>
   #      - <<: *save_cache
 
   tests_core_212:
