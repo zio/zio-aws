@@ -87,13 +87,12 @@ jobs:
       - <<: *localstack
     environment:
       - <<: *scala_213
-      - <<: *java_opts
     steps:
       - checkout
       - attach_workspace:
           at: ~/project
       - <<: *load_cache
-      - run: sbt examples/compile integtests/test
+      - run: sbt -J-Xmx2g examples/compile integtests/test
       - <<: *save_cache
       - <<: *save_test_results
       - store_test_results:
