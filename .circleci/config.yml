@@ -50,6 +50,9 @@ localstack: &localstack
       AWS_SECRET_ACCESS_KEY: dummy-key
       DEBUG: "1"
 
+projects:
+
+
 # CircleCI jobs
 
 jobs:
@@ -81,6 +84,17 @@ jobs:
       - <<: *save_test_results
       - store_test_results:
           path: test-reports
+
+  compile_sdk_projects_213:
+    docker:
+      - image: hseeberger/scala-sbt:8u265_1.3.13_2.13.3
+    environment:
+      - <<: *scala_213
+    steps:
+      - checkout
+      - <<: *load_cache
+      - run: sbt -J-Xmx2g all/compile
+      - <<: *save_cache
 
   tests_core_212:
     docker:
@@ -233,6 +247,11 @@ workflows:
           filters:
             <<: *filter_tags
       - tests_core_213:
+          filters:
+            <<: *filter_tags
+      - compile_sdk_projects_213:
+          requires:
+            - tests_core_213
           filters:
             <<: *filter_tags
       - integration_tests_213:
