@@ -32,7 +32,7 @@ filter_tags: &filter_tags
     only: /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
 
 java_opts: &java_opts
-  JAVA_OPTS: -J-Xmx3g -J-Xms3g -J-Dfile.encoding=UTF8 -J-Xss16M -J-XX:+UseParallelGC -J-XX:ReservedCodeCacheSize=512M
+  JAVA_OPTS: -Xmx3g Xms3g Dfile.encoding=UTF8 Xss16M XX:+UseParallelGC XX:ReservedCodeCacheSize=512M
 
 save_test_results: &save_test_results
   - run:
