@@ -33,7 +33,7 @@ filter_tags: &filter_tags
     only: /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
 
 java_opts: &java_opts
-  JAVA_OPTS: -Xmx3g -Xms3g -Dfile.encoding=UTF8 -Xss16M -XX:+UseParallelGC -XX:ReservedCodeCacheSize=512M
+  JAVA_OPTS: -Xmx2g -Xms2g -Dfile.encoding=UTF8 -Xss16M -XX:+UseParallelGC -XX:ReservedCodeCacheSize=512M
 
 save_test_results: &save_test_results
   - run:
@@ -87,12 +87,13 @@ jobs:
       - <<: *localstack
     environment:
       - <<: *scala_213
+      - <<: *java_opts
     steps:
       - checkout
       - attach_workspace:
           at: ~/project
       - <<: *load_cache
-      - run: sbt -J-Xmx2g examples/compile integtests/test
+      - run: sbt examples/compile integtests/test
       - <<: *save_cache
       - <<: *save_test_results
       - store_test_results:
