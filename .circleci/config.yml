@@ -53,7 +53,7 @@ localstack: &localstack
 # CircleCI jobs
 
 jobs:
-  tests_core:
+  tests_core_213:
     docker:
       - image: hseeberger/scala-sbt:8u265_1.3.13_2.13.3
     environment:
@@ -67,12 +67,41 @@ jobs:
       - store_test_results:
           path: test-reports
 
-  integration_tests:
+  integration_tests_213:
     docker:
       - image: hseeberger/scala-sbt:8u265_1.3.13_2.13.3
       - <<: *localstack
     environment:
       - <<: *scala_213
+    steps:
+      - checkout
+      - <<: *load_cache
+      - run: sbt -J-Xmx2g examples/compile integtests/test
+      - <<: *save_cache
+      - <<: *save_test_results
+      - store_test_results:
+          path: test-reports
+
+  tests_core_212:
+    docker:
+      - image: hseeberger/scala-sbt:8u265_1.3.13_2.13.3
+    environment:
+      - <<: *scala_212
+    steps:
+      - checkout
+      - <<: *load_cache
+      - run: sbt -J-Xmx3g -J-Xms3g zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
+      - <<: *save_cache
+      - <<: *save_test_results
+      - store_test_results:
+          path: test-reports
+
+  integration_tests_212:
+    docker:
+      - image: hseeberger/scala-sbt:8u265_1.3.13_2.13.3
+      - <<: *localstack
+    environment:
+      - <<: *scala_212
     steps:
       - checkout
       - <<: *load_cache
@@ -195,12 +224,20 @@ workflows:
   version: 2
   build:
     jobs:
-      - tests_core:
+      - tests_core_212:
           filters:
             <<: *filter_tags
-      - integration_tests:
+      - integration_tests_212:
           requires:
-            - tests_core
+            - tests_core_212
+          filters:
+            <<: *filter_tags
+      - tests_core_213:
+          filters:
+            <<: *filter_tags
+      - integration_tests_213:
+          requires:
+            - tests_core_213
           filters:
             <<: *filter_tags
 #      - test212_jdk8:
