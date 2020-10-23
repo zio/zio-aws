@@ -46,15 +46,6 @@ localstack: &localstack
 # CircleCI jobs
 
 jobs:
-  lint:
-    docker:
-      - image: hseeberger/scala-sbt:11.0.8_1.3.13_2.13.3
-    steps:
-      - checkout
-      - <<: *load_cache
-      - run: sbt ++2.13.3! check
-      - <<: *save_cache
-
   test213_jdk8:
     docker:
       - image: hseeberger/scala-sbt:8u265_1.3.13_2.13.3
@@ -177,12 +168,7 @@ workflows:
   version: 2
   build:
     jobs:
-      - lint:
-          filters:
-            <<: *filter_tags
       - test213_jdk8:
-          requires:
-            - lint
           filters:
             <<: *filter_tags
 #      - test213_jdk11:
