@@ -156,7 +156,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
           .settings(
             libraryDependencies += "software.amazon.awssdk" % id.name % awsLibraryVersion.value,
             awsLibraryId := id.toString,
-            Compile / sourceGenerators += generateSources.taskValue,
+            Compile / sourceGenerators += generateSources.taskValue
           )
           .dependsOn(deps: _*)
           .enablePlugins(ci.release.early.Plugin)

@@ -40,7 +40,6 @@ object Common extends AutoPlugin {
       scalaVersion := scala213Version,
       crossScalaVersions := List(scala212Version, scala213Version),
       organization := "io.github.vigoo",
-      version := zioAwsVersion,
       awsLibraryVersion := awsVersion,
       scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
         case Some((2, 12)) => scalacOptions212
