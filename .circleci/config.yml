@@ -42,7 +42,7 @@ localstack: &localstack
   - image: localstack/localstack
     environment:
       LOCALSTACK_HOST: localstack
-      SERVICES: 's3'
+      SERVICES: 's3,dynamodb'
       USE_SSL: "false"
       DEFAULT_REGION: 'us-east-1'
       AWS_DEFAULT_REGION: "us-east-1"
