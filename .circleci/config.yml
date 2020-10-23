@@ -56,7 +56,6 @@ jobs:
   tests_core:
     docker:
       - image: hseeberger/scala-sbt:8u265_1.3.13_2.13.3
-      - <<: *localstack
     environment:
       - <<: *scala_213
     steps:
