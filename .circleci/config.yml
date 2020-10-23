@@ -57,6 +57,9 @@ jobs:
       - <<: *load_cache
       - run: sbt -J-Xmx3g -J-Xms3g zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
       - <<: *save_cache
+      - store_test_results:
+          path: target/test-reports
+
 #  test213_jdk11:
 #    docker:
 #      - image: hseeberger/scala-sbt:11.0.8_1.3.13_2.13.3
