@@ -53,7 +53,8 @@ jobs:
     steps:
       - checkout
       - <<: *load_cache
-      - run: sbt zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
+      - <<: *scala_213
+      - run: sbt -J-Xmx3g -J-Xms3g zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
       - <<: *save_cache
 #  test213_jdk11:
 #    docker:
