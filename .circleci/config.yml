@@ -62,9 +62,9 @@ jobs:
     environment:
       - <<: *scala_213
     steps:
+      - checkout
       - attach_workspace:
           at: ~/project
-      - checkout
       - <<: *load_cache
       - run: sbt -J-Xmx3g -J-Xms3g zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
       - <<: *save_cache
@@ -86,9 +86,9 @@ jobs:
     environment:
       - <<: *scala_213
     steps:
+      - checkout
       - attach_workspace:
           at: ~/project
-      - checkout
       - <<: *load_cache
       - run: sbt -J-Xmx2g examples/compile integtests/test
       - <<: *save_cache
