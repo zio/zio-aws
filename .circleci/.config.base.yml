@@ -1,0 +1,171 @@
+version: 2.1
+
+# Some reusable YAML definitions
+save_cache: &save_cache
+  - save_cache:
+      key: sbt-cache-{{ checksum "build.sbt" }}-{{ checksum "project/build.properties" }}-{{ checksum "project/plugins.sbt" }}-1
+      paths:
+        - "~/.ivy2/cache"
+        - "~/.sbt"
+        - "~/.m2"
+        - "~/.cache"
+        - "~/website/node_modules"
+
+load_cache: &load_cache
+  - restore_cache:
+      key: sbt-cache-{{ checksum "build.sbt" }}-{{ checksum "project/build.properties" }}-{{ checksum "project/plugins.sbt" }}-1
+
+scala_212: &scala_212
+  SCALA_VERSION: 2.12.12
+
+scala_213: &scala_213
+  SCALA_VERSION: 2.13.3
+
+jdk_8: &jdk_8
+  JDK_VERSION: 8
+
+jdk_11: &jdk_11
+  JDK_VERSION: 11
+
+filter_tags: &filter_tags
+  tags:
+    only: /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
+
+java_opts: &java_opts
+  JAVA_OPTS: -Xmx3g -Xms3g -Dfile.encoding=UTF8 -Xss16M -XX:+UseParallelGC -XX:ReservedCodeCacheSize=512M
+
+save_test_results: &save_test_results
+  - run:
+      command: |
+        mkdir -p test-reports
+        find . -type f -regex ".*/target/test-reports/.*xml" -exec cp {} test-reports/ \;
+      name: Save test results
+
+localstack: &localstack
+  - image: localstack/localstack
+    environment:
+      LOCALSTACK_HOST: localstack
+      SERVICES: 's3,dynamodb'
+      USE_SSL: "false"
+      DEFAULT_REGION: 'us-east-1'
+      AWS_DEFAULT_REGION: "us-east-1"
+      AWS_ACCESS_KEY_ID: dummy-key
+      AWS_SECRET_ACCESS_KEY: dummy-key
+      DEBUG: "1"
+
+projects:
+
+
+# CircleCI jobs
+
+jobs:
+  tests_core_213:
+    docker:
+      - image: hseeberger/scala-sbt:8u265_1.3.13_2.13.3
+    environment:
+      - <<: *scala_213
+    steps:
+      - checkout
+      - <<: *load_cache
+      - run: sbt -J-Xmx3g -J-Xms3g zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
+      - <<: *save_cache
+      - <<: *save_test_results
+      - store_test_results:
+          path: test-reports
+
+  integration_tests_213:
+    docker:
+      - image: hseeberger/scala-sbt:8u265_1.3.13_2.13.3
+      - <<: *localstack
+    environment:
+      - <<: *scala_213
+    steps:
+      - checkout
+      - <<: *load_cache
+      - run: sbt -J-Xmx2g examples/compile integtests/test
+      - <<: *save_cache
+      - <<: *save_test_results
+      - store_test_results:
+          path: test-reports
+
+  compile_sdk_projects:
+    parameters:
+      commands:
+        description: SBT commands to run
+        type: string
+      scala_version:
+        description: Scala version
+        type: string
+    docker:
+      - image: hseeberger/scala-sbt:8u265_1.3.13_2.13.3
+    environment:
+      - SCALA_VERSION: << parameters.scala_version >>
+      - <<: *java_opts
+    steps:
+      - checkout
+      - <<: *load_cache
+      - run: sbt << parameters.commands >>
+  #      - <<: *save_cache
+
+  tests_core_212:
+    docker:
+      - image: hseeberger/scala-sbt:8u265_1.3.13_2.13.3
+    environment:
+      - <<: *scala_212
+    steps:
+      - checkout
+      - <<: *load_cache
+      - run: sbt -J-Xmx3g -J-Xms3g zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
+      - <<: *save_cache
+      - <<: *save_test_results
+      - store_test_results:
+          path: test-reports
+
+  integration_tests_212:
+    docker:
+      - image: hseeberger/scala-sbt:8u265_1.3.13_2.13.3
+      - <<: *localstack
+    environment:
+      - <<: *scala_212
+    steps:
+      - checkout
+      - <<: *load_cache
+      - run: sbt -J-Xmx2g examples/compile integtests/test
+      - <<: *save_cache
+      - <<: *save_test_results
+      - store_test_results:
+          path: test-reports
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - tests_core_212:
+          filters:
+            <<: *filter_tags
+      - integration_tests_212:
+          requires:
+            - tests_core_212
+          filters:
+            <<: *filter_tags
+      - tests_core_213:
+          filters:
+            <<: *filter_tags
+      - compile_sdk_projects:
+          requires:
+            - tests_core_213
+            - tests_core_212
+          filters:
+            <<: *filter_tags
+          matrix:
+            parameters:
+              scala_version:
+                - 2.13.3
+                - 2.12.12
+                # NOTE this part is automatically generated
+              commands: COMMANDS
+      - integration_tests_213:
+          requires:
+            - tests_core_213
+          filters:
+            <<: *filter_tags
