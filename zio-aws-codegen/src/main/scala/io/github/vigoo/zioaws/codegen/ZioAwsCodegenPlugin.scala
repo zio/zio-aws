@@ -11,13 +11,18 @@ import zio.nio.core.file.Path
 object ZioAwsCodegenPlugin extends AutoPlugin {
 
   object autoImport {
-    val awsLibraryId = settingKey[String]("Selects the AWS library to generate sources for")
-    val awsLibraryVersion = settingKey[String]("Specifies the version of the  AWS Java SDK to depend on")
-    val travisParallelJobs = settingKey[Int]("Number of parallel jobs in the generated travis file")
-    val travisSource = settingKey[File]("Travis source file")
-    val travisTarget = settingKey[File]("Travis target file")
+    val awsLibraryId =
+      settingKey[String]("Selects the AWS library to generate sources for")
+    val awsLibraryVersion = settingKey[String](
+      "Specifies the version of the  AWS Java SDK to depend on"
+    )
+    val circleCiParallelJobs =
+      settingKey[Int]("Number of parallel jobs in the generated circleCi file")
+    val circleCiSource = settingKey[File]("circleCi source file")
+    val circleCiTarget = settingKey[File]("circleCi target file")
 
-    val generateTravisYaml = taskKey[Unit]("Regenerates the .travis.yml file")
+    val generateCircleCiYaml =
+      taskKey[Unit]("Regenerates the .circleCi.yml file")
 
     lazy val generateSources =
       Def.task {
@@ -26,19 +31,19 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
         val idStr = awsLibraryId.value
         val id = ModelId.parse(idStr) match {
           case Left(failure) => sys.error(failure)
-          case Right(value) => value
+          case Right(value)  => value
         }
 
         val targetRoot = (sourceManaged in Compile).value
-        val travisSrc = travisSource.value
-        val travisDst = travisTarget.value
-        val parallelJobs = travisParallelJobs.value
+        val circleCiSrc = circleCiSource.value
+        val circleCiDst = circleCiTarget.value
+        val parallelJobs = circleCiParallelJobs.value
 
         val params = Parameters(
           targetRoot = Path.fromJava(targetRoot.toPath),
-          travisSource = Path.fromJava(travisSrc.toPath),
-          travisTarget = Path.fromJava(travisDst.toPath),
-          parallelTravisJobs = parallelJobs
+          circleCiSource = Path.fromJava(circleCiSrc.toPath),
+          circleCiTarget = Path.fromJava(circleCiDst.toPath),
+          parallelCircleCiJobs = parallelJobs
         )
 
         zio.Runtime.default.unsafeRun {
@@ -51,12 +56,13 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
               files <- generator.generateServiceCode(id, model)
             } yield files.toSeq
           task.provideCustomLayer(env).catchAll { generatorError =>
-            ZIO.effect(log.error(s"Code generator failure: ${generatorError}")).as(Seq.empty)
+            ZIO
+              .effect(log.error(s"Code generator failure: ${generatorError}"))
+              .as(Seq.empty)
           }
         }
       }
   }
-
 
   import autoImport._
 
@@ -67,7 +73,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
   case class GeneratorError(error: GeneratorFailure) extends Error
 
   override lazy val projectSettings = {
-    generateTravisYaml := generateTravisYamlTask.value
+    generateCircleCiYaml := generateCircleCiYamlTask.value
   }
 
   override lazy val extraProjects: Seq[Project] = {
@@ -78,24 +84,26 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
       } yield generateSbtSubprojects(ids)
 
       task.provideCustomLayer(env).catchAll { generatorError =>
-        zio.console.putStrLnErr(s"Code generator failure: ${generatorError}").as(Seq.empty)
+        zio.console
+          .putStrLnErr(s"Code generator failure: ${generatorError}")
+          .as(Seq.empty)
       }
     }
   }
 
-  private lazy val generateTravisYamlTask = Def.task {
+  private lazy val generateCircleCiYamlTask = Def.task {
     val log = streams.value.log
 
     val targetRoot = (sourceManaged in Compile).value
-    val travisSrc = travisSource.value
-    val travisDst = travisTarget.value
-    val parallelJobs = travisParallelJobs.value
+    val circleCiSrc = circleCiSource.value
+    val circleCiDst = circleCiTarget.value
+    val parallelJobs = circleCiParallelJobs.value
 
     val params = Parameters(
       targetRoot = Path.fromJava(targetRoot.toPath),
-      travisSource = Path.fromJava(travisSrc.toPath),
-      travisTarget = Path.fromJava(travisDst.toPath),
-      parallelTravisJobs = parallelJobs
+      circleCiSource = Path.fromJava(circleCiSrc.toPath),
+      circleCiTarget = Path.fromJava(circleCiDst.toPath),
+      parallelCircleCiJobs = parallelJobs
     )
 
     zio.Runtime.default.unsafeRun {
@@ -103,38 +111,45 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
       val env = loader.live ++ (cfg >+> generator.live)
       val task =
         for {
-          _ <- ZIO.effect(log.info(s"Regenerating $travisDst"))
+          _ <- ZIO.effect(log.info(s"Regenerating $circleCiDst"))
           ids <- loader.findModels()
-          _ <- generator.generateTravisYaml(ids)
+          _ <- generator.generateCircleCiYaml(ids)
         } yield ()
       task.provideCustomLayer(env).catchAll { generatorError =>
-        ZIO.effect(log.error(s"Code generator failure: ${generatorError}")).as(Seq.empty)
+        ZIO
+          .effect(log.error(s"Code generator failure: ${generatorError}"))
+          .as(Seq.empty)
       }
     }
   }
 
   protected def generateSbtSubprojects(ids: Set[ModelId]): Seq[Project] = {
-    val map = ids
-      .toSeq
-      .sortWith { case (a, b) =>
-        val aIsDependent = a.subModuleName match {
-          case Some(value) if value != a.name => true
-          case _ => false
-        }
-        val bIsDependent = b.subModuleName match {
-          case Some(value) if value != b.name => true
-          case _ => false
-        }
+    val map = ids.toSeq
+      .sortWith {
+        case (a, b) =>
+          val aIsDependent = a.subModuleName match {
+            case Some(value) if value != a.name => true
+            case _                              => false
+          }
+          val bIsDependent = b.subModuleName match {
+            case Some(value) if value != b.name => true
+            case _                              => false
+          }
 
-        bIsDependent || (!aIsDependent && a.toString < b.toString)
+          bIsDependent || (!aIsDependent && a.toString < b.toString)
       }
       .foldLeft(Map.empty[ModelId, Project]) { (mapping, id) =>
         val name = id.moduleName
         val fullName = s"zio-aws-$name"
         val deps: Seq[ClasspathDep[ProjectReference]] = id.subModule match {
           case Some(value) if value != id.name =>
-            Seq(ClasspathDependency(LocalProject("zio-aws-core"), None),
-              ClasspathDependency(mapping(ModelId(id.name, Some(id.name))), None))
+            Seq(
+              ClasspathDependency(LocalProject("zio-aws-core"), None),
+              ClasspathDependency(
+                mapping(ModelId(id.name, Some(id.name))),
+                None
+              )
+            )
           case _ =>
             Seq(ClasspathDependency(LocalProject("zio-aws-core"), None))
         }
@@ -143,7 +158,8 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
           .settings(
             libraryDependencies += "software.amazon.awssdk" % id.name % awsLibraryVersion.value,
             awsLibraryId := id.toString,
-            Compile / sourceGenerators += generateSources.taskValue)
+            Compile / sourceGenerators += generateSources.taskValue
+          )
           .dependsOn(deps: _*)
 
         mapping.updated(id, project)
@@ -152,7 +168,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
     val projects = map.values.toSeq
     val aggregated = Project("all", file("generated") / "all")
       .settings(
-        publishArtifact := false,
+        publishArtifact := false
       )
       .aggregate(projects.map(projectToRef): _*)
 

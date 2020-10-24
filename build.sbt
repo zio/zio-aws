@@ -1,12 +1,12 @@
 enablePlugins(Common, ZioAwsCodegenPlugin)
 
-ThisBuild / travisParallelJobs := 8
-ThisBuild / travisSource := file(".travis.base.yml")
-ThisBuild / travisTarget := file(".travis.yml")
+ThisBuild / circleCiParallelJobs := 8
+ThisBuild / circleCiSource := file(".circleci/.config.base.yml")
+ThisBuild / circleCiTarget := file(".circleci/config.yml")
 
 lazy val root = Project("zio-aws", file(".")).settings(
-  publishArtifact := false,
-) aggregate(core, http4s, netty, akkahttp)
+  publishArtifact := false
+) aggregate (core, http4s, netty, akkahttp)
 
 lazy val core = Project("zio-aws-core", file("zio-aws-core"))
   .settings(
@@ -38,24 +38,28 @@ lazy val http4s = Project("zio-aws-http4s", file("zio-aws-http4s")).settings(
     "org.typelevel" %% "cats-effect" % catsEffectVersion,
     "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.1",
   )
-).dependsOn(core)
+  .dependsOn(core)
 
-lazy val akkahttp = Project("zio-aws-akka-http", file("zio-aws-akka-http")).settings(
-  libraryDependencies ++= Seq(
-    "com.typesafe.akka" %% "akka-stream" % "2.6.9",
-    "com.typesafe.akka" %% "akka-http" % "10.2.0",
-    "com.github.matsluni" %% "aws-spi-akka-http" % "0.0.9",
+lazy val akkahttp = Project("zio-aws-akka-http", file("zio-aws-akka-http"))
+  .settings(
+    libraryDependencies ++= Seq(
+      "com.typesafe.akka" %% "akka-stream" % "2.6.10",
+      "com.typesafe.akka" %% "akka-http" % "10.2.1",
+      "com.github.matsluni" %% "aws-spi-akka-http" % "0.0.10"
+    )
   )
-).dependsOn(core)
+  .dependsOn(core)
 
-lazy val netty = Project("zio-aws-netty", file("zio-aws-netty")).settings(
-  libraryDependencies ++= Seq(
-    "software.amazon.awssdk" % "netty-nio-client" % awsVersion,
+lazy val netty = Project("zio-aws-netty", file("zio-aws-netty"))
+  .settings(
+    libraryDependencies ++= Seq(
+      "software.amazon.awssdk" % "netty-nio-client" % awsVersion
+    )
   )
-).dependsOn(core)
+  .dependsOn(core)
 
 lazy val examples = Project("examples", file("examples")).settings(
-  publishArtifact := false,
+  publishArtifact := false
 ) aggregate (example1)
 
 lazy val example1 = Project("example1", file("examples") / "example1")
