@@ -192,7 +192,7 @@ trait ServiceInterfaceGenerator {
           q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Byte]): IO[AwsError, StreamingOutputResult[Any, $responseTypeRo, Byte]] =
                 asyncRequestInputOutputStream[$modelPkg.$requestName, $modelPkg.$responseName](
                   ${Lit.String(methodName.value)},
-                  api.$methodName[zio.Task[StreamingOutputResult[Any, $modelPkg.$responseName, Byte]]]
+                  api.$methodName[zio.Task[StreamingOutputResult[R, $modelPkg.$responseName, Byte]]]
                 )(request.buildAwsValue(), body)
                   .map(_.mapResponse($responseNameTerm.wrap).provide(r))
                   .provide(r)
@@ -212,7 +212,7 @@ trait ServiceInterfaceGenerator {
           q"""def $methodName(request: $requestName): IO[AwsError, StreamingOutputResult[Any, $responseTypeRo, Byte]] =
                 asyncRequestOutputStream[$modelPkg.$requestName, $modelPkg.$responseName](
                   ${Lit.String(methodName.value)},
-                  api.$methodName[zio.Task[StreamingOutputResult[Any, $modelPkg.$responseName, Byte]]]
+                  api.$methodName[zio.Task[StreamingOutputResult[R, $modelPkg.$responseName, Byte]]]
                 )(request.buildAwsValue())
                   .map(_.mapResponse($responseNameTerm.wrap).provide(r))
                   .provide(r)""",
