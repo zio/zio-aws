@@ -301,7 +301,7 @@ trait ServiceModelGenerator {
     )
   }
 
-  private def generateList(m: Model) = {
+  private def generateList(m: Model): ZIO[GeneratorContext, GeneratorFailure, ModelWrapper] = {
     for {
       itemModel <- get(m.shape.getListMember.getShape)
       elemT <- TypeMapping.toWrappedType(itemModel)
@@ -310,7 +310,7 @@ trait ServiceModelGenerator {
     )
   }
 
-  private def generateMap(m: Model) = {
+  private def generateMap(m: Model): ZIO[GeneratorContext, GeneratorFailure, ModelWrapper] = {
     for {
       keyModel <- get(m.shape.getMapKeyType.getShape)
       valueModel <- get(m.shape.getMapValueType.getShape)
@@ -321,7 +321,7 @@ trait ServiceModelGenerator {
     )
   }
 
-  private def generateEnum(m: Model, awsShapeNameT: Type) = {
+  private def generateEnum(m: Model, awsShapeNameT: Type): ZIO[GeneratorContext, GeneratorFailure, ModelWrapper] = {
     for {
       namingStrategy <- getNamingStrategy
       modelPkg <- getModelPkg

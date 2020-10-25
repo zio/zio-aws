@@ -543,7 +543,7 @@ trait ServiceInterfaceGenerator {
           type $serviceNameT = Has[$serviceTrait]
 
           object $serviceName {
-            trait Service {
+            trait Service extends AspectSupport[Service] {
               val api: $clientInterface
 
               ..$serviceMethodIfaces
@@ -558,13 +558,13 @@ trait ServiceInterfaceGenerator {
               b0 <- awsConfig.configure[$clientInterface, $clientInterfaceBuilder]($clientInterfaceSingleton.builder())
               b1 <- awsConfig.configureHttpClient[$clientInterface, $clientInterfaceBuilder](b0)
               client <- ZIO(customization(b1).build())
-            } yield new $serviceImplT(client, Aspect.identity, ().asInstanceOf[Any])).toLayer
+            } yield new $serviceImplT(client, AwsCallAspect.identity, ().asInstanceOf[Any])).toLayer
 
-          private class $serviceImplT[R](override val api: $clientInterface, override val aspect: Aspect[R, AwsError], r: R)
+          private class $serviceImplT[R](override val api: $clientInterface, override val aspect: AwsCallAspect[R], r: R)
             extends ${Init(serviceTrait, Name.Anonymous(), List.empty)} with AwsServiceBase[R, $serviceImplT] {
               override val serviceName: String = ${Lit.String(serviceName.value)}
-              override def withAspect[R1 <: R](newAspect: Aspect[R1, AwsError], r: R1): $serviceImplT[R1] =
-                new $serviceImplT(api, aspect, r)
+              override def withAspect[R1](newAspect: AwsCallAspect[R1], r: R1): $serviceImplT[R1] =
+                new $serviceImplT(api, newAspect, r)
 
               ..$serviceMethodImpls
             }

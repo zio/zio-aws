@@ -14,10 +14,8 @@ import zio.stream.ZStream.TerminationStrategy
 import scala.reflect.ClassTag
 
 trait AwsServiceBase[R, Self[_]] {
-  val aspect: Aspect[R, AwsError]
+  val aspect: AwsCallAspect[R]
   val serviceName: String
-
-  def withAspect[R1 <: R](newAspect: Aspect[R1, AwsError], r: R1): Self[R1]
 
   final protected def asyncRequestResponse[Request, Response](opName: String, impl: Request => CompletableFuture[Response])(request: Request): ZIO[R, AwsError, Response] =
     aspect(ZIO.fromCompletionStage(impl(request)).mapError(AwsError.fromThrowable) ? (serviceName / opName)).unwrap

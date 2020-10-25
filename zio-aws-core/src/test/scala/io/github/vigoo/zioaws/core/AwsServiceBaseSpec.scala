@@ -3,7 +3,7 @@ package io.github.vigoo.zioaws.core
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.{CompletableFuture, ExecutorService, Executors}
 
-import io.github.vigoo.zioaws.core.aspects.Aspect
+import io.github.vigoo.zioaws.core.aspects.AwsCallAspect
 import io.github.vigoo.zioaws.core.sim.SimulatedPagination.PaginatedRequest
 import io.github.vigoo.zioaws.core.sim.{SimulatedAsyncBodyReceiver, SimulatedAsyncResponseTransformer, SimulatedEventStreamResponseHandlerReceiver, SimulatedPagination, SimulatedPublisher}
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
@@ -20,9 +20,9 @@ import scala.collection.mutable.ArrayBuffer
 trait Service[R] extends AwsServiceBase[R, Service]
 
 object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
-  override val aspect: Aspect[Any, AwsError] = Aspect.identity
+  override val aspect: AwsCallAspect[Any, AwsError] = AwsCallAspect.identity
   override val serviceName: String = "test"
-  override def withAspect[R1 <: Any](newAspect: Aspect[R1, AwsError], r: R1): Service[R1] = ???
+  override def withAspect[R1 <: Any](newAspect: AwsCallAspect[R1, AwsError], r: R1): Service[R1] = ???
 
   private implicit val threadPool: ExecutorService = Executors.newCachedThreadPool()
 

@@ -1,25 +1,25 @@
 package io.github.vigoo.zioaws.core
 
 import izumi.reflect.Tag
-import zio.{Has, TagK, ZIO, ZLayer, ZManaged}
+import zio.{Has, ZIO, ZLayer, ZManaged}
 
 package object aspects {
-  trait Aspect[-R, +E] { self =>
-    def apply[R1 <: R, E1 >: E, A](f: ZIO[R1, E1, A]): ZIO[R1, E1, A]
+  trait AwsCallAspect[-R] { self =>
+    def apply[R1 <: R, A](f: ZIO[R1, AwsError, Described[A]]): ZIO[R1, AwsError, Described[A]]
 
-    final def >>>[R1 <: R, E1 >: E](that: Aspect[R1, E1]): Aspect[R1, E1] =
+    final def >>>[R1 <: R](that: AwsCallAspect[R1]): AwsCallAspect[R1] =
       andThen(that)
 
-    final def andThen[R1 <: R, E1 >: E](that: Aspect[R1, E1]): Aspect[R1, E1] =
-      new Aspect[R1, E1] {
-        def apply[R2 <: R1, E2 >: E1, A](f: ZIO[R2, E2, A]): ZIO[R2, E2, A] =
+    final def andThen[R1 <: R](that: AwsCallAspect[R1]): AwsCallAspect[R1] =
+      new AwsCallAspect[R1] {
+        def apply[R2 <: R1, A](f: ZIO[R2, AwsError, Described[A]]): ZIO[R2, AwsError, Described[A]] =
           that(self(f))
       }
   }
 
-  object Aspect {
-    def identity[R, E]: Aspect[R, E] = new Aspect[R, E] {
-      override final def apply[R1 <: R, E1 >: E, A](f: ZIO[R1, E1, A]): ZIO[R1, E1, A] = f
+  object AwsCallAspect {
+    def identity[R, E]: AwsCallAspect[R] = new AwsCallAspect[R] {
+      override final def apply[R1 <: R, A](f: ZIO[R1, AwsError, Described[A]]): ZIO[R1, AwsError, Described[A]] = f
     }
   }
 
@@ -39,9 +39,13 @@ package object aspects {
     final def unwrap: ZIO[R, E, A] = f.map(_.value)
   }
 
-  implicit class ZLayerSyntax[ROutR : Tag, RIn <: ROutR, E, ROut[_] <: AwsServiceBase[RIn, ROut] : TagK](layer: ZLayer[RIn, E, Has[ROut[ROutR]]]) {
-    def @@[RIn1 <: RIn : Tag](aspect: Aspect[RIn1, AwsError]): ZLayer[RIn1, E, Has[ROut[RIn1]]] =
-      ZLayer.fromManaged[RIn1, E, ROut[RIn1]] {
+  trait AspectSupport[Self] {
+    def withAspect[R](newAspect: AwsCallAspect[R], r: R): Self
+  }
+
+  implicit class ZLayerSyntax[RIn, E, ROut <: AspectSupport[ROut] : Tag](layer: ZLayer[RIn, E, Has[ROut]]) {
+    def @@[RIn1 <: RIn : Tag](aspect: AwsCallAspect[RIn1]): ZLayer[RIn1, E, Has[ROut]] =
+      ZLayer.fromManaged[RIn1, E, ROut] {
         ZManaged.environment[RIn1].flatMap { r =>
           layer.build.map(_.get.withAspect(aspect, r))
         }

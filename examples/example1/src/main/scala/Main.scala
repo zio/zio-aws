@@ -61,9 +61,8 @@ object Main extends App {
       }
     } yield ()
 
-  override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] = {
-//    val httpClient = http4s.client()
-    val httpClient = netty.client()
+  override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] = {//
+    val httpClient = netty.default
     val awsConfig = httpClient >>> core.config.default
     val aws = awsConfig >>> (ec2.live ++ elasticbeanstalk.live)
 
