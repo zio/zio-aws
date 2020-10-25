@@ -106,9 +106,10 @@ object S3Tests extends DefaultRunnableSpec {
       suite("with Netty")(
         tests("netty"): _*
       ).provideCustomLayer((nettyClient >>> awsConfig >>> s3Client).mapError(TestFailure.die)) @@ sequential,
-      suite("with http4s")(
-        tests("http4s"): _*
-      ).provideCustomLayer((http4sClient >>> awsConfig >>> s3Client).mapError(TestFailure.die)) @@ sequential,
+      // TODO: reenable when https://github.com/typelevel/fs2/issues/2076 gets released
+//      suite("with http4s")(
+//        tests("http4s"): _*
+//      ).provideCustomLayer((http4sClient >>> awsConfig >>> s3Client).mapError(TestFailure.die)) @@ sequential,
       suite("with akka-http")(
         tests("akkahttp", ignoreUpload = true): _*
       ).provideCustomLayer((actorSystem >>> akkaHttpClient >>> awsConfig >>> s3Client).mapError(TestFailure.die)) @@ sequential,

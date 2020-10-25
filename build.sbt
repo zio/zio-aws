@@ -72,23 +72,25 @@ lazy val example1 = Project("example1", file("examples") / "example1")
     LocalProject("zio-aws-ec2")
   )
 
-lazy val integtests = Project("integtests", file("integtests")).settings(
-  libraryDependencies ++= Seq(
-    "dev.zio" %% "zio" % zioVersion,
-    "dev.zio" %% "zio-test" % zioVersion,
-    "dev.zio" %% "zio-test-sbt" % zioVersion,
 
-    "org.apache.logging.log4j" % "log4j-1.2-api" % "2.13.3",
-    "org.apache.logging.log4j" % "log4j-core" % "2.13.3",
-    "org.apache.logging.log4j" % "log4j-api" % "2.13.3",
-    "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.13.3",
-  ),
-  testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
-).dependsOn(
-  core,
-  http4s,
-  netty,
-  akkahttp,
-  LocalProject("zio-aws-s3"),
-  LocalProject("zio-aws-dynamodb")
-)
+lazy val integtests = Project("integtests", file("integtests"))
+  .settings(
+    libraryDependencies ++= Seq(
+      "dev.zio" %% "zio" % zioVersion,
+      "dev.zio" %% "zio-test" % zioVersion,
+      "dev.zio" %% "zio-test-sbt" % zioVersion,
+      "org.apache.logging.log4j" % "log4j-1.2-api" % "2.13.3",
+      "org.apache.logging.log4j" % "log4j-core" % "2.13.3",
+      "org.apache.logging.log4j" % "log4j-api" % "2.13.3",
+      "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.13.3"
+    ),
+    testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
+  )
+  .dependsOn(
+    core,
+    http4s,
+    netty,
+    akkahttp,
+    LocalProject("zio-aws-s3"),
+    LocalProject("zio-aws-dynamodb")
+  )

@@ -9,8 +9,8 @@ import xerial.sbt.Sonatype.SonatypeKeys._
 object Common extends AutoPlugin {
 
   object autoImport {
-    val zioVersion = "1.0.1"
-    val zioCatsInteropVersion = "2.2.0.0"
+    val zioVersion = "1.0.3"
+    val zioCatsInteropVersion = "2.2.0.1"
     val zioReactiveStreamsInteropVersion = "1.0.3.5"
     val zioConfigVersion = "1.0.0-RC28"
     val catsEffectVersion = "2.2.0"

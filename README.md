@@ -146,7 +146,7 @@ as a _layer_ (`HttpClient`) that has to be provided to the _AWS configuration la
 Currently the following implementations can be used:
 - `zio-aws-netty` contains the default netty implementation packed as a layer 
 - `zio-aws-akka-http` is based on Matthias Lüneberg's [aws-spi-akka-http library](https://github.com/matsluni/aws-spi-akka-http)
-- `zio-aws-http4s` is an implementation on top of _http4s_
+- `zio-aws-http4s` is an implementation on top of _http4s_ (**NOTE**: currently unusable due to a race condition, the next FS2 release will fix it)
  
 ### Build
 
