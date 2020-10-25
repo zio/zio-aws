@@ -20,9 +20,8 @@ import scala.collection.mutable.ArrayBuffer
 trait Service[R] extends AwsServiceBase[R, Service]
 
 object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
-  override val aspect: AwsCallAspect[Any, AwsError] = AwsCallAspect.identity
+  override val aspect: AwsCallAspect[Any] = AwsCallAspect.identity
   override val serviceName: String = "test"
-  override def withAspect[R1 <: Any](newAspect: AwsCallAspect[R1, AwsError], r: R1): Service[R1] = ???
 
   private implicit val threadPool: ExecutorService = Executors.newCachedThreadPool()
 
