@@ -499,6 +499,7 @@ trait ServiceInterfaceGenerator {
 
       imports = List(
         Some(q"""import io.github.vigoo.zioaws.core._"""),
+        Some(q"""import io.github.vigoo.zioaws.core.aspects._"""),
         Some(q"""import io.github.vigoo.zioaws.core.config.AwsConfig"""),
         if (usesJavaSdkPaginators)
           Some(Import(List(Importer(paginatorPackage, List(Importee.Wildcard())))))

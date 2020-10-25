@@ -3,7 +3,7 @@ import io.github.vigoo.zioaws.ec2.Ec2
 import io.github.vigoo.zioaws.ec2.model._
 import io.github.vigoo.zioaws.elasticbeanstalk.ElasticBeanstalk
 import io.github.vigoo.zioaws.elasticbeanstalk.model._
-import io.github.vigoo.zioaws.{core, ec2, elasticbeanstalk, http4s}
+import io.github.vigoo.zioaws.{core, ec2, elasticbeanstalk, netty}
 import zio.{console, _}
 import zio.console._
 import zio.stream._
@@ -62,8 +62,8 @@ object Main extends App {
     } yield ()
 
   override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] = {
-    val httpClient = http4s.client()
-    //val httpClient = netty.client()
+//    val httpClient = http4s.client()
+    val httpClient = netty.client()
     val awsConfig = httpClient >>> core.config.default
     val aws = awsConfig >>> (ec2.live ++ elasticbeanstalk.live)
 
