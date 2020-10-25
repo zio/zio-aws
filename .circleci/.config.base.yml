@@ -79,10 +79,11 @@ jobs:
       - <<: *localstack
     environment:
       - <<: *scala_213
+      - <<: *java_opts
     steps:
       - checkout
       - <<: *load_cache
-      - run: sbt -J-Xmx3g -J-Xms3g ++$SCALA_VERSION examples/compile integtests/test
+      - run: sbt ++$SCALA_VERSION examples/compile integtests/test
       - <<: *save_cache
       - <<: *save_test_results
       - store_test_results:
@@ -127,10 +128,11 @@ jobs:
       - <<: *localstack
     environment:
       - <<: *scala_212
+      - <<: *java_opts
     steps:
       - checkout
       - <<: *load_cache
-      - run: sbt -J-Xmx3g -J-Xms3g ++$SCALA_VERSION examples/compile integtests/test
+      - run: sbt ++$SCALA_VERSION examples/compile integtests/test
       - <<: *save_cache
       - <<: *save_test_results
       - store_test_results:
