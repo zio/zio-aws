@@ -17,12 +17,12 @@ object SimulatedAsyncResponseTransformer {
 
 
   def useAsyncResponseTransformer[In, Out](in: In,
-                                           transformer: AsyncResponseTransformer[Out, Task[StreamingOutputResult[Out, Byte]]],
+                                           transformer: AsyncResponseTransformer[Out, Task[StreamingOutputResult[Any, Out, Byte]]],
                                            toResult: In => Out,
                                            toPublisher: In => SdkPublisher[ByteBuffer],
                                            failureSpec: FailureSpec)
-                                          (implicit threadPool: ExecutorService): CompletableFuture[Task[StreamingOutputResult[Out, Byte]]] = {
-    val cf = new CompletableFuture[Task[StreamingOutputResult[Out, Byte]]]()
+                                          (implicit threadPool: ExecutorService): CompletableFuture[Task[StreamingOutputResult[Any, Out, Byte]]] = {
+    val cf = new CompletableFuture[Task[StreamingOutputResult[Any, Out, Byte]]]()
     threadPool.submit(new Runnable {
       override def run(): Unit = {
         useAsyncResponseTransformerImpl(in, transformer, toResult, toPublisher, failureSpec, cf)
@@ -32,17 +32,17 @@ object SimulatedAsyncResponseTransformer {
   }
 
   def useAsyncResponseTransformerImpl[Out, In](in: In,
-                                               transformer: AsyncResponseTransformer[Out, Task[StreamingOutputResult[Out, Byte]]],
+                                               transformer: AsyncResponseTransformer[Out, Task[StreamingOutputResult[Any, Out, Byte]]],
                                                toResult: In => Out,
                                                toPublisher: In => SdkPublisher[ByteBuffer],
                                                failureSpec: FailureSpec,
-                                               cf: CompletableFuture[Task[StreamingOutputResult[Out, Byte]]]): Unit = {
+                                               cf: CompletableFuture[Task[StreamingOutputResult[Any, Out, Byte]]]): Unit = {
     failureSpec.failBeforePrepare match {
       case Some(throwable) =>
         cf.completeExceptionally(throwable)
       case None =>
         slowDown()
-        transformer.prepare().thenApply[Boolean] { (result: Task[StreamingOutputResult[Out, Byte]]) =>
+        transformer.prepare().thenApply[Boolean] { (result: Task[StreamingOutputResult[Any, Out, Byte]]) =>
           slowDown()
           transformer.onResponse(toResult(in))
 

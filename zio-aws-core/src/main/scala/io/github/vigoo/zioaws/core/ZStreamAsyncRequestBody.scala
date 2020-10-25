@@ -10,7 +10,7 @@ import zio.{Chunk, Runtime}
 import zio.stream.ZStream
 import zio.interop.reactivestreams._
 
-class ZStreamAsyncRequestBody(stream: ZStream[Any, AwsError, Byte])(implicit runtime: Runtime[Any]) extends AsyncRequestBody {
+class ZStreamAsyncRequestBody[R](stream: ZStream[R, AwsError, Byte])(implicit runtime: Runtime[R]) extends AsyncRequestBody {
   override def contentLength(): Optional[lang.Long] = Optional.empty()
 
   override def subscribe(s: Subscriber[_ >: ByteBuffer]): Unit =

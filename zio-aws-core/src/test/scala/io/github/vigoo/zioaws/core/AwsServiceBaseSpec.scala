@@ -16,7 +16,12 @@ import zio.test.environment.TestEnvironment
 
 import scala.collection.mutable.ArrayBuffer
 
-object AwsServiceBaseSpec extends DefaultRunnableSpec with AwsServiceBase {
+trait Service[R] extends AwsServiceBase[R, Service]
+
+object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
+  override val aspect: Aspect[Any, AwsError] = Aspect.identity
+  override def @@[R1 <: Any](aspect: Aspect[R1, AwsError]): Service[R1] = ???
+
   private implicit val threadPool: ExecutorService = Executors.newCachedThreadPool()
 
   case object SimulatedException extends RuntimeException("simulated")
@@ -135,8 +140,8 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with AwsServiceBase {
               case Exit.Success(value) => Some(Exit.Success(value))
               case _ => None
             },
-            hasField[Exit.Success[(StreamingOutputResult[Int, Byte], Vector[Byte])], Int]("1", _.value._1.response, equalTo(5)) &&
-              hasField[Exit.Success[(StreamingOutputResult[Int, Byte], Vector[Byte])], Vector[Byte]]("2", _.value._2, equalTo("hello".getBytes(StandardCharsets.US_ASCII).toVector))))),
+            hasField[Exit.Success[(StreamingOutputResult[Any, Int, Byte], Vector[Byte])], Int]("1", _.value._1.response, equalTo(5)) &&
+              hasField[Exit.Success[(StreamingOutputResult[Any, Int, Byte], Vector[Byte])], Vector[Byte]]("2", _.value._2, equalTo("hello".getBytes(StandardCharsets.US_ASCII).toVector))))),
       testM("future fails before prepare")(
         assertM(runAsyncRequestOutput(SimulatedAsyncResponseTransformer.FailureSpec(failBeforePrepare = Some(SimulatedException))))(
           isAwsFailure
@@ -182,8 +187,8 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with AwsServiceBase {
     suite("asyncRequestInputOutputStream")(
       testM("success")(
         assertM(runAsyncRequestInputOutputRequest())(
-          hasField[(StreamingOutputResult[Int, Byte], Vector[Byte]), Int]("1", _._1.response, equalTo(5)) &&
-            hasField[(StreamingOutputResult[Int, Byte], Vector[Byte]), Vector[Byte]]("2", _._2, equalTo("hheelllloo".getBytes(StandardCharsets.US_ASCII).toVector)))),
+          hasField[(StreamingOutputResult[Any, Int, Byte], Vector[Byte]), Int]("1", _._1.response, equalTo(5)) &&
+            hasField[(StreamingOutputResult[Any, Int, Byte], Vector[Byte]), Vector[Byte]]("2", _._2, equalTo("hheelllloo".getBytes(StandardCharsets.US_ASCII).toVector)))),
       testM("failure on input stream")(
         assertM(runAsyncRequestInputOutputRequest(failOnInput = true).run)(
           isAwsFailure
@@ -408,10 +413,10 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with AwsServiceBase {
 
   private def runAsyncRequestInputOutputRequest(failureSpec: SimulatedAsyncResponseTransformer.FailureSpec = SimulatedAsyncResponseTransformer.FailureSpec(),
                                                 failOnInput: Boolean = false,
-                                                failOnStream: Option[Throwable] = None): ZIO[Any, AwsError, (StreamingOutputResult[Int, Byte], Vector[Byte])] = {
-    val fakeAwsCall: (Int, AsyncRequestBody, AsyncResponseTransformer[Int, Task[StreamingOutputResult[Int, Byte]]]) => CompletableFuture[Task[StreamingOutputResult[Int, Byte]]] =
+                                                failOnStream: Option[Throwable] = None): ZIO[Any, AwsError, (StreamingOutputResult[Any, Int, Byte], Vector[Byte])] = {
+    val fakeAwsCall: (Int, AsyncRequestBody, AsyncResponseTransformer[Int, Task[StreamingOutputResult[Any, Int, Byte]]]) => CompletableFuture[Task[StreamingOutputResult[Any, Int, Byte]]] =
       (multipler, asyncBody, transformer) =>
-        SimulatedAsyncBodyReceiver.useAsyncBody[Task[StreamingOutputResult[Int, Byte]]](
+        SimulatedAsyncBodyReceiver.useAsyncBody[Task[StreamingOutputResult[Any, Int, Byte]]](
           (in, cf, buffer) => {
             SimulatedAsyncResponseTransformer.useAsyncResponseTransformerImpl[Int, ArrayBuffer[Byte]](
               buffer,
@@ -472,8 +477,8 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with AwsServiceBase {
     } yield streamResult
 
   private def runAsyncRequestOutput(failureSpec: SimulatedAsyncResponseTransformer.FailureSpec = SimulatedAsyncResponseTransformer.FailureSpec(),
-                                    failOnStream: Option[Throwable] = None): ZIO[Any, AwsError, Exit[AwsError, (StreamingOutputResult[Int, Byte], Vector[Byte])]] = {
-    val fakeAwsCall = (in: String, transformer: AsyncResponseTransformer[Int, Task[StreamingOutputResult[Int, Byte]]]) =>
+                                    failOnStream: Option[Throwable] = None): ZIO[Any, AwsError, Exit[AwsError, (StreamingOutputResult[Any, Int, Byte], Vector[Byte])]] = {
+    val fakeAwsCall = (in: String, transformer: AsyncResponseTransformer[Int, Task[StreamingOutputResult[Any, Int, Byte]]]) =>
       SimulatedAsyncResponseTransformer.useAsyncResponseTransformer[String, Int](
         in,
         transformer,

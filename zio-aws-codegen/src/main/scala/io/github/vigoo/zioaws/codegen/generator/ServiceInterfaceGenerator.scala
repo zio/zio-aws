@@ -116,7 +116,7 @@ trait ServiceInterfaceGenerator {
                         override def onEventStream(publisher: software.amazon.awssdk.core.async.SdkPublisher[$awsOutEventStreamT]): Unit = impl.onEventStream(publisher)
                         override def exceptionOccurred(throwable: Throwable): Unit = impl.exceptionOccurred(throwable)
                         override def complete(): Unit = impl.complete()
-                      })(request.buildAwsValue(), input.map(_.buildAwsValue())).map(item => $wrappedItem)
+                      })(request.buildAwsValue(), input.map(_.buildAwsValue())).map(item => $wrappedItem).provide(r)
                """,
         accessor =
           q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, AwsError, $inEventT]): zio.stream.ZStream[$serviceNameT, AwsError, $outEventRoT] =
@@ -152,7 +152,7 @@ trait ServiceInterfaceGenerator {
                         override def onEventStream(publisher: software.amazon.awssdk.core.async.SdkPublisher[$awsEventStreamT]): Unit = impl.onEventStream(publisher)
                         override def exceptionOccurred(throwable: Throwable): Unit = impl.exceptionOccurred(throwable)
                         override def complete(): Unit = impl.complete()
-                      })(request.buildAwsValue()).map(item => $wrappedItem)
+                      })(request.buildAwsValue()).map(item => $wrappedItem).provide(r)
               """,
         accessor =
           q"""def $methodName(request: $requestName): zio.stream.ZStream[$serviceNameT, AwsError, $eventRoT] =
@@ -172,7 +172,7 @@ trait ServiceInterfaceGenerator {
           q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, AwsError, $eventT]): IO[AwsError, $responseTypeRo]""",
         implementation =
           q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, AwsError, $eventT]): IO[AwsError, $responseTypeRo] =
-                asyncRequestEventInputStream[$modelPkg.$requestName, $modelPkg.$responseName, $awsInEventStreamT](api.$methodName)(request.buildAwsValue(), input.map(_.buildAwsValue()))""",
+                asyncRequestEventInputStream[$modelPkg.$requestName, $modelPkg.$responseName, $awsInEventStreamT](api.$methodName)(request.buildAwsValue(), input.map(_.buildAwsValue())).provide(r)""",
         accessor =
           q"""def $methodName(request: $requestName, input: zio.stream.ZStream[Any, AwsError, $eventT]): ZIO[$serviceNameT, AwsError, $responseTypeRo] =
                 ZIO.accessM(_.get.$methodName(request, input))"""))
@@ -182,12 +182,17 @@ trait ServiceInterfaceGenerator {
     ZIO.succeed(ServiceMethods(
       ServiceMethod(
         interface =
-          q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Byte]): IO[AwsError, StreamingOutputResult[$responseTypeRo, Byte]]""",
+          q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Byte]): IO[AwsError, StreamingOutputResult[Any, $responseTypeRo, Byte]]""",
         implementation =
-          q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Byte]): IO[AwsError, StreamingOutputResult[$responseTypeRo, Byte]] =
-                asyncRequestInputOutputStream[$modelPkg.$requestName, $modelPkg.$responseName](api.$methodName[zio.Task[StreamingOutputResult[$modelPkg.$responseName, Byte]]])(request.buildAwsValue(), body).map(_.mapResponse($responseNameTerm.wrap))""",
+          q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Byte]): IO[AwsError, StreamingOutputResult[Any, $responseTypeRo, Byte]] =
+                asyncRequestInputOutputStream[$modelPkg.$requestName, $modelPkg.$responseName](
+                  api.$methodName[zio.Task[StreamingOutputResult[Any, $modelPkg.$responseName, Byte]]]
+                )(request.buildAwsValue(), body)
+                  .map(_.mapResponse($responseNameTerm.wrap).provide(r))
+                  .provide(r)
+          """,
         accessor =
-          q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Byte]): ZIO[$serviceNameT, AwsError, StreamingOutputResult[$responseTypeRo, Byte]] =
+          q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Byte]): ZIO[$serviceNameT, AwsError, StreamingOutputResult[Any, $responseTypeRo, Byte]] =
                 ZIO.accessM(_.get.$methodName(request, body))"""
       )))
   }
@@ -196,12 +201,16 @@ trait ServiceInterfaceGenerator {
     ZIO.succeed(ServiceMethods(
       ServiceMethod(
         interface =
-          q"""def $methodName(request: $requestName): IO[AwsError, StreamingOutputResult[$responseTypeRo, Byte]]""",
+          q"""def $methodName(request: $requestName): IO[AwsError, StreamingOutputResult[Any, $responseTypeRo, Byte]]""",
         implementation =
-          q"""def $methodName(request: $requestName): IO[AwsError, StreamingOutputResult[$responseTypeRo, Byte]] =
-                asyncRequestOutputStream[$modelPkg.$requestName, $modelPkg.$responseName](api.$methodName[zio.Task[StreamingOutputResult[$modelPkg.$responseName, Byte]]])(request.buildAwsValue()).map(_.mapResponse($responseNameTerm.wrap))""",
+          q"""def $methodName(request: $requestName): IO[AwsError, StreamingOutputResult[Any, $responseTypeRo, Byte]] =
+                asyncRequestOutputStream[$modelPkg.$requestName, $modelPkg.$responseName](
+                  api.$methodName[zio.Task[StreamingOutputResult[Any, $modelPkg.$responseName, Byte]]]
+                )(request.buildAwsValue())
+                  .map(_.mapResponse($responseNameTerm.wrap).provide(r))
+                  .provide(r)""",
         accessor =
-          q"""def $methodName(request: $requestName): ZIO[$serviceNameT, AwsError, StreamingOutputResult[$responseTypeRo, Byte]] =
+          q"""def $methodName(request: $requestName): ZIO[$serviceNameT, AwsError, StreamingOutputResult[Any, $responseTypeRo, Byte]] =
                 ZIO.accessM(_.get.$methodName(request))"""
       )))
   }
@@ -213,7 +222,7 @@ trait ServiceInterfaceGenerator {
           q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Byte]): IO[AwsError, $responseTypeRo]""",
         implementation =
           q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Byte]): IO[AwsError, $responseTypeRo] =
-                asyncRequestInputStream[$modelPkg.$requestName, $modelPkg.$responseName](api.$methodName)(request.buildAwsValue(), body).map($responseNameTerm.wrap)""",
+                asyncRequestInputStream[$modelPkg.$requestName, $modelPkg.$responseName](api.$methodName)(request.buildAwsValue(), body).map($responseNameTerm.wrap).provide(r)""",
         accessor =
           q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Byte]): ZIO[$serviceNameT, AwsError, $responseTypeRo] =
                 ZIO.accessM(_.get.$methodName(request, body))"""
@@ -234,7 +243,7 @@ trait ServiceInterfaceGenerator {
               q"""def $methodName(request: $requestName): zio.stream.ZStream[Any, AwsError, $wrappedItemType]""",
             implementation =
               q"""def $methodName(request: $requestName): zio.stream.ZStream[Any, AwsError, $wrappedItemType] =
-                    asyncJavaPaginatedRequest[$modelPkg.$requestName, $awsItemType, $paginatorPkg.$publisherType](api.$paginatorMethodName, _.${Term.Name(paginationName.uncapitalize)}())(request.buildAwsValue()).map(item => $wrappedItem)""",
+                    asyncJavaPaginatedRequest[$modelPkg.$requestName, $awsItemType, $paginatorPkg.$publisherType](api.$paginatorMethodName, _.${Term.Name(paginationName.uncapitalize)}())(request.buildAwsValue()).map(item => $wrappedItem).provide(r)""",
             accessor =
               q"""def $methodName(request: $requestName): zio.stream.ZStream[$serviceNameT, AwsError, $wrappedItemType] =
                     ZStream.accessStream(_.get.$methodName(request))"""
@@ -259,7 +268,7 @@ trait ServiceInterfaceGenerator {
                       (r, token) => r.toBuilder().nextToken(token).build(),
                       r => Option(r.nextToken()),
                       r => Chunk.fromIterable(r.$propertyNameTerm().asScala)
-                    )(request.buildAwsValue()).map(item => $wrappedItem)
+                    )(request.buildAwsValue()).map(item => $wrappedItem).provide(r)
                """,
               accessor =
                 q"""def $methodName(request: $requestName): ZStream[$serviceNameT, AwsError, $itemTypeRo] =
@@ -269,18 +278,24 @@ trait ServiceInterfaceGenerator {
           } else {
             ServiceMethod(
               interface =
-                q"""def $methodName(request: $requestName): ZIO[Any, AwsError, StreamingOutputResult[$responseTypeRo, $itemTypeRo]]""",
+                q"""def $methodName(request: $requestName): ZIO[Any, AwsError, StreamingOutputResult[Any, $responseTypeRo, $itemTypeRo]]""",
               implementation =
-                q"""def $methodName(request: $requestName): ZIO[Any, AwsError, StreamingOutputResult[$responseTypeRo, $itemTypeRo]] =
+                q"""def $methodName(request: $requestName): ZIO[Any, AwsError, StreamingOutputResult[Any, $responseTypeRo, $itemTypeRo]] =
                     asyncPaginatedRequest[$modelPkg.$requestName, $modelPkg.$responseName, $awsItemType](
                       api.$methodName,
                       (r, token) => r.toBuilder().nextToken(token).build(),
                       r => Option(r.nextToken()),
                       r => Chunk.fromIterable(r.$propertyNameTerm().asScala)
-                    )(request.buildAwsValue()).map(result => result.mapResponse($responseNameTerm.wrap).mapOutput(_.map(item => $wrappedItem)))
+                    )(request.buildAwsValue())
+                      .map(result =>
+                         result
+                           .mapResponse($responseNameTerm.wrap)
+                           .mapOutput(_.map(item => $wrappedItem))
+                           .provide(r))
+                      .provide(r)
                """,
               accessor =
-                q"""def $methodName(request: $requestName): ZIO[$serviceNameT, AwsError, StreamingOutputResult[$responseTypeRo, $itemTypeRo]] =
+                q"""def $methodName(request: $requestName): ZIO[$serviceNameT, AwsError, StreamingOutputResult[Any, $responseTypeRo, $itemTypeRo]] =
                     ZIO.accessM(_.get.$methodName(request))
                """
             )
@@ -309,7 +324,7 @@ trait ServiceInterfaceGenerator {
                       (r, token) => r.toBuilder().nextToken(token).build(),
                       r => Option(r.nextToken()),
                       r => Chunk.fromIterable(r.$propertyNameTerm().asScala)
-                    )(request.buildAwsValue()).map { case (key, value) => $wrappedKey -> $wrappedValue }
+                    )(request.buildAwsValue()).map { case (key, value) => $wrappedKey -> $wrappedValue }.provide(r)
                """,
               accessor =
                 q"""def $methodName(request: $requestName): ZStream[$serviceNameT, AwsError, ($keyTypeRo, $valueTypeRo)] =
@@ -319,18 +334,24 @@ trait ServiceInterfaceGenerator {
           } else {
             ServiceMethod(
               interface =
-                q"""def $methodName(request: $requestName): ZIO[Any, AwsError, StreamingOutputResult[$responseTypeRo, ($keyTypeRo, $valueTypeRo)]]""",
+                q"""def $methodName(request: $requestName): ZIO[Any, AwsError, StreamingOutputResult[Any, $responseTypeRo, ($keyTypeRo, $valueTypeRo)]]""",
               implementation =
-                q"""def $methodName(request: $requestName): ZIO[Any, AwsError, StreamingOutputResult[$responseTypeRo, ($keyTypeRo, $valueTypeRo)]] =
+                q"""def $methodName(request: $requestName): ZIO[Any, AwsError, StreamingOutputResult[Any, $responseTypeRo, ($keyTypeRo, $valueTypeRo)]] =
                     asyncPaginatedRequest[$modelPkg.$requestName, $modelPkg.$responseName, ($awsKeyType, $awsValueType)](
                       api.$methodName,
                       (r, token) => r.toBuilder().nextToken(token).build(),
                       r => Option(r.nextToken()),
                       r => Chunk.fromIterable(r.$propertyNameTerm().asScala)
-                    )(request.buildAwsValue()).map(result => result.mapResponse($responseNameTerm.wrap).mapOutput(_.map { case (key, value) => $wrappedKey -> $wrappedValue }))
+                    )(request.buildAwsValue())
+                      .map { result =>
+                        result
+                          .mapResponse($responseNameTerm.wrap)
+                          .mapOutput(_.map { case (key, value) => $wrappedKey -> $wrappedValue })
+                          .provide(r)
+                      }.provide(r)
                """,
               accessor =
-                q"""def $methodName(request: $requestName): ZIO[$serviceNameT, AwsError, StreamingOutputResult[$responseTypeRo, ($keyTypeRo, $valueTypeRo)]] =
+                q"""def $methodName(request: $requestName): ZIO[$serviceNameT, AwsError, StreamingOutputResult[Any, $responseTypeRo, ($keyTypeRo, $valueTypeRo)]] =
                     ZIO.accessM(_.get.$methodName(request))
                """
             )
@@ -355,7 +376,7 @@ trait ServiceInterfaceGenerator {
                       (r, token) => r.toBuilder().nextToken(token).build(),
                       r => Option(r.nextToken()),
                       r => Chunk(r.$propertyNameTerm())
-                    )(request.buildAwsValue()).map(item => $wrappedItem)
+                    )(request.buildAwsValue()).map(item => $wrappedItem).provide(r)
                """,
               accessor =
                 q"""def $methodName(request: $requestName): ZStream[$serviceNameT, AwsError, $itemTypeRo] =
@@ -365,18 +386,24 @@ trait ServiceInterfaceGenerator {
           } else {
             ServiceMethod(
               interface =
-                q"""def $methodName(request: $requestName): ZIO[Any, AwsError, StreamingOutputResult[$responseTypeRo, $itemTypeRo]]""",
+                q"""def $methodName(request: $requestName): ZIO[Any, AwsError, StreamingOutputResult[Any, $responseTypeRo, $itemTypeRo]]""",
               implementation =
-                q"""def $methodName(request: $requestName): ZIO[Any, AwsError, StreamingOutputResult[$responseTypeRo, $itemTypeRo]] =
+                q"""def $methodName(request: $requestName): ZIO[Any, AwsError, StreamingOutputResult[Any, $responseTypeRo, $itemTypeRo]] =
                     asyncPaginatedRequest[$modelPkg.$requestName, $modelPkg.$responseName, $awsItemType](
                       api.$methodName,
                       (r, token) => r.toBuilder().nextToken(token).build(),
                       r => Option(r.nextToken()),
                       r => Chunk(r.$propertyNameTerm())
-                    )(request.buildAwsValue()).map(result => result.mapResponse($responseNameTerm.wrap).mapOutput(_.map(item => $wrappedItem)))
+                    )(request.buildAwsValue())
+                      .map(result =>
+                        result
+                          .mapResponse($responseNameTerm.wrap)
+                          .mapOutput(_.map(item => $wrappedItem))
+                          .provide(r))
+                      .provide(r)
                """,
               accessor =
-                q"""def $methodName(request: $requestName): ZIO[$serviceNameT, AwsError, StreamingOutputResult[$responseTypeRo, $itemTypeRo]] =
+                q"""def $methodName(request: $requestName): ZIO[$serviceNameT, AwsError, StreamingOutputResult[Any, $responseTypeRo, $itemTypeRo]] =
                     ZIO.accessM(_.get.$methodName(request))
                """
             )
@@ -388,7 +415,7 @@ trait ServiceInterfaceGenerator {
             q"""def $methodName(request: $requestName): IO[AwsError, $responseTypeRo]""",
           implementation =
             q"""def $methodName(request: $requestName): IO[AwsError, $responseTypeRo] =
-              asyncRequestResponse[$modelPkg.$requestName, $modelPkg.$responseName](api.$methodName)(request.buildAwsValue()).map($responseNameTerm.wrap)""",
+              asyncRequestResponse[$modelPkg.$requestName, $modelPkg.$responseName](api.$methodName)(request.buildAwsValue()).map($responseNameTerm.wrap).provide(r)""",
           accessor =
             q"""def $methodName(request: $requestName): ZIO[$serviceNameT, AwsError, $responseTypeRo] =
               ZIO.accessM(_.get.$methodName(request))"""
@@ -403,7 +430,7 @@ trait ServiceInterfaceGenerator {
           q"""def $methodName(request: $requestName): IO[AwsError, scala.Unit]""",
         implementation =
           q"""def $methodName(request: $requestName): IO[AwsError, scala.Unit] =
-                asyncRequestResponse[$modelPkg.$requestName, $modelPkg.$responseName](api.$methodName)(request.buildAwsValue()).unit""",
+                asyncRequestResponse[$modelPkg.$requestName, $modelPkg.$responseName](api.$methodName)(request.buildAwsValue()).unit.provide(r)""",
         accessor =
           q"""def $methodName(request: $requestName): ZIO[$serviceNameT, AwsError, scala.Unit] =
                 ZIO.accessM(_.get.$methodName(request))"""
@@ -418,7 +445,7 @@ trait ServiceInterfaceGenerator {
           q"""def $methodName(): IO[AwsError, $responseTypeRo]""",
         implementation =
           q"""def $methodName(): IO[AwsError, $responseTypeRo] =
-                asyncRequestResponse[$modelPkg.$requestName, $modelPkg.$responseName](api.$methodName)($modelPkg.$requestNameTerm.builder().build()).map($responseNameTerm.wrap)""",
+                asyncRequestResponse[$modelPkg.$requestName, $modelPkg.$responseName](api.$methodName)($modelPkg.$requestNameTerm.builder().build()).map($responseNameTerm.wrap).provide(r)""",
         accessor =
           q"""def $methodName(): ZIO[$serviceNameT, AwsError, $responseTypeRo] =
                 ZIO.accessM(_.get.$methodName())"""
@@ -433,7 +460,7 @@ trait ServiceInterfaceGenerator {
           q"""def $methodName(): IO[AwsError, scala.Unit]""",
         implementation =
           q"""def $methodName(): IO[AwsError, scala.Unit] =
-                asyncRequestResponse[$modelPkg.$requestName, $modelPkg.$responseName](api.$methodName)($modelPkg.$requestNameTerm.builder().build()).unit""",
+                asyncRequestResponse[$modelPkg.$requestName, $modelPkg.$responseName](api.$methodName)($modelPkg.$requestNameTerm.builder().build()).unit.provide(r)""",
         accessor =
           q"""def $methodName(): ZIO[$serviceNameT, AwsError, scala.Unit] =
                 ZIO.accessM(_.get.$methodName())"""
@@ -448,6 +475,8 @@ trait ServiceInterfaceGenerator {
       paginatorPackage <- getPaginatorPkg
       pkgName = Term.Name(id.moduleName)
       serviceName = Term.Name(namingStrategy.getServiceName)
+      serviceImplName = Term.Name(serviceName.value + "Impl")
+      serviceImplT = Type.Name(serviceImplName.value)
       serviceNameT = Type.Name(serviceName.value)
       serviceTrait = Type.Select(serviceName, Type.Name("Service"))
       clientInterface = Type.Name(serviceName.value + "AsyncClient")
@@ -515,11 +544,15 @@ trait ServiceInterfaceGenerator {
               b0 <- awsConfig.configure[$clientInterface, $clientInterfaceBuilder]($clientInterfaceSingleton.builder())
               b1 <- awsConfig.configureHttpClient[$clientInterface, $clientInterfaceBuilder](b0)
               client <- ZIO(customization(b1).build())
-            } yield new ${Init(serviceTrait, Name.Anonymous(), List.empty)} with AwsServiceBase {
-              val api: $clientInterface = client
+            } yield new $serviceImplT(client, Aspect.identity, ().asInstanceOf[Any])).toLayer
+
+          private class $serviceImplT[R](override val api: $clientInterface, override val aspect: Aspect[R, AwsError], r: R)
+            extends ${Init(serviceTrait, Name.Anonymous(), List.empty)} with AwsServiceBase[R, $serviceImplT] {
+              override def withAspect[R1 <: R](newAspect: Aspect[R1, AwsError], r: R1): $serviceImplT[R1] =
+                new $serviceImplT(api, aspect, r)
 
               ..$serviceMethodImpls
-            }).toLayer
+            }
 
           ..$serviceAccessors
         }
