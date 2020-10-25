@@ -35,7 +35,7 @@ package object aspects {
       f.map(Described(_, description))
   }
 
-  private[core] implicit class DescrubedZIOSyntax[R, E, A](f: ZIO[R, E, Described[A]]) {
+  private[core] implicit class DescribedZIOSyntax[R, E, A](f: ZIO[R, E, Described[A]]) {
     final def unwrap: ZIO[R, E, A] = f.map(_.value)
   }
 
