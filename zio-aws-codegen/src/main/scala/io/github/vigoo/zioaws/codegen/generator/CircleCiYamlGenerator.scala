@@ -19,7 +19,7 @@ trait CircleCiYamlGenerator {
     )
     val envDefs = grouped
       .map(group =>
-        s""""${group.map(name => s"$name/compile").mkString(" ")}""""
+        s""""${group.map(name => s"$name/compile $name/publish").mkString(" ")}""""
       )
       .toVector
 
