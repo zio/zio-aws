@@ -138,6 +138,8 @@ jobs:
   tag:
     docker:
       - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.12.12
+    environment:
+      CIRCLE_REPOSITORY_URL: https://github.com/svroonland/zio-aws.git
     steps:
       - checkout
       - run: sbt ciReleaseTagNextVersion
@@ -209,11 +211,11 @@ workflows:
       # Create the next tag
       - tag:
           requires:
-            - tests_core_213
-            - tests_core_212
+            - integration_tests_212
+            - integration_tests_213
           filters:
             <<: *filter_tags
-            
+
       # Cross build SDK projects
       - compile_sdk_projects:
           requires:
