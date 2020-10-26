@@ -58,10 +58,13 @@ localstack: &localstack
 
 jobs:
   tests_core_213:
+    parameters:
+      scala_version:
+        description: Scala version
+        type: string
     docker:
       - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.13.3
     environment:
-      - <<: *scala_213
       - <<: *java_opts
     steps:
       - checkout
@@ -121,10 +124,7 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-            - project
-            - target
-            - zio-aws-*
-            - generated
+            - target/sonatype-staging
 
   publish_local:
     parameters:
@@ -142,7 +142,6 @@ jobs:
           at: ~/project
       - <<: *load_cache
       - run: sbt ++$SCALA_VERSION -J-Xmx2500m -J-Xms2500m publishLocal
-      - run: sbt ++$SCALA_VERSION -J-Xmx2500m -J-Xms2500m all/publishLocal
 
   tests_core_212:
     docker:
