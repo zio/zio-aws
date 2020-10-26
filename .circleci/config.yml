@@ -143,7 +143,7 @@ jobs:
     steps:
       - add_ssh_keys:
           fingerprints:
-            - "3c:30:f2:43:78:72:c5:64:f9:45:31:f5:a6:77:83:65"
+            - $SSH_FINGERPRINT"3c:30:f2:43:78:72:c5:64:f9:45:31:f5:a6:77:83:65"
       - checkout
       - run: sbt ciReleaseTagNextVersion
 
