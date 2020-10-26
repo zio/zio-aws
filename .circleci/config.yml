@@ -211,8 +211,8 @@ workflows:
       # Create the next tag
       - tag:
           requires:
-            - integration_tests_212
-            - integration_tests_213
+#            - integration_tests_212
+#            - integration_tests_213
           filters:
             <<: *filter_tags
 
