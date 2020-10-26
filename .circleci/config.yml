@@ -4,17 +4,17 @@ version: 2.1
 # TODO may need 2.12 cache and 2.13 cache
 save_cache: &save_cache
   - save_cache:
-      key: sbt-cache-{{ checksum "build.sbt" }}-{{ checksum "project/build.properties" }}-{{ checksum "project/plugins.sbt" }}-1
+      key: sbt-cache-{{ checksum "build.sbt" }}-{{ checksum "project/build.properties" }}-{{ checksum "project/plugins.sbt" }}-2
       paths:
         - "~/.ivy2/cache"
         - "~/.sbt"
         - "~/.m2"
         - "~/.cache"
-        - "~/website/node_modules"
+        - "target"
 
 load_cache: &load_cache
   - restore_cache:
-      key: sbt-cache-{{ checksum "build.sbt" }}-{{ checksum "project/build.properties" }}-{{ checksum "project/plugins.sbt" }}-1
+      key: sbt-cache-{{ checksum "build.sbt" }}-{{ checksum "project/build.properties" }}-{{ checksum "project/plugins.sbt" }}-2
 
 scala_212: &scala_212
   SCALA_VERSION: 2.12.12
