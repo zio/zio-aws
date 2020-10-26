@@ -1,6 +1,7 @@
 import io.github.vigoo.zioaws.codegen.ZioAwsCodegenPlugin.autoImport._
 import sbt._
 import Keys._
+import com.jsuereth.sbtpgp.PgpKeys._
 import xerial.sbt.Sonatype
 import xerial.sbt.Sonatype._
 import xerial.sbt.Sonatype.SonatypeKeys._
@@ -75,6 +76,9 @@ object Common extends AutoPlugin {
           "oss.sonatype.org",
           username,
           password
-        )).toSeq
+        )).toSeq,
+      pgpPublicRing := file("/tmp/public.asc"),
+      pgpSecretRing := file("/tmp/secret.asc"),
+      pgpPassphrase := sys.env.get("PGP_PASSPHRASE").map(_.toArray)
     )
 }
