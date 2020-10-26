@@ -136,7 +136,7 @@ jobs:
       - attach_workspace:
           at: ~/project
       - <<: *load_cache
-      - run: sbt +publishLocal
+      - run: sbt +publishLocal +all/publishLocal
 
   tests_core_212:
     docker:
