@@ -206,13 +206,20 @@ workflows:
           filters:
             <<: *filter_tags
 
-      # git tag - locally only
+      # Create the next tag
+      - tag:
+          requires:
+            - tests_core_213
+            - tests_core_212
+          filters:
+            <<: *filter_tags
 
       # Cross build SDK projects
       - compile_sdk_projects:
           requires:
             - tests_core_213
             - tests_core_212
+            - tag
           filters:
             <<: *filter_tags
           matrix:
@@ -222,9 +229,6 @@ workflows:
                 - 2.12.12
                 # NOTE this part is automatically generated
               commands: COMMANDS
-      - tag:
-          requires:
-            - compile_sdk_projects
       - publish_local:
           requires:
             - compile_sdk_projects
