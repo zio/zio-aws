@@ -130,13 +130,15 @@ jobs:
     docker:
       - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.13.3
     environment:
+      - SCALA_VERSION: << parameters.scala_version >>
       - <<: *java_opts
     steps:
       - checkout
       - attach_workspace:
           at: ~/project
       - <<: *load_cache
-      - run: sbt +publishLocal +all/publishLocal
+      - run: sbt ++$SCALA_VERSION -J-Xmx2500m -J-Xms2500m publishLocal
+      - run: sbt ++$SCALA_VERSION -J-Xmx2500m -J-Xms2500m all/publishLocal
 
   tests_core_212:
     docker:
@@ -203,3 +205,8 @@ workflows:
       - release:
           requires:
             - compile_sdk_projects
+          matrix:
+            parameters:
+              scala_version:
+                - 2.13.3
+                - 2.12.12
