@@ -75,9 +75,32 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-            - project
-            - target
-            - zio-aws-*
+            - project/target/scala-2.13
+            - target/scala-2.13
+            - zio-aws-*/target/scala-2.13
+            - generated
+
+  tests_core_212:
+    docker:
+      - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.12.12
+    environment:
+      - <<: *scala_212
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ~/project
+      - <<: *load_cache
+      - run: sbt -J-Xmx3g -J-Xms3g ++$SCALA_VERSION zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
+      - <<: *save_cache
+      - <<: *save_test_results
+      - store_test_results:
+          path: test-reports
+      - persist_to_workspace:
+          root: .
+          paths:
+            - project/target/scala-2.12
+            - target/scala-2.12
+            - zio-aws-*/target/scala-2.12
             - generated
 
   integration_tests_213:
@@ -96,6 +119,28 @@ jobs:
       - <<: *save_test_results
       - store_test_results:
           path: test-reports
+
+  integration_tests_212:
+    docker:
+      - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.12.12
+      - <<: *localstack
+    environment:
+      - <<: *scala_212
+    steps:
+      - checkout
+      - <<: *load_cache
+      - run: sbt -J-Xmx2500m -J-Xms2500m ++$SCALA_VERSION examples/compile integtests/test
+      - <<: *save_cache
+      - <<: *save_test_results
+      - store_test_results:
+          path: test-reports
+
+  tag:
+    docker:
+      - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.12.12
+    steps:
+      - checkout
+      - run: sbt ciReleaseTagNextVersion
 
   compile_sdk_projects:
     parameters:
@@ -116,7 +161,6 @@ jobs:
           at: ~/project
       - <<: *load_cache
       - run: sbt ++$SCALA_VERSION << parameters.commands >>
-  #      - <<: *save_cache
       - persist_to_workspace:
           root: .
           paths:
@@ -139,47 +183,20 @@ jobs:
       - <<: *load_cache
       - run: sbt ++$SCALA_VERSION -J-Xmx2500m -J-Xms2500m publishLocal
 
-  tests_core_212:
-    docker:
-      - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.13.3
-    environment:
-      - <<: *scala_212
-    steps:
-      - checkout
-      - <<: *load_cache
-      - run: sbt -J-Xmx3g -J-Xms3g ++$SCALA_VERSION zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
-      - <<: *save_cache
-      - <<: *save_test_results
-      - store_test_results:
-          path: test-reports
-
-#  integration_tests_212:
-#    docker:
-#      - image: hseeberger/scala-sbt:8u265_1.3.13_2.13.3
-#      - <<: *localstack
-#    environment:
-#      - <<: *scala_212
-#    steps:
-#      - checkout
-#      - <<: *load_cache
-#      - run: sbt -J-Xmx2500m -J-Xms2500m ++$SCALA_VERSION examples/compile integtests/test
-#      - <<: *save_cache
-#      - <<: *save_test_results
-#      - store_test_results:
-#          path: test-reports
-
 workflows:
   version: 2
   build:
     jobs:
-#      - tests_core_212:
-#          filters:
-#            <<: *filter_tags
-#      - integration_tests_212:
-#          requires:
-#            - tests_core_212
-#          filters:
-#            <<: *filter_tags
+      # Scala 2.12
+      - tests_core_212:
+          filters:
+            <<: *filter_tags
+      - integration_tests_212:
+          requires:
+            - tests_core_212
+          filters:
+            <<: *filter_tags
+      # Scala 2.13
       - tests_core_213:
           filters:
             <<: *filter_tags
@@ -188,19 +205,26 @@ workflows:
             - tests_core_213
           filters:
             <<: *filter_tags
+
+      # git tag - locally only
+
+      # Cross build SDK projects
       - compile_sdk_projects:
           requires:
             - tests_core_213
-#            - tests_core_212
+            - tests_core_212
           filters:
             <<: *filter_tags
           matrix:
             parameters:
               scala_version:
                 - 2.13.3
-                # - 2.12.12
+                - 2.12.12
                 # NOTE this part is automatically generated
-              commands: ["zio-aws-accessanalyzer/compile zio-aws-accessanalyzer/publish zio-aws-acm/compile zio-aws-acm/publish zio-aws-acmpca/compile zio-aws-acmpca/publish zio-aws-alexaforbusiness/compile zio-aws-alexaforbusiness/publish zio-aws-amplify/compile zio-aws-amplify/publish zio-aws-apigateway/compile zio-aws-apigateway/publish zio-aws-apigatewaymanagementapi/compile zio-aws-apigatewaymanagementapi/publish zio-aws-apigatewayv2/compile zio-aws-apigatewayv2/publish zio-aws-appconfig/compile zio-aws-appconfig/publish zio-aws-appflow/compile zio-aws-appflow/publish zio-aws-applicationautoscaling/compile zio-aws-applicationautoscaling/publish zio-aws-applicationdiscovery/compile zio-aws-applicationdiscovery/publish zio-aws-applicationinsights/compile zio-aws-applicationinsights/publish zio-aws-appmesh/compile zio-aws-appmesh/publish zio-aws-appstream/compile zio-aws-appstream/publish zio-aws-appsync/compile zio-aws-appsync/publish zio-aws-athena/compile zio-aws-athena/publish zio-aws-autoscaling/compile zio-aws-autoscaling/publish zio-aws-autoscalingplans/compile zio-aws-autoscalingplans/publish zio-aws-backup/compile zio-aws-backup/publish zio-aws-batch/compile zio-aws-batch/publish zio-aws-braket/compile zio-aws-braket/publish zio-aws-budgets/compile zio-aws-budgets/publish zio-aws-chime/compile zio-aws-chime/publish zio-aws-cloud9/compile zio-aws-cloud9/publish zio-aws-clouddirectory/compile zio-aws-clouddirectory/publish zio-aws-cloudformation/compile zio-aws-cloudformation/publish zio-aws-cloudfront/compile zio-aws-cloudfront/publish zio-aws-cloudhsm/compile zio-aws-cloudhsm/publish","zio-aws-cloudhsmv2/compile zio-aws-cloudhsmv2/publish zio-aws-cloudsearch/compile zio-aws-cloudsearch/publish zio-aws-cloudsearchdomain/compile zio-aws-cloudsearchdomain/publish zio-aws-cloudtrail/compile zio-aws-cloudtrail/publish zio-aws-cloudwatch/compile zio-aws-cloudwatch/publish zio-aws-cloudwatchevents/compile zio-aws-cloudwatchevents/publish zio-aws-cloudwatchlogs/compile zio-aws-cloudwatchlogs/publish zio-aws-codeartifact/compile zio-aws-codeartifact/publish zio-aws-codebuild/compile zio-aws-codebuild/publish zio-aws-codecommit/compile zio-aws-codecommit/publish zio-aws-codedeploy/compile zio-aws-codedeploy/publish zio-aws-codeguruprofiler/compile zio-aws-codeguruprofiler/publish zio-aws-codegurureviewer/compile zio-aws-codegurureviewer/publish zio-aws-codepipeline/compile zio-aws-codepipeline/publish zio-aws-codestar/compile zio-aws-codestar/publish zio-aws-codestarconnections/compile zio-aws-codestarconnections/publish zio-aws-codestarnotifications/compile zio-aws-codestarnotifications/publish zio-aws-cognitoidentity/compile zio-aws-cognitoidentity/publish zio-aws-cognitoidentityprovider/compile zio-aws-cognitoidentityprovider/publish zio-aws-cognitosync/compile zio-aws-cognitosync/publish zio-aws-comprehend/compile zio-aws-comprehend/publish zio-aws-comprehendmedical/compile zio-aws-comprehendmedical/publish zio-aws-computeoptimizer/compile zio-aws-computeoptimizer/publish zio-aws-config/compile zio-aws-config/publish zio-aws-connect/compile zio-aws-connect/publish zio-aws-connectparticipant/compile zio-aws-connectparticipant/publish zio-aws-costandusagereport/compile zio-aws-costandusagereport/publish zio-aws-costexplorer/compile zio-aws-costexplorer/publish zio-aws-databasemigration/compile zio-aws-databasemigration/publish"]
+              commands: ["zio-aws-accessanalyzer/compile zio-aws-accessanalyzer/publish zio-aws-acm/compile zio-aws-acm/publish zio-aws-acmpca/compile zio-aws-acmpca/publish zio-aws-alexaforbusiness/compile zio-aws-alexaforbusiness/publish zio-aws-amplify/compile zio-aws-amplify/publish zio-aws-apigateway/compile zio-aws-apigateway/publish zio-aws-apigatewaymanagementapi/compile zio-aws-apigatewaymanagementapi/publish zio-aws-apigatewayv2/compile zio-aws-apigatewayv2/publish zio-aws-appconfig/compile zio-aws-appconfig/publish zio-aws-appflow/compile zio-aws-appflow/publish zio-aws-applicationautoscaling/compile zio-aws-applicationautoscaling/publish zio-aws-applicationdiscovery/compile zio-aws-applicationdiscovery/publish zio-aws-applicationinsights/compile zio-aws-applicationinsights/publish zio-aws-appmesh/compile zio-aws-appmesh/publish zio-aws-appstream/compile zio-aws-appstream/publish zio-aws-appsync/compile zio-aws-appsync/publish zio-aws-athena/compile zio-aws-athena/publish zio-aws-autoscaling/compile zio-aws-autoscaling/publish zio-aws-autoscalingplans/compile zio-aws-autoscalingplans/publish zio-aws-backup/compile zio-aws-backup/publish zio-aws-batch/compile zio-aws-batch/publish zio-aws-braket/compile zio-aws-braket/publish zio-aws-budgets/compile zio-aws-budgets/publish zio-aws-chime/compile zio-aws-chime/publish zio-aws-cloud9/compile zio-aws-cloud9/publish zio-aws-clouddirectory/compile zio-aws-clouddirectory/publish zio-aws-cloudformation/compile zio-aws-cloudformation/publish zio-aws-cloudfront/compile zio-aws-cloudfront/publish zio-aws-cloudhsm/compile zio-aws-cloudhsm/publish","zio-aws-cloudhsmv2/compile zio-aws-cloudhsmv2/publish zio-aws-cloudsearch/compile zio-aws-cloudsearch/publish zio-aws-cloudsearchdomain/compile zio-aws-cloudsearchdomain/publish zio-aws-cloudtrail/compile zio-aws-cloudtrail/publish zio-aws-cloudwatch/compile zio-aws-cloudwatch/publish zio-aws-cloudwatchevents/compile zio-aws-cloudwatchevents/publish zio-aws-cloudwatchlogs/compile zio-aws-cloudwatchlogs/publish zio-aws-codeartifact/compile zio-aws-codeartifact/publish zio-aws-codebuild/compile zio-aws-codebuild/publish zio-aws-codecommit/compile zio-aws-codecommit/publish zio-aws-codedeploy/compile zio-aws-codedeploy/publish zio-aws-codeguruprofiler/compile zio-aws-codeguruprofiler/publish zio-aws-codegurureviewer/compile zio-aws-codegurureviewer/publish zio-aws-codepipeline/compile zio-aws-codepipeline/publish zio-aws-codestar/compile zio-aws-codestar/publish zio-aws-codestarconnections/compile zio-aws-codestarconnections/publish zio-aws-codestarnotifications/compile zio-aws-codestarnotifications/publish zio-aws-cognitoidentity/compile zio-aws-cognitoidentity/publish zio-aws-cognitoidentityprovider/compile zio-aws-cognitoidentityprovider/publish zio-aws-cognitosync/compile zio-aws-cognitosync/publish zio-aws-comprehend/compile zio-aws-comprehend/publish zio-aws-comprehendmedical/compile zio-aws-comprehendmedical/publish zio-aws-computeoptimizer/compile zio-aws-computeoptimizer/publish zio-aws-config/compile zio-aws-config/publish zio-aws-connect/compile zio-aws-connect/publish zio-aws-connectparticipant/compile zio-aws-connectparticipant/publish zio-aws-costandusagereport/compile zio-aws-costandusagereport/publish zio-aws-costexplorer/compile zio-aws-costexplorer/publish zio-aws-databasemigration/compile zio-aws-databasemigration/publish","zio-aws-dataexchange/compile zio-aws-dataexchange/publish zio-aws-datapipeline/compile zio-aws-datapipeline/publish zio-aws-datasync/compile zio-aws-datasync/publish zio-aws-dax/compile zio-aws-dax/publish zio-aws-detective/compile zio-aws-detective/publish zio-aws-devicefarm/compile zio-aws-devicefarm/publish zio-aws-directconnect/compile zio-aws-directconnect/publish zio-aws-directory/compile zio-aws-directory/publish zio-aws-dlm/compile zio-aws-dlm/publish zio-aws-docdb/compile zio-aws-docdb/publish zio-aws-dynamodb/compile zio-aws-dynamodb/publish zio-aws-dynamodbstreams/compile zio-aws-dynamodbstreams/publish zio-aws-ebs/compile zio-aws-ebs/publish zio-aws-ec2/compile zio-aws-ec2/publish zio-aws-ec2instanceconnect/compile zio-aws-ec2instanceconnect/publish zio-aws-ecr/compile zio-aws-ecr/publish zio-aws-ecs/compile zio-aws-ecs/publish zio-aws-efs/compile zio-aws-efs/publish zio-aws-eks/compile zio-aws-eks/publish zio-aws-elasticache/compile zio-aws-elasticache/publish zio-aws-elasticbeanstalk/compile zio-aws-elasticbeanstalk/publish zio-aws-elasticinference/compile zio-aws-elasticinference/publish zio-aws-elasticloadbalancing/compile zio-aws-elasticloadbalancing/publish zio-aws-elasticloadbalancingv2/compile zio-aws-elasticloadbalancingv2/publish zio-aws-elasticsearch/compile zio-aws-elasticsearch/publish zio-aws-elastictranscoder/compile zio-aws-elastictranscoder/publish zio-aws-emr/compile zio-aws-emr/publish zio-aws-eventbridge/compile zio-aws-eventbridge/publish zio-aws-firehose/compile zio-aws-firehose/publish","zio-aws-fms/compile zio-aws-fms/publish zio-aws-forecast/compile zio-aws-forecast/publish zio-aws-forecastquery/compile zio-aws-forecastquery/publish zio-aws-frauddetector/compile zio-aws-frauddetector/publish zio-aws-fsx/compile zio-aws-fsx/publish zio-aws-gamelift/compile zio-aws-gamelift/publish zio-aws-glacier/compile zio-aws-glacier/publish zio-aws-globalaccelerator/compile zio-aws-globalaccelerator/publish zio-aws-glue/compile zio-aws-glue/publish zio-aws-greengrass/compile zio-aws-greengrass/publish zio-aws-groundstation/compile zio-aws-groundstation/publish zio-aws-guardduty/compile zio-aws-guardduty/publish zio-aws-health/compile zio-aws-health/publish zio-aws-honeycode/compile zio-aws-honeycode/publish zio-aws-iam/compile zio-aws-iam/publish zio-aws-identitystore/compile zio-aws-identitystore/publish zio-aws-imagebuilder/compile zio-aws-imagebuilder/publish zio-aws-inspector/compile zio-aws-inspector/publish zio-aws-iot/compile zio-aws-iot/publish zio-aws-iot1clickdevices/compile zio-aws-iot1clickdevices/publish zio-aws-iot1clickprojects/compile zio-aws-iot1clickprojects/publish zio-aws-iotanalytics/compile zio-aws-iotanalytics/publish zio-aws-iotdataplane/compile zio-aws-iotdataplane/publish zio-aws-iotevents/compile zio-aws-iotevents/publish zio-aws-ioteventsdata/compile zio-aws-ioteventsdata/publish zio-aws-iotjobsdataplane/compile zio-aws-iotjobsdataplane/publish zio-aws-iotsecuretunneling/compile zio-aws-iotsecuretunneling/publish zio-aws-iotsitewise/compile zio-aws-iotsitewise/publish zio-aws-iotthingsgraph/compile zio-aws-iotthingsgraph/publish","zio-aws-ivs/compile zio-aws-ivs/publish zio-aws-kafka/compile zio-aws-kafka/publish zio-aws-kendra/compile zio-aws-kendra/publish zio-aws-kinesis/compile zio-aws-kinesis/publish zio-aws-kinesisanalytics/compile zio-aws-kinesisanalytics/publish zio-aws-kinesisanalyticsv2/compile zio-aws-kinesisanalyticsv2/publish zio-aws-kinesisvideo/compile zio-aws-kinesisvideo/publish zio-aws-kinesisvideoarchivedmedia/compile zio-aws-kinesisvideoarchivedmedia/publish zio-aws-kinesisvideomedia/compile zio-aws-kinesisvideomedia/publish zio-aws-kinesisvideosignaling/compile zio-aws-kinesisvideosignaling/publish zio-aws-kms/compile zio-aws-kms/publish zio-aws-lakeformation/compile zio-aws-lakeformation/publish zio-aws-lambda/compile zio-aws-lambda/publish zio-aws-lexmodelbuilding/compile zio-aws-lexmodelbuilding/publish zio-aws-lexruntime/compile zio-aws-lexruntime/publish zio-aws-licensemanager/compile zio-aws-licensemanager/publish zio-aws-lightsail/compile zio-aws-lightsail/publish zio-aws-machinelearning/compile zio-aws-machinelearning/publish zio-aws-macie/compile zio-aws-macie/publish zio-aws-macie2/compile zio-aws-macie2/publish zio-aws-managedblockchain/compile zio-aws-managedblockchain/publish zio-aws-marketplacecatalog/compile zio-aws-marketplacecatalog/publish zio-aws-marketplacecommerceanalytics/compile zio-aws-marketplacecommerceanalytics/publish zio-aws-marketplaceentitlement/compile zio-aws-marketplaceentitlement/publish zio-aws-marketplacemetering/compile zio-aws-marketplacemetering/publish zio-aws-mediaconnect/compile zio-aws-mediaconnect/publish zio-aws-mediaconvert/compile zio-aws-mediaconvert/publish zio-aws-medialive/compile zio-aws-medialive/publish zio-aws-mediapackage/compile zio-aws-mediapackage/publish","zio-aws-mediapackagevod/compile zio-aws-mediapackagevod/publish zio-aws-mediastore/compile zio-aws-mediastore/publish zio-aws-mediastoredata/compile zio-aws-mediastoredata/publish zio-aws-mediatailor/compile zio-aws-mediatailor/publish zio-aws-migrationhub/compile zio-aws-migrationhub/publish zio-aws-migrationhubconfig/compile zio-aws-migrationhubconfig/publish zio-aws-mobile/compile zio-aws-mobile/publish zio-aws-mq/compile zio-aws-mq/publish zio-aws-mturk/compile zio-aws-mturk/publish zio-aws-neptune/compile zio-aws-neptune/publish zio-aws-networkmanager/compile zio-aws-networkmanager/publish zio-aws-opsworks/compile zio-aws-opsworks/publish zio-aws-opsworkscm/compile zio-aws-opsworkscm/publish zio-aws-organizations/compile zio-aws-organizations/publish zio-aws-outposts/compile zio-aws-outposts/publish zio-aws-personalize/compile zio-aws-personalize/publish zio-aws-personalizeevents/compile zio-aws-personalizeevents/publish zio-aws-personalizeruntime/compile zio-aws-personalizeruntime/publish zio-aws-pi/compile zio-aws-pi/publish zio-aws-pinpoint/compile zio-aws-pinpoint/publish zio-aws-pinpointemail/compile zio-aws-pinpointemail/publish zio-aws-pinpointsmsvoice/compile zio-aws-pinpointsmsvoice/publish zio-aws-polly/compile zio-aws-polly/publish zio-aws-pricing/compile zio-aws-pricing/publish zio-aws-qldb/compile zio-aws-qldb/publish zio-aws-qldbsession/compile zio-aws-qldbsession/publish zio-aws-quicksight/compile zio-aws-quicksight/publish zio-aws-ram/compile zio-aws-ram/publish zio-aws-rds/compile zio-aws-rds/publish","zio-aws-rdsdata/compile zio-aws-rdsdata/publish zio-aws-redshift/compile zio-aws-redshift/publish zio-aws-redshiftdata/compile zio-aws-redshiftdata/publish zio-aws-rekognition/compile zio-aws-rekognition/publish zio-aws-resourcegroups/compile zio-aws-resourcegroups/publish zio-aws-resourcegroupstaggingapi/compile zio-aws-resourcegroupstaggingapi/publish zio-aws-robomaker/compile zio-aws-robomaker/publish zio-aws-route53/compile zio-aws-route53/publish zio-aws-route53domains/compile zio-aws-route53domains/publish zio-aws-route53resolver/compile zio-aws-route53resolver/publish zio-aws-s3/compile zio-aws-s3/publish zio-aws-s3control/compile zio-aws-s3control/publish zio-aws-s3outposts/compile zio-aws-s3outposts/publish zio-aws-sagemaker/compile zio-aws-sagemaker/publish zio-aws-sagemakera2iruntime/compile zio-aws-sagemakera2iruntime/publish zio-aws-sagemakerruntime/compile zio-aws-sagemakerruntime/publish zio-aws-savingsplans/compile zio-aws-savingsplans/publish zio-aws-schemas/compile zio-aws-schemas/publish zio-aws-secretsmanager/compile zio-aws-secretsmanager/publish zio-aws-securityhub/compile zio-aws-securityhub/publish zio-aws-serverlessapplicationrepository/compile zio-aws-serverlessapplicationrepository/publish zio-aws-servicecatalog/compile zio-aws-servicecatalog/publish zio-aws-servicediscovery/compile zio-aws-servicediscovery/publish zio-aws-servicequotas/compile zio-aws-servicequotas/publish zio-aws-ses/compile zio-aws-ses/publish zio-aws-sesv2/compile zio-aws-sesv2/publish zio-aws-sfn/compile zio-aws-sfn/publish zio-aws-shield/compile zio-aws-shield/publish zio-aws-signer/compile zio-aws-signer/publish","zio-aws-sms/compile zio-aws-sms/publish zio-aws-snowball/compile zio-aws-snowball/publish zio-aws-sns/compile zio-aws-sns/publish zio-aws-sqs/compile zio-aws-sqs/publish zio-aws-ssm/compile zio-aws-ssm/publish zio-aws-sso/compile zio-aws-sso/publish zio-aws-ssoadmin/compile zio-aws-ssoadmin/publish zio-aws-ssooidc/compile zio-aws-ssooidc/publish zio-aws-storagegateway/compile zio-aws-storagegateway/publish zio-aws-sts/compile zio-aws-sts/publish zio-aws-support/compile zio-aws-support/publish zio-aws-swf/compile zio-aws-swf/publish zio-aws-synthetics/compile zio-aws-synthetics/publish zio-aws-textract/compile zio-aws-textract/publish zio-aws-timestreamquery/compile zio-aws-timestreamquery/publish zio-aws-timestreamwrite/compile zio-aws-timestreamwrite/publish zio-aws-transcribe/compile zio-aws-transcribe/publish zio-aws-transcribestreaming/compile zio-aws-transcribestreaming/publish zio-aws-transfer/compile zio-aws-transfer/publish zio-aws-translate/compile zio-aws-translate/publish zio-aws-waf/compile zio-aws-waf/publish zio-aws-wafregional/compile zio-aws-wafregional/publish zio-aws-wafv2/compile zio-aws-wafv2/publish zio-aws-workdocs/compile zio-aws-workdocs/publish zio-aws-worklink/compile zio-aws-worklink/publish zio-aws-workmail/compile zio-aws-workmail/publish zio-aws-workmailmessageflow/compile zio-aws-workmailmessageflow/publish zio-aws-workspaces/compile zio-aws-workspaces/publish zio-aws-xray/compile zio-aws-xray/publish"]
+      - tag:
+          requires:
+            - compile_sdk_projects
       - publish_local:
           requires:
             - compile_sdk_projects

@@ -1,19 +1,20 @@
 version: 2.1
 
 # Some reusable YAML definitions
+# TODO may need 2.12 cache and 2.13 cache
 save_cache: &save_cache
   - save_cache:
-      key: sbt-cache-{{ checksum "build.sbt" }}-{{ checksum "project/build.properties" }}-{{ checksum "project/plugins.sbt" }}-1
+      key: sbt-cache-{{ checksum "build.sbt" }}-{{ checksum "project/build.properties" }}-{{ checksum "project/plugins.sbt" }}-2
       paths:
         - "~/.ivy2/cache"
         - "~/.sbt"
         - "~/.m2"
         - "~/.cache"
-        - "~/website/node_modules"
+        - "target"
 
 load_cache: &load_cache
   - restore_cache:
-      key: sbt-cache-{{ checksum "build.sbt" }}-{{ checksum "project/build.properties" }}-{{ checksum "project/plugins.sbt" }}-1
+      key: sbt-cache-{{ checksum "build.sbt" }}-{{ checksum "project/build.properties" }}-{{ checksum "project/plugins.sbt" }}-2
 
 scala_212: &scala_212
   SCALA_VERSION: 2.12.12
@@ -32,7 +33,7 @@ filter_tags: &filter_tags
     only: /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
 
 java_opts: &java_opts
-  JAVA_OPTS: -Xmx3g -Xms3g -Dfile.encoding=UTF8 -Xss16M -XX:+UseParallelGC -XX:ReservedCodeCacheSize=512M
+  JAVA_OPTS: -Xmx2g -Xms1g -Dfile.encoding=UTF8 -Xss16M -XX:+UseParallelGC -XX:ReservedCodeCacheSize=512M
 
 save_test_results: &save_test_results
   - run:
@@ -53,40 +54,93 @@ localstack: &localstack
       AWS_SECRET_ACCESS_KEY: dummy-key
       DEBUG: "1"
 
-projects:
-
-
 # CircleCI jobs
 
 jobs:
   tests_core_213:
     docker:
-      - image: hseeberger/scala-sbt:8u265_1.3.13_2.13.3
+      - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.13.3
     environment:
-      - <<: *scala_213
+      - <<: *java_opts
     steps:
       - checkout
+      - attach_workspace:
+          at: ~/project
       - <<: *load_cache
-      - run: sbt -J-Xmx3g -J-Xms3g zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
+      - run: sbt -J-Xmx3g -J-Xms3g ++$SCALA_VERSION zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
       - <<: *save_cache
       - <<: *save_test_results
       - store_test_results:
           path: test-reports
+      - persist_to_workspace:
+          root: .
+          paths:
+            - project/target/scala-2.13
+            - target/scala-2.13
+            - zio-aws-*/target/scala-2.13
+            - generated
+
+  tests_core_212:
+    docker:
+      - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.12.12
+    environment:
+      - <<: *scala_212
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ~/project
+      - <<: *load_cache
+      - run: sbt -J-Xmx3g -J-Xms3g ++$SCALA_VERSION zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
+      - <<: *save_cache
+      - <<: *save_test_results
+      - store_test_results:
+          path: test-reports
+      - persist_to_workspace:
+          root: .
+          paths:
+            - project/target/scala-2.12
+            - target/scala-2.12
+            - zio-aws-*/target/scala-2.12
+            - generated
 
   integration_tests_213:
     docker:
-      - image: hseeberger/scala-sbt:8u265_1.3.13_2.13.3
+      - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.13.3
       - <<: *localstack
     environment:
       - <<: *scala_213
     steps:
       - checkout
+      - attach_workspace:
+          at: ~/project
       - <<: *load_cache
-      - run: sbt -J-Xmx2g examples/compile integtests/test
+      - run: sbt -J-Xmx2500m -J-Xms2500m ++$SCALA_VERSION examples/compile integtests/test
       - <<: *save_cache
       - <<: *save_test_results
       - store_test_results:
           path: test-reports
+
+  integration_tests_212:
+    docker:
+      - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.12.12
+      - <<: *localstack
+    environment:
+      - <<: *scala_212
+    steps:
+      - checkout
+      - <<: *load_cache
+      - run: sbt -J-Xmx2500m -J-Xms2500m ++$SCALA_VERSION examples/compile integtests/test
+      - <<: *save_cache
+      - <<: *save_test_results
+      - store_test_results:
+          path: test-reports
+
+  tag:
+    docker:
+      - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.12.12
+    steps:
+      - checkout
+      - run: sbt ciReleaseTagNextVersion
 
   compile_sdk_projects:
     parameters:
@@ -97,49 +151,43 @@ jobs:
         description: Scala version
         type: string
     docker:
-      - image: hseeberger/scala-sbt:8u265_1.3.13_2.13.3
+      - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.13.3
     environment:
       - SCALA_VERSION: << parameters.scala_version >>
       - <<: *java_opts
     steps:
       - checkout
+      - attach_workspace:
+          at: ~/project
       - <<: *load_cache
-      - run: sbt << parameters.commands >>
-  #      - <<: *save_cache
+      - run: sbt ++$SCALA_VERSION << parameters.commands >>
+      - persist_to_workspace:
+          root: .
+          paths:
+            - target/sonatype-staging
 
-  tests_core_212:
+  publish_local:
+    parameters:
+      scala_version:
+        description: Scala version
+        type: string
     docker:
-      - image: hseeberger/scala-sbt:8u265_1.3.13_2.13.3
+      - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.13.3
     environment:
-      - <<: *scala_212
+      - SCALA_VERSION: << parameters.scala_version >>
+      - <<: *java_opts
     steps:
       - checkout
+      - attach_workspace:
+          at: ~/project
       - <<: *load_cache
-      - run: sbt -J-Xmx3g -J-Xms3g zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
-      - <<: *save_cache
-      - <<: *save_test_results
-      - store_test_results:
-          path: test-reports
-
-  integration_tests_212:
-    docker:
-      - image: hseeberger/scala-sbt:8u265_1.3.13_2.13.3
-      - <<: *localstack
-    environment:
-      - <<: *scala_212
-    steps:
-      - checkout
-      - <<: *load_cache
-      - run: sbt -J-Xmx2g examples/compile integtests/test
-      - <<: *save_cache
-      - <<: *save_test_results
-      - store_test_results:
-          path: test-reports
+      - run: sbt ++$SCALA_VERSION -J-Xmx2500m -J-Xms2500m publishLocal
 
 workflows:
   version: 2
   build:
     jobs:
+      # Scala 2.12
       - tests_core_212:
           filters:
             <<: *filter_tags
@@ -148,9 +196,19 @@ workflows:
             - tests_core_212
           filters:
             <<: *filter_tags
+      # Scala 2.13
       - tests_core_213:
           filters:
             <<: *filter_tags
+      - integration_tests_213:
+          requires:
+            - tests_core_213
+          filters:
+            <<: *filter_tags
+
+      # git tag - locally only
+
+      # Cross build SDK projects
       - compile_sdk_projects:
           requires:
             - tests_core_213
@@ -164,8 +222,14 @@ workflows:
                 - 2.12.12
                 # NOTE this part is automatically generated
               commands: COMMANDS
-      - integration_tests_213:
+      - tag:
           requires:
-            - tests_core_213
-          filters:
-            <<: *filter_tags
+            - compile_sdk_projects
+      - publish_local:
+          requires:
+            - compile_sdk_projects
+          matrix:
+            parameters:
+              scala_version:
+                - 2.13.3
+                - 2.12.12
