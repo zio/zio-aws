@@ -58,10 +58,6 @@ localstack: &localstack
 
 jobs:
   tests_core_213:
-    parameters:
-      scala_version:
-        description: Scala version
-        type: string
     docker:
       - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.13.3
     environment:
