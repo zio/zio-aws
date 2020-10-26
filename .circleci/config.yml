@@ -166,7 +166,13 @@ jobs:
       - attach_workspace:
           at: ~/project
       - <<: *load_cache
-      - run: sbt ++$SCALA_VERSION << parameters.commands >>
+      - run:
+          name: Configure Sonatype credentials
+          command: |
+            echo "credentials += Credentials(\"Sonatype Nexus Repository Manager\", \"oss.sonatype.org\", \"${SONATYPE_USER}\", \"${SONATYPE_PASSWORD}\")" > ~/.sbt/1.0/sonatype.sbt
+            echo -n "${PGP_PUBLIC}" | base64 -di > /tmp/public.asc
+            echo -n "${PGP_SECRET}" | base64 -di > /tmp/secret.asc
+      - run: sbt -J-Xmx2500m -J-Xms2500m ++$SCALA_VERSION << parameters.commands >>
       - persist_to_workspace:
           root: .
           paths:
@@ -206,7 +212,7 @@ jobs:
             echo "credentials += Credentials(\"Sonatype Nexus Repository Manager\", \"oss.sonatype.org\", \"${SONATYPE_USER}\", \"${SONATYPE_PASSWORD}\")" > ~/.sbt/1.0/sonatype.sbt
             echo -n "${PGP_PUBLIC}" | base64 -di > /tmp/public.asc
             echo -n "${PGP_SECRET}" | base64 -di > /tmp/secret.asc
-            sbt -J-Xmx2500m -J-Xms2500m publish sonatypeBundleRelease
+            sbt -J-Xmx2500m -J-Xms2500m +publishSigned sonatypeBundleRelease
 
 workflows:
   version: 2
