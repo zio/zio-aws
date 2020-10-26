@@ -20,7 +20,6 @@ lazy val core = Project("zio-aws-core", file("zio-aws-core"))
 
       "dev.zio" %% "zio-test" % zioVersion % "test",
       "dev.zio" %% "zio-test-sbt" % zioVersion % "test",
-      "dev.zio" %% "zio-test-intellij" % zioVersion % "test",
       "dev.zio" %% "zio-config-typesafe" % zioConfigVersion % "test",
     ),
     testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
@@ -61,7 +60,7 @@ lazy val netty = Project("zio-aws-netty", file("zio-aws-netty"))
 
 lazy val examples = Project("examples", file("examples")).settings(
   publishArtifact := false
-) aggregate (example1)
+) aggregate (example1, example2)
 
 lazy val example1 = Project("example1", file("examples") / "example1")
   .dependsOn(
@@ -70,6 +69,20 @@ lazy val example1 = Project("example1", file("examples") / "example1")
     netty,
     LocalProject("zio-aws-elasticbeanstalk"),
     LocalProject("zio-aws-ec2")
+  )
+
+lazy val example2 = Project("example2", file("examples") / "example2")
+  .settings(
+    resolvers += Resolver.jcenterRepo,
+    libraryDependencies ++= Seq(
+      "nl.vroste" %% "rezilience" % "0.5.0",
+      "dev.zio" %% "zio-logging" % "0.5.0",
+    )
+  )
+  .dependsOn(
+    core,
+    netty,
+    LocalProject("zio-aws-dynamodb"),
   )
 
 

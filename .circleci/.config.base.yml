@@ -67,7 +67,7 @@ jobs:
     steps:
       - checkout
       - <<: *load_cache
-      - run: sbt -J-Xmx3g -J-Xms3g zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
+      - run: sbt -J-Xmx3g -J-Xms3g ++$SCALA_VERSION zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
       - <<: *save_cache
       - <<: *save_test_results
       - store_test_results:
@@ -82,7 +82,7 @@ jobs:
     steps:
       - checkout
       - <<: *load_cache
-      - run: sbt -J-Xmx2g examples/compile integtests/test
+      - run: sbt -J-Xmx2500m -J-Xms2500m ++$SCALA_VERSION examples/compile integtests/test
       - <<: *save_cache
       - <<: *save_test_results
       - store_test_results:
@@ -104,7 +104,7 @@ jobs:
     steps:
       - checkout
       - <<: *load_cache
-      - run: sbt << parameters.commands >>
+      - run: sbt ++$SCALA_VERSION << parameters.commands >>
   #      - <<: *save_cache
 
   tests_core_212:
@@ -115,7 +115,7 @@ jobs:
     steps:
       - checkout
       - <<: *load_cache
-      - run: sbt -J-Xmx3g -J-Xms3g zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
+      - run: sbt -J-Xmx3g -J-Xms3g ++$SCALA_VERSION zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
       - <<: *save_cache
       - <<: *save_test_results
       - store_test_results:
@@ -130,7 +130,7 @@ jobs:
     steps:
       - checkout
       - <<: *load_cache
-      - run: sbt -J-Xmx2g examples/compile integtests/test
+      - run: sbt -J-Xmx2500m -J-Xms2500m ++$SCALA_VERSION examples/compile integtests/test
       - <<: *save_cache
       - <<: *save_test_results
       - store_test_results:
