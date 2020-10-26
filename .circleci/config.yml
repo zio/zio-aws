@@ -59,7 +59,7 @@ localstack: &localstack
 jobs:
   tests_core_213:
     docker:
-      - image: hseeberger/scala-sbt:8u265_1.3.13_2.13.3
+      - image: hseeberger/scala-sbt:8u265_1.4.1_2.13.3
     environment:
       - <<: *scala_213
       - <<: *java_opts
@@ -83,7 +83,7 @@ jobs:
 
   integration_tests_213:
     docker:
-      - image: hseeberger/scala-sbt:8u265_1.3.13_2.13.3
+      - image: hseeberger/scala-sbt:8u265_1.4.1_2.13.3
       - <<: *localstack
     environment:
       - <<: *scala_213
@@ -107,7 +107,7 @@ jobs:
         description: Scala version
         type: string
     docker:
-      - image: hseeberger/scala-sbt:8u265_1.3.13_2.13.3
+      - image: hseeberger/scala-sbt:8u265_1.4.1_2.13.3
     environment:
       - SCALA_VERSION: << parameters.scala_version >>
       - <<: *java_opts
