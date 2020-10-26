@@ -78,7 +78,6 @@ object Common extends AutoPlugin {
           password
         )).toSeq,
       pgpPublicRing := file("/tmp/public.asc"),
-      pgpSecretRing := file("/tmp/secret.asc"),
-      pgpPassphrase := sys.env.get("PGP_PASSPHRASE").map(_.toArray)
+      pgpSecretRing := file("/tmp/secret.asc")
     )
 }
