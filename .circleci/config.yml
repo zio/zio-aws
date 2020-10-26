@@ -201,17 +201,11 @@ jobs:
           at: ~/project
       - <<: *load_cache
       - run:
-          name: Write sonatype credentials
-          command: echo "credentials += Credentials(\"Sonatype Nexus Repository Manager\", \"oss.sonatype.org\", \"${SONATYPE_USER}\", \"${SONATYPE_PASSWORD}\")" > ~/.sbt/1.0/sonatype.sbt
-      - run:
-          name: Write PGP public key
-          command: echo -n "${PGP_PUBLIC}" | base64 -di > /tmp/public.asc
-      - run:
-          name: Write PGP secret key
-          command: echo -n "${PGP_SECRET}" | base64 -di > /tmp/secret.asc
-      - run:
           name: Release artifacts
-          command:
+          command: |
+            echo "credentials += Credentials(\"Sonatype Nexus Repository Manager\", \"oss.sonatype.org\", \"${SONATYPE_USER}\", \"${SONATYPE_PASSWORD}\")" > ~/.sbt/1.0/sonatype.sbt
+            echo -n "${PGP_PUBLIC}" | base64 -di > /tmp/public.asc
+            echo -n "${PGP_SECRET}" | base64 -di > /tmp/secret.asc
             sbt -J-Xmx2500m -J-Xms2500m publish sonatypeBundleRelease
 
 workflows:
@@ -265,5 +259,7 @@ workflows:
               scala_version:
                 - 2.13.3
                 - 2.12.12
-      - release
+      - release:
+          requires:
+            - publish_local
 
