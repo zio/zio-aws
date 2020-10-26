@@ -127,6 +127,10 @@ jobs:
             - generated
 
   publish_local:
+    parameters:
+      scala_version:
+        description: Scala version
+        type: string
     docker:
       - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.13.3
     environment:
