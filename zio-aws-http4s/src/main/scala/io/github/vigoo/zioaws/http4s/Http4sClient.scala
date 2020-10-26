@@ -130,16 +130,14 @@ object Http4sClient {
     }
   }
 
-  case class Http4sClientBuilder()(implicit runtime: Runtime[Any])
+  case class Http4sClientBuilder(customization: BlazeClientBuilder[Task] => BlazeClientBuilder[Task] = identity)(implicit runtime: Runtime[Any])
     extends SdkAsyncHttpClient.Builder[Http4sClientBuilder] {
 
     def withRuntime(runtime: Runtime[Any]): Http4sClientBuilder =
       copy()(runtime)
 
     private def createClient(): Resource[Task, Client[Task]] = {
-      BlazeClientBuilder[Task](runtime.platform.executor.asEC)
-        // TODO: expose client settings
-        .resource
+      customization(BlazeClientBuilder[Task](runtime.platform.executor.asEC)).resource
     }
 
     override def buildWithDefaults(serviceDefaults: AttributeMap): SdkAsyncHttpClient = {

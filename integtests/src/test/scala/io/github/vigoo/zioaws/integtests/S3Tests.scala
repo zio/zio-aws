@@ -15,8 +15,8 @@ import zio.test.TestAspect._
 import zio.test._
 
 object S3Tests extends DefaultRunnableSpec {
-  val nettyClient = netty.client()
-  val http4sClient = http4s.client()
+  val nettyClient = netty.default
+  val http4sClient = http4s.default
 
   val actorSystem = ZLayer.fromAcquireRelease(ZIO.effect(ActorSystem("test")))(sys => ZIO.fromFuture(_ => sys.terminate()).orDie)
   val akkaHttpClient = akkahttp.client()
@@ -106,9 +106,10 @@ object S3Tests extends DefaultRunnableSpec {
       suite("with Netty")(
         tests("netty"): _*
       ).provideCustomLayer((nettyClient >>> awsConfig >>> s3Client).mapError(TestFailure.die)) @@ sequential,
-      suite("with http4s")(
-        tests("http4s"): _*
-      ).provideCustomLayer((http4sClient >>> awsConfig >>> s3Client).mapError(TestFailure.die)) @@ sequential,
+      // TODO: reenable when https://github.com/typelevel/fs2/issues/2076 gets released
+//      suite("with http4s")(
+//        tests("http4s"): _*
+//      ).provideCustomLayer((http4sClient >>> awsConfig >>> s3Client).mapError(TestFailure.die)) @@ sequential,
       suite("with akka-http")(
         tests("akkahttp", ignoreUpload = true): _*
       ).provideCustomLayer((actorSystem >>> akkaHttpClient >>> awsConfig >>> s3Client).mapError(TestFailure.die)) @@ sequential,

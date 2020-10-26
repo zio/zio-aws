@@ -6,7 +6,7 @@ ThisBuild / circleCiTarget := file(".circleci/config.yml")
 
 lazy val root = Project("zio-aws", file(".")).settings(
   publishArtifact := false
-) aggregate (core, http4s, netty, akkahttp)
+) aggregate(core, http4s, netty, akkahttp)
 
 lazy val core = Project("zio-aws-core", file("zio-aws-core"))
   .settings(
@@ -15,9 +15,13 @@ lazy val core = Project("zio-aws-core", file("zio-aws-core"))
       "dev.zio" %% "zio" % zioVersion,
       "dev.zio" %% "zio-streams" % zioVersion,
       "dev.zio" %% "zio-interop-reactivestreams" % zioReactiveStreamsInteropVersion,
+      "dev.zio" %% "zio-config" % zioConfigVersion,
       "org.scala-lang.modules" %% "scala-collection-compat" % "2.2.0",
+
       "dev.zio" %% "zio-test" % zioVersion % "test",
-      "dev.zio" %% "zio-test-sbt" % zioVersion % "test"
+      "dev.zio" %% "zio-test-sbt" % zioVersion % "test",
+      "dev.zio" %% "zio-test-intellij" % zioVersion % "test",
+      "dev.zio" %% "zio-config-typesafe" % zioConfigVersion % "test",
     ),
     testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
   )
@@ -30,12 +34,12 @@ lazy val http4s = Project("zio-aws-http4s", file("zio-aws-http4s"))
       "software.amazon.awssdk" % "http-client-spi" % awsVersion,
       "dev.zio" %% "zio" % zioVersion,
       "dev.zio" %% "zio-interop-cats" % zioCatsInteropVersion,
+      "dev.zio" %% "zio-config" % zioConfigVersion,
       "co.fs2" %% "fs2-reactive-streams" % fs2Version,
       "org.typelevel" %% "cats-effect" % catsEffectVersion,
-      "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.1"
+      "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.1",
     )
-  )
-  .dependsOn(core)
+  ).dependsOn(core)
 
 lazy val akkahttp = Project("zio-aws-akka-http", file("zio-aws-akka-http"))
   .settings(
@@ -68,12 +72,13 @@ lazy val example1 = Project("example1", file("examples") / "example1")
     LocalProject("zio-aws-ec2")
   )
 
+
 lazy val integtests = Project("integtests", file("integtests"))
   .settings(
     libraryDependencies ++= Seq(
-      "dev.zio" %% "zio" % "1.0.1",
-      "dev.zio" %% "zio-test" % "1.0.1",
-      "dev.zio" %% "zio-test-sbt" % "1.0.1",
+      "dev.zio" %% "zio" % zioVersion,
+      "dev.zio" %% "zio-test" % zioVersion,
+      "dev.zio" %% "zio-test-sbt" % zioVersion,
       "org.apache.logging.log4j" % "log4j-1.2-api" % "2.13.3",
       "org.apache.logging.log4j" % "log4j-core" % "2.13.3",
       "org.apache.logging.log4j" % "log4j-api" % "2.13.3",
