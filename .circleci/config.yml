@@ -145,7 +145,8 @@ jobs:
           fingerprints:
             - $SSH_FINGERPRINT
       - checkout
-      - run: sbt ciReleaseTagNextVersion
+      - <<: *load_cache
+      - run: sbt -J-Xmx2500m -J-Xms2500m  ciReleaseTagNextVersion
 
   compile_sdk_projects:
     parameters:
