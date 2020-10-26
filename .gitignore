@@ -1,3 +1,5 @@
 generated/
 target/
 .idea/
+.bsp/
+.sbtopts
