@@ -211,17 +211,8 @@ jobs:
           command: echo -n "${PGP_SECRET}" | base64 -di > /tmp/secret.asc
       - run:
           name: Release artifacts
-          command: |
-            mkdir -p $HOME/bin
-            apt-get update && apt-get -y install gnupg2
-            echo pinentry-mode loopback >> ~/.gnupg/gpg.conf
-            echo allow-loopback-pinentry >> ~/.gnupg/gpg-agent.conf
-            chmod 600 ~/.gnupg/*
-            ln -s /usr/bin/gpg2 $HOME/bin/gpg
-            $HOME/bin/gpg --version
-            echo RELOADAGENT | gpg-connect-agent
-            echo $PGP_SECRET | base64 -di | gpg2 --import --no-tty --batch --yes
-            PATH=$HOME/bin:$PATH ./sbt publish sonatypeBundleRelease
+          command:
+            sbt -J-Xmx2500m -J-Xms2500m publish sonatypeBundleRelease
 
 workflows:
   version: 2
