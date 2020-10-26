@@ -4,6 +4,7 @@ import java.net.URI
 
 import akka.actor.ActorSystem
 import io.github.vigoo.zioaws.core._
+import io.github.vigoo.zioaws.core.config
 import io.github.vigoo.zioaws.dynamodb.model._
 import io.github.vigoo.zioaws.{dynamodb, _}
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
@@ -15,8 +16,8 @@ import zio.test._
 
 object DynamoDbTests extends DefaultRunnableSpec {
 
-  val nettyClient = netty.client()
-  val http4sClient = http4s.client()
+  val nettyClient = netty.default
+  val http4sClient = http4s.default
   val actorSystem = ZLayer.fromAcquireRelease(ZIO.effect(ActorSystem("test")))(sys => ZIO.fromFuture(_ => sys.terminate()).orDie)
   val akkaHttpClient = akkahttp.client()
   val awsConfig = config.default
@@ -137,9 +138,10 @@ object DynamoDbTests extends DefaultRunnableSpec {
       suite("with Netty")(
         tests("netty"): _*
       ).provideCustomLayer((nettyClient >>> awsConfig >>> dynamoDb).mapError(TestFailure.die)) @@ sequential,
-      suite("with http4s")(
-        tests("http4s"): _*
-      ).provideCustomLayer((http4sClient >>> awsConfig >>> dynamoDb).mapError(TestFailure.die)) @@ sequential,
+      // TODO: reenable when https://github.com/typelevel/fs2/issues/2076 gets released
+//      suite("with http4s")(
+//        tests("http4s"): _*
+//      ).provideCustomLayer((http4sClient >>> awsConfig >>> dynamoDb).mapError(TestFailure.die)) @@ sequential,
       suite("with akka-http")(
         tests("akkahttp"): _*
       ).provideCustomLayer((actorSystem >>> akkaHttpClient >>> awsConfig >>> dynamoDb).mapError(TestFailure.die)) @@ sequential,

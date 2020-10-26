@@ -1,5 +1,5 @@
 # zio-aws
-[![Build Status](https://travis-ci.org/vigoo/zio-aws.svg?branch=master)](https://travis-ci.org/vigoo/zio-aws)
+[![CircleCI](https://circleci.com/gh/vigoo/zio-aws.svg?style=svg)](https://circleci.com/gh/vigoo/zio-aws)
 [![Apache 2 License License](http://img.shields.io/badge/license-APACHE2-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 [![Latest version](https://index.scala-lang.org/vigoo/zio-aws/zio-aws-core/latest.svg)](https://index.scala-lang.org/vigoo/zio-aws/zio-aws-core)
 [![Maven central](https://img.shields.io/maven-central/v/io.github.vigoo/zio-aws-core_2.13.svg?style=flat-square)
@@ -146,7 +146,7 @@ as a _layer_ (`HttpClient`) that has to be provided to the _AWS configuration la
 Currently the following implementations can be used:
 - `zio-aws-netty` contains the default netty implementation packed as a layer 
 - `zio-aws-akka-http` is based on Matthias Lüneberg's [aws-spi-akka-http library](https://github.com/matsluni/aws-spi-akka-http)
-- `zio-aws-http4s` is an implementation on top of _http4s_
+- `zio-aws-http4s` is an implementation on top of _http4s_ (**NOTE**: currently unusable due to a race condition, the next FS2 release will fix it)
  
 ### Build
 
