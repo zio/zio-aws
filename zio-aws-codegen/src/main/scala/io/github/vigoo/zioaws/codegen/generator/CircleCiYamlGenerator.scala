@@ -14,9 +14,11 @@ trait CircleCiYamlGenerator {
   ): String = {
     val sortedProjectNames =
       ids.map(id => s"zio-aws-${id.moduleName}").toList.sorted
-    val grouped = sortedProjectNames.grouped(
-      Math.ceil(ids.size.toDouble / parallelJobs.toDouble).toInt
-    )
+    val grouped = sortedProjectNames
+      .grouped(
+        Math.ceil(ids.size.toDouble / parallelJobs.toDouble).toInt
+      )
+      .toList
     val compile = grouped
       .map(group =>
         s""""${group.map(name => s"$name/compile").mkString(" ")}""""
@@ -28,7 +30,8 @@ trait CircleCiYamlGenerator {
       )
       .toVector
 
-    source.replace("COMPILE_COMMANDS", s"[${compile.mkString(",")}]")
-    source.replace("PUBLISH_COMMANDS", s"[${publish.mkString(",")}]")
+    source
+      .replace("COMPILE_COMMANDS", s"[${compile.mkString(",")}]")
+      .replace("PUBLISH_COMMANDS", s"[${publish.mkString(",")}]")
   }
 }

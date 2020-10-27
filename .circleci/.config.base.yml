@@ -42,6 +42,15 @@ save_test_results: &save_test_results
         find . -type f -regex ".*/target/test-reports/.*xml" -exec cp {} test-reports/ \;
       name: Save test results
 
+configure_gpg: &configure_gpg
+  - run:
+      command: |
+        echo -n "${PGP_SECRET}" | base64 -d | gpg --import --no-tty --batch --passphrase "$PGP_PASSPHRASE" --pinentry-mode loopback
+        echo pinentry-mode loopback >> ~/.gnupg/gpg.conf
+        echo allow-loopback-pinentry >> ~/.gnupg/gpg-agent.conf
+        chmod 600 ~/.gnupg/*
+        echo RELOADAGENT | gpg-connect-agent
+
 localstack: &localstack
   - image: localstack/localstack
     environment:
@@ -138,11 +147,13 @@ jobs:
   tag:
     docker:
       - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.12.12
-    environment:
-      CIRCLE_REPOSITORY_URL: https://github.com/svroonland/zio-aws.git
     steps:
+      - add_ssh_keys:
+          fingerprints:
+            - $SSH_FINGERPRINT
       - checkout
-      - run: sbt ciReleaseTagNextVersion
+      - <<: *load_cache
+      - run: sbt -J-Xmx2500m -J-Xms2500m  ciReleaseTagNextVersion
 
   compile_sdk_projects:
     parameters:
@@ -162,14 +173,16 @@ jobs:
       - attach_workspace:
           at: ~/project
       - <<: *load_cache
-      - run: sbt ++$SCALA_VERSION << parameters.commands >>
-      - persist_to_workspace:
-          root: .
-          paths:
-            - target/sonatype-staging
+      - <<: *configure_gpg
+      - run: sbt -J-Xmx2500m -J-Xms2500m ++$SCALA_VERSION << parameters.commands >>
+      # Does not persist to workspace here because of cross-building, both jobs would persist target/streams
+      # So we have to rebuild for `publish_sdk_projects` upon release
 
-  publish_local:
+  publish_sdk_projects:
     parameters:
+      commands:
+        description: SBT commands to run
+        type: string
       scala_version:
         description: Scala version
         type: string
@@ -183,7 +196,29 @@ jobs:
       - attach_workspace:
           at: ~/project
       - <<: *load_cache
-      - run: sbt ++$SCALA_VERSION -J-Xmx2500m -J-Xms2500m publishLocal
+      - <<: *configure_gpg
+      - run: sbt -J-Xmx2500m -J-Xms2500m ++$SCALA_VERSION << parameters.commands >>
+      - persist_to_workspace:
+          root: .
+          paths:
+            - target/sonatype-staging
+
+  # Publish the non-generated modules and then upload them + the generated ones to Sonatype
+  release:
+    docker:
+      - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.13.3
+    steps:
+      - checkout
+      - run:
+          name: Fetch git tags
+          command: git fetch --tags
+      - attach_workspace:
+          at: ~/project
+      - <<: *load_cache
+      - <<: *configure_gpg
+      - run:
+          name: Release artifacts
+          command: sbt -J-Xmx2500m -J-Xms2500m +publishSigned sonatypeBundleRelease
 
 workflows:
   version: 2
@@ -193,26 +228,23 @@ workflows:
       - tests_core_212:
           filters:
             <<: *filter_tags
-      - integration_tests_212:
-          requires:
-            - tests_core_212
-          filters:
-            <<: *filter_tags
+      #      - integration_tests_212:
+      #          requires:
+      #            - tests_core_212
+      #          filters:
+      #            <<: *filter_tags
       # Scala 2.13
       - tests_core_213:
           filters:
             <<: *filter_tags
-      - integration_tests_213:
-          requires:
-            - tests_core_213
-          filters:
-            <<: *filter_tags
+      #      - integration_tests_213:
+      #          requires:
+      #            - tests_core_213
+      #          filters:
+      #            <<: *filter_tags
 
       # Create the next tag
       - tag:
-          requires:
-#            - integration_tests_212
-#            - integration_tests_213
           filters:
             <<: *filter_tags
 
@@ -230,12 +262,35 @@ workflows:
                 - 2.13.3
                 - 2.12.12
                 # NOTE this part is automatically generated
-              commands: COMMANDS
-      - publish_local:
+              commands: COMPILE_COMMANDS
+      - publish_sdk_projects:
           requires:
-            - compile_sdk_projects
+            - tests_core_213
+            - tests_core_212
+            - tag
+          filters:
+            <<: *filter_tags
+            # TODO uncomment before merging
+          #            branches:
+          #              only:
+          #                - master
           matrix:
             parameters:
               scala_version:
                 - 2.13.3
                 - 2.12.12
+                # NOTE this part is automatically generated
+              commands: PUBLISH_COMMANDS
+            # TODO uncomment before merging
+      #            branches:
+      #              only:
+      #                - master
+      - release:
+          requires:
+            - publish_sdk_projects
+          filters:
+            <<: *filter_tags
+            # TODO uncomment before merging
+#            branches:
+#              only:
+#                - master
