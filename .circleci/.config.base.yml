@@ -123,7 +123,7 @@ jobs:
       - attach_workspace:
           at: ~/project
       - <<: *load_cache
-      - run: sbt -J-Xmx2500m -J-Xms2500m ++$SCALA_VERSION examples/compile integtests/test
+      - run: sbt -J-Xmx3g -J-Xms3g ++$SCALA_VERSION examples/compile integtests/test
       - <<: *save_cache
       - <<: *save_test_results
       - store_test_results:
