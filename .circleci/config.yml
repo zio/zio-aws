@@ -181,23 +181,6 @@ jobs:
           paths:
             - target/sonatype-staging
 
-  publish_local:
-    parameters:
-      scala_version:
-        description: Scala version
-        type: string
-    docker:
-      - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.13.3
-    environment:
-      - SCALA_VERSION: << parameters.scala_version >>
-      - <<: *java_opts
-    steps:
-      - checkout
-      - attach_workspace:
-          at: ~/project
-      - <<: *load_cache
-      - run: sbt ++$SCALA_VERSION -J-Xmx2500m -J-Xms2500m publishLocal
-
   release:
     docker:
       - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.13.3
@@ -212,8 +195,10 @@ jobs:
       - run:
           name: Release artifacts
           command: |
-            echo -n "${PGP_PUBLIC}" | base64 -di > /tmp/public.asc
-            echo -n "${PGP_SECRET}" | base64 -di > /tmp/secret.asc
+            echo pinentry-mode loopback >> ~/.gnupg/gpg.conf
+            echo allow-loopback-pinentry >> ~/.gnupg/gpg-agent.conf
+            chmod 600 ~/.gnupg/*
+            echo RELOADAGENT | gpg-connect-agent
             sbt -J-Xmx2500m -J-Xms2500m +publishSigned sonatypeBundleRelease
 
 workflows:
@@ -259,15 +244,7 @@ workflows:
                 - 2.12.12
                 # NOTE this part is automatically generated
               commands: [ "zio-aws-accessanalyzer/publishSigned" ]
-      - publish_local:
-          requires:
-            - compile_sdk_projects
-          matrix:
-            parameters:
-              scala_version:
-                - 2.13.3
-                - 2.12.12
       - release:
           requires:
-            - publish_local
+            - compile_sdk_projects
 
