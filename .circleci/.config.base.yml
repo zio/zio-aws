@@ -266,7 +266,6 @@ workflows:
             - tag
           filters:
             <<: *filter_tags
-            # TODO uncomment before merging
             branches:
               only:
                 - master
