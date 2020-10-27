@@ -114,7 +114,7 @@ jobs:
 
   integration_tests_213:
     docker:
-      - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.13.3
+      - image: hseeberger/scala-sbt:8u265_1.4.1_2.13.3
       - <<: *localstack
     environment:
       - <<: *scala_213
@@ -128,7 +128,7 @@ jobs:
 
   integration_tests_212:
     docker:
-      - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.12.12
+      - image: hseeberger/scala-sbt:8u265_1.4.1_2.12.12
       - <<: *localstack
     environment:
       - <<: *scala_212
