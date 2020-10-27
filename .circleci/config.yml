@@ -171,7 +171,6 @@ jobs:
           command: |
             echo -n "${PGP_SECRET}" | base64 -d | gpg --import --no-tty --batch --passphrase "$PGP_PASSPHRASE" --pinentry-mode loopback
       - run: |
-          export GPG_TTY=$(tty)
           echo pinentry-mode loopback >> ~/.gnupg/gpg.conf
           echo allow-loopback-pinentry >> ~/.gnupg/gpg-agent.conf
           chmod 600 ~/.gnupg/*
