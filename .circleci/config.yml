@@ -258,7 +258,7 @@ workflows:
                 - 2.13.3
                 - 2.12.12
                 # NOTE this part is automatically generated
-              commands: [ "zio-aws-accessanalyzer/publish" ]
+              commands: [ "zio-aws-accessanalyzer/publishSigned" ]
       - publish_local:
           requires:
             - compile_sdk_projects
