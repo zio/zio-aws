@@ -169,7 +169,7 @@ jobs:
       - run:
           name: Configure Sonatype credentials
           command: |
-            echo -n "${PGP_SECRET}" | gpg --import --no-tty --batch --passphrase "$PGP_PASSPHRASE" --pinentry-mode loopback
+            echo -n "${PGP_SECRET}" | base64 -d | gpg --import --no-tty --batch --passphrase "$PGP_PASSPHRASE" --pinentry-mode loopback
       - run: sbt -J-Xmx2500m -J-Xms2500m ++$SCALA_VERSION << parameters.commands >>
       - persist_to_workspace:
           root: .
