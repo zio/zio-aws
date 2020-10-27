@@ -175,10 +175,8 @@ jobs:
       - <<: *load_cache
       - <<: *configure_gpg
       - run: sbt -J-Xmx2500m -J-Xms2500m ++$SCALA_VERSION << parameters.commands >>
-      - persist_to_workspace:
-          root: .
-          paths:
-            - generated/*/target
+      # Does not persist to workspace here because of cross-building, both jobs would persist target/streams
+      # So we have to rebuild for `publish_sdk_projects` upon release
 
   publish_sdk_projects:
     parameters:
@@ -266,10 +264,12 @@ workflows:
                 # NOTE this part is automatically generated
               commands: [ "zio-aws-accessanalyzer/compile" ]
       - publish_sdk_projects:
-          requires:
-            - compile_sdk_projects
           filters:
             <<: *filter_tags
+            # TODO uncomment before merging
+#            branches:
+#              only:
+#                - master
           matrix:
             parameters:
               scala_version:
@@ -277,8 +277,16 @@ workflows:
                 - 2.12.12
                 # NOTE this part is automatically generated
               commands: [ "zio-aws-accessanalyzer/publishSigned" ]
-            # TODO only on tags
+            # TODO uncomment before merging
+      #            branches:
+      #              only:
+      #                - master
       - release:
           requires:
             - publish_sdk_projects
-            # TODO only on tags
+          filters:
+            <<: *filter_tags
+            # TODO uncomment before merging
+#            branches:
+#              only:
+#                - master
