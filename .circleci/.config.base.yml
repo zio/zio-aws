@@ -225,20 +225,20 @@ workflows:
       - tests_core_212:
           filters:
             <<: *filter_tags
-      #      - integration_tests_212:
-      #          requires:
-      #            - tests_core_212
-      #          filters:
-      #            <<: *filter_tags
+      - integration_tests_212:
+          requires:
+            - tests_core_212
+          filters:
+            <<: *filter_tags
       # Scala 2.13
       - tests_core_213:
           filters:
             <<: *filter_tags
-      #      - integration_tests_213:
-      #          requires:
-      #            - tests_core_213
-      #          filters:
-      #            <<: *filter_tags
+      - integration_tests_213:
+          requires:
+            - tests_core_213
+          filters:
+            <<: *filter_tags
 
       # Create the next tag
       - tag:
@@ -246,24 +246,23 @@ workflows:
             <<: *filter_tags
 
       # Cross build SDK projects
-#      - compile_sdk_projects:
-#          requires:
-#            - tests_core_213
-#            - tests_core_212
-#            - tag
-#          filters:
-#            <<: *filter_tags
-#            # TODO uncomment before merging
-#          #            branches:
-#          #              ignore:
-#          #                - master
-#          matrix:
-#            parameters:
-#              scala_version:
-#                - 2.13.3
-#                - 2.12.12
-#                # NOTE this part is automatically generated
-#              commands: COMPILE_COMMANDS
+      - compile_sdk_projects:
+          requires:
+            - tests_core_213
+            - tests_core_212
+            - tag
+          filters:
+            <<: *filter_tags
+            branches:
+              ignore:
+                - master
+          matrix:
+            parameters:
+              scala_version:
+                - 2.13.3
+                - 2.12.12
+                # NOTE this part is automatically generated
+              commands: COMPILE_COMMANDS
       - publish_sdk_projects:
           requires:
             - tests_core_213
@@ -272,9 +271,9 @@ workflows:
           filters:
             <<: *filter_tags
             # TODO uncomment before merging
-          #            branches:
-          #              only:
-          #                - master
+            branches:
+              only:
+                - master
           matrix:
             parameters:
               scala_version:
@@ -282,16 +281,11 @@ workflows:
                 - 2.12.12
                 # NOTE this part is automatically generated
               commands: PUBLISH_COMMANDS
-            # TODO uncomment before merging
-      #            branches:
-      #              only:
-      #                - master
       - release:
           requires:
             - publish_sdk_projects
           filters:
             <<: *filter_tags
-            # TODO uncomment before merging
-#            branches:
-#              only:
-#                - master
+            branches:
+              only:
+                - master

@@ -64,7 +64,6 @@ object Common extends AutoPlugin {
       ),
       publishTo := sonatypePublishToBundle.value,
       sonatypeTimeoutMillis := 300 * 60 * 1000,
-      sonatypeProfileName := "nl.vroste",
       sonatypeProjectHosting := Some(
         GitHubHosting("vigoo", "zio-aws", "daniel.vigovszky@gmail.com")
       ),
