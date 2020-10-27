@@ -7,6 +7,7 @@ ThisBuild / circleCiTarget := file(".circleci/config.yml")
 
 Global / pgpPublicRing := file("/tmp/public.asc")
 Global / pgpSecretRing := file("/tmp/secret.asc")
+Global / pgpPassphrase := sys.env.get("PGP_PASSPHRASE").map(_.toCharArray())
 
 lazy val root = Project("zio-aws", file(".")).settings(
   publishArtifact := false
