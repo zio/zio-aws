@@ -171,6 +171,8 @@ jobs:
           command: |
             echo -n "${PGP_PUBLIC}" | base64 -di > /tmp/public.asc
             echo -n "${PGP_SECRET}" | base64 -di > /tmp/secret.asc
+            cat /tmp/public.asc | gpg --import --no-tty --batch --yes
+            cat /tmp/secret.asc | gpg --import --no-tty --batch --passphrase "$PGP_PASSPHRASE" --pinentry-mode loopback
       - run: sbt -J-Xmx2500m -J-Xms2500m ++$SCALA_VERSION << parameters.commands >>
       - persist_to_workspace:
           root: .
