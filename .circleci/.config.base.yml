@@ -209,9 +209,6 @@ jobs:
       - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.13.3
     steps:
       - checkout
-      - run:
-          name: Fetch git tags
-          command: git fetch --tags
       - attach_workspace:
           at: ~/project
       - <<: *load_cache
