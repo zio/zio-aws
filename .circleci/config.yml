@@ -178,6 +178,31 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
+            - generated/*/target
+
+  publish_sdk_projects:
+    parameters:
+      commands:
+        description: SBT commands to run
+        type: string
+      scala_version:
+        description: Scala version
+        type: string
+    docker:
+      - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.13.3
+    environment:
+      - SCALA_VERSION: << parameters.scala_version >>
+      - <<: *java_opts
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ~/project
+      - <<: *load_cache
+      - <<: *configure_gpg
+      - run: sbt -J-Xmx2500m -J-Xms2500m ++$SCALA_VERSION << parameters.commands >>
+      - persist_to_workspace:
+          root: .
+          paths:
             - target/sonatype-staging
 
   # Publish the non-generated modules and then upload them + the generated ones to Sonatype

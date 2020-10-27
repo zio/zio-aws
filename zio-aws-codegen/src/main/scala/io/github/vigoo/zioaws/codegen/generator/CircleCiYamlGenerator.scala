@@ -17,12 +17,18 @@ trait CircleCiYamlGenerator {
     val grouped = sortedProjectNames.grouped(
       Math.ceil(ids.size.toDouble / parallelJobs.toDouble).toInt
     )
-    val envDefs = grouped
+    val compile = grouped
+      .map(group =>
+        s""""${group.map(name => s"$name/compile").mkString(" ")}""""
+      )
+      .toVector
+    val publish = grouped
       .map(group =>
         s""""${group.map(name => s"$name/publishSigned").mkString(" ")}""""
       )
       .toVector
 
-    source.replace("COMMANDS", s"[${envDefs.mkString(",")}]")
+    source.replace("COMPILE_COMMANDS", s"[${compile.mkString(",")}]")
+    source.replace("PUBLISH_COMMANDS", s"[${publish.mkString(",")}]")
   }
 }
