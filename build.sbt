@@ -5,8 +5,8 @@ ThisBuild / circleCiParallelJobs := 8
 ThisBuild / circleCiSource := file(".circleci/.config.base.yml")
 ThisBuild / circleCiTarget := file(".circleci/config.yml")
 
-ThisBuild / pgpPublicRing := file("/tmp/public.asc")
-ThisBuild / pgpSecretRing := file("/tmp/secret.asc")
+Global / pgpPublicRing := file("/tmp/public.asc")
+Global / pgpSecretRing := file("/tmp/secret.asc")
 
 lazy val root = Project("zio-aws", file(".")).settings(
   publishArtifact := false
