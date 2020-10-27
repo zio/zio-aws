@@ -76,8 +76,6 @@ object Common extends AutoPlugin {
           "oss.sonatype.org",
           username,
           password
-        )).toSeq,
-      pgpPublicRing := file("/tmp/public.asc"),
-      pgpSecretRing := file("/tmp/secret.asc")
+        )).toSeq
     )
 }
