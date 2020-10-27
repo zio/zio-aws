@@ -220,20 +220,20 @@ workflows:
       - tests_core_212:
           filters:
             <<: *filter_tags
-      - integration_tests_212:
-          requires:
-            - tests_core_212
-          filters:
-            <<: *filter_tags
+#      - integration_tests_212:
+#          requires:
+#            - tests_core_212
+#          filters:
+#            <<: *filter_tags
       # Scala 2.13
       - tests_core_213:
           filters:
             <<: *filter_tags
-      - integration_tests_213:
-          requires:
-            - tests_core_213
-          filters:
-            <<: *filter_tags
+#      - integration_tests_213:
+#          requires:
+#            - tests_core_213
+#          filters:
+#            <<: *filter_tags
 
       # Create the next tag
       - tag:
