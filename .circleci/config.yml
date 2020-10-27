@@ -264,6 +264,10 @@ workflows:
                 # NOTE this part is automatically generated
               commands: [ "zio-aws-accessanalyzer/compile" ]
       - publish_sdk_projects:
+          requires:
+            - tests_core_213
+            - tests_core_212
+            - tag
           filters:
             <<: *filter_tags
             # TODO uncomment before merging
