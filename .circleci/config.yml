@@ -172,6 +172,10 @@ jobs:
             echo -n "${PGP_SECRET}" | base64 -d | gpg --import --no-tty --batch --passphrase "$PGP_PASSPHRASE" --pinentry-mode loopback
       - run: |
           export GPG_TTY=$(tty)
+          echo pinentry-mode loopback >> ~/.gnupg/gpg.conf
+          echo allow-loopback-pinentry >> ~/.gnupg/gpg-agent.conf
+          chmod 600 ~/.gnupg/*
+          echo RELOADAGENT | gpg-connect-agent
           sbt -J-Xmx2500m -J-Xms2500m ++$SCALA_VERSION << parameters.commands >>
       - persist_to_workspace:
           root: .
