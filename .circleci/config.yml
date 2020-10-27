@@ -180,6 +180,7 @@ jobs:
           paths:
             - target/sonatype-staging
 
+  # Publish the non-generated modules and then upload them + the generated ones to Sonatype
   release:
     docker:
       - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.13.3
@@ -238,8 +239,21 @@ workflows:
                 - 2.13.3
                 - 2.12.12
                 # NOTE this part is automatically generated
-              commands: [ "zio-aws-accessanalyzer/publishSigned" ]
-      - release:
+              commands: [ "zio-aws-accessanalyzer/compile" ]
+      - publish_sdk_projects:
           requires:
             - compile_sdk_projects
-
+          filters:
+            <<: *filter_tags
+          matrix:
+            parameters:
+              scala_version:
+                - 2.13.3
+                - 2.12.12
+                # NOTE this part is automatically generated
+              commands: [ "zio-aws-accessanalyzer/publishSigned" ]
+            # TODO only on tags
+      - release:
+          requires:
+            - publish_sdk_projects
+            # TODO only on tags
