@@ -2,7 +2,6 @@ package io.github.vigoo.zioaws.core
 
 import java.util.concurrent.CompletionException
 
-import software.amazon.awssdk.core.exception.SdkException
 import zio.ZIO
 
 sealed trait AwsError {
