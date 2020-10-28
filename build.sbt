@@ -1,12 +1,17 @@
-enablePlugins(Common, ZioAwsCodegenPlugin)
+import com.jsuereth.sbtpgp.PgpKeys.{pgpPublicRing, pgpSecretRing}
+enablePlugins(Common, ZioAwsCodegenPlugin, GitVersioning)
 
 ThisBuild / circleCiParallelJobs := 8
 ThisBuild / circleCiSource := file(".circleci/.config.base.yml")
 ThisBuild / circleCiTarget := file(".circleci/config.yml")
 
+Global / pgpPublicRing := file("/tmp/public.asc")
+Global / pgpSecretRing := file("/tmp/secret.asc")
+Global / pgpPassphrase := sys.env.get("PGP_PASSPHRASE").map(_.toCharArray())
+
 lazy val root = Project("zio-aws", file(".")).settings(
   publishArtifact := false
-) aggregate(core, http4s, netty, akkahttp)
+) aggregate (core, http4s, netty, akkahttp)
 
 lazy val core = Project("zio-aws-core", file("zio-aws-core"))
   .settings(
@@ -17,10 +22,9 @@ lazy val core = Project("zio-aws-core", file("zio-aws-core"))
       "dev.zio" %% "zio-interop-reactivestreams" % zioReactiveStreamsInteropVersion,
       "dev.zio" %% "zio-config" % zioConfigVersion,
       "org.scala-lang.modules" %% "scala-collection-compat" % "2.2.0",
-
       "dev.zio" %% "zio-test" % zioVersion % "test",
       "dev.zio" %% "zio-test-sbt" % zioVersion % "test",
-      "dev.zio" %% "zio-config-typesafe" % zioConfigVersion % "test",
+      "dev.zio" %% "zio-config-typesafe" % zioConfigVersion % "test"
     ),
     testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
   )
@@ -36,9 +40,10 @@ lazy val http4s = Project("zio-aws-http4s", file("zio-aws-http4s"))
       "dev.zio" %% "zio-config" % zioConfigVersion,
       "co.fs2" %% "fs2-reactive-streams" % fs2Version,
       "org.typelevel" %% "cats-effect" % catsEffectVersion,
-      "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.1",
+      "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.1"
     )
-  ).dependsOn(core)
+  )
+  .dependsOn(core)
 
 lazy val akkahttp = Project("zio-aws-akka-http", file("zio-aws-akka-http"))
   .settings(
@@ -76,15 +81,14 @@ lazy val example2 = Project("example2", file("examples") / "example2")
     resolvers += Resolver.jcenterRepo,
     libraryDependencies ++= Seq(
       "nl.vroste" %% "rezilience" % "0.5.0",
-      "dev.zio" %% "zio-logging" % "0.5.0",
+      "dev.zio" %% "zio-logging" % "0.5.0"
     )
   )
   .dependsOn(
     core,
     netty,
-    LocalProject("zio-aws-dynamodb"),
+    LocalProject("zio-aws-dynamodb")
   )
-
 
 lazy val integtests = Project("integtests", file("integtests"))
   .settings(

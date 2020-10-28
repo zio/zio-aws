@@ -1,3 +1,7 @@
 generated/
 target/
 .idea/
+.bsp/
+.sbtopts
+
+private-key.pem
