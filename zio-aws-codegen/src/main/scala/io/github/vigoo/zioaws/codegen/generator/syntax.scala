@@ -7,7 +7,7 @@ object syntax {
     def toCamelCase: String =
       (value.toList match {
         case ::(head, next) => head.toLower :: next
-        case Nil => Nil
+        case Nil            => Nil
       }).mkString
 
     def uncapitalize: String = Utils.unCapitalize(value)

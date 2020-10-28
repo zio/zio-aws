@@ -7,22 +7,27 @@ import zio._
 import zio.stream.ZStream
 
 object ZEventStreamResponseHandler {
-  def create[ResponseT, EventT](runtime: Runtime[Any],
-                                signalQueue: Queue[Option[AwsError]],
-                                responsePromise: Promise[AwsError, ResponseT],
-                                promise: Promise[AwsError, Publisher[EventT]]): EventStreamResponseHandler[ResponseT, EventT] = new EventStreamResponseHandler[ResponseT, EventT] {
-    override def responseReceived(response: ResponseT): Unit =
-      runtime.unsafeRun(responsePromise.succeed(response))
+  def create[ResponseT, EventT](
+      runtime: Runtime[Any],
+      signalQueue: Queue[Option[AwsError]],
+      responsePromise: Promise[AwsError, ResponseT],
+      promise: Promise[AwsError, Publisher[EventT]]
+  ): EventStreamResponseHandler[ResponseT, EventT] =
+    new EventStreamResponseHandler[ResponseT, EventT] {
+      override def responseReceived(response: ResponseT): Unit =
+        runtime.unsafeRun(responsePromise.succeed(response))
 
-    override def onEventStream(publisher: SdkPublisher[EventT]): Unit =
-      runtime.unsafeRun(promise.succeed(publisher))
+      override def onEventStream(publisher: SdkPublisher[EventT]): Unit =
+        runtime.unsafeRun(promise.succeed(publisher))
 
-    override def exceptionOccurred(throwable: Throwable): Unit =
-      runtime.unsafeRun(signalQueue.offer(Some(AwsError.fromThrowable(throwable))))
+      override def exceptionOccurred(throwable: Throwable): Unit =
+        runtime.unsafeRun(
+          signalQueue.offer(Some(AwsError.fromThrowable(throwable)))
+        )
 
-    override def complete(): Unit = {
-      // We cannot signal termination here because the publisher stream may still have buffered items.
-      // Completion is marked by the publisher
+      override def complete(): Unit = {
+        // We cannot signal termination here because the publisher stream may still have buffered items.
+        // Completion is marked by the publisher
+      }
     }
-  }
 }

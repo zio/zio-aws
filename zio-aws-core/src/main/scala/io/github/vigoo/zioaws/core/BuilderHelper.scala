@@ -8,15 +8,17 @@ trait BuilderHelper[T] {
     def optionallyWith[P](opt: Option[P])(withF: B => P => B): B =
       opt match {
         case Some(value) => withF(builder)(value)
-        case None => builder
+        case None        => builder
       }
   }
 
-  implicit class HttpClientBuilderOps[B <: SdkAsyncHttpClient.Builder[B]](val builder: B) {
+  implicit class HttpClientBuilderOps[B <: SdkAsyncHttpClient.Builder[B]](
+      val builder: B
+  ) {
     def optionallyWith[P](opt: Option[P])(withF: B => P => B): B =
       opt match {
         case Some(value) => withF(builder)(value)
-        case None => builder
+        case None        => builder
       }
   }
 }

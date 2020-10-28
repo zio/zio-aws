@@ -15,7 +15,11 @@ import scala.meta._
 
 trait GeneratorBase {
 
-  protected def unwrapSdkValue(model: Model, term: Term, forceToString: Boolean = false): ZIO[GeneratorContext, GeneratorFailure, Term] =
+  protected def unwrapSdkValue(
+      model: Model,
+      term: Term,
+      forceToString: Boolean = false
+  ): ZIO[GeneratorContext, GeneratorFailure, Term] =
     model.typ match {
       case ModelType.Map =>
         for {
@@ -26,22 +30,24 @@ trait GeneratorBase {
           value = Term.Name("value")
           unwrapKey <- unwrapSdkValue(keyModel, key, forceToString = true)
           unwrapValue <- unwrapSdkValue(valueModel, value, forceToString = true)
-        } yield if (unwrapKey == key && unwrapValue == value) {
-          q"""$term.asJava"""
-        } else {
-          q"""$term.map { case (key, value) => $unwrapKey -> $unwrapValue }.asJava"""
-        }
+        } yield
+          if (unwrapKey == key && unwrapValue == value) {
+            q"""$term.asJava"""
+          } else {
+            q"""$term.map { case (key, value) => $unwrapKey -> $unwrapValue }.asJava"""
+          }
       case ModelType.List =>
         for {
           modelMap <- getModelMap
           valueModel <- get(model.shape.getListMember.getShape)
           item = Term.Name("item")
           unwrapItem <- unwrapSdkValue(valueModel, item, forceToString = true)
-        } yield if (unwrapItem == item) {
-          q"""$term.asJavaCollection"""
-        } else {
-          q"""$term.map { item => $unwrapItem }.asJavaCollection"""
-        }
+        } yield
+          if (unwrapItem == item) {
+            q"""$term.asJavaCollection"""
+          } else {
+            q"""$term.map { item => $unwrapItem }.asJavaCollection"""
+          }
       case ModelType.Enum =>
         val nameTerm = Term.Name(model.name)
         if (forceToString) {
@@ -63,7 +69,10 @@ trait GeneratorBase {
         }
     }
 
-  protected def wrapSdkValue(model: Model, term: Term): ZIO[GeneratorContext, GeneratorFailure, Term] =
+  protected def wrapSdkValue(
+      model: Model,
+      term: Term
+  ): ZIO[GeneratorContext, GeneratorFailure, Term] =
     model.typ match {
       case ModelType.Map =>
         for {
@@ -73,21 +82,23 @@ trait GeneratorBase {
           value = Term.Name("value")
           wrapKey <- wrapSdkValue(keyModel, key)
           wrapValue <- wrapSdkValue(valueModel, value)
-        } yield if (wrapKey == key && wrapValue == value) {
-          q"""$term.asScala.toMap"""
-        } else {
-          q"""$term.asScala.map { case (key, value) => $wrapKey -> $wrapValue }.toMap"""
-        }
+        } yield
+          if (wrapKey == key && wrapValue == value) {
+            q"""$term.asScala.toMap"""
+          } else {
+            q"""$term.asScala.map { case (key, value) => $wrapKey -> $wrapValue }.toMap"""
+          }
       case ModelType.List =>
         for {
           valueModel <- get(model.shape.getListMember.getShape)
           item = Term.Name("item")
           wrapItem <- wrapSdkValue(valueModel, item)
-        } yield if (wrapItem == item) {
-          q"""$term.asScala.toList"""
-        } else {
-          q"""$term.asScala.map { item => $wrapItem }.toList"""
-        }
+        } yield
+          if (wrapItem == item) {
+            q"""$term.asScala.toList"""
+          } else {
+            q"""$term.asScala.map { item => $wrapItem }.toList"""
+          }
       case ModelType.Enum =>
         val nameTerm = Term.Name(model.name)
         ZIO.succeed(q"""$nameTerm.wrap($term)""")
@@ -98,50 +109,77 @@ trait GeneratorBase {
         ZIO.succeed(q"""$nameTerm.wrap($term)""")
       case ModelType.Exception =>
         ZIO.succeed(term)
-      case _ if TypeMapping.isPrimitiveType(model.shape) && !TypeMapping.isBuiltIn(model.shapeName) =>
+      case _
+          if TypeMapping.isPrimitiveType(model.shape) && !TypeMapping.isBuiltIn(
+            model.shapeName
+          ) =>
         ZIO.succeed(q"""$term : primitives.${Type.Name(model.name)}""")
       case _ =>
         ZIO.succeed(q"""$term : ${Type.Name(model.name)}""")
     }
 
-  protected def propertyName(model: Model, fieldModel: Model, name: String): ZIO[GeneratorContext, Nothing, String] = {
+  protected def propertyName(
+      model: Model,
+      fieldModel: Model,
+      name: String
+  ): ZIO[GeneratorContext, Nothing, String] = {
     getNamingStrategy.flatMap { namingStrategy =>
       getModels.map { models =>
-        val shapeModifiers = Option(models.customizationConfig().getShapeModifiers).map(_.asScala).getOrElse(Map.empty[String, ShapeModifier])
-        shapeModifiers.get(model.shapeName).flatMap { shapeModifier =>
-          val modifies = Option(shapeModifier.getModify).map(_.asScala).getOrElse(List.empty)
-          val matchingModifiers = modifies.flatMap { modifiesMap =>
-            modifiesMap.asScala.map { case (key, value) => (key.toLowerCase, value) }.get(name.toLowerCase)
-          }.toList
+        val shapeModifiers = Option(
+          models.customizationConfig().getShapeModifiers
+        ).map(_.asScala).getOrElse(Map.empty[String, ShapeModifier])
+        shapeModifiers
+          .get(model.shapeName)
+          .flatMap { shapeModifier =>
+            val modifies = Option(shapeModifier.getModify)
+              .map(_.asScala)
+              .getOrElse(List.empty)
+            val matchingModifiers = modifies.flatMap { modifiesMap =>
+              modifiesMap.asScala
+                .map { case (key, value) => (key.toLowerCase, value) }
+                .get(name.toLowerCase)
+            }.toList
 
-          matchingModifiers
-            .map(modifier => Option(modifier.getEmitPropertyName))
-            .find(_.isDefined)
-            .flatten.map(_.uncapitalize)
-        }.getOrElse {
-          val getterMethod = namingStrategy.getFluentGetterMethodName(name, model.shape, fieldModel.shape)
-          getterMethod
-            .stripSuffix("AsString")
-            .stripSuffix("AsStrings")
-        }
+            matchingModifiers
+              .map(modifier => Option(modifier.getEmitPropertyName))
+              .find(_.isDefined)
+              .flatten
+              .map(_.uncapitalize)
+          }
+          .getOrElse {
+            val getterMethod = namingStrategy.getFluentGetterMethodName(
+              name,
+              model.shape,
+              fieldModel.shape
+            )
+            getterMethod
+              .stripSuffix("AsString")
+              .stripSuffix("AsStrings")
+          }
       }
     }
   }
 
-  protected def writeIfDifferent(path: Path, contents: String): ZIO[blocking.Blocking, GeneratorFailure, Unit] =
+  protected def writeIfDifferent(
+      path: Path,
+      contents: String
+  ): ZIO[blocking.Blocking, GeneratorFailure, Unit] =
     Files.exists(path).flatMap { exists =>
       for {
-        existingBytes <- if (exists) {
-          Files.readAllBytes(path).mapError(FailedToReadFile)
-        } else {
-          ZIO.succeed(Chunk.empty[Byte])
-        }
-        contentsBytes = Chunk.fromArray(contents.getBytes(StandardCharsets.UTF_8))
-        _ <- if (existingBytes == contentsBytes) {
-          ZIO.unit
-        } else {
-          Files.writeBytes(path, contentsBytes).mapError(FailedToWriteFile)
-        }
+        existingBytes <-
+          if (exists) {
+            Files.readAllBytes(path).mapError(FailedToReadFile)
+          } else {
+            ZIO.succeed(Chunk.empty[Byte])
+          }
+        contentsBytes =
+          Chunk.fromArray(contents.getBytes(StandardCharsets.UTF_8))
+        _ <-
+          if (existingBytes == contentsBytes) {
+            ZIO.unit
+          } else {
+            Files.writeBytes(path, contentsBytes).mapError(FailedToWriteFile)
+          }
       } yield ()
     }
 }

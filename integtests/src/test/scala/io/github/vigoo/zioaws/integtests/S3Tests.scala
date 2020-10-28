@@ -6,7 +6,10 @@ import akka.actor.ActorSystem
 import io.github.vigoo.zioaws.core.config
 import io.github.vigoo.zioaws.s3.model._
 import io.github.vigoo.zioaws.{akkahttp, http4s, netty, s3}
-import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
+import software.amazon.awssdk.auth.credentials.{
+  AwsBasicCredentials,
+  StaticCredentialsProvider
+}
 import software.amazon.awssdk.regions.Region
 import zio._
 import zio.stream.ZStream
@@ -18,13 +21,18 @@ object S3Tests extends DefaultRunnableSpec {
   val nettyClient = netty.default
   val http4sClient = http4s.default
 
-  val actorSystem = ZLayer.fromAcquireRelease(ZIO.effect(ActorSystem("test")))(sys => ZIO.fromFuture(_ => sys.terminate()).orDie)
+  val actorSystem =
+    ZLayer.fromAcquireRelease(ZIO.effect(ActorSystem("test")))(sys =>
+      ZIO.fromFuture(_ => sys.terminate()).orDie
+    )
   val akkaHttpClient = akkahttp.client()
 
   val awsConfig = config.default
   val s3Client = s3.customized(
-    _.credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("dummy", "key")))
-      .region(Region.US_WEST_2)
+    _.credentialsProvider(
+      StaticCredentialsProvider
+        .create(AwsBasicCredentials.create("dummy", "key"))
+    ).region(Region.US_WEST_2)
       .endpointOverride(new URI("http://localhost:4566"))
   )
 
@@ -36,9 +44,11 @@ object S3Tests extends DefaultRunnableSpec {
     } yield ZManaged.make(
       for {
         _ <- console.putStrLn(s"Creating bucket $bucketName")
-        _ <- s3.createBucket(CreateBucketRequest(
-          bucket = bucketName,
-        ))
+        _ <- s3.createBucket(
+          CreateBucketRequest(
+            bucket = bucketName
+          )
+        )
       } yield bucketName
     )(bucketName =>
       (for {
@@ -47,72 +57,91 @@ object S3Tests extends DefaultRunnableSpec {
       } yield ())
         .provide(env)
         .catchAll(error => ZIO.die(error.toThrowable))
-        .unit)
+        .unit
+    )
   }
 
-  def tests(prefix: String, ignoreUpload: Boolean = false) = Seq(
-    testM("can create and delete a bucket") {
-      // simple request/response calls
-      val steps = for {
-        bucket <- testBucket(s"${prefix}-cd")
-        _ <- bucket.use { bucketName =>
-          ZIO.unit
-        }
-      } yield ()
+  def tests(prefix: String, ignoreUpload: Boolean = false) =
+    Seq(
+      testM("can create and delete a bucket") {
+        // simple request/response calls
+        val steps = for {
+          bucket <- testBucket(s"${prefix}-cd")
+          _ <- bucket.use { bucketName =>
+            ZIO.unit
+          }
+        } yield ()
 
-      assertM(steps.run)(succeeds(isUnit))
-    } @@ nondeterministic @@ flaky,
-    testM("can upload and download items as byte streams with known content length") {
-      // streaming input and streaming output calls
-      val steps = for {
-        testData <- random.nextBytes(65536)
-        bucket <- testBucket(s"${prefix}-ud")
-        key = "testdata"
-        receivedData <- bucket.use { bucketName =>
-          for {
-            _ <- console.putStrLn(s"Uploading $key to $bucketName")
-            _ <- s3.putObject(PutObjectRequest(
-              bucket = bucketName,
-              key = key,
-              contentLength = Some(65536L) // Remove to test https://github.com/vigoo/zio-aws/issues/24
-            ), ZStream
-              .fromIterable(testData)
-              .chunkN(1024)
-            )
-            _ <- console.putStrLn("Downloading")
-            getResponse <- s3.getObject(GetObjectRequest(
-              bucket = bucketName,
-              key = key
-            ))
-            getStream = getResponse.output
-            result <- getStream.runCollect
+        assertM(steps.run)(succeeds(isUnit))
+      } @@ nondeterministic @@ flaky,
+      testM(
+        "can upload and download items as byte streams with known content length"
+      ) {
+        // streaming input and streaming output calls
+        val steps = for {
+          testData <- random.nextBytes(65536)
+          bucket <- testBucket(s"${prefix}-ud")
+          key = "testdata"
+          receivedData <- bucket.use {
+            bucketName =>
+              for {
+                _ <- console.putStrLn(s"Uploading $key to $bucketName")
+                _ <- s3.putObject(
+                  PutObjectRequest(
+                    bucket = bucketName,
+                    key = key,
+                    contentLength =
+                      Some(
+                        65536L
+                      ) // Remove to test https://github.com/vigoo/zio-aws/issues/24
+                  ),
+                  ZStream
+                    .fromIterable(testData)
+                    .chunkN(1024)
+                )
+                _ <- console.putStrLn("Downloading")
+                getResponse <- s3.getObject(
+                  GetObjectRequest(
+                    bucket = bucketName,
+                    key = key
+                  )
+                )
+                getStream = getResponse.output
+                result <- getStream.runCollect
 
-            _ <- console.putStrLn("Deleting")
-            _ <- s3.deleteObject(DeleteObjectRequest(
-              bucket = bucketName,
-              key = key
-            ))
+                _ <- console.putStrLn("Deleting")
+                _ <- s3.deleteObject(
+                  DeleteObjectRequest(
+                    bucket = bucketName,
+                    key = key
+                  )
+                )
 
-          } yield result
-        }
-      } yield testData == receivedData
+              } yield result
+          }
+        } yield testData == receivedData
 
-      assertM(steps)(isTrue)
-    } @@ (if (ignoreUpload) ignore else identity) @@ nondeterministic @@ flaky
-  )
+        assertM(steps)(isTrue)
+      } @@ (if (ignoreUpload) ignore else identity) @@ nondeterministic @@ flaky
+    )
 
   override def spec = {
     suite("S3")(
       suite("with Netty")(
         tests("netty"): _*
-      ).provideCustomLayer((nettyClient >>> awsConfig >>> s3Client).mapError(TestFailure.die)) @@ sequential,
+      ).provideCustomLayer(
+        (nettyClient >>> awsConfig >>> s3Client).mapError(TestFailure.die)
+      ) @@ sequential,
       // TODO: reenable when https://github.com/typelevel/fs2/issues/2076 gets released
 //      suite("with http4s")(
 //        tests("http4s"): _*
 //      ).provideCustomLayer((http4sClient >>> awsConfig >>> s3Client).mapError(TestFailure.die)) @@ sequential,
       suite("with akka-http")(
         tests("akkahttp", ignoreUpload = true): _*
-      ).provideCustomLayer((actorSystem >>> akkaHttpClient >>> awsConfig >>> s3Client).mapError(TestFailure.die)) @@ sequential,
+      ).provideCustomLayer(
+        (actorSystem >>> akkaHttpClient >>> awsConfig >>> s3Client)
+          .mapError(TestFailure.die)
+      ) @@ sequential
     ) @@ sequential
   }
 }

@@ -8,7 +8,8 @@ case object UnitToResponse extends OperationMethodType
 
 case object RequestToUnit extends OperationMethodType
 
-case class RequestResponse(pagination: Option[PaginationDefinition]) extends OperationMethodType
+case class RequestResponse(pagination: Option[PaginationDefinition])
+    extends OperationMethodType
 
 case object StreamedInput extends OperationMethodType
 

@@ -15,19 +15,28 @@ package object akkahttp {
 
   import builderHelper._
 
-  def client(connectionPoolSettings: Option[ConnectionPoolSettings] = None,
-             executionContext: Option[ExecutionContext] = None): ZLayer[Has[ActorSystem], Throwable, HttpClient] =
+  def client(
+      connectionPoolSettings: Option[ConnectionPoolSettings] = None,
+      executionContext: Option[ExecutionContext] = None
+  ): ZLayer[Has[ActorSystem], Throwable, HttpClient] =
     ZLayer.fromServiceManaged { actorSystem =>
-      ZManaged.fromAutoCloseable(
-        ZIO(AkkaHttpClient
-          .builder()
-          .withActorSystem(actorSystem)
-          .optionallyWith(connectionPoolSettings)(_.withConnectionPoolSettings)
-          .optionallyWith(executionContext)(_.withExecutionContext)
-          .build())).map { akkaClient =>
-        new HttpClient.Service {
-          override val client: SdkAsyncHttpClient = akkaClient
+      ZManaged
+        .fromAutoCloseable(
+          ZIO(
+            AkkaHttpClient
+              .builder()
+              .withActorSystem(actorSystem)
+              .optionallyWith(connectionPoolSettings)(
+                _.withConnectionPoolSettings
+              )
+              .optionallyWith(executionContext)(_.withExecutionContext)
+              .build()
+          )
+        )
+        .map { akkaClient =>
+          new HttpClient.Service {
+            override val client: SdkAsyncHttpClient = akkaClient
+          }
         }
-      }
     }
 }
