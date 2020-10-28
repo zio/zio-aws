@@ -170,7 +170,7 @@ jobs:
           at: ~/project
       - <<: *load_cache
       - <<: *configure_gpg
-      - run: sbt -J-Xmx3g -J-Xms2500m ++$SCALA_VERSION << parameters.commands >>
+      - run: sbt -J-Xmx2500m -J-Xms2500m ++$SCALA_VERSION << parameters.commands >>
       # Does not persist to workspace here because of cross-building, both jobs would persist target/streams
       # So we have to rebuild for `publish_sdk_projects` upon release
 
@@ -193,7 +193,7 @@ jobs:
           at: ~/project
       - <<: *load_cache
       - <<: *configure_gpg
-      - run: sbt -J-Xmx3g -J-Xms2500m ++$SCALA_VERSION << parameters.commands >>
+      - run: sbt -J-Xmx2500m -J-Xms2500m ++$SCALA_VERSION << parameters.commands >>
       - persist_to_workspace:
           root: .
           paths:
@@ -211,7 +211,7 @@ jobs:
       - <<: *configure_gpg
       - run:
           name: Release artifacts
-          command: sbt -J-Xmx3g -J-Xms2500m +publishSigned sonatypeBundleRelease
+          command: sbt -J-Xmx2500m -J-Xms2500m +publishSigned sonatypeBundleRelease
 
 workflows:
   version: 2

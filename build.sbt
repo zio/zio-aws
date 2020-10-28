@@ -1,7 +1,7 @@
 import com.jsuereth.sbtpgp.PgpKeys.{pgpPublicRing, pgpSecretRing}
 enablePlugins(Common, ZioAwsCodegenPlugin, GitVersioning)
 
-ThisBuild / circleCiParallelJobs := 8
+ThisBuild / circleCiParallelJobs := 12
 ThisBuild / circleCiSource := file(".circleci/.config.base.yml")
 ThisBuild / circleCiTarget := file(".circleci/config.yml")
 
