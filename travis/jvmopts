@@ -1,6 +1,0 @@
--Dfile.encoding=UTF8
--Xms2048M
--Xmx8192M
--Xss16M
--XX:+UseParallelGC
--XX:ReservedCodeCacheSize=512M

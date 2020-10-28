@@ -6,6 +6,8 @@ import xerial.sbt.Sonatype
 import xerial.sbt.Sonatype._
 import xerial.sbt.Sonatype.SonatypeKeys._
 
+import scala.collection.JavaConverters._
+
 object Common extends AutoPlugin {
 
   object autoImport {
@@ -21,8 +23,7 @@ object Common extends AutoPlugin {
     val fs2Version = "2.4.4"
 
     val majorVersion = "2"
-    val minorVersion = "0"
-    val zioAwsVersion = s"$majorVersion.$awsSubVersion.$minorVersion"
+    val zioAwsVersionPrefix = s"$majorVersion.$awsSubVersion."
 
     val scala212Version = "2.12.12"
     val scala213Version = "2.13.3"
@@ -36,6 +37,24 @@ object Common extends AutoPlugin {
   override val trigger = allRequirements
 
   override val requires = Sonatype
+
+  override lazy val globalSettings =
+    Seq(
+      commands += Command.command("tagAwsVersion") { state =>
+        def log(msg: String) = sLog.value.info(msg)
+        adjustTagForAwsVersion(log) match {
+          case Some(tagAndVersion) =>
+            val tag = tagAndVersion.tag
+            ci.release.early.Utils.push(tag, log)
+            sLog.value.info("reloading sbt so that sbt-git will set the `version`" +
+            s" setting based on the git tag ($tag)")
+            "reload" :: state
+          case None =>
+            sLog.value.info("no need to adjust version to match AWS library version")
+            state
+        }
+      }
+    )
 
   override lazy val projectSettings =
     Seq(
@@ -78,4 +97,24 @@ object Common extends AutoPlugin {
           password
         )).toSeq
     )
+
+  private def adjustTagForAwsVersion(log: String => Any): Option[ci.release.early.VersionAndTag] = {
+    import ci.release.early._
+    import ci.release.early.Utils._
+
+    verifyGitIsClean
+    val allTags = git.tagList.call.asScala.map(_.getName).toList
+    val highestVersion = findHighestVersion(allTags, log)
+    log(s"highest version so far: $highestVersion")
+
+    if (highestVersion.startsWith(zioAwsVersionPrefix)) {
+      // Prefix is already good
+      None
+    } else {
+      val targetVersion = s"${zioAwsVersionPrefix}0"
+      val tagName = s"v$targetVersion"
+      tag(tagName, log)
+      Some(VersionAndTag(targetVersion, tagName))
+    }
+  }
 }
