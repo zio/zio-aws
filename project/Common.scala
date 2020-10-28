@@ -22,7 +22,7 @@ object Common extends AutoPlugin {
     val http4sVersion = "0.21.8"
     val fs2Version = "2.4.4"
 
-    val majorVersion = "2"
+    val majorVersion = "3"
     val zioAwsVersionPrefix = s"$majorVersion.$awsSubVersion."
 
     val scala212Version = "2.12.12"
