@@ -22,8 +22,6 @@ object AwsError {
     val innerReason = reason match {
       case e: CompletionException =>
         Option(e.getCause).getOrElse(e)
-      case e: SdkException        =>
-        Option(e.getCause).getOrElse(e)
       case e => e
     }
 
