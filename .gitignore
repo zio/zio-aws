@@ -3,5 +3,7 @@ target/
 .idea/
 .bsp/
 .sbtopts
+.metals/
+.vscode/
 
 private-key.pem
