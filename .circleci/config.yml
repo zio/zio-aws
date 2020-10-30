@@ -240,6 +240,9 @@ workflows:
       - tag:
           filters:
             <<: *filter_tags
+            branches:
+              only:
+                - master
 
       # Cross build SDK projects
       - compile_sdk_projects:
