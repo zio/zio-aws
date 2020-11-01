@@ -30,56 +30,54 @@ object Main extends App {
             )
 
             _ <- envStream.run(Sink.foreach { env =>
-              env.environmentName.flatMap {
-                environmentName =>
-                  (for {
-                    environmentId <- env.environmentId
-                    _ <- console.putStrLn(
-                      s"Getting the EB resources of $environmentName"
-                    )
+              env.environmentName.flatMap { environmentName =>
+                (for {
+                  environmentId <- env.environmentId
+                  _ <- console.putStrLn(
+                    s"Getting the EB resources of $environmentName"
+                  )
 
-                    resourcesResult <-
-                      elasticbeanstalk.describeEnvironmentResources(
-                        DescribeEnvironmentResourcesRequest(environmentId =
-                          Some(environmentId)
-                        )
+                  resourcesResult <-
+                    elasticbeanstalk.describeEnvironmentResources(
+                      DescribeEnvironmentResourcesRequest(environmentId =
+                        Some(environmentId)
                       )
-                    resources <- resourcesResult.environmentResources
-                    _ <- console.putStrLn(
-                      s"Getting the EC2 instances in $environmentName"
                     )
-                    instances <- resources.instances
-                    instanceIds <- ZIO.foreach(instances)(_.id)
-                    _ <- console.putStrLn(
-                      s"Instance IDs are ${instanceIds.mkString(", ")}"
-                    )
+                  resources <- resourcesResult.environmentResources
+                  _ <- console.putStrLn(
+                    s"Getting the EC2 instances in $environmentName"
+                  )
+                  instances <- resources.instances
+                  instanceIds <- ZIO.foreach(instances)(_.id)
+                  _ <- console.putStrLn(
+                    s"Instance IDs are ${instanceIds.mkString(", ")}"
+                  )
 
-                    reservationsStream = ec2.describeInstances(
-                      DescribeInstancesRequest(instanceIds = Some(instanceIds))
-                    )
-                    _ <- reservationsStream.run(Sink.foreach { reservation =>
-                      reservation.instances
-                        .flatMap {
-                          instances =>
-                            ZIO.foreach(instances) { instance =>
-                              for {
-                                id <- instance.instanceId
-                                typ <- instance.instanceType
-                                launchTime <- instance.launchTime
-                                _ <- console.putStrLn(s"  instance $id:")
-                                _ <- console.putStrLn(s"    type: $typ")
-                                _ <- console.putStrLn(
-                                  s"    launched at: $launchTime"
-                                )
-                              } yield ()
-                            }
+                  reservationsStream = ec2.describeInstances(
+                    DescribeInstancesRequest(instanceIds = Some(instanceIds))
+                  )
+                  _ <- reservationsStream.run(Sink.foreach { reservation =>
+                    reservation.instances
+                      .flatMap { instances =>
+                        ZIO.foreach(instances) { instance =>
+                          for {
+                            id <- instance.instanceId
+                            typ <- instance.instanceType
+                            launchTime <- instance.launchTime
+                            _ <- console.putStrLn(s"  instance $id:")
+                            _ <- console.putStrLn(s"    type: $typ")
+                            _ <- console.putStrLn(
+                              s"    launched at: $launchTime"
+                            )
+                          } yield ()
                         }
-                    })
-                  } yield ()).catchAll { error =>
-                    console.putStrLnErr(
-                      s"Failed to get info for $environmentName: $error"
-                    )
-                  }
+                      }
+                  })
+                } yield ()).catchAll { error =>
+                  console.putStrLnErr(
+                    s"Failed to get info for $environmentName: $error"
+                  )
+                }
               }
             })
           } yield ()

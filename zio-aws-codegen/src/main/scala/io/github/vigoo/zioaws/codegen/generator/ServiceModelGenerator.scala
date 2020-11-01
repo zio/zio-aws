@@ -19,8 +19,8 @@ trait ServiceModelGenerator {
 
   private def removeDuplicates(modelSet: Set[Model]): Set[Model] =
     modelSet
-      .foldLeft(Map.empty[String, Model]) {
-        case (result, model) => result.updated(model.name, model)
+      .foldLeft(Map.empty[String, Model]) { case (result, model) =>
+        result.updated(model.name, model)
       }
       .values
       .toSet
@@ -68,11 +68,10 @@ trait ServiceModelGenerator {
         .getOrElse(List.empty)
         .map(_.toLowerCase)
 
-      ZIO.succeed(members.filterNot {
-        case (memberName, member) =>
-          globalExcludes.contains(memberName.toLowerCase) ||
-            localExcludes.contains(memberName.toLowerCase) ||
-            member.isStreaming || {
+      ZIO.succeed(members.filterNot { case (memberName, member) =>
+        globalExcludes.contains(memberName.toLowerCase) ||
+          localExcludes.contains(memberName.toLowerCase) ||
+          member.isStreaming || {
             val shape = models.serviceModel().getShape(member.getShape)
             shape.isStreaming || shape.isEventstream
           }
@@ -260,111 +259,107 @@ trait ServiceModelGenerator {
         Option(m.shape.getRequired).map(_.asScala.toSet).getOrElse(Set.empty)
       fieldModels <-
         ZIO
-          .foreach(fieldList) {
-            case (memberName, member) =>
-              for {
-                fieldModel <- get(member.getShape)
-                finalFieldModel <- adjustFieldType(m, memberName, fieldModel)
-              } yield (memberName -> finalFieldModel)
+          .foreach(fieldList) { case (memberName, member) =>
+            for {
+              fieldModel <- get(member.getShape)
+              finalFieldModel <- adjustFieldType(m, memberName, fieldModel)
+            } yield (memberName -> finalFieldModel)
           }
           .map(_.toMap)
       fieldNames <-
         ZIO
-          .foreach(fieldModels.toList) {
-            case (memberName, fieldModel) =>
-              for {
-                property <- propertyName(m, fieldModel, memberName)
-              } yield (memberName -> property)
+          .foreach(fieldModels.toList) { case (memberName, fieldModel) =>
+            for {
+              property <- propertyName(m, fieldModel, memberName)
+            } yield (memberName -> property)
           }
           .map(_.toMap)
-      fields <- ZIO.foreach(fieldList) {
-        case (memberName, _) =>
-          val finalFieldModel = fieldModels(memberName)
-          val property = fieldNames(memberName)
-          val propertyNameLit = Lit.String(property)
-          val propertyNameTerm = Term.Name(property)
+      fields <- ZIO.foreach(fieldList) { case (memberName, _) =>
+        val finalFieldModel = fieldModels(memberName)
+        val property = fieldNames(memberName)
+        val propertyNameLit = Lit.String(property)
+        val propertyNameTerm = Term.Name(property)
 
-          val propertyValueNameTerm =
-            if (fieldNames.values.toSet.contains(property + "Value")) {
-              Term.Name(property + "Value_")
-            } else {
-              Term.Name(property + "Value")
-            }
+        val propertyValueNameTerm =
+          if (fieldNames.values.toSet.contains(property + "Value")) {
+            Term.Name(property + "Value_")
+          } else {
+            Term.Name(property + "Value")
+          }
 
-          val fluentSetter = Term.Name(
-            namingStrategy.getFluentSetterMethodName(
-              property,
-              m.shape,
-              finalFieldModel.shape
-            )
+        val fluentSetter = Term.Name(
+          namingStrategy.getFluentSetterMethodName(
+            property,
+            m.shape,
+            finalFieldModel.shape
           )
+        )
 
-          TypeMapping.toWrappedType(finalFieldModel).flatMap { memberT =>
-            TypeMapping.toWrappedTypeReadOnly(finalFieldModel).flatMap {
-              memberRoT =>
-                if (required contains memberName) {
-                  unwrapSdkValue(finalFieldModel, propertyNameTerm).flatMap {
+        TypeMapping.toWrappedType(finalFieldModel).flatMap { memberT =>
+          TypeMapping.toWrappedTypeReadOnly(finalFieldModel).flatMap {
+            memberRoT =>
+              if (required contains memberName) {
+                unwrapSdkValue(finalFieldModel, propertyNameTerm).flatMap {
+                  unwrappedGet =>
+                    wrapSdkValue(
+                      finalFieldModel,
+                      Term.Apply(
+                        Term.Select(Term.Name("impl"), propertyNameTerm),
+                        List.empty
+                      )
+                    ).flatMap { wrappedGet =>
+                      roToEditable(finalFieldModel, propertyValueNameTerm)
+                        .map { toEditable =>
+                          ModelFieldFragments(
+                            paramDef = param"""$propertyNameTerm: $memberT""",
+                            getterCall = toEditable,
+                            getterInterface =
+                              q"""def $propertyValueNameTerm: $memberRoT""",
+                            getterImplementation =
+                              q"""override def $propertyValueNameTerm: $memberRoT = $wrappedGet""",
+                            zioGetterImplementation =
+                              q"""def $propertyNameTerm: ZIO[Any, Nothing, $memberRoT] = ZIO.succeed($propertyValueNameTerm)""",
+                            applyToBuilder = builder =>
+                              q"""$builder.$fluentSetter($unwrappedGet)"""
+                          )
+                        }
+                    }
+                }
+              } else {
+                val get = Term.Apply(
+                  Term.Select(Term.Name("impl"), propertyNameTerm),
+                  List.empty
+                )
+                val valueTerm = Term.Name("value")
+                wrapSdkValue(finalFieldModel, valueTerm).flatMap { wrappedGet =>
+                  unwrapSdkValue(finalFieldModel, valueTerm).flatMap {
                     unwrappedGet =>
-                      wrapSdkValue(
-                        finalFieldModel,
-                        Term.Apply(
-                          Term.Select(Term.Name("impl"), propertyNameTerm),
-                          List.empty
-                        )
-                      ).flatMap { wrappedGet =>
-                        roToEditable(finalFieldModel, propertyValueNameTerm)
-                          .map { toEditable =>
-                            ModelFieldFragments(
-                              paramDef = param"""$propertyNameTerm: $memberT""",
-                              getterCall = toEditable,
-                              getterInterface =
-                                q"""def $propertyValueNameTerm: $memberRoT""",
-                              getterImplementation =
-                                q"""override def $propertyValueNameTerm: $memberRoT = $wrappedGet""",
-                              zioGetterImplementation =
-                                q"""def $propertyNameTerm: ZIO[Any, Nothing, $memberRoT] = ZIO.succeed($propertyValueNameTerm)""",
-                              applyToBuilder = builder =>
-                                q"""$builder.$fluentSetter($unwrappedGet)"""
-                            )
-                          }
-                      }
-                  }
-                } else {
-                  val get = Term.Apply(
-                    Term.Select(Term.Name("impl"), propertyNameTerm),
-                    List.empty
-                  )
-                  val valueTerm = Term.Name("value")
-                  wrapSdkValue(finalFieldModel, valueTerm).flatMap {
-                    wrappedGet =>
-                      unwrapSdkValue(finalFieldModel, valueTerm).flatMap {
-                        unwrappedGet =>
-                          roToEditable(finalFieldModel, valueTerm).map {
-                            toEditable =>
-                              ModelFieldFragments(
-                                paramDef =
-                                  param"""$propertyNameTerm: scala.Option[$memberT] = None""",
-                                getterCall =
-                                  q"""$propertyValueNameTerm.map(value => $toEditable)""",
-                                getterInterface =
-                                  q"""def ${propertyValueNameTerm}: scala.Option[$memberRoT]""",
-                                getterImplementation =
-                                  if (wrappedGet == valueTerm) {
-                                    q"""override def $propertyValueNameTerm: scala.Option[$memberRoT] = scala.Option($get)"""
-                                  } else {
-                                    q"""override def $propertyValueNameTerm: scala.Option[$memberRoT] = scala.Option($get).map(value => $wrappedGet)"""
-                                  },
-                                zioGetterImplementation =
-                                  q"""def $propertyNameTerm: ZIO[Any, io.github.vigoo.zioaws.core.AwsError, $memberRoT] = io.github.vigoo.zioaws.core.AwsError.unwrapOptionField($propertyNameLit, $propertyValueNameTerm)""",
-                                applyToBuilder = builder =>
-                                  q"""$builder.optionallyWith($propertyNameTerm.map(value => $unwrappedGet))(_.$fluentSetter)"""
-                              )
-                          }
+                      roToEditable(finalFieldModel, valueTerm).map {
+                        toEditable =>
+                          ModelFieldFragments(
+                            paramDef =
+                              param"""$propertyNameTerm: scala.Option[$memberT] = None""",
+                            getterCall =
+                              q"""$propertyValueNameTerm.map(value => $toEditable)""",
+                            getterInterface =
+                              q"""def ${propertyValueNameTerm}: scala.Option[$memberRoT]""",
+                            getterImplementation =
+                              if (wrappedGet == valueTerm) {
+                                q"""override def $propertyValueNameTerm: scala.Option[$memberRoT] = scala.Option($get)"""
+                              } else {
+                                q"""override def $propertyValueNameTerm: scala.Option[$memberRoT] = scala.Option($get).map(value => $wrappedGet)"""
+                              },
+                            zioGetterImplementation =
+                              q"""def $propertyNameTerm: ZIO[Any, io.github.vigoo.zioaws.core.AwsError, $memberRoT] = io.github.vigoo.zioaws.core.AwsError.unwrapOptionField($propertyNameLit, $propertyValueNameTerm)""",
+                            applyToBuilder = builder =>
+                              q"""$builder.optionallyWith($propertyNameTerm.map(value => $unwrappedGet))(_.$fluentSetter)"""
+                          )
                       }
                   }
                 }
-            }
+              }
           }
+        }
       }
       createBuilderTerm = Term.Apply(
         Term.Select(awsShapeNameTerm, Term.Name("builder")),

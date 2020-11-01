@@ -126,9 +126,8 @@ class Http4sClient(client: Client[Task], closeFn: () => Unit)(implicit
             .headers(
               response.headers.toList
                 .groupBy(_.name)
-                .map {
-                  case (name, values) =>
-                    (name.value, values.map(_.value).asJava)
+                .map { case (name, values) =>
+                  (name.value, values.map(_.value).asJava)
                 }
                 .asJava
             )

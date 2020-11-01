@@ -20,13 +20,12 @@ object Main extends App {
       override final def apply[R1 <: Clock with Logging, A](
           f: ZIO[R1, AwsError, Described[A]]
       ): ZIO[R1, AwsError, Described[A]] = {
-        f.timed.flatMap {
-          case (duration, r @ Described(result, description)) =>
-            log
-              .info(
-                s"[${description.service}/${description.operation}] ran for $duration"
-              )
-              .as(r)
+        f.timed.flatMap { case (duration, r @ Described(result, description)) =>
+          log
+            .info(
+              s"[${description.service}/${description.operation}] ran for $duration"
+            )
+            .as(r)
         }
       }
     }

@@ -104,8 +104,8 @@ object OperationCollector {
       .asScala
       .toMap
       .filter { case (_, op) => !op.isDeprecated }
-      .filter {
-        case (opName, _) => !isExcluded(models.customizationConfig(), opName)
+      .filter { case (opName, _) =>
+        !isExcluded(models.customizationConfig(), opName)
       }
 
   def inputIsStreamingOf(models: C2jModels, op: Operation): Boolean =
