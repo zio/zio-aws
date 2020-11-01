@@ -26,7 +26,10 @@ object SimulatedPublisher {
   def correctSequence[InElem](in: Chunk[InElem]): List[Action] =
     Subscribe :: in.indices.map(_ => Emit).toList ::: List(Complete)
 
-  def wrapSubscriber[T](inner: Subscriber[T], simulation: List[Action]): Subscriber[T] =
+  def wrapSubscriber[T](
+      inner: Subscriber[T],
+      simulation: List[Action]
+  ): Subscriber[T] =
     new Subscriber[T] {
       private val steps = mutable.Queue.empty[Action]
       simulation.foreach(step => steps.enqueue(step))
@@ -37,7 +40,9 @@ object SimulatedPublisher {
           steps.dequeue() match {
             case Subscribe => inner.onSubscribe(s)
             case Emit =>
-              inner.onError(new RuntimeException(s"Simulation cannot emit before subscribe"))
+              inner.onError(
+                new RuntimeException(s"Simulation cannot emit before subscribe")
+              )
               onSubscribe(s)
             case Complete =>
               inner.onComplete()
@@ -54,7 +59,9 @@ object SimulatedPublisher {
         if (steps.nonEmpty) {
           steps.dequeue() match {
             case Subscribe =>
-              inner.onError(new RuntimeException(s"Simulation cannot subscribe during emit"))
+              inner.onError(
+                new RuntimeException(s"Simulation cannot subscribe during emit")
+              )
               onNext(t)
             case Emit =>
               inner.onNext(t)
@@ -73,10 +80,16 @@ object SimulatedPublisher {
         if (steps.nonEmpty) {
           steps.dequeue() match {
             case Subscribe =>
-              inner.onError(new RuntimeException(s"Simulation cannot subscribe during error"))
+              inner.onError(
+                new RuntimeException(
+                  s"Simulation cannot subscribe during error"
+                )
+              )
               onError(t)
             case Emit =>
-              inner.onError(new RuntimeException(s"Simulation cannot emit during error"))
+              inner.onError(
+                new RuntimeException(s"Simulation cannot emit during error")
+              )
               onError(t)
             case Complete =>
               inner.onComplete()
@@ -92,10 +105,16 @@ object SimulatedPublisher {
         if (steps.nonEmpty) {
           steps.dequeue() match {
             case Subscribe =>
-              inner.onError(new RuntimeException(s"Simulation cannot subscribe during error"))
+              inner.onError(
+                new RuntimeException(
+                  s"Simulation cannot subscribe during error"
+                )
+              )
               onComplete()
             case Emit =>
-              inner.onError(new RuntimeException(s"Simulation cannot emit during error"))
+              inner.onError(
+                new RuntimeException(s"Simulation cannot emit during error")
+              )
               onComplete()
             case Complete =>
               inner.onComplete()
@@ -107,10 +126,12 @@ object SimulatedPublisher {
       }
     }
 
-  def createSimulatedPublisher[InElem, OutElem](in: Chunk[InElem],
-                                                convert: InElem => OutElem,
-                                                simulation: List[Action],
-                                                onComplete: () => Unit): SdkPublisher[OutElem] =
+  def createSimulatedPublisher[InElem, OutElem](
+      in: Chunk[InElem],
+      convert: InElem => OutElem,
+      simulation: List[Action],
+      onComplete: () => Unit
+  ): SdkPublisher[OutElem] =
     new SdkPublisher[OutElem] {
       val idx: AtomicInteger = new AtomicInteger(0)
 
@@ -142,25 +163,31 @@ object SimulatedPublisher {
       }
     }
 
-  def createStringByteBufferPublisher(in: String,
-                                      simulation: Chunk[Byte] => List[Action] = correctSequence,
-                                      onComplete: () => Unit = () => {}): SdkPublisher[ByteBuffer] = {
+  def createStringByteBufferPublisher(
+      in: String,
+      simulation: Chunk[Byte] => List[Action] = correctSequence,
+      onComplete: () => Unit = () => {}
+  ): SdkPublisher[ByteBuffer] = {
     val inChunk = Chunk.fromArray(in.getBytes(StandardCharsets.US_ASCII))
     createSimulatedPublisher[Byte, ByteBuffer](
       inChunk,
       b => ByteBuffer.wrap(Array(b)),
       simulation(inChunk),
-      onComplete)
+      onComplete
+    )
   }
 
-  def createCharPublisher(in: String,
-                          simulation: Chunk[Char] => List[Action] = correctSequence,
-                          onComplete: () => Unit = () => {}): SdkPublisher[Char] = {
+  def createCharPublisher(
+      in: String,
+      simulation: Chunk[Char] => List[Action] = correctSequence,
+      onComplete: () => Unit = () => {}
+  ): SdkPublisher[Char] = {
     val inChunk = Chunk.fromIterable(in)
     createSimulatedPublisher[Char, Char](
       inChunk,
       identity,
       simulation(inChunk),
-      onComplete)
+      onComplete
+    )
   }
 }

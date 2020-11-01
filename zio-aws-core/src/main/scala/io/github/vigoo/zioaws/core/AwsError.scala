@@ -27,9 +27,12 @@ object AwsError {
     GenericAwsError(innerReason)
   }
 
-  def unwrapOptionField[T](name: String, value: Option[T]): ZIO[Any, AwsError, T] =
+  def unwrapOptionField[T](
+      name: String,
+      value: Option[T]
+  ): ZIO[Any, AwsError, T] =
     value match {
       case Some(value) => ZIO.succeed(value)
-      case None => ZIO.fail(FieldIsNone(name))
+      case None        => ZIO.fail(FieldIsNone(name))
     }
 }

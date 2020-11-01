@@ -15,18 +15,31 @@ import zio.duration.durationInt
 import zio.logging._
 
 object Main extends App {
-  val callLogging: AwsCallAspect[Clock with Logging] = new AwsCallAspect[Clock with Logging] {
-    override final def apply[R1 <: Clock with Logging, A](f: ZIO[R1, AwsError, Described[A]]): ZIO[R1, AwsError, Described[A]] = {
-      f.timed.flatMap { case (duration, r@Described(result, description)) =>
-        log.info(s"[${description.service}/${description.operation}] ran for $duration").as(r)
+  val callLogging: AwsCallAspect[Clock with Logging] =
+    new AwsCallAspect[Clock with Logging] {
+      override final def apply[R1 <: Clock with Logging, A](
+          f: ZIO[R1, AwsError, Described[A]]
+      ): ZIO[R1, AwsError, Described[A]] = {
+        f.timed.flatMap {
+          case (duration, r @ Described(result, description)) =>
+            log
+              .info(
+                s"[${description.service}/${description.operation}] ran for $duration"
+              )
+              .as(r)
+        }
       }
     }
-  }
 
-  def circuitBreaking(cb: CircuitBreaker[AwsError]): AwsCallAspect[Any] = new AwsCallAspect[Any] {
-    override final def apply[R1 <: Any, A](f: ZIO[R1, AwsError, Described[A]]): ZIO[R1, AwsError, Described[A]] =
-      cb(f).mapError(policyError => AwsError.fromThrowable(policyError.toException))
-  }
+  def circuitBreaking(cb: CircuitBreaker[AwsError]): AwsCallAspect[Any] =
+    new AwsCallAspect[Any] {
+      override final def apply[R1 <: Any, A](
+          f: ZIO[R1, AwsError, Described[A]]
+      ): ZIO[R1, AwsError, Described[A]] =
+        cb(f).mapError(policyError =>
+          AwsError.fromThrowable(policyError.toException)
+        )
+    }
 
   val program: ZIO[Console with DynamoDb, AwsError, Unit] =
     for {
@@ -37,16 +50,23 @@ object Main extends App {
 
   override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] = {
     val httpClient = netty.default
-    val config = ZLayer.succeed(CommonAwsConfig(region = Some(Region.US_EAST_1), credentialsProvider = DefaultCredentialsProvider.create(), endpointOverride = None, commonClientConfig = None))
+    val config = ZLayer.succeed(
+      CommonAwsConfig(
+        region = Some(Region.US_EAST_1),
+        credentialsProvider = DefaultCredentialsProvider.create(),
+        endpointOverride = None,
+        commonClientConfig = None
+      )
+    )
     val awsConfig = (httpClient ++ config) >>> core.config.configured()
     val logging = Logging.consoleErr()
 
     val circuitBreaker = CircuitBreaker.make[AwsError](
       trippingStrategy = TrippingStrategy.failureCount(maxFailures = 3),
-      resetPolicy = Retry.Schedules.exponentialBackoff(min = 1.second, max = 1.minute)
+      resetPolicy =
+        Retry.Schedules.exponentialBackoff(min = 1.second, max = 1.minute)
     )
     circuitBreaker.use { cb =>
-
       // Default DynamoDB layer
       // val dynamoDb: ZLayer[AwsConfig, Throwable, DynamoDb] = dynamodb.live
       // DynamoDB with logging

@@ -24,34 +24,36 @@ object ModelType {
 
   def fromString(typ: String): ModelType =
     typ match {
-      case "map" => Map
-      case "list" => List
-      case "string" => String
-      case "integer" => Integer
-      case "long" => Long
-      case "float" => Float
-      case "double" => Double
-      case "boolean" => Boolean
-      case "timestamp" => Timestamp
+      case "map"        => Map
+      case "list"       => List
+      case "string"     => String
+      case "integer"    => Integer
+      case "long"       => Long
+      case "float"      => Float
+      case "double"     => Double
+      case "boolean"    => Boolean
+      case "timestamp"  => Timestamp
       case "bigdecimal" => BigDecimal
-      case "blob" => Blob
-      case "structure" => Structure
-      case _ => Unknown(typ)
+      case "blob"       => Blob
+      case "structure"  => Structure
+      case _            => Unknown(typ)
     }
 
   def fromShape(shape: Shape): ModelType =
     shape.getType match {
       case "string" if Option(shape.getEnumValues).isDefined => Enum
-      case "structure" if shape.isException => Exception
-      case _ => fromString(shape.getType)
+      case "structure" if shape.isException                  => Exception
+      case _                                                 => fromString(shape.getType)
     }
 }
 
-case class Model(name: String,
-                 shapeName: String,
-                 typ: ModelType,
-                 shape: Shape,
-                 serviceModelName: String) {
+case class Model(
+    name: String,
+    shapeName: String,
+    typ: ModelType,
+    shape: Shape,
+    serviceModelName: String
+) {
 
   val asTerm: Term.Name = Term.Name(name)
   val asType: Type.Name = Type.Name(name)

@@ -10,19 +10,22 @@ import zio.{Chunk, Runtime}
 import zio.stream.ZStream
 import zio.interop.reactivestreams._
 
-class ZStreamAsyncRequestBody[R](stream: ZStream[R, AwsError, Byte])(implicit runtime: Runtime[R]) extends AsyncRequestBody {
+class ZStreamAsyncRequestBody[R](stream: ZStream[R, AwsError, Byte])(implicit
+    runtime: Runtime[R]
+) extends AsyncRequestBody {
   override def contentLength(): Optional[lang.Long] = Optional.empty()
 
   override def subscribe(s: Subscriber[_ >: ByteBuffer]): Unit =
     runtime.unsafeRun {
       for {
         (errorP, sink) <- s.toSink[Throwable]
-        _ <- stream
-          .mapError(_.toThrowable)
-          .mapChunks(chunk => Chunk(ByteBuffer.wrap(chunk.toArray)))
-          .run(sink)
-          .catchAll(errorP.fail)
-          .forkDaemon
+        _ <-
+          stream
+            .mapError(_.toThrowable)
+            .mapChunks(chunk => Chunk(ByteBuffer.wrap(chunk.toArray)))
+            .run(sink)
+            .catchAll(errorP.fail)
+            .forkDaemon
       } yield ()
     }
 }

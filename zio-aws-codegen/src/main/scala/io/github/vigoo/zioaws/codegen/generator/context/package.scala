@@ -24,17 +24,26 @@ package object context {
     }
   }
 
-  def getService: ZIO[GeneratorContext, Nothing, ModelId] = ZIO.access(_.get.service)
-  def getServiceName: ZIO[GeneratorContext, Nothing, String] = ZIO.access(_.get.service.name)
-  def getModelPkg: ZIO[GeneratorContext, Nothing, Term.Ref] = ZIO.access(_.get.modelPkg)
-  def getPaginatorPkg: ZIO[GeneratorContext, Nothing, Term.Ref] = ZIO.access(_.get.paginatorPkg)
-  def getNamingStrategy: ZIO[GeneratorContext, Nothing, NamingStrategy] = ZIO.access(_.get.namingStrategy)
-  def getModelMap: ZIO[GeneratorContext, Nothing, ModelMap] = ZIO.access(_.get.modelMap)
-  def getModels: ZIO[GeneratorContext, Nothing, C2jModels] = ZIO.access(_.get.models)
-  def get(name: String): ZIO[GeneratorContext, GeneratorFailure, Model] = ZIO.accessM(_.get.modelMap.get(name))
+  def getService: ZIO[GeneratorContext, Nothing, ModelId] =
+    ZIO.access(_.get.service)
+  def getServiceName: ZIO[GeneratorContext, Nothing, String] =
+    ZIO.access(_.get.service.name)
+  def getModelPkg: ZIO[GeneratorContext, Nothing, Term.Ref] =
+    ZIO.access(_.get.modelPkg)
+  def getPaginatorPkg: ZIO[GeneratorContext, Nothing, Term.Ref] =
+    ZIO.access(_.get.paginatorPkg)
+  def getNamingStrategy: ZIO[GeneratorContext, Nothing, NamingStrategy] =
+    ZIO.access(_.get.namingStrategy)
+  def getModelMap: ZIO[GeneratorContext, Nothing, ModelMap] =
+    ZIO.access(_.get.modelMap)
+  def getModels: ZIO[GeneratorContext, Nothing, C2jModels] =
+    ZIO.access(_.get.models)
+  def get(name: String): ZIO[GeneratorContext, GeneratorFailure, Model] =
+    ZIO.accessM(_.get.modelMap.get(name))
 
   object awsModel {
-    def getOperations: ZIO[GeneratorContext, Nothing, List[(String, Operation)]] =
+    def getOperations
+        : ZIO[GeneratorContext, Nothing, List[(String, Operation)]] =
       ZIO.access(_.get.models.serviceModel().getOperations.asScala.toList)
 
     def getShape(name: String): ZIO[GeneratorContext, Nothing, Option[Shape]] =

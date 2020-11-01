@@ -9,8 +9,11 @@ import software.amazon.awssdk.core.async.AsyncRequestBody
 import scala.collection.mutable.ArrayBuffer
 
 object SimulatedAsyncBodyReceiver {
-  def useAsyncBody[Out](completeFn: (Int, CompletableFuture[Out], ArrayBuffer[Byte]) => Unit)
-                       (implicit threadPool: ExecutorService): (Int, AsyncRequestBody) => CompletableFuture[Out] = { (in, asyncBody) =>
+  def useAsyncBody[Out](
+      completeFn: (Int, CompletableFuture[Out], ArrayBuffer[Byte]) => Unit
+  )(implicit
+      threadPool: ExecutorService
+  ): (Int, AsyncRequestBody) => CompletableFuture[Out] = { (in, asyncBody) =>
     val cf = new CompletableFuture[Out]()
     threadPool.submit(new Runnable {
       override def run(): Unit = {

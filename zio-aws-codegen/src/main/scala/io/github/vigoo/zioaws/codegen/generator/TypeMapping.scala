@@ -7,26 +7,38 @@ import scala.meta._
 import _root_.io.github.vigoo.zioaws.codegen.generator.context._
 
 object TypeMapping {
-  def isPrimitiveType(shape: Shape): Boolean = shape.getType match {
-    case "string" if Option(shape.getEnumValues).isEmpty => true
-    case "integer" => true
-    case "long" => true
-    case "float" => true
-    case "double" => true
-    case "boolean" => true
-    case "timestamp" => true
-    case "blob" => true
-    case "bigdecimal" => true
-    case _ => false
-  }
+  def isPrimitiveType(shape: Shape): Boolean =
+    shape.getType match {
+      case "string" if Option(shape.getEnumValues).isEmpty => true
+      case "integer"                                       => true
+      case "long"                                          => true
+      case "float"                                         => true
+      case "double"                                        => true
+      case "boolean"                                       => true
+      case "timestamp"                                     => true
+      case "blob"                                          => true
+      case "bigdecimal"                                    => true
+      case _                                               => false
+    }
 
-  private val builtIns = Set("String", "Boolean", "Int", "Integer", "Long", "Float", "Double", "BigDecimal")
+  private val builtIns = Set(
+    "String",
+    "Boolean",
+    "Int",
+    "Integer",
+    "Long",
+    "Float",
+    "Double",
+    "BigDecimal"
+  )
 
   def isBuiltIn(name: String): Boolean = {
     builtIns.contains(name)
   }
 
-  def toJavaType(model: Model): ZIO[GeneratorContext, GeneratorFailure, Type] = {
+  def toJavaType(
+      model: Model
+  ): ZIO[GeneratorContext, GeneratorFailure, Type] = {
     getModelPkg.flatMap { modelPkg =>
       val shape = model.shape
       model.typ match {
@@ -72,7 +84,9 @@ object TypeMapping {
     }
   }
 
-  def toWrappedType(model: Model): ZIO[GeneratorContext, GeneratorFailure, Type] = {
+  def toWrappedType(
+      model: Model
+  ): ZIO[GeneratorContext, GeneratorFailure, Type] = {
     model.typ match {
       case ModelType.Map =>
         for {
@@ -93,7 +107,9 @@ object TypeMapping {
     }
   }
 
-  def toWrappedTypeReadOnly(model: Model): ZIO[GeneratorContext, GeneratorFailure, Type] = {
+  def toWrappedTypeReadOnly(
+      model: Model
+  ): ZIO[GeneratorContext, GeneratorFailure, Type] = {
     model.typ match {
       case ModelType.Map =>
         for {
