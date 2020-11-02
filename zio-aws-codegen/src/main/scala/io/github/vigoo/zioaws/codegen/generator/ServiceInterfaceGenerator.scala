@@ -802,7 +802,7 @@ trait ServiceInterfaceGenerator {
               )
             )
         }),
-        Some(q"""import zio.{Chunk, Has, IO, ZIO, ZLayer}"""),
+        Some(q"""import zio.{Chunk, Has, IO, ZIO, ZLayer, ZManaged}"""),
         Some(q"""import zio.stream.ZStream"""),
         Some(q"""import org.reactivestreams.Publisher"""),
         Some(q"""import scala.jdk.CollectionConverters._""")
@@ -826,11 +826,16 @@ trait ServiceInterfaceGenerator {
 
           def customized(customization: $clientInterfaceBuilder => $clientInterfaceBuilder): ZLayer[AwsConfig, Throwable, $serviceNameT] =
             (for {
-              awsConfig <- ZIO.service[AwsConfig.Service]
-              b0 <- awsConfig.configure[$clientInterface, $clientInterfaceBuilder]($clientInterfaceSingleton.builder())
-              b1 <- awsConfig.configureHttpClient[$clientInterface, $clientInterfaceBuilder](b0)
-              client <- ZIO(customization(b1).build())
-            } yield new $serviceImplT(client, AwsCallAspect.identity, ().asInstanceOf[Any])).toLayer
+              config <- ZManaged.service[AwsConfig.Service]
+              service <- managed(config, customization)
+            } yield service).toLayer
+
+          def managed(config: AwsConfig.Service, customization: $clientInterfaceBuilder => $clientInterfaceBuilder): ZManaged[AwsConfig, Throwable, $serviceNameT] =
+            for {
+              b0 <- awsConfig.configure[$clientInterface, $clientInterfaceBuilder]($clientInterfaceSingleton.builder()).toManaged_
+              b1 <- awsConfig.configureHttpClient[$clientInterface, $clientInterfaceBuilder](b0).toManaged_
+              client <- ZIO(customization(b1).build()).toManaged_
+            } yield new $serviceImplT(client, AwsCallAspect.identity, ().asInstanceOf[Any])
 
           private class $serviceImplT[R](override val api: $clientInterface, override val aspect: AwsCallAspect[R], r: R)
             extends ${Init(serviceTrait, Name.Anonymous(), List.empty)} with AwsServiceBase[R, $serviceImplT] {
