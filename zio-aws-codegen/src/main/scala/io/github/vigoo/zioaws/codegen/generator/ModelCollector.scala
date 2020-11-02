@@ -53,50 +53,23 @@ object ModelCollector {
       models: C2jModels,
       ops: Map[String, Operation]
   ): Set[Model] =
-    ops.toList.flatMap {
-      case (opName, op) =>
-        val outputIsEventStream =
-          OperationCollector.outputIsEventStreamOf(models, op)
+    ops.toList.flatMap { case (opName, op) =>
+      val outputIsEventStream =
+        OperationCollector.outputIsEventStreamOf(models, op)
 
-        val requestName = namingStrategy.getRequestClassName(opName)
-        val responseName = namingStrategy.getResponseClassName(opName)
+      val requestName = namingStrategy.getRequestClassName(opName)
+      val responseName = namingStrategy.getResponseClassName(opName)
 
-        val request = Option(op.getInput).map(_.getShape)
-        val response =
-          if (outputIsEventStream) None
-          else Option(op.getOutput).map(_.getShape)
+      val request = Option(op.getInput).map(_.getShape)
+      val response =
+        if (outputIsEventStream) None
+        else Option(op.getOutput).map(_.getShape)
 
-        (request, response) match {
-          case (None, None) => List.empty
-          case (Some(requestShapeName), None) =>
-            Option(models.serviceModel().getShape(requestShapeName)).map {
-              requestShape =>
-                Model(
-                  requestName,
-                  requestShapeName.capitalize,
-                  finalType(models, requestShape),
-                  requestShape,
-                  requestName
-                )
-            }.toList
-          case (None, Some(responseShapeName)) =>
-            Option(models.serviceModel().getShape(responseShapeName)).map {
-              responseShape =>
-                Model(
-                  responseName,
-                  responseShapeName.capitalize,
-                  finalType(models, responseShape),
-                  responseShape,
-                  responseName
-                )
-            }.toList
-          case (Some(requestShapeName), Some(responseShapeName)) =>
-            val requestShapeOpt =
-              Option(models.serviceModel().getShape(requestShapeName))
-            val responseShapeOpt =
-              Option(models.serviceModel().getShape(responseShapeName))
-
-            requestShapeOpt.map { requestShape =>
+      (request, response) match {
+        case (None, None) => List.empty
+        case (Some(requestShapeName), None) =>
+          Option(models.serviceModel().getShape(requestShapeName)).map {
+            requestShape =>
               Model(
                 requestName,
                 requestShapeName.capitalize,
@@ -104,7 +77,10 @@ object ModelCollector {
                 requestShape,
                 requestName
               )
-            }.toList ::: responseShapeOpt.map { responseShape =>
+          }.toList
+        case (None, Some(responseShapeName)) =>
+          Option(models.serviceModel().getShape(responseShapeName)).map {
+            responseShape =>
               Model(
                 responseName,
                 responseShapeName.capitalize,
@@ -112,8 +88,31 @@ object ModelCollector {
                 responseShape,
                 responseName
               )
-            }.toList
-        }
+          }.toList
+        case (Some(requestShapeName), Some(responseShapeName)) =>
+          val requestShapeOpt =
+            Option(models.serviceModel().getShape(requestShapeName))
+          val responseShapeOpt =
+            Option(models.serviceModel().getShape(responseShapeName))
+
+          requestShapeOpt.map { requestShape =>
+            Model(
+              requestName,
+              requestShapeName.capitalize,
+              finalType(models, requestShape),
+              requestShape,
+              requestName
+            )
+          }.toList ::: responseShapeOpt.map { responseShape =>
+            Model(
+              responseName,
+              responseShapeName.capitalize,
+              finalType(models, responseShape),
+              responseShape,
+              responseName
+            )
+          }.toList
+      }
     }.toSet
 
   private def collectInputEvents(
@@ -121,16 +120,15 @@ object ModelCollector {
       models: C2jModels,
       ops: Map[String, Operation]
   ): Set[Model] =
-    ops.toList.flatMap {
-      case (_, op) =>
-        if (OperationCollector.inputIsEventStreamOf(models, op)) {
-          tryFindEventStreamShape(models, op.getInput.getShape).flatMap {
-            eventStream =>
-              modelFromShapeName(namingStrategy, models, eventStream.name)
-          }
-        } else {
-          None
+    ops.toList.flatMap { case (_, op) =>
+      if (OperationCollector.inputIsEventStreamOf(models, op)) {
+        tryFindEventStreamShape(models, op.getInput.getShape).flatMap {
+          eventStream =>
+            modelFromShapeName(namingStrategy, models, eventStream.name)
         }
+      } else {
+        None
+      }
     }.toSet
 
   private def collectOutputEvents(
@@ -138,17 +136,16 @@ object ModelCollector {
       models: C2jModels,
       ops: Map[String, Operation]
   ): Set[Model] =
-    ops.toList.flatMap {
-      case (_, op) =>
-        if (OperationCollector.outputIsEventStreamOf(models, op)) {
-          tryFindEventStreamShape(models, op.getOutput.getShape).flatMap {
-            eventStream =>
-              val name = eventStream.shape.getMembers.asScala.keys.head
-              modelFromShapeName(namingStrategy, models, name)
-          }
-        } else {
-          None
+    ops.toList.flatMap { case (_, op) =>
+      if (OperationCollector.outputIsEventStreamOf(models, op)) {
+        tryFindEventStreamShape(models, op.getOutput.getShape).flatMap {
+          eventStream =>
+            val name = eventStream.shape.getMembers.asScala.keys.head
+            modelFromShapeName(namingStrategy, models, name)
         }
+      } else {
+        None
+      }
     }.toSet
 
   private def collectPaginations(
@@ -160,38 +157,37 @@ object ModelCollector {
       .getPagination
       .asScala
       .toList
-      .flatMap {
-        case (name, paginator) =>
-          if (paginator.isValid) {
-            Option(paginator.getResultKey)
-              .flatMap(_.asScala.headOption)
-              .flatMap { key =>
-                val outputShape = models
-                  .serviceModel()
-                  .getShape(
-                    models.serviceModel().getOperation(name).getOutput.getShape
-                  )
-                outputShape.getMembers.asScala.get(key).flatMap {
-                  outputListMember =>
-                    val listShape =
-                      models.serviceModel().getShape(outputListMember.getShape)
-                    Option(listShape.getListMember).flatMap { itemMember =>
-                      val itemShapeName = itemMember.getShape
-                      Option(models.serviceModel().getShape(itemShapeName))
-                        .map { itemShape =>
-                          modelFromShape(
-                            namingStrategy,
-                            models,
-                            itemShape,
-                            itemShapeName
-                          )
-                        }
-                    }
-                }
+      .flatMap { case (name, paginator) =>
+        if (paginator.isValid) {
+          Option(paginator.getResultKey)
+            .flatMap(_.asScala.headOption)
+            .flatMap { key =>
+              val outputShape = models
+                .serviceModel()
+                .getShape(
+                  models.serviceModel().getOperation(name).getOutput.getShape
+                )
+              outputShape.getMembers.asScala.get(key).flatMap {
+                outputListMember =>
+                  val listShape =
+                    models.serviceModel().getShape(outputListMember.getShape)
+                  Option(listShape.getListMember).flatMap { itemMember =>
+                    val itemShapeName = itemMember.getShape
+                    Option(models.serviceModel().getShape(itemShapeName))
+                      .map { itemShape =>
+                        modelFromShape(
+                          namingStrategy,
+                          models,
+                          itemShape,
+                          itemShapeName
+                        )
+                      }
+                  }
               }
-          } else {
-            None
-          }
+            }
+        } else {
+          None
+        }
       }
       .toSet
 
@@ -206,9 +202,8 @@ object ModelCollector {
         collectOutputEvents(namingStrategy, models, ops) union
         collectPaginations(namingStrategy, models)
 
-    val all = rootShapes.foldLeft(rootShapes) {
-      case (result, m) =>
-        collectShapes(namingStrategy, models, result, Set.empty, m.shape)
+    val all = rootShapes.foldLeft(rootShapes) { case (result, m) =>
+      collectShapes(namingStrategy, models, result, Set.empty, m.shape)
     }
     val map = all.map { m => (m.serviceModelName, m) }.toMap
     val substitutedMap = applySubstitutions(models, map)
@@ -247,17 +242,16 @@ object ModelCollector {
         Option(shape.getMapKeyType).map(_.getShape).toSet union
         Option(shape.getMapValueType).map(_.getShape).toSet
 
-    val newShapes = found.foldLeft(subTypes) {
-      case (names, model) => names - model.serviceModelName
+    val newShapes = found.foldLeft(subTypes) { case (names, model) =>
+      names - model.serviceModelName
     } diff invalid
     val newModels =
       newShapes.flatMap(modelFromShapeName(namingStrategy, models, _))
     val newInvalids =
       invalid union (newShapes diff newModels.map(_.serviceModelName))
 
-    newModels.foldLeft(found) {
-      case (result, m) =>
-        collectShapes(namingStrategy, models, result + m, newInvalids, m.shape)
+    newModels.foldLeft(found) { case (result, m) =>
+      collectShapes(namingStrategy, models, result + m, newInvalids, m.shape)
     }
   }
 
@@ -304,24 +298,23 @@ object ModelCollector {
     if (substitutions.isEmpty) {
       map
     } else {
-      map.map {
-        case (name, model) =>
-          substitutions.get(name) match {
-            case Some(substitution) =>
-              Option(substitution.getEmitAsShape) match {
-                case Some(newShape) =>
-                  val otherModel = map(newShape)
-                  name -> model.copy(
-                    name = otherModel.name,
-                    shapeName = otherModel.shapeName,
-                    typ = otherModel.typ,
-                    shape = otherModel.shape
-                  )
-                case None =>
-                  name -> model
-              }
-            case None => name -> model
-          }
+      map.map { case (name, model) =>
+        substitutions.get(name) match {
+          case Some(substitution) =>
+            Option(substitution.getEmitAsShape) match {
+              case Some(newShape) =>
+                val otherModel = map(newShape)
+                name -> model.copy(
+                  name = otherModel.name,
+                  shapeName = otherModel.shapeName,
+                  typ = otherModel.typ,
+                  shape = otherModel.shape
+                )
+              case None =>
+                name -> model
+            }
+          case None => name -> model
+        }
       }
     }
   }

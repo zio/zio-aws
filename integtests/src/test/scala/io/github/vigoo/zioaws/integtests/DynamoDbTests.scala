@@ -95,37 +95,34 @@ object DynamoDbTests extends DefaultRunnableSpec {
         val N = 100
         val steps = for {
           table <- testTable(s"${prefix}_scn")
-          result <- table.use {
-            tableDescription =>
-              val put =
-                for {
-                  tableName <- tableDescription.tableName
-                  randomKey <- random.nextString(10)
-                  randomValue <- random.nextInt
-                  _ <- dynamodb.putItem(
-                    PutItemRequest(
-                      tableName = tableName,
-                      item = Map(
-                        "key" -> AttributeValue(s = Some(randomKey)),
-                        "value" -> AttributeValue(n =
-                          Some(randomValue.toString)
-                        )
-                      )
-                    )
-                  )
-                } yield ()
-
+          result <- table.use { tableDescription =>
+            val put =
               for {
                 tableName <- tableDescription.tableName
-                _ <- put.repeatN(N - 1)
-                stream = dynamodb.scan(
-                  ScanRequest(
+                randomKey <- random.nextString(10)
+                randomValue <- random.nextInt
+                _ <- dynamodb.putItem(
+                  PutItemRequest(
                     tableName = tableName,
-                    limit = Some(10)
+                    item = Map(
+                      "key" -> AttributeValue(s = Some(randomKey)),
+                      "value" -> AttributeValue(n = Some(randomValue.toString))
+                    )
                   )
                 )
-                streamResult <- stream.runCollect
-              } yield streamResult
+              } yield ()
+
+            for {
+              tableName <- tableDescription.tableName
+              _ <- put.repeatN(N - 1)
+              stream = dynamodb.scan(
+                ScanRequest(
+                  tableName = tableName,
+                  limit = Some(10)
+                )
+              )
+              streamResult <- stream.runCollect
+            } yield streamResult
           }
         } yield result.length
 
@@ -136,26 +133,25 @@ object DynamoDbTests extends DefaultRunnableSpec {
         val N = 1000
         val steps = for {
           table <- testTable(s"${prefix}_lt")
-          result <- table.use {
-            tableDescription =>
-              for {
-                arn <- tableDescription.tableArn
-                _ <- dynamodb.tagResource(
-                  TagResourceRequest(
-                    resourceArn = arn,
-                    tags = (0 until N)
-                      .map(i => dynamodb.model.Tag(s"tag$i", i.toString))
-                      .toList
-                  )
+          result <- table.use { tableDescription =>
+            for {
+              arn <- tableDescription.tableArn
+              _ <- dynamodb.tagResource(
+                TagResourceRequest(
+                  resourceArn = arn,
+                  tags = (0 until N)
+                    .map(i => dynamodb.model.Tag(s"tag$i", i.toString))
+                    .toList
                 )
+              )
 
-                tagStream = dynamodb.listTagsOfResource(
-                  ListTagsOfResourceRequest(
-                    resourceArn = arn
-                  )
+              tagStream = dynamodb.listTagsOfResource(
+                ListTagsOfResourceRequest(
+                  resourceArn = arn
                 )
-                tags <- tagStream.runCollect
-              } yield tags
+              )
+              tags <- tagStream.runCollect
+            } yield tags
           }
         } yield result.length
 

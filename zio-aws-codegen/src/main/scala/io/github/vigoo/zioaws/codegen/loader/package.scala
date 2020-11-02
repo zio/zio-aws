@@ -110,8 +110,8 @@ package object loader {
       ): ZIO[Blocking, Throwable, T] = {
         val url = new URL(s"${root.toString}/$name")
 
-        loadJson[T](url).catchSome {
-          case _: FileNotFoundException => ZIO.succeed(default)
+        loadJson[T](url).catchSome { case _: FileNotFoundException =>
+          ZIO.succeed(default)
         }
       }
 
@@ -181,9 +181,8 @@ package object loader {
             if (uri.getScheme == "jar") {
               FileSystem
                 .getFileSystem(uri)
-                .catchSome {
-                  case _: FileSystemNotFoundException =>
-                    FileSystem.newFileSystem(uri)
+                .catchSome { case _: FileSystemNotFoundException =>
+                  FileSystem.newFileSystem(uri)
                 }
                 .use { fs =>
                   findServiceSpecification(

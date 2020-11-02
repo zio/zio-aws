@@ -125,18 +125,17 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
 
   protected def generateSbtSubprojects(ids: Set[ModelId]): Seq[Project] = {
     val map = ids.toSeq
-      .sortWith {
-        case (a, b) =>
-          val aIsDependent = a.subModuleName match {
-            case Some(value) if value != a.name => true
-            case _                              => false
-          }
-          val bIsDependent = b.subModuleName match {
-            case Some(value) if value != b.name => true
-            case _                              => false
-          }
+      .sortWith { case (a, b) =>
+        val aIsDependent = a.subModuleName match {
+          case Some(value) if value != a.name => true
+          case _                              => false
+        }
+        val bIsDependent = b.subModuleName match {
+          case Some(value) if value != b.name => true
+          case _                              => false
+        }
 
-          bIsDependent || (!aIsDependent && a.toString < b.toString)
+        bIsDependent || (!aIsDependent && a.toString < b.toString)
       }
       .foldLeft(Map.empty[ModelId, Project]) { (mapping, id) =>
         val name = id.moduleName

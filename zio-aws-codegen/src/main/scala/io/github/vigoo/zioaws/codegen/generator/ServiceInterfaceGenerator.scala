@@ -69,122 +69,121 @@ trait ServiceInterfaceGenerator {
       : ZIO[GeneratorContext, GeneratorFailure, List[ServiceMethods]] = {
     getModels.flatMap { models =>
       val ops = OperationCollector.getFilteredOperations(models)
-      ZIO.foreach(ops.toList) {
-        case (opName, op) =>
-          for {
-            serviceNameT <- serviceName
-            methodName = opMethodName(opName)
-            requestName <- opRequestName(opName)
-            requestNameTerm <- opRequestNameTerm(opName)
-            responseName <- opResponseName(opName)
-            responseNameTerm <- opResponseNameTerm(opName)
-            responseTypeRo =
-              Type.Select(responseNameTerm, Type.Name("ReadOnly"))
-            modelPkg <- getModelPkg
-            operation <- OperationCollector.get(opName, op)
-            result <- operation match {
-              case UnitToUnit =>
-                generateUnitToUnit(
-                  serviceNameT,
-                  methodName,
-                  requestName,
-                  requestNameTerm,
-                  responseName,
-                  modelPkg
-                )
-              case UnitToResponse =>
-                generateUnitToResponse(
-                  serviceNameT,
-                  methodName,
-                  requestName,
-                  requestNameTerm,
-                  responseName,
-                  responseNameTerm,
-                  responseTypeRo,
-                  modelPkg
-                )
-              case RequestToUnit =>
-                generateRequestToUnit(
-                  serviceNameT,
-                  methodName,
-                  requestName,
-                  responseName,
-                  modelPkg
-                )
-              case RequestResponse(pagination) =>
-                generateRequestToResponse(
-                  opName,
-                  serviceNameT,
-                  methodName,
-                  requestName,
-                  responseName,
-                  responseNameTerm,
-                  responseTypeRo,
-                  modelPkg,
-                  pagination
-                )
-              case StreamedInput =>
-                generateStreamedInput(
-                  serviceNameT,
-                  methodName,
-                  requestName,
-                  responseName,
-                  responseNameTerm,
-                  responseTypeRo,
-                  modelPkg
-                )
-              case StreamedOutput =>
-                generateStreamedOutput(
-                  serviceNameT,
-                  methodName,
-                  requestName,
-                  responseName,
-                  responseNameTerm,
-                  responseTypeRo,
-                  modelPkg
-                )
-              case StreamedInputOutput =>
-                generateStreamedInputOutput(
-                  serviceNameT,
-                  methodName,
-                  requestName,
-                  responseName,
-                  responseNameTerm,
-                  responseTypeRo,
-                  modelPkg
-                )
-              case EventStreamInput =>
-                generateEventStreamInput(
-                  op,
-                  serviceNameT,
-                  methodName,
-                  requestName,
-                  responseName,
-                  responseTypeRo,
-                  modelPkg
-                )
-              case EventStreamOutput =>
-                generateEventStreamOutput(
-                  opName,
-                  op,
-                  serviceNameT,
-                  methodName,
-                  requestName,
-                  responseName,
-                  modelPkg
-                )
-              case EventStreamInputOutput =>
-                generateEventStreamInputOutput(
-                  opName,
-                  op,
-                  serviceNameT,
-                  methodName,
-                  requestName,
-                  responseName,
-                  modelPkg
-                )
-            }
-          } yield result
+      ZIO.foreach(ops.toList) { case (opName, op) =>
+        for {
+          serviceNameT <- serviceName
+          methodName = opMethodName(opName)
+          requestName <- opRequestName(opName)
+          requestNameTerm <- opRequestNameTerm(opName)
+          responseName <- opResponseName(opName)
+          responseNameTerm <- opResponseNameTerm(opName)
+          responseTypeRo =
+            Type.Select(responseNameTerm, Type.Name("ReadOnly"))
+          modelPkg <- getModelPkg
+          operation <- OperationCollector.get(opName, op)
+          result <- operation match {
+            case UnitToUnit =>
+              generateUnitToUnit(
+                serviceNameT,
+                methodName,
+                requestName,
+                requestNameTerm,
+                responseName,
+                modelPkg
+              )
+            case UnitToResponse =>
+              generateUnitToResponse(
+                serviceNameT,
+                methodName,
+                requestName,
+                requestNameTerm,
+                responseName,
+                responseNameTerm,
+                responseTypeRo,
+                modelPkg
+              )
+            case RequestToUnit =>
+              generateRequestToUnit(
+                serviceNameT,
+                methodName,
+                requestName,
+                responseName,
+                modelPkg
+              )
+            case RequestResponse(pagination) =>
+              generateRequestToResponse(
+                opName,
+                serviceNameT,
+                methodName,
+                requestName,
+                responseName,
+                responseNameTerm,
+                responseTypeRo,
+                modelPkg,
+                pagination
+              )
+            case StreamedInput =>
+              generateStreamedInput(
+                serviceNameT,
+                methodName,
+                requestName,
+                responseName,
+                responseNameTerm,
+                responseTypeRo,
+                modelPkg
+              )
+            case StreamedOutput =>
+              generateStreamedOutput(
+                serviceNameT,
+                methodName,
+                requestName,
+                responseName,
+                responseNameTerm,
+                responseTypeRo,
+                modelPkg
+              )
+            case StreamedInputOutput =>
+              generateStreamedInputOutput(
+                serviceNameT,
+                methodName,
+                requestName,
+                responseName,
+                responseNameTerm,
+                responseTypeRo,
+                modelPkg
+              )
+            case EventStreamInput =>
+              generateEventStreamInput(
+                op,
+                serviceNameT,
+                methodName,
+                requestName,
+                responseName,
+                responseTypeRo,
+                modelPkg
+              )
+            case EventStreamOutput =>
+              generateEventStreamOutput(
+                opName,
+                op,
+                serviceNameT,
+                methodName,
+                requestName,
+                responseName,
+                modelPkg
+              )
+            case EventStreamInputOutput =>
+              generateEventStreamInputOutput(
+                opName,
+                op,
+                serviceNameT,
+                methodName,
+                requestName,
+                responseName,
+                modelPkg
+              )
+          }
+        } yield result
       }
     }
   }
@@ -751,15 +750,14 @@ trait ServiceInterfaceGenerator {
 
       serviceMethods <- generateServiceMethods()
       ops <- awsModel.getOperations
-      javaSdkPaginations <- ZIO.foreach(ops) {
-        case (opName, op) =>
-          OperationCollector.get(opName, op).map {
-            case RequestResponse(
-                  Some(JavaSdkPaginationDefinition(_, _, _, _))
-                ) =>
-              true
-            case _ => false
-          }
+      javaSdkPaginations <- ZIO.foreach(ops) { case (opName, op) =>
+        OperationCollector.get(opName, op).map {
+          case RequestResponse(
+                Some(JavaSdkPaginationDefinition(_, _, _, _))
+              ) =>
+            true
+          case _ => false
+        }
       }
       usesJavaSdkPaginators = javaSdkPaginations.exists(identity)
 

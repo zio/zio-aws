@@ -46,11 +46,15 @@ object Common extends AutoPlugin {
           case Some(tagAndVersion) =>
             val tag = tagAndVersion.tag
             ci.release.early.Utils.push(tag, log)
-            sLog.value.info("reloading sbt so that sbt-git will set the `version`" +
-            s" setting based on the git tag ($tag)")
+            sLog.value.info(
+              "reloading sbt so that sbt-git will set the `version`" +
+                s" setting based on the git tag ($tag)"
+            )
             "reload" :: state
           case None =>
-            sLog.value.info("no need to adjust version to match AWS library version")
+            sLog.value.info(
+              "no need to adjust version to match AWS library version"
+            )
             state
         }
       }
@@ -98,7 +102,9 @@ object Common extends AutoPlugin {
         )).toSeq
     )
 
-  private def adjustTagForAwsVersion(log: String => Any): Option[ci.release.early.VersionAndTag] = {
+  private def adjustTagForAwsVersion(
+      log: String => Any
+  ): Option[ci.release.early.VersionAndTag] = {
     import ci.release.early._
     import ci.release.early.Utils._
 

@@ -82,42 +82,40 @@ object S3Tests extends DefaultRunnableSpec {
           testData <- random.nextBytes(65536)
           bucket <- testBucket(s"${prefix}-ud")
           key = "testdata"
-          receivedData <- bucket.use {
-            bucketName =>
-              for {
-                _ <- console.putStrLn(s"Uploading $key to $bucketName")
-                _ <- s3.putObject(
-                  PutObjectRequest(
-                    bucket = bucketName,
-                    key = key,
-                    contentLength =
-                      Some(
-                        65536L
-                      ) // Remove to test https://github.com/vigoo/zio-aws/issues/24
-                  ),
-                  ZStream
-                    .fromIterable(testData)
-                    .chunkN(1024)
+          receivedData <- bucket.use { bucketName =>
+            for {
+              _ <- console.putStrLn(s"Uploading $key to $bucketName")
+              _ <- s3.putObject(
+                PutObjectRequest(
+                  bucket = bucketName,
+                  key = key,
+                  contentLength = Some(
+                    65536L
+                  ) // Remove to test https://github.com/vigoo/zio-aws/issues/24
+                ),
+                ZStream
+                  .fromIterable(testData)
+                  .chunkN(1024)
+              )
+              _ <- console.putStrLn("Downloading")
+              getResponse <- s3.getObject(
+                GetObjectRequest(
+                  bucket = bucketName,
+                  key = key
                 )
-                _ <- console.putStrLn("Downloading")
-                getResponse <- s3.getObject(
-                  GetObjectRequest(
-                    bucket = bucketName,
-                    key = key
-                  )
-                )
-                getStream = getResponse.output
-                result <- getStream.runCollect
+              )
+              getStream = getResponse.output
+              result <- getStream.runCollect
 
-                _ <- console.putStrLn("Deleting")
-                _ <- s3.deleteObject(
-                  DeleteObjectRequest(
-                    bucket = bucketName,
-                    key = key
-                  )
+              _ <- console.putStrLn("Deleting")
+              _ <- s3.deleteObject(
+                DeleteObjectRequest(
+                  bucket = bucketName,
+                  key = key
                 )
+              )
 
-              } yield result
+            } yield result
           }
         } yield testData == receivedData
 

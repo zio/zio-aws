@@ -43,7 +43,8 @@ package object config {
       ): Task[Builder]
 
       def configureHttpClient[
-          Client, Builder <: AwsAsyncClientBuilder[Builder, Client]
+          Client,
+          Builder <: AwsAsyncClientBuilder[Builder, Client]
       ](builder: Builder): Task[Builder]
     }
 
@@ -320,9 +321,8 @@ package object config {
                 case bs: FixedDelayBackoffStrategy =>
                   Some(
                     bs.computeDelayBeforeNextRetry(
-                        RetryPolicyContext.builder().build()
-                      )
-                      .asScala
+                      RetryPolicyContext.builder().build()
+                    ).asScala
                   )
                 case _ => None
               }

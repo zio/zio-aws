@@ -157,10 +157,10 @@ package object netty {
                 _.tlsTrustManagersProvider
               )
 
-          val builder1 = config.channelOptions.options.foldLeft(builder0) {
-            case (b, opt) =>
+          val builder1 =
+            config.channelOptions.options.foldLeft(builder0) { case (b, opt) =>
               b.putChannelOption(opt.key, opt.value)
-          }
+            }
 
           builder1.build()
         })
