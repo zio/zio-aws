@@ -825,13 +825,11 @@ trait ServiceInterfaceGenerator {
           val live: ZLayer[AwsConfig, Throwable, $serviceNameT] = customized(identity)
 
           def customized(customization: $clientInterfaceBuilder => $clientInterfaceBuilder): ZLayer[AwsConfig, Throwable, $serviceNameT] =
-            (for {
-              config <- ZManaged.service[AwsConfig.Service]
-              service <- managed(config, customization)
-            } yield service).toLayer
+            managed(customization).toLayer
 
-          def managed(config: AwsConfig.Service, customization: $clientInterfaceBuilder => $clientInterfaceBuilder): ZManaged[AwsConfig, Throwable, $serviceNameT] =
+          def managed(customization: $clientInterfaceBuilder => $clientInterfaceBuilder): ZManaged[AwsConfig, Throwable, $serviceTrait] =
             for {
+              awsConfig <- ZManaged.service[AwsConfig.Service]
               b0 <- awsConfig.configure[$clientInterface, $clientInterfaceBuilder]($clientInterfaceSingleton.builder()).toManaged_
               b1 <- awsConfig.configureHttpClient[$clientInterface, $clientInterfaceBuilder](b0).toManaged_
               client <- ZIO(customization(b1).build()).toManaged_
