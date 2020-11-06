@@ -409,18 +409,6 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
             ).run
           )(isAwsFailure)
         },
-        testM("failed future after stream") {
-          import SimulatedEventStreamResponseHandlerReceiver._
-          assertM(
-            runAsyncRequestEventOutputStream(
-              handlerSteps = List(
-                ResponseReceived,
-                EventStream,
-                FailFuture(SimulatedException)
-              )
-            ).run
-          )(isAwsFailure)
-        },
         testM("publisher fail before subscribe")(
           assertM(
             runAsyncRequestEventOutputStream(
