@@ -9,7 +9,7 @@ import zio.stream.ZStream
 object ZEventStreamResponseHandler {
   def create[ResponseT, EventT](
       runtime: Runtime[Any],
-      signalQueue: Queue[Option[AwsError]],
+      signalQueue: Queue[AwsError],
       responsePromise: Promise[AwsError, ResponseT],
       promise: Promise[AwsError, Publisher[EventT]]
   ): EventStreamResponseHandler[ResponseT, EventT] =
@@ -22,7 +22,7 @@ object ZEventStreamResponseHandler {
 
       override def exceptionOccurred(throwable: Throwable): Unit =
         runtime.unsafeRun(
-          signalQueue.offer(Some(AwsError.fromThrowable(throwable)))
+          signalQueue.offer(AwsError.fromThrowable(throwable))
         )
 
       override def complete(): Unit = {

@@ -409,18 +409,6 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
             ).run
           )(isAwsFailure)
         },
-        testM("failed future after stream") {
-          import SimulatedEventStreamResponseHandlerReceiver._
-          assertM(
-            runAsyncRequestEventOutputStream(
-              handlerSteps = List(
-                ResponseReceived,
-                EventStream,
-                FailFuture(SimulatedException)
-              )
-            ).run
-          )(isAwsFailure)
-        },
         testM("publisher fail before subscribe")(
           assertM(
             runAsyncRequestEventOutputStream(
@@ -525,22 +513,8 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
           assertM(
             runAsyncRequestEventInputOutputStream(
               handlerSteps = List(
-                ResponseReceived,
                 ReportException(SimulatedException),
                 EventStream,
-                CompleteFuture
-              )
-            ).run
-          )(isAwsFailure)
-        },
-        testM("exception after stream") {
-          import SimulatedEventStreamResponseHandlerReceiver._
-          assertM(
-            runAsyncRequestEventInputOutputStream(
-              handlerSteps = List(
-                ResponseReceived,
-                EventStream,
-                ReportException(SimulatedException),
                 CompleteFuture
               )
             ).run
@@ -554,18 +528,6 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
                 FailFuture(SimulatedException),
                 ResponseReceived,
                 EventStream
-              )
-            ).run
-          )(isAwsFailure)
-        },
-        testM("failed future after stream") {
-          import SimulatedEventStreamResponseHandlerReceiver._
-          assertM(
-            runAsyncRequestEventInputOutputStream(
-              handlerSteps = List(
-                ResponseReceived,
-                EventStream,
-                FailFuture(SimulatedException)
               )
             ).run
           )(isAwsFailure)
