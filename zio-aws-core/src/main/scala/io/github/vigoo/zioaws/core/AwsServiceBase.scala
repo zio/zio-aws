@@ -336,7 +336,7 @@ trait AwsServiceBase[R, Self[_]] {
         responsePromise <- Promise.make[AwsError, Response]
         signalQueue <- ZQueue.bounded[AwsError](16)
 
-        _ <- aspect(
+        subscribe = aspect(
           ZIO
             .fromCompletionStage(
               impl(
@@ -354,6 +354,17 @@ trait AwsServiceBase[R, Self[_]] {
             )
             .mapError(AwsError.fromThrowable) ? (serviceName / opName)
         ).unwrap
+
+        /*
+       Not all SDK methods complete on success via the completion stage, for example kinesis subscribeToShard, for
+       which the publisherPromise completes first. Subscribe can complete with failures. Just to be sure, we
+       await several effects for the first success or failure.
+         */
+        _ <- subscribe raceFirst
+          responsePromise.await raceFirst
+          signalQueue.take.flip raceFirst
+          outPublisherPromise.await
+
         outPublisher <- outPublisherPromise.await
         stream =
           outPublisher
