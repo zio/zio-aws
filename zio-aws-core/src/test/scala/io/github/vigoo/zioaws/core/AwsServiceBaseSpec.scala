@@ -513,7 +513,6 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
           assertM(
             runAsyncRequestEventInputOutputStream(
               handlerSteps = List(
-                ResponseReceived,
                 ReportException(SimulatedException),
                 EventStream,
                 CompleteFuture
@@ -542,18 +541,6 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
                 FailFuture(SimulatedException),
                 ResponseReceived,
                 EventStream
-              )
-            ).run
-          )(isAwsFailure)
-        },
-        testM("failed future after stream") {
-          import SimulatedEventStreamResponseHandlerReceiver._
-          assertM(
-            runAsyncRequestEventInputOutputStream(
-              handlerSteps = List(
-                ResponseReceived,
-                EventStream,
-                FailFuture(SimulatedException)
               )
             ).run
           )(isAwsFailure)
