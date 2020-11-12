@@ -157,7 +157,12 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
           .settings(
             libraryDependencies += "software.amazon.awssdk" % id.name % awsLibraryVersion.value,
             awsLibraryId := id.toString,
-            Compile / sourceGenerators += generateSources.taskValue
+            Compile / sourceGenerators += generateSources.taskValue,
+            mappings in (Compile, packageSrc) ++= {
+              val base = (sourceManaged in Compile).value
+              val files = (managedSources in Compile).value
+              files.map { f => (f, f.relativeTo(base).get.getPath) }
+            }
           )
           .dependsOn(deps: _*)
 
