@@ -25,7 +25,6 @@ object TypeMapping {
     "String",
     "Boolean",
     "Int",
-    "Integer",
     "Long",
     "Float",
     "Double",
