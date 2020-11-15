@@ -282,10 +282,10 @@ package object config {
                   .build(),
               {
                 case bs: FullJitterBackoffStrategy =>
-                  Some(
+                  Some((
                     bs.toBuilder.baseDelay.asScala,
                     bs.toBuilder.maxBackoffTime.asScala
-                  )
+                  ))
                 case _ => None
               }
             )
@@ -303,10 +303,10 @@ package object config {
                   .build(),
               {
                 case bs: EqualJitterBackoffStrategy =>
-                  Some(
+                  Some((
                     bs.toBuilder.baseDelay.asScala,
                     bs.toBuilder.maxBackoffTime.asScala
-                  )
+                  ))
                 case _ => None
               }
             )
