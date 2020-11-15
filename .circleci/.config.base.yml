@@ -212,6 +212,19 @@ jobs:
           name: Release artifacts
           command: sbt -J-Xmx2500m -J-Xms2500m +publishSigned sonatypeBundleRelease
 
+  microsite:
+    docker:
+      - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.13.3
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ~/project
+      - <<: *load_cache
+      - <<: *configure_gpg
+      - run:
+          name: Generate microsite
+          command: sbt -J-Xmx2500m -J-Xms2500m generateArtifactList docs/publishMicrosite
+
 workflows:
   version: 2
   build:
@@ -281,6 +294,18 @@ workflows:
       - release:
           requires:
             - publish_sdk_projects
+          filters:
+            <<: *filter_tags
+            branches:
+              only:
+                - master
+
+      - microsite:
+          requires:
+            - tag
+            - tests_core_213
+            - tests_core_212
+            - tag
           filters:
             <<: *filter_tags
             branches:

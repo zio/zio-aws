@@ -287,7 +287,7 @@ package object netty {
             )
         )
 
-      (socketChannelOptions |@| nettyChannelOptions)(
+      (socketChannelOptions |@| channelOptions)(
         (opts1, opts2) => opts2.withSocketOptions(opts1),
         _ => None
       )

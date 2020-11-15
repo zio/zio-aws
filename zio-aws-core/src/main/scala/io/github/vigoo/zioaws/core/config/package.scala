@@ -446,7 +446,6 @@ package object config {
             )
           )
 
-        // NOTE: `or` and `and` to be reenabled once zio-config supports recursive data structures
         default <> none <> or <> and <> maxNumberOfRetries <> retryOn <> retryOnErrorCodes <> retryOnExceptions <> retryOnStatusCodes <> tokenBucket
       }
 

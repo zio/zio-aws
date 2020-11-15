@@ -1,9 +1,14 @@
 import com.jsuereth.sbtpgp.PgpKeys.{pgpPublicRing, pgpSecretRing}
+import microsites.ConfigYml
+import scala.xml.{Node => XmlNode, NodeSeq => XmlNodeSeq, _}
+import scala.xml.transform.{RewriteRule, RuleTransformer}
+
 enablePlugins(Common, ZioAwsCodegenPlugin, GitVersioning)
 
 ThisBuild / circleCiParallelJobs := 12
 ThisBuild / circleCiSource := file(".circleci/.config.base.yml")
 ThisBuild / circleCiTarget := file(".circleci/config.yml")
+ThisBuild / artifactListTarget := file("docs/docs/docs/artifacts.md")
 
 Global / pgpPublicRing := file("/tmp/public.asc")
 Global / pgpSecretRing := file("/tmp/secret.asc")
@@ -110,4 +115,63 @@ lazy val integtests = Project("integtests", file("integtests"))
     akkahttp,
     LocalProject("zio-aws-s3"),
     LocalProject("zio-aws-dynamodb")
+  )
+
+lazy val docs = project
+  .enablePlugins(GhpagesPlugin, MicrositesPlugin)
+  .settings(
+    publishArtifact := false,
+    skip in publish := true,
+    scalaVersion := scala213Version,
+    name := "zio-aws",
+    description := "Low-level AWS wrapper for ZIO for all AWS services",
+    git.remoteRepo := "git@github.com:vigoo/zio-aws.git",
+    micrositeUrl := "https://vigoo.github.io",
+    micrositeBaseUrl := "/zio-aws",
+    micrositeHomepage := "https://vigoo.github.io/zio-aws/",
+    micrositeDocumentationUrl := "/zio-aws/docs",
+    micrositeAuthor := "Daniel Vigovszky",
+    micrositeTwitterCreator := "@dvigovszky",
+    micrositeGithubOwner := "vigoo",
+    micrositeGithubRepo := "zio-aws",
+    micrositeGitterChannel := false,
+    micrositeDataDirectory := baseDirectory.value / "src/microsite/data",
+    micrositeStaticDirectory := baseDirectory.value / "src/microsite/static",
+    micrositeImgDirectory := baseDirectory.value / "src/microsite/img",
+    micrositeCssDirectory := baseDirectory.value / "src/microsite/styles",
+    micrositeSassDirectory := baseDirectory.value / "src/microsite/partials",
+    micrositeJsDirectory := baseDirectory.value / "src/microsite/scripts",
+    micrositeTheme := "light",
+    micrositeHighlightLanguages ++= Seq("scala", "sbt"),
+    micrositeConfigYaml := ConfigYml(
+      yamlCustomProperties = Map(
+        "url" -> "https://vigoo.github.io",
+        "plugins" -> List("jemoji", "jekyll-sitemap")
+      )
+    ),
+    micrositeAnalyticsToken := "UA-56320875-3",
+    includeFilter in makeSite := "*.html" | "*.css" | "*.png" | "*.jpg" | "*.gif" | "*.js" | "*.swf" | "*.txt" | "*.xml" | "*.svg",
+    // Temporary fix to avoid including mdoc in the published POM
+
+    // skip dependency elements with a scope
+    pomPostProcess := { (node: XmlNode) =>
+      new RuleTransformer(new RewriteRule {
+        override def transform(node: XmlNode): XmlNodeSeq = node match {
+          case e: Elem if e.label == "dependency" && e.child.exists(child => child.label == "artifactId" && child.text.startsWith("mdoc_")) =>
+            val organization = e.child.filter(_.label == "groupId").flatMap(_.text).mkString
+            val artifact = e.child.filter(_.label == "artifactId").flatMap(_.text).mkString
+            val version = e.child.filter(_.label == "version").flatMap(_.text).mkString
+            Comment(s"dependency $organization#$artifact;$version has been omitted")
+          case _ => node
+        }
+      }).transform(node).head
+    }
+  )
+  .dependsOn(
+    core,
+    http4s,
+    netty,
+    akkahttp,
+    LocalProject("zio-aws-elasticbeanstalk"),
+    LocalProject("zio-aws-ec2")
   )

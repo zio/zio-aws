@@ -30,6 +30,9 @@ package object generator {
       def generateCircleCiYaml(
           ids: Set[ModelId]
       ): ZIO[Console with Blocking, GeneratorFailure, Unit]
+      def generateArtifactList(
+          ids: Set[ModelId]
+      ): ZIO[Console with Blocking, GeneratorFailure, Unit]
     }
 
   }
@@ -37,7 +40,7 @@ package object generator {
   val live: ZLayer[Has[Parameters], Nothing, Generator] = ZLayer.fromService {
     cfg =>
       new Generator.Service with GeneratorBase with ServiceInterfaceGenerator
-      with ServiceModelGenerator with CircleCiYamlGenerator with HasConfig {
+      with ServiceModelGenerator with CircleCiYamlGenerator with ArtifactListGenerator with HasConfig {
         import scala.meta._
 
         val config: Parameters = cfg
@@ -118,6 +121,11 @@ package object generator {
               generateCircleCiYaml(ids, config.parallelCircleCiJobs, source)
             _ <- writeIfDifferent(config.circleCiTarget, result)
           } yield ()
+
+        override def generateArtifactList(ids: Set[ModelId]): ZIO[Console with Blocking, GeneratorFailure, Unit] =
+          for {
+            _ <- writeIfDifferent(config.artifactListTarget, generateArtifactList(ids, config.version))
+          } yield ()
       }
   }
 
@@ -131,4 +139,7 @@ package object generator {
       ids: Set[ModelId]
   ): ZIO[Generator with Console with Blocking, GeneratorFailure, Unit] =
     ZIO.accessM(_.get.generateCircleCiYaml(ids))
+
+  def generateArtifactList(ids: Set[ModelId]): ZIO[Generator with Console with Blocking, GeneratorFailure, Unit] =
+    ZIO.accessM(_.get.generateArtifactList(ids))
 }
