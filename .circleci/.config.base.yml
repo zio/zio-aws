@@ -223,7 +223,11 @@ jobs:
       - <<: *configure_gpg
       - run:
           name: Generate microsite
-          command: sbt -J-Xmx2500m -J-Xms2500m generateArtifactList docs/publishMicrosite
+          command: |
+            git config --global user.email "daniel.vigovszky@gmail.com"
+            git config --global user.name "Daniel Vigovszky"
+            git config --global push.default simple
+            sbt -J-Xmx2500m -J-Xms2500m generateArtifactList docs/publishMicrosite
 
 workflows:
   version: 2
