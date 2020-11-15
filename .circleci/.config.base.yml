@@ -1,4 +1,6 @@
 version: 2.1
+orbs:
+  ruby: circleci/ruby@1.1.2
 
 # Some reusable YAML definitions
 # TODO may need 2.12 cache and 2.13 cache
@@ -215,8 +217,16 @@ jobs:
   microsite:
     docker:
       - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.13.3
+    ruby:
+      version: 2.6.0
     steps:
       - checkout
+      - ruby/install:
+          version: '2.6'      
+      - run: gem install sass
+      - run: gem install jekyll -v 4.0.0
+      - run: gem install jemoji -v 0.11.1
+      - run: gem install jekyll-sitemap -v 1.4.0
       - attach_workspace:
           at: ~/project
       - <<: *load_cache
