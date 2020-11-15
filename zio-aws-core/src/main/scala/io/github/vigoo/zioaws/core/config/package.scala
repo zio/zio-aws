@@ -282,10 +282,12 @@ package object config {
                   .build(),
               {
                 case bs: FullJitterBackoffStrategy =>
-                  Some((
-                    bs.toBuilder.baseDelay.asScala,
-                    bs.toBuilder.maxBackoffTime.asScala
-                  ))
+                  Some(
+                    (
+                      bs.toBuilder.baseDelay.asScala,
+                      bs.toBuilder.maxBackoffTime.asScala
+                    )
+                  )
                 case _ => None
               }
             )
@@ -303,10 +305,12 @@ package object config {
                   .build(),
               {
                 case bs: EqualJitterBackoffStrategy =>
-                  Some((
-                    bs.toBuilder.baseDelay.asScala,
-                    bs.toBuilder.maxBackoffTime.asScala
-                  ))
+                  Some(
+                    (
+                      bs.toBuilder.baseDelay.asScala,
+                      bs.toBuilder.maxBackoffTime.asScala
+                    )
+                  )
                 case _ => None
               }
             )
@@ -350,17 +354,17 @@ package object config {
         )
         val or: ConfigDescriptor[RetryCondition] =
           nested("or")(
-            list(retryCondition)(
-              lst => OrRetryCondition.create(lst: _*),
-              _ => None // NOTE: Cannot extract conditions without reflection
-            )
+            list(retryCondition)
+          )(
+            lst => OrRetryCondition.create(lst: _*),
+            _ => None // NOTE: Cannot extract conditions without reflection
           )
         val and: ConfigDescriptor[RetryCondition] =
           nested("and")(
-            list(retryCondition)(
-              lst => AndRetryCondition.create(lst: _*),
-              _ => None // NOTE: Cannot extract conditions without reflection
-            )
+            list(retryCondition)
+          )(
+            lst => AndRetryCondition.create(lst: _*),
+            _ => None // NOTE: Cannot extract conditions without reflection
           )
 
         val maxNumberOfRetries: ConfigDescriptor[RetryCondition] =

@@ -29,8 +29,8 @@ specific configuration which is described [on the page about the HTTP engines](h
 import zio.config._
 import io.github.vigoo.zioaws.core.config.descriptors._
 
-//val docs = generateDocs(commonAwsConfig)
-// println(docs.toTable.asGithubFlavouredMarkdown) TODO: fix zio-config recursion support
+val docs = generateDocs(commonAwsConfig)
+println(docs.toTable.asGithubFlavouredMarkdown)
 ```
 
 ## Service layer

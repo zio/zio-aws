@@ -216,9 +216,7 @@ jobs:
 
   microsite:
     docker:
-      - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.13.3
-    ruby:
-      version: 2.6.0
+      - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.13.3    
     steps:
       - checkout
       - ruby/install:
