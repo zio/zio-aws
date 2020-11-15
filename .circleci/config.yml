@@ -214,7 +214,7 @@ jobs:
 
   microsite:
     docker:
-      - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.13.3    
+      - image: vigoo/scala-sbt-jekyll:11.0.8_1.4.1_2.13.3
     steps:
       - checkout
       - attach_workspace:
@@ -223,17 +223,7 @@ jobs:
       - <<: *configure_gpg
       - run:
           name: Generate microsite
-          command: |
-            gpg --keyserver hkp://pool.sks-keyservers.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
-            curl -sSL https://get.rvm.io | bash -s stable --ruby
-            source /usr/local/rvm/scripts/rvm
-            rvm install 2.6.0
-            rvm use 2.6.0
-            gem install sass
-            gem install jekyll -v 4.0.0
-            gem install jemoji -v 0.11.1
-            gem install jekyll-sitemap -v 1.4.0
-            sbt -J-Xmx2500m -J-Xms2500m generateArtifactList docs/publishMicrosite
+          command: sbt -J-Xmx2500m -J-Xms2500m generateArtifactList docs/publishMicrosite
 
 workflows:
   version: 2
