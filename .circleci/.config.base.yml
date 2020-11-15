@@ -1,6 +1,4 @@
 version: 2.1
-orbs:
-  ruby: circleci/ruby@1.1.2
 
 # Some reusable YAML definitions
 # TODO may need 2.12 cache and 2.13 cache
@@ -219,8 +217,11 @@ jobs:
       - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.13.3    
     steps:
       - checkout
-      - ruby/install:
-          version: '2.6'      
+      - run: gpg --keyserver hkp://pool.sks-keyservers.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
+      - run: curl -sSL https://get.rvm.io | bash -s stable --ruby
+      - run: source /usr/local/rvm/scripts/rvm
+      - run: rvm install 2.6.0
+      - run: rvm use 2.6.0
       - run: gem install sass
       - run: gem install jekyll -v 4.0.0
       - run: gem install jemoji -v 0.11.1
