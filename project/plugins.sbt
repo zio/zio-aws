@@ -1,6 +1,6 @@
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.9.4")
 addSbtPlugin("com.jsuereth" % "sbt-pgp" % "2.0.1")
-addSbtPlugin("io.shiftleft" % "sbt-ci-release-early" % "1.2.4")
+addSbtPlugin("io.shiftleft" % "sbt-ci-release-early" % "2.0.12")
 addSbtPlugin("com.47deg" % "sbt-microsites" % "1.2.1")
 addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.2.12")
 addSbtPlugin("com.typesafe.sbt" % "sbt-ghpages" % "0.6.3")
