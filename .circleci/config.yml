@@ -121,7 +121,7 @@ jobs:
     steps:
       - checkout
       - <<: *load_cache
-      - run: sbt -J-Xmx2200m -J-Xms2200m ++$SCALA_VERSION examples/compile integtests/test
+      - run: sbt -J-Xmx2350m -J-Xms2350m ++$SCALA_VERSION examples/compile integtests/test
       - <<: *save_test_results
       - store_test_results:
           path: test-reports
@@ -135,7 +135,7 @@ jobs:
     steps:
       - checkout
       - <<: *load_cache
-      - run: sbt -J-Xmx2200m -J-Xms2200m ++$SCALA_VERSION examples/compile integtests/test
+      - run: sbt -J-Xmx2350m -J-Xms2350m ++$SCALA_VERSION examples/compile integtests/test
       - <<: *save_test_results
       - store_test_results:
           path: test-reports
