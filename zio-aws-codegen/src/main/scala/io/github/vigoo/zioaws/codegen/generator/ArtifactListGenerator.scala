@@ -25,9 +25,12 @@ trait ArtifactListGenerator {
                     |```scala
                     |""".stripMargin
 
-    val clients = ids.toList.sortBy(_.moduleName).map { id =>
-      s""""io.github.vigoo" %% "zio-aws-${id.moduleName}" % "$version""""
-    }.mkString("\n")
+    val clients = ids.toList
+      .sortBy(_.moduleName)
+      .map { id =>
+        s""""io.github.vigoo" %% "zio-aws-${id.moduleName}" % "$version""""
+      }
+      .mkString("\n")
 
     val postfix = "\n```\n"
 
