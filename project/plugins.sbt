@@ -4,6 +4,7 @@ addSbtPlugin("io.shiftleft" % "sbt-ci-release-early" % "1.2.4")
 addSbtPlugin("com.47deg" % "sbt-microsites" % "1.2.1")
 addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.2.12")
 addSbtPlugin("com.typesafe.sbt" % "sbt-ghpages" % "0.6.3")
+addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.4.2")
 
 // Codegen project
 

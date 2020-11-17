@@ -262,13 +262,15 @@ trait AwsServiceBase[R, Self[_]] {
               )
             )
             .mapError(AwsError.fromThrowable) ? (serviceName / opName)
-        ).forkWithErrorHandler(error => signalQueue.offerAll(Seq(error, error)).unit)
+        ).forkWithErrorHandler(error =>
+          signalQueue.offerAll(Seq(error, error)).unit
+        )
 
-        failOnErrorSignal = signalQueue
-          .take
+        failOnErrorSignal = signalQueue.take
           .map(Left.apply[AwsError, Unit])
           .absolve
-        _ <- (responsePromise.await *> publisherPromise.await) raceFirst failOnErrorSignal
+        _ <-
+          (responsePromise.await *> publisherPromise.await) raceFirst failOnErrorSignal
         publisher <- publisherPromise.await
 
         stream =
@@ -351,13 +353,15 @@ trait AwsServiceBase[R, Self[_]] {
               )
             )
             .mapError(AwsError.fromThrowable) ? (serviceName / opName)
-        ).forkWithErrorHandler(error => signalQueue.offerAll(Seq(error, error)).unit)
+        ).forkWithErrorHandler(error =>
+          signalQueue.offerAll(Seq(error, error)).unit
+        )
 
-        failOnErrorSignal = signalQueue
-          .take
+        failOnErrorSignal = signalQueue.take
           .map(Left.apply[AwsError, Unit])
           .absolve
-        _ <- (responsePromise.await *> outPublisherPromise.await) raceFirst failOnErrorSignal
+        _ <-
+          (responsePromise.await *> outPublisherPromise.await) raceFirst failOnErrorSignal
         outPublisher <- outPublisherPromise.await
 
         stream =
