@@ -21,9 +21,10 @@ object ZEventStreamResponseHandler {
         runtime.unsafeRun(promise.succeed(publisher))
 
       override def exceptionOccurred(throwable: Throwable): Unit =
-        runtime.unsafeRun(
-          signalQueue.offer(AwsError.fromThrowable(throwable))
-        )
+        runtime.unsafeRun {
+          val error = AwsError.fromThrowable(throwable)
+          signalQueue.offerAll(Seq(error, error))
+        }
 
       override def complete(): Unit = {
         // We cannot signal termination here because the publisher stream may still have buffered items.
