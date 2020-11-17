@@ -145,7 +145,9 @@ object SimulatedPublisher {
               for (_ <- 0 until toEmit) {
                 val i = idx.getAndIncrement()
 
-                Thread.sleep(100) // slow publishing to enable verification of emitting errors in parallel to the publisher
+                Thread.sleep(
+                  100
+                ) // slow publishing to enable verification of emitting errors in parallel to the publisher
                 wrapped.onNext(convert(in(i)))
 
               }
