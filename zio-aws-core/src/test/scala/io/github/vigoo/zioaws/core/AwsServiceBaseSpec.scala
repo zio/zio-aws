@@ -19,8 +19,10 @@ import software.amazon.awssdk.core.async.{
   AsyncResponseTransformer
 }
 import zio._
+import zio.duration._
 import zio.stream.ZStream
 import zio.test.Assertion._
+import zio.test.TestAspect.{nonFlaky, timeout}
 import zio.test._
 import zio.test.environment.TestEnvironment
 
@@ -371,6 +373,23 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
             ).map(_.mkString)
           )(equalTo("hello"))
         },
+        testM("future may not be completed at all") {
+          /*
+            Not all SDK methods complete on success via the completion stage, for example kinesis subscribeToShard, for
+            which the publisherPromise completes first.
+           */
+
+          import SimulatedEventStreamResponseHandlerReceiver._
+          assertM(
+            runAsyncRequestEventOutputStream(
+              handlerSteps = List(
+                EventStream,
+                ResponseReceived,
+                CompleteFuture
+              )
+            ).map(_.mkString)
+          )(equalTo("hello"))
+        },
         testM("exception before stream") {
           import SimulatedEventStreamResponseHandlerReceiver._
           assertM(
@@ -405,6 +424,18 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
                 FailFuture(SimulatedException),
                 ResponseReceived,
                 EventStream
+              )
+            ).run
+          )(isAwsFailure)
+        },
+        testM("failed future after stream") {
+          import SimulatedEventStreamResponseHandlerReceiver._
+          assertM(
+            runAsyncRequestEventOutputStream(
+              handlerSteps = List(
+                ResponseReceived,
+                EventStream,
+                FailFuture(SimulatedException)
               )
             ).run
           )(isAwsFailure)
@@ -508,13 +539,43 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
             ).map(_.mkString)
           )(equalTo("helloworld"))
         },
+        testM("future may not be completed at all") {
+          /*
+            Not all SDK methods complete on success via the completion stage, for example kinesis subscribeToShard, for
+            which the publisherPromise completes first.
+           */
+
+          import SimulatedEventStreamResponseHandlerReceiver._
+          assertM(
+            runAsyncRequestEventInputOutputStream(
+              handlerSteps = List(
+                EventStream,
+                ResponseReceived
+              )
+            ).map(_.mkString)
+          )(equalTo("helloworld"))
+        },
         testM("exception before stream") {
           import SimulatedEventStreamResponseHandlerReceiver._
           assertM(
             runAsyncRequestEventInputOutputStream(
               handlerSteps = List(
+                ResponseReceived,
                 ReportException(SimulatedException),
                 EventStream,
+                CompleteFuture
+              )
+            ).run
+          )(isAwsFailure)
+        },
+        testM("exception after stream") {
+          import SimulatedEventStreamResponseHandlerReceiver._
+          assertM(
+            runAsyncRequestEventInputOutputStream(
+              handlerSteps = List(
+                ResponseReceived,
+                EventStream,
+                ReportException(SimulatedException),
                 CompleteFuture
               )
             ).run
@@ -528,6 +589,18 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
                 FailFuture(SimulatedException),
                 ResponseReceived,
                 EventStream
+              )
+            ).run
+          )(isAwsFailure)
+        },
+        testM("failed future after stream") {
+          import SimulatedEventStreamResponseHandlerReceiver._
+          assertM(
+            runAsyncRequestEventInputOutputStream(
+              handlerSteps = List(
+                ResponseReceived,
+                EventStream,
+                FailFuture(SimulatedException)
               )
             ).run
           )(isAwsFailure)
@@ -586,7 +659,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
           )(equalTo(""))
         )
       )
-    )
+    ) @@ nonFlaky(25)
 
   private def runAsyncRequestInputOutputRequest(
       failureSpec: SimulatedAsyncResponseTransformer.FailureSpec =

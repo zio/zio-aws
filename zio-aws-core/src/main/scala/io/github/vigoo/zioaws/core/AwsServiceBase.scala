@@ -246,7 +246,7 @@ trait AwsServiceBase[R, Self[_]] {
         responsePromise <- Promise.make[AwsError, Response]
         signalQueue <- ZQueue.bounded[AwsError](16)
 
-        subscribe = aspect(
+        _ <- aspect(
           ZIO
             .fromCompletionStage(
               impl(
@@ -262,17 +262,15 @@ trait AwsServiceBase[R, Self[_]] {
               )
             )
             .mapError(AwsError.fromThrowable) ? (serviceName / opName)
-        ).unwrap
-        /*
-        Not all SDK methods complete on success via the completion stage, for example kinesis subscribeToShard, for
-        which the publisherPromise completes first. Subscribe can complete with failures. Just to be sure, we
-        await several effects for the first success or failure.
-         */
-        _ <- subscribe raceFirst
-          responsePromise.await raceFirst
-          signalQueue.take.flip raceFirst
-          publisherPromise.await
+        ).forkWithErrorHandler(error => signalQueue.offerAll(Seq(error, error)).unit)
+
+        failOnErrorSignal = signalQueue
+          .take
+          .map(Left.apply[AwsError, Unit])
+          .absolve
+        _ <- (responsePromise.await *> publisherPromise.await) raceFirst failOnErrorSignal
         publisher <- publisherPromise.await
+
         stream =
           publisher
             .toStream()
@@ -336,7 +334,7 @@ trait AwsServiceBase[R, Self[_]] {
         responsePromise <- Promise.make[AwsError, Response]
         signalQueue <- ZQueue.bounded[AwsError](16)
 
-        subscribe = aspect(
+        _ <- aspect(
           ZIO
             .fromCompletionStage(
               impl(
@@ -353,19 +351,15 @@ trait AwsServiceBase[R, Self[_]] {
               )
             )
             .mapError(AwsError.fromThrowable) ? (serviceName / opName)
-        ).unwrap
+        ).forkWithErrorHandler(error => signalQueue.offerAll(Seq(error, error)).unit)
 
-        /*
-       Not all SDK methods complete on success via the completion stage, for example kinesis subscribeToShard, for
-       which the publisherPromise completes first. Subscribe can complete with failures. Just to be sure, we
-       await several effects for the first success or failure.
-         */
-        _ <- subscribe raceFirst
-          responsePromise.await raceFirst
-          signalQueue.take.flip raceFirst
-          outPublisherPromise.await
-
+        failOnErrorSignal = signalQueue
+          .take
+          .map(Left.apply[AwsError, Unit])
+          .absolve
+        _ <- (responsePromise.await *> outPublisherPromise.await) raceFirst failOnErrorSignal
         outPublisher <- outPublisherPromise.await
+
         stream =
           outPublisher
             .toStream()
