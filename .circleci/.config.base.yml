@@ -215,6 +215,8 @@ jobs:
   microsite:
     docker:
       - image: vigoo/scala-sbt-jekyll:11.0.8_1.4.1_2.13.3
+    environment:
+      SBT_GHPAGES_COMMIT_MESSAGE: '[ci skip] updated site'
     steps:
       - checkout
       - attach_workspace:
