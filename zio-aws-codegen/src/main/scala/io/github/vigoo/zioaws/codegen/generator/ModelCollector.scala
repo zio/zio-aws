@@ -279,7 +279,7 @@ object ModelCollector {
       case None                   => shapeName
     }
 
-    val className = namingStrategy.getJavaClassName(finalName)
+    val className = namingStrategy.getShapeClassName(finalName)
     Model(className, className, finalType(models, shape), shape, shapeName)
   }
 
