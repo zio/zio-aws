@@ -18,6 +18,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
     )
     val circleCiParallelJobs =
       settingKey[Int]("Number of parallel jobs in the generated circleCi file")
+    val circleCiSeparateJobs = settingKey[Seq[String]]("List of subprojects to have their individual circleCi jobs")
     val circleCiSource = settingKey[File]("circleCi source file")
     val circleCiTarget = settingKey[File]("circleCi target file")
     val artifactListTarget =
@@ -42,6 +43,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
         val circleCiSrc = circleCiSource.value
         val circleCiDst = circleCiTarget.value
         val parallelJobs = circleCiParallelJobs.value
+        val separateJobs = circleCiSeparateJobs.value
         val artifactLstTarget = artifactListTarget.value
         val ver = version.value
 
@@ -50,6 +52,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
           circleCiSource = Path.fromJava(circleCiSrc.toPath),
           circleCiTarget = Path.fromJava(circleCiDst.toPath),
           parallelCircleCiJobs = parallelJobs,
+          separateCircleCiJobs = separateJobs.toSet,
           artifactListTarget = Path.fromJava(artifactLstTarget.toPath),
           version = ver
         )
@@ -106,6 +109,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
     val circleCiSrc = circleCiSource.value
     val circleCiDst = circleCiTarget.value
     val parallelJobs = circleCiParallelJobs.value
+    val separateJobs = circleCiSeparateJobs.value
     val artifactLstTarget = artifactListTarget.value
     val ver = version.value
 
@@ -114,6 +118,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
       circleCiSource = Path.fromJava(circleCiSrc.toPath),
       circleCiTarget = Path.fromJava(circleCiDst.toPath),
       parallelCircleCiJobs = parallelJobs,
+      separateCircleCiJobs = separateJobs.toSet,
       artifactListTarget = Path.fromJava(artifactLstTarget.toPath),
       version = ver
     )
@@ -141,6 +146,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
     val circleCiSrc = circleCiSource.value
     val circleCiDst = circleCiTarget.value
     val parallelJobs = circleCiParallelJobs.value
+    val separateJobs = circleCiSeparateJobs.value
     val artifactLstTarget = artifactListTarget.value
     val ver = version.value
 
@@ -149,6 +155,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
       circleCiSource = Path.fromJava(circleCiSrc.toPath),
       circleCiTarget = Path.fromJava(circleCiDst.toPath),
       parallelCircleCiJobs = parallelJobs,
+      separateCircleCiJobs = separateJobs.toSet,
       artifactListTarget = Path.fromJava(artifactLstTarget.toPath),
       version = ver
     )

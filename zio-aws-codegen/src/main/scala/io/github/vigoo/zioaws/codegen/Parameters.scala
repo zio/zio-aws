@@ -7,6 +7,7 @@ case class Parameters(
     circleCiSource: Path,
     circleCiTarget: Path,
     parallelCircleCiJobs: Int,
+    separateCircleCiJobs: Set[String],
     artifactListTarget: Path,
     version: String
 )

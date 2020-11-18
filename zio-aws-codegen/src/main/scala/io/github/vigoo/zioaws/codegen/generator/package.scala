@@ -119,7 +119,7 @@ package object generator {
                   bytes => new String(bytes.toArray, StandardCharsets.UTF_8)
                 )
             result =
-              generateCircleCiYaml(ids, config.parallelCircleCiJobs, source)
+              generateCircleCiYaml(ids, config.parallelCircleCiJobs, config.separateCircleCiJobs, source)
             _ <- writeIfDifferent(config.circleCiTarget, result)
           } yield ()
 

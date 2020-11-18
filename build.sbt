@@ -6,6 +6,8 @@ import scala.xml.transform.{RewriteRule, RuleTransformer}
 enablePlugins(Common, ZioAwsCodegenPlugin, GitVersioning)
 
 ThisBuild / circleCiParallelJobs := 14
+ThisBuild / circleCiSeparateJobs := Seq("zio-aws-ec2")
+
 ThisBuild / circleCiSource := file(".circleci/.config.base.yml")
 ThisBuild / circleCiTarget := file(".circleci/config.yml")
 ThisBuild / artifactListTarget := file("docs/docs/docs/artifacts.md")
