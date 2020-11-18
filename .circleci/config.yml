@@ -73,10 +73,14 @@ save_test_results: &save_test_results
 configure_gpg: &configure_gpg
   - run:
       command: |
+        mkdir -p $HOME/bin
+        sudo apt-get update && sudo apt-get -y install gnupg2
         echo -n "${PGP_SECRET}" | base64 -d | gpg --import --no-tty --batch --passphrase "$PGP_PASSPHRASE" --pinentry-mode loopback
         echo pinentry-mode loopback >> ~/.gnupg/gpg.conf
         echo allow-loopback-pinentry >> ~/.gnupg/gpg-agent.conf
         chmod 600 ~/.gnupg/*
+        $HOME/bin/gpg --version
+        ln -s /usr/bin/gpg2 $HOME/bin/gpg
         echo RELOADAGENT | gpg-connect-agent
 
 localstack: &localstack
@@ -230,7 +234,7 @@ jobs:
       - <<: *load_cache
       - <<: *install_jdk
       - <<: *configure_gpg
-      - run: ./sbt ++$SCALA_VERSION << parameters.commands >>
+      - run: PATH=$HOME/bin:$PATH ./sbt ++$SCALA_VERSION << parameters.commands >>
       - persist_to_workspace:
           root: .
           paths:
@@ -251,7 +255,7 @@ jobs:
       - <<: *configure_gpg
       - run:
           name: Release artifacts
-          command: ./sbt +publishSigned sonatypeBundleRelease
+          command: PATH=$HOME/bin:$PATH ./sbt +publishSigned sonatypeBundleRelease
 
   microsite:
     docker:
