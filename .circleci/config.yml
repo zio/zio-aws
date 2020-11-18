@@ -3,7 +3,7 @@ version: 2.1
 # Some reusable YAML definitions
 save_cache: &save_cache
   - save_cache:
-      key: sbt-cache-{{ .Environment.SCALA_VERSION }}
+      key: sbt-cache
       paths:
         - "~/.ivy2/cache"
         - "~/.sbt"
@@ -13,7 +13,7 @@ save_cache: &save_cache
 
 load_cache: &load_cache
   - restore_cache:
-      key: sbt-cache-{{ .Environment.SCALA_VERSION }}
+      key: sbt-cache
 
 scala_212: &scala_212
   SCALA_VERSION: 2.12.12
@@ -61,6 +61,7 @@ filter_tags: &filter_tags
 
 java_opts: &java_opts
   JAVA_OPTS: -Dfile.encoding=UTF8 -Xss16M -XX:+UseParallelGC -XX:ReservedCodeCacheSize=512M
+  SBT_OPTS: -J-Xmx4g -J-Xms4g
 
 save_test_results: &save_test_results
   - run:
@@ -105,7 +106,7 @@ jobs:
           at: ~/project
       - <<: *load_cache
       - <<: *install_jdk
-      - run: ./sbt -J-Xmx4g -J-Xms4g ++$SCALA_VERSION zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
+      - run: ./sbt ++$SCALA_VERSION zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
       - <<: *save_cache
       - <<: *save_test_results
       - store_test_results:
@@ -130,7 +131,7 @@ jobs:
           at: ~/project
       - <<: *load_cache
       - <<: *install_jdk
-      - run: ./sbt -J-Xmx4g -J-Xms4g ++$SCALA_VERSION zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
+      - run: ./sbt ++$SCALA_VERSION zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
       - <<: *save_cache
       - <<: *save_test_results
       - store_test_results:
@@ -184,7 +185,7 @@ jobs:
       - checkout
       - <<: *load_cache
       - <<: *install_jdk
-      - run: ./sbt -J-Xmx4g -J-Xms4g tagAwsVersion ciReleaseTagNextVersion
+      - run: ./sbt tagAwsVersion ciReleaseTagNextVersion
 
   compile_sdk_projects:
     parameters:
@@ -205,7 +206,7 @@ jobs:
           at: ~/project
       - <<: *load_cache
       - <<: *install_jdk
-      - run: ./sbt -J-Xmx4g -J-Xms4g ++$SCALA_VERSION << parameters.commands >>
+      - run: ./sbt ++$SCALA_VERSION << parameters.commands >>
       # Does not persist to workspace here because of cross-building, both jobs would persist target/streams
       # So we have to rebuild for `publish_sdk_projects` upon release
 
@@ -229,7 +230,7 @@ jobs:
       - <<: *load_cache
       - <<: *install_jdk
       - <<: *configure_gpg
-      - run: ./sbt -J-Xmx4g -J-Xms4g ++$SCALA_VERSION << parameters.commands >>
+      - run: ./sbt ++$SCALA_VERSION << parameters.commands >>
       - persist_to_workspace:
           root: .
           paths:
@@ -240,6 +241,7 @@ jobs:
     <<: *machine_ubuntu
     environment:
       - <<: *jdk_11
+      - <<: *java_opts
     steps:
       - checkout
       - attach_workspace:
@@ -249,7 +251,7 @@ jobs:
       - <<: *configure_gpg
       - run:
           name: Release artifacts
-          command: ./sbt -J-Xmx4g -J-Xms4g +publishSigned sonatypeBundleRelease
+          command: ./sbt +publishSigned sonatypeBundleRelease
 
   microsite:
     docker:
