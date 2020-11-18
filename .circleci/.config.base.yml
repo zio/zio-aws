@@ -169,7 +169,7 @@ jobs:
       - attach_workspace:
           at: ~/project
       - <<: *load_cache
-      - run: sbt -J-Xmx2500m -J-Xms2500m ++$SCALA_VERSION << parameters.commands >>
+      - run: sbt -J-Xmx2750m -J-Xms2750m ++$SCALA_VERSION << parameters.commands >>
       # Does not persist to workspace here because of cross-building, both jobs would persist target/streams
       # So we have to rebuild for `publish_sdk_projects` upon release
 
