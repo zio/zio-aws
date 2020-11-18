@@ -28,12 +28,40 @@ jdk_8: &jdk_8
 jdk_11: &jdk_11
   JDK_VERSION: 11
 
+machine_ubuntu: &machine_ubuntu
+  machine:
+    image: ubuntu-1604:201903-01
+
+install_jdk: &install_jdk
+  - run:
+      name: Install JDK
+      command: |
+        while $(ps aux | grep -i ' apt ' | grep -v grep > /dev/null); do sleep 1; done # Wait for apt to be ready
+        sudo rm /etc/apt/sources.list.d/*
+        sudo tee /etc/apt/sources.list > /dev/null \<< 'EOF'
+        deb http://mirror.math.princeton.edu/pub/ubuntu/ xenial main universe
+        deb http://mirror.math.princeton.edu/pub/ubuntu/ xenial-updates main universe
+        deb http://mirror.math.princeton.edu/pub/ubuntu/ xenial-backports main universe
+        deb http://mirror.math.princeton.edu/pub/ubuntu/ xenial-security main restricted universe
+        EOF
+        if [ $JDK_VERSION == 11 ]; then
+          wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | sudo apt-key add -
+          sudo add-apt-repository https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/ -y
+        fi
+        sudo apt update
+        if [ $JDK_VERSION == 11 ]; then
+          sudo apt install -y adoptopenjdk-11-hotspot
+        elif [ $JDK_VERSION == 8 ]; then
+          sudo apt install -y openjdk-8-jdk
+        fi
+        java -version
+
 filter_tags: &filter_tags
   tags:
     only: /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
 
 java_opts: &java_opts
-  JAVA_OPTS: -Xmx2500m -Xms2500m -Dfile.encoding=UTF8 -Xss16M -XX:+UseParallelGC -XX:ReservedCodeCacheSize=512M
+  JAVA_OPTS: -Dfile.encoding=UTF8 -Xss16M -XX:+UseParallelGC -XX:ReservedCodeCacheSize=512M
 
 save_test_results: &save_test_results
   - run:
@@ -159,17 +187,18 @@ jobs:
       scala_version:
         description: Scala version
         type: string
-    docker:
-      - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.13.3
+    <<: *machine_ubuntu
     environment:
       - SCALA_VERSION: << parameters.scala_version >>
+      - <<: *jdk_11
       - <<: *java_opts
     steps:
       - checkout
       - attach_workspace:
           at: ~/project
       - <<: *load_cache
-      - run: sbt -J-Xmx2750m -J-Xms2750m ++$SCALA_VERSION << parameters.commands >>
+      - <<: *install_jdk
+      - run: ./sbt -J-Xmx4g -J-Xms4g ++$SCALA_VERSION << parameters.commands >>
       # Does not persist to workspace here because of cross-building, both jobs would persist target/streams
       # So we have to rebuild for `publish_sdk_projects` upon release
 
@@ -181,18 +210,19 @@ jobs:
       scala_version:
         description: Scala version
         type: string
-    docker:
-      - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.13.3
+    <<: *machine_ubuntu
     environment:
       - SCALA_VERSION: << parameters.scala_version >>
+      - <<: *jdk_11
       - <<: *java_opts
     steps:
       - checkout
       - attach_workspace:
           at: ~/project
       - <<: *load_cache
+      - <<: *install_jdk
       - <<: *configure_gpg
-      - run: sbt -J-Xmx2500m -J-Xms2500m ++$SCALA_VERSION << parameters.commands >>
+      - run: ./sbt -J-Xmx4g -J-Xms4g ++$SCALA_VERSION << parameters.commands >>
       - persist_to_workspace:
           root: .
           paths:
@@ -200,17 +230,19 @@ jobs:
 
   # Publish the non-generated modules and then upload them + the generated ones to Sonatype
   release:
-    docker:
-      - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.13.3
+    <<: *machine_ubuntu
+    environment:
+      - <<: *jdk_11
     steps:
       - checkout
       - attach_workspace:
           at: ~/project
       - <<: *load_cache
+      - <<: *install_jdk
       - <<: *configure_gpg
       - run:
           name: Release artifacts
-          command: sbt -J-Xmx2500m -J-Xms2500m +publishSigned sonatypeBundleRelease
+          command: ./sbt -J-Xmx4g -J-Xms4g +publishSigned sonatypeBundleRelease
 
   microsite:
     docker:
