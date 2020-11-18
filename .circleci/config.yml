@@ -75,7 +75,7 @@ configure_gpg: &configure_gpg
       command: |
         mkdir -p $HOME/bin
         sudo apt-get update && sudo apt-get -y install gnupg2
-        echo -n "${PGP_SECRET}" | base64 -d | gpg --import --no-tty --batch --passphrase "$PGP_PASSPHRASE" --pinentry-mode loopback
+        echo -n "${PGP_SECRET}" | base64 -d | gpg2 --import --no-tty --batch --passphrase "$PGP_PASSPHRASE" --pinentry-mode loopback
         echo pinentry-mode loopback >> ~/.gnupg/gpg.conf
         echo allow-loopback-pinentry >> ~/.gnupg/gpg-agent.conf
         chmod 600 ~/.gnupg/*
