@@ -3,7 +3,7 @@ version: 2.1
 # Some reusable YAML definitions
 save_cache: &save_cache
   - save_cache:
-      key: sbt-cache
+      key: sbt-cache-3
       paths:
         - "~/.ivy2/cache"
         - "~/.sbt"
@@ -13,7 +13,7 @@ save_cache: &save_cache
 
 load_cache: &load_cache
   - restore_cache:
-      key: sbt-cache
+      key: sbt-cache-3
 
 scala_212: &scala_212
   SCALA_VERSION: 2.12.12
