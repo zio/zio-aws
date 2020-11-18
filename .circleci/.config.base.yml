@@ -1,10 +1,9 @@
 version: 2.1
 
 # Some reusable YAML definitions
-# TODO may need 2.12 cache and 2.13 cache
 save_cache: &save_cache
   - save_cache:
-      key: sbt-cache-{{ checksum "build.sbt" }}-{{ checksum "project/build.properties" }}-{{ checksum "project/plugins.sbt" }}-2
+      key: sbt-cache-{{ .Environment.SCALA_VERSION }}
       paths:
         - "~/.ivy2/cache"
         - "~/.sbt"
@@ -14,7 +13,7 @@ save_cache: &save_cache
 
 load_cache: &load_cache
   - restore_cache:
-      key: sbt-cache-{{ checksum "build.sbt" }}-{{ checksum "project/build.properties" }}-{{ checksum "project/plugins.sbt" }}-2
+      key: sbt-cache-{{ .Environment.SCALA_VERSION }}
 
 scala_212: &scala_212
   SCALA_VERSION: 2.12.12
@@ -95,16 +94,18 @@ localstack: &localstack
 
 jobs:
   tests_core_213:
-    docker:
-      - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.13.3
+    <<: *machine_ubuntu
     environment:
+      - <<: *scala_213
       - <<: *java_opts
+      - <<: *jdk_11
     steps:
       - checkout
       - attach_workspace:
           at: ~/project
       - <<: *load_cache
-      - run: sbt -J-Xmx2500m -J-Xms2500m ++$SCALA_VERSION zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
+      - <<: *install_jdk
+      - run: ./sbt -J-Xmx4g -J-Xms4g ++$SCALA_VERSION zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
       - <<: *save_cache
       - <<: *save_test_results
       - store_test_results:
@@ -118,16 +119,18 @@ jobs:
             - generated
 
   tests_core_212:
-    docker:
-      - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.12.12
+    <<: *machine_ubuntu
     environment:
       - <<: *scala_212
+      - <<: *java_opts
+      - <<: *jdk_11
     steps:
       - checkout
       - attach_workspace:
           at: ~/project
       - <<: *load_cache
-      - run: sbt -J-Xmx2500m -J-Xms2500m ++$SCALA_VERSION zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
+      - <<: *install_jdk
+      - run: ./sbt -J-Xmx4g -J-Xms4g ++$SCALA_VERSION zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
       - <<: *save_cache
       - <<: *save_test_results
       - store_test_results:
@@ -162,22 +165,26 @@ jobs:
       - <<: *scala_212
     steps:
       - checkout
-      - <<: *load_cache
+      # Cannot load cache as we create it for the machine executor
       - run: sbt -J-Xmx2350m -J-Xms2350m ++$SCALA_VERSION examples/compile integtests/test
       - <<: *save_test_results
       - store_test_results:
           path: test-reports
 
   tag:
-    docker:
-      - image: hseeberger/scala-sbt:11.0.8_1.4.1_2.12.12
+    <<: *machine_ubuntu
+    environment:
+      - <<: *jdk_11
+      - <<: *java_opts
+      - <<: *scala_213
     steps:
       - add_ssh_keys:
           fingerprints:
             - $SSH_FINGERPRINT
       - checkout
       - <<: *load_cache
-      - run: sbt -J-Xmx2500m -J-Xms2500m tagAwsVersion ciReleaseTagNextVersion
+      - <<: *install_jdk
+      - run: ./sbt -J-Xmx4g -J-Xms4g tagAwsVersion ciReleaseTagNextVersion
 
   compile_sdk_projects:
     parameters:
@@ -262,7 +269,6 @@ jobs:
             git config --global user.name "Daniel Vigovszky"
             git config --global push.default simple
             sbt -J-Xmx2500m -J-Xms2500m generateArtifactList docs/publishMicrosite
-
 workflows:
   version: 2
   build:
