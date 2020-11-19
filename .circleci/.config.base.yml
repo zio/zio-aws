@@ -83,6 +83,15 @@ configure_gpg: &configure_gpg
         echo RELOADAGENT | gpg-connect-agent
         echo -n "${PGP_SECRET}" | base64 -d | gpg2 --import --no-tty --batch --passphrase "$PGP_PASSPHRASE" --pinentry-mode loopback
 
+configure_gpg_docker: &configure_gpg_docker
+  - run:
+      command: |
+        echo -n "${PGP_SECRET}" | base64 -d | gpg --import --no-tty --batch --passphrase "$PGP_PASSPHRASE" --pinentry-mode loopback
+        echo pinentry-mode loopback >> ~/.gnupg/gpg.conf
+        echo allow-loopback-pinentry >> ~/.gnupg/gpg-agent.conf
+        chmod 600 ~/.gnupg/*
+        echo RELOADAGENT | gpg-connect-agent
+
 localstack: &localstack
   - image: localstack/localstack
     environment:
@@ -267,7 +276,7 @@ jobs:
       - attach_workspace:
           at: ~/project
       - <<: *load_cache
-      - <<: *configure_gpg
+      - <<: *configure_gpg_docker
       - run:
           name: Generate microsite
           command: |
