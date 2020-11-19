@@ -218,7 +218,8 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
               val base = (sourceManaged in Compile).value
               val files = (managedSources in Compile).value
               files.map { f => (f, f.relativeTo(base).get.getPath) }
-            }
+            },
+            sources in (Compile, doc) := Seq.empty
           )
           .dependsOn(deps: _*)
 
