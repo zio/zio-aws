@@ -61,7 +61,7 @@ filter_tags: &filter_tags
 
 java_opts: &java_opts
   JAVA_OPTS: -Dfile.encoding=UTF8 -Xss16M -XX:+UseParallelGC -XX:ReservedCodeCacheSize=512M
-  SBT_OPTS: -J-Xmx6g -J-Xms6g
+  SBT_OPTS: -J-Xmx7g -J-Xms7g
 
 save_test_results: &save_test_results
   - run:
