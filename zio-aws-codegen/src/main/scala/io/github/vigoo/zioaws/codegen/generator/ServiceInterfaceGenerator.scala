@@ -766,10 +766,14 @@ trait ServiceInterfaceGenerator {
         serviceMethods.flatMap(_.methods.map(_.implementation))
       serviceAccessors = serviceMethods.flatMap(_.methods.map(_.accessor))
 
+      supportsHttp2 = id.name == "kinesis" || id.name == "transcribestreaming"
+      supportsHttp2Lit = Lit.Boolean(supportsHttp2)
+
       imports = List(
         Some(q"""import io.github.vigoo.zioaws.core._"""),
         Some(q"""import io.github.vigoo.zioaws.core.aspects._"""),
         Some(q"""import io.github.vigoo.zioaws.core.config.AwsConfig"""),
+        Some(q"""import io.github.vigoo.zioaws.core.httpclient.ServiceHttpCapabilities"""),
         if (usesJavaSdkPaginators)
           Some(
             Import(List(Importer(paginatorPackage, List(Importee.Wildcard()))))
@@ -831,7 +835,7 @@ trait ServiceInterfaceGenerator {
             for {
               awsConfig <- ZManaged.service[AwsConfig.Service]
               b0 <- awsConfig.configure[$clientInterface, $clientInterfaceBuilder]($clientInterfaceSingleton.builder()).toManaged_
-              b1 <- awsConfig.configureHttpClient[$clientInterface, $clientInterfaceBuilder](b0).toManaged_
+              b1 <- awsConfig.configureHttpClient[$clientInterface, $clientInterfaceBuilder](b0, ServiceHttpCapabilities(supportsHttp2 = $supportsHttp2Lit)).toManaged_
               client <- ZIO(customization(b1).build()).toManaged_
             } yield new $serviceImplT(client, AwsCallAspect.identity, ().asInstanceOf[Any])
 

@@ -1,11 +1,17 @@
 package io.github.vigoo.zioaws
 
 import io.github.vigoo.zioaws.core.BuilderHelper
-import io.github.vigoo.zioaws.core.httpclient.{ChannelOptions, HttpClient}
+import io.github.vigoo.zioaws.core.httpclient.{
+  ChannelOptions,
+  HttpClient,
+  Protocol,
+  fromManagedPerProtocol,
+  fromManagedPerProtocolManaged
+}
 import io.netty.channel.ChannelOption
 import io.netty.handler.ssl.SslProvider
 import software.amazon.awssdk.http.{
-  Protocol,
+  Protocol => AwsProtocol,
   SdkHttpConfigurationOption,
   TlsKeyManagersProvider,
   TlsTrustManagersProvider
@@ -24,27 +30,36 @@ import zio.{ZIO, ZLayer, ZManaged}
 import scala.jdk.CollectionConverters._
 
 package object netty {
-  val default: ZLayer[Any, Throwable, HttpClient] = customized(identity)
+  val default: ZLayer[Any, Throwable, HttpClient] =
+    customized(Protocol.Http11, identity)
+
+  val dual: ZLayer[Any, Throwable, HttpClient] =
+    customized(Protocol.Dual, identity)
 
   def customized(
+      protocol: Protocol,
       customization: NettyNioAsyncHttpClient.Builder => NettyNioAsyncHttpClient.Builder =
         identity
   ): ZLayer[Any, Throwable, HttpClient] = {
-    ZManaged
-      .fromAutoCloseable(
-        ZIO.effect(
-          customization(
-            NettyNioAsyncHttpClient
-              .builder()
-          ).build()
+    def create(
+        awsProtocol: AwsProtocol
+    ): ZManaged[Any, Throwable, SdkAsyncHttpClient] =
+      ZManaged
+        .fromAutoCloseable(
+          ZIO.effect(
+            customization(
+              NettyNioAsyncHttpClient
+                .builder()
+            )
+              .protocol(awsProtocol)
+              .build()
+          )
         )
-      )
-      .map { nettyClient =>
-        new HttpClient.Service {
-          override val client: SdkAsyncHttpClient = nettyClient
-        }
-      }
-      .toLayer
+
+    fromManagedPerProtocol(
+      create(AwsProtocol.HTTP1_1),
+      create(AwsProtocol.HTTP2)
+    )(protocol)
   }
 
   sealed trait HttpOrHttps {
@@ -108,67 +123,81 @@ package object netty {
       tlsKeyManagersProvider: Option[TlsKeyManagersProvider] = None,
       tlsTrustManagersProvider: Option[TlsTrustManagersProvider] = None
   ): ZLayer[ZConfig[NettyClientConfig], Throwable, HttpClient] = {
-    ZLayer.fromServiceManaged { config =>
+    def create(
+        awsProtocol: AwsProtocol
+    ): ZManaged[ZConfig[NettyClientConfig], Throwable, SdkAsyncHttpClient] =
       ZManaged
-        .fromAutoCloseable(ZIO.effect {
-          val builderHelper: BuilderHelper[NettyNioAsyncHttpClient] =
-            BuilderHelper.apply
-          import builderHelper._
+        .fromAutoCloseable(ZIO.service[NettyClientConfig].flatMap { config =>
+          ZIO.effect {
+            val builderHelper: BuilderHelper[NettyNioAsyncHttpClient] =
+              BuilderHelper.apply
+            import builderHelper._
 
-          val builder0: NettyNioAsyncHttpClient.Builder =
-            NettyNioAsyncHttpClient
-              .builder()
-              .maxConcurrency(config.maxConcurrency)
-              .maxPendingConnectionAcquires(config.maxPendingConnectionAcquires)
-              .readTimeout(config.readTimeout)
-              .writeTimeout(config.writeTimeout)
-              .connectionTimeout(config.connectionTimeout)
-              .connectionAcquisitionTimeout(config.connectionAcquisitionTimeout)
-              .connectionTimeToLive(config.connectionTimeToLive)
-              .connectionMaxIdleTime(config.connectionMaxIdleTime)
-              .useIdleConnectionReaper(config.useIdleConnectionReaper)
-              .protocol(config.protocol)
-              .optionallyWith(config.sslProvider)(_.sslProvider)
-              .optionallyWith(config.proxyConfiguration)(builder =>
-                proxy =>
-                  builder.proxyConfiguration(
-                    AwsProxyConfiguration
-                      .builder()
-                      .host(proxy.host)
-                      .port(proxy.port)
-                      .scheme(proxy.scheme.asString)
-                      .nonProxyHosts(proxy.nonProxyHosts.asJava)
-                      .build()
-                  )
-              )
-              .optionallyWith(config.http2)(builder =>
-                http2 =>
-                  builder.http2Configuration(
-                    Http2Configuration
-                      .builder()
-                      .healthCheckPingPeriod(http2.healthCheckPingPeriod)
-                      .maxStreams(http2.maxStreams)
-                      .initialWindowSize(http2.initialWindowSize)
-                      .build()
-                  )
-              )
-              .optionallyWith(tlsKeyManagersProvider)(_.tlsKeyManagersProvider)
-              .optionallyWith(tlsTrustManagersProvider)(
-                _.tlsTrustManagersProvider
-              )
+            val builder0: NettyNioAsyncHttpClient.Builder =
+              NettyNioAsyncHttpClient
+                .builder()
+                .protocol(awsProtocol)
+                .maxConcurrency(config.maxConcurrency)
+                .maxPendingConnectionAcquires(
+                  config.maxPendingConnectionAcquires
+                )
+                .readTimeout(config.readTimeout)
+                .writeTimeout(config.writeTimeout)
+                .connectionTimeout(config.connectionTimeout)
+                .connectionAcquisitionTimeout(
+                  config.connectionAcquisitionTimeout
+                )
+                .connectionTimeToLive(config.connectionTimeToLive)
+                .connectionMaxIdleTime(config.connectionMaxIdleTime)
+                .useIdleConnectionReaper(config.useIdleConnectionReaper)
+                .optionallyWith(config.sslProvider)(_.sslProvider)
+                .optionallyWith(config.proxyConfiguration)(builder =>
+                  proxy =>
+                    builder.proxyConfiguration(
+                      AwsProxyConfiguration
+                        .builder()
+                        .host(proxy.host)
+                        .port(proxy.port)
+                        .scheme(proxy.scheme.asString)
+                        .nonProxyHosts(proxy.nonProxyHosts.asJava)
+                        .build()
+                    )
+                )
+                .optionallyWith(config.http2)(builder =>
+                  http2 =>
+                    builder.http2Configuration(
+                      Http2Configuration
+                        .builder()
+                        .healthCheckPingPeriod(http2.healthCheckPingPeriod)
+                        .maxStreams(http2.maxStreams)
+                        .initialWindowSize(http2.initialWindowSize)
+                        .build()
+                    )
+                )
+                .optionallyWith(tlsKeyManagersProvider)(
+                  _.tlsKeyManagersProvider
+                )
+                .optionallyWith(tlsTrustManagersProvider)(
+                  _.tlsTrustManagersProvider
+                )
 
-          val builder1 =
-            config.channelOptions.options.foldLeft(builder0) { case (b, opt) =>
-              b.putChannelOption(opt.key, opt.value)
-            }
+            val builder1 =
+              config.channelOptions.options.foldLeft(builder0) {
+                case (b, opt) =>
+                  b.putChannelOption(opt.key, opt.value)
+              }
 
-          builder1.build()
-        })
-        .map { nettyClient =>
-          new HttpClient.Service {
-            override val client: SdkAsyncHttpClient = nettyClient
+            builder1.build()
           }
-        }
+        })
+
+    ZLayer.fromManaged {
+      ZManaged.service[NettyClientConfig].flatMap { config =>
+        fromManagedPerProtocolManaged(
+          create(AwsProtocol.HTTP1_1),
+          create(AwsProtocol.HTTP2)
+        )(config.protocol)
+      }
     }
   }
 
@@ -296,14 +325,18 @@ package object netty {
     val protocol: ConfigDescriptor[Protocol] =
       string.xmapEither(
         {
-          case "HTTP/1.1" => Right(Protocol.HTTP1_1)
-          case "HTTP/2"   => Right(Protocol.HTTP2)
+          case "HTTP/1.1" => Right(Protocol.Http11)
+          case "HTTP/2"   => Right(Protocol.Http2)
+          case "Dual"     => Right(Protocol.Dual)
           case other: String =>
-            Left(s"Invalid protocol: '$other'. Use 'HTTP/1.1' or 'HTTP/2'")
+            Left(
+              s"Invalid protocol: '$other'. Use 'HTTP/1.1' or 'HTTP/2' or 'Dual'"
+            )
         },
         {
-          case Protocol.HTTP1_1 => Right("HTTP/1.1")
-          case Protocol.HTTP2   => Right("HTTP/2")
+          case Protocol.Http11 => Right("HTTP/1.1")
+          case Protocol.Http2  => Right("HTTP/2")
+          case Protocol.Dual   => Right("Dual")
         }
       )
 
@@ -358,7 +391,7 @@ package object netty {
             globalDefault(REAP_IDLE_CONNECTIONS)
           ) ?? "If true, the idle connections in the pool should be closed" |@|
           nested("protocol")(protocol)
-            .default(globalDefault(PROTOCOL)) ?? "HTTP/1.1 or HTTP/2" |@|
+            .default(Protocol.Dual) ?? "HTTP/1.1 or HTTP/2 or Dual" |@|
           nested("channelOptions")(nettyChannelOptions).default(
             NettyChannelOptions(Vector.empty)
           ) ?? "Custom Netty channel options" |@|

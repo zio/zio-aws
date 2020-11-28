@@ -2,7 +2,10 @@ package io.github.vigoo.zioaws.core
 
 import java.net.URI
 
-import io.github.vigoo.zioaws.core.httpclient.HttpClient
+import io.github.vigoo.zioaws.core.httpclient.{
+  HttpClient,
+  ServiceHttpCapabilities
+}
 import software.amazon.awssdk.auth.credentials._
 import software.amazon.awssdk.awscore.client.builder.{
   AwsAsyncClientBuilder,
@@ -45,7 +48,7 @@ package object config {
       def configureHttpClient[
           Client,
           Builder <: AwsAsyncClientBuilder[Builder, Client]
-      ](builder: Builder): Task[Builder]
+      ](builder: Builder, serviceCaps: ServiceHttpCapabilities): Task[Builder]
     }
 
   }
@@ -85,8 +88,11 @@ package object config {
         override def configureHttpClient[
             Client,
             Builder <: AwsAsyncClientBuilder[Builder, Client]
-        ](builder: Builder): Task[Builder] =
-          ZIO.succeed(builder.httpClient(httpClient.client))
+        ](
+            builder: Builder,
+            serviceCaps: ServiceHttpCapabilities
+        ): Task[Builder] =
+          httpClient.clientFor(serviceCaps).map(builder.httpClient)
       }
     }
 
@@ -166,8 +172,11 @@ package object config {
             override def configureHttpClient[
                 Client,
                 Builder <: AwsAsyncClientBuilder[Builder, Client]
-            ](builder: Builder): Task[Builder] =
-              ZIO.succeed(builder.httpClient(httpClient.client))
+            ](
+                builder: Builder,
+                serviceCaps: ServiceHttpCapabilities
+            ): Task[Builder] =
+              httpClient.clientFor(serviceCaps).map(builder.httpClient)
           }
       }
 

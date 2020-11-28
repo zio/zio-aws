@@ -4,7 +4,10 @@ import java.net.SocketOption
 import java.nio.channels.AsynchronousChannelGroup
 
 import io.github.vigoo.zioaws.core.httpclient
-import io.github.vigoo.zioaws.core.httpclient.HttpClient
+import io.github.vigoo.zioaws.core.httpclient.{
+  HttpClient,
+  ServiceHttpCapabilities
+}
 import io.github.vigoo.zioaws.core.httpclient.descriptors.channelOptions
 import javax.net.ssl.SSLContext
 import org.http4s.blaze.channel.{ChannelOptions, OptionValue}
@@ -31,7 +34,9 @@ package object http4s {
         .toManaged
         .map { c =>
           new HttpClient.Service {
-            override val client: SdkAsyncHttpClient = c
+            override def clientFor(
+                serviceCaps: ServiceHttpCapabilities
+            ): Task[SdkAsyncHttpClient] = Task.succeed(c)
           }
         }
     }.toLayer
@@ -102,7 +107,9 @@ package object http4s {
           .toManaged
           .map { c =>
             new HttpClient.Service {
-              override val client: SdkAsyncHttpClient = c
+              override def clientFor(
+                  serviceCaps: ServiceHttpCapabilities
+              ): Task[SdkAsyncHttpClient] = Task.succeed(c)
             }
           }
       }
