@@ -376,6 +376,8 @@ trait ServiceModelGenerator {
                           import ${m.asTerm}.zioAwsBuilderHelper.BuilderOps
                           $builderChain.build()
                         }
+
+                        def asReadOnly: ${m.asTerm}.$roT = ${m.asTerm}.wrap(buildAwsValue())
                       }""",
         q"""object ${m.asTerm} {
                             private lazy val zioAwsBuilderHelper: io.github.vigoo.zioaws.core.BuilderHelper[$awsShapeNameT] = io.github.vigoo.zioaws.core.BuilderHelper.apply
