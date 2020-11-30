@@ -5,21 +5,92 @@ import java.net.{NetworkInterface, SocketOption, StandardSocketOptions}
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient
 import zio.config.ConfigDescriptor._
 import zio.config._
-import zio.{Has, URIO, ZIO}
+import zio._
 
 import scala.util.Try
+import io.github.vigoo.zioaws.core.httpclient.Protocol.Http11
+import io.github.vigoo.zioaws.core.httpclient.Protocol.Http2
+import io.github.vigoo.zioaws.core.httpclient.Protocol.Dual
 
 package object httpclient {
   type HttpClient = Has[HttpClient.Service]
 
   object HttpClient {
     trait Service {
-      val client: SdkAsyncHttpClient
+      def clientFor(
+          serviceCaps: ServiceHttpCapabilities
+      ): Task[SdkAsyncHttpClient]
     }
   }
 
-  def client(): URIO[HttpClient.Service, SdkAsyncHttpClient] =
-    ZIO.access(_.client)
+  def clientFor(
+      serviceCaps: ServiceHttpCapabilities
+  ): ZIO[HttpClient.Service, Throwable, SdkAsyncHttpClient] =
+    ZIO.accessM(_.clientFor(serviceCaps))
+
+  sealed trait Protocol
+  object Protocol {
+    case object Http11 extends Protocol
+    case object Http2 extends Protocol
+    case object Dual extends Protocol
+  }
+
+  case class ServiceHttpCapabilities(supportsHttp2: Boolean)
+
+  def fromManagedPerProtocol[R, E, A <: SdkAsyncHttpClient](
+      http11Client: ZManaged[R, E, A],
+      http2Client: ZManaged[R, E, A]
+  )(protocol: Protocol): ZLayer[R, E, HttpClient] =
+    ZLayer.fromManaged(
+      fromManagedPerProtocolManaged(http11Client, http2Client)(protocol)
+    )
+
+  def fromManagedPerProtocolManaged[R, E, A <: SdkAsyncHttpClient](
+      http11Client: ZManaged[R, E, A],
+      http2Client: ZManaged[R, E, A]
+  )(protocol: Protocol): ZManaged[R, E, HttpClient.Service] =
+    protocol match {
+      case Http11 =>
+        http11Client.map { client =>
+          new HttpClient.Service {
+            override def clientFor(
+                serviceCaps: ServiceHttpCapabilities
+            ): Task[SdkAsyncHttpClient] =
+              Task.succeed(client)
+          }
+        }
+      case Http2 =>
+        http2Client.map { client =>
+          new HttpClient.Service {
+            override def clientFor(
+                serviceCaps: ServiceHttpCapabilities
+            ): Task[SdkAsyncHttpClient] =
+              if (serviceCaps.supportsHttp2) {
+                Task.succeed(client)
+              } else {
+                Task.fail(
+                  new UnsupportedOperationException(
+                    "The http client only supports HTTP 2 but the client requires HTTP 1.1"
+                  )
+                )
+              }
+          }
+        }
+      case Dual =>
+        for {
+          http11 <- http11Client
+          http2 <- http2Client
+        } yield new HttpClient.Service {
+          override def clientFor(
+              serviceCaps: ServiceHttpCapabilities
+          ): Task[SdkAsyncHttpClient] =
+            if (serviceCaps.supportsHttp2) {
+              Task.succeed(http11)
+            } else {
+              Task.succeed(http2)
+            }
+        }
+    }
 
   case class OptionValue[T](key: SocketOption[T], value: T)
   case class ChannelOptions(options: Vector[OptionValue[Any]])

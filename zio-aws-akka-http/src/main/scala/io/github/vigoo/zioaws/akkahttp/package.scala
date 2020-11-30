@@ -4,9 +4,12 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.settings.ConnectionPoolSettings
 import com.github.matsluni.akkahttpspi.AkkaHttpClient
 import io.github.vigoo.zioaws.core.BuilderHelper
-import io.github.vigoo.zioaws.core.httpclient.HttpClient
+import io.github.vigoo.zioaws.core.httpclient.{
+  HttpClient,
+  ServiceHttpCapabilities
+}
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient
-import zio.{Has, ZIO, ZLayer, ZManaged}
+import zio.{Has, ZIO, ZLayer, ZManaged, Task}
 
 import scala.concurrent.ExecutionContext
 
@@ -35,7 +38,9 @@ package object akkahttp {
         )
         .map { akkaClient =>
           new HttpClient.Service {
-            override val client: SdkAsyncHttpClient = akkaClient
+            override def clientFor(
+                serviceCaps: ServiceHttpCapabilities
+            ): Task[SdkAsyncHttpClient] = Task.succeed(akkaClient)
           }
         }
     }
