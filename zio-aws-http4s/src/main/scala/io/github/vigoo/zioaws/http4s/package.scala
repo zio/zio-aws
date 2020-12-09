@@ -17,7 +17,7 @@ import org.http4s.headers.{AgentProduct, `User-Agent`}
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient
 import zio.config.ConfigDescriptor._
 import zio.config._
-import zio.{Runtime, Task, ZIO, ZLayer}
+import zio.{Has, Runtime, Task, ZIO, ZLayer}
 
 import scala.concurrent.duration._
 import scala.util.control.NonFatal
@@ -71,7 +71,7 @@ package object http4s {
       maxConnectionsPerRequestKey: Option[RequestKey => Int] = None,
       asynchronousChannelGroup: Option[AsynchronousChannelGroup] = None,
       additionalSocketOptions: Seq[OptionValue[_]] = Seq.empty
-  ): ZLayer[ZConfig[BlazeClientConfig], Throwable, HttpClient] =
+  ): ZLayer[Has[BlazeClientConfig], Throwable, HttpClient] =
     ZLayer.fromServiceManaged { config =>
       ZIO.runtime.toManaged_.flatMap { implicit runtime: Runtime[Any] =>
         Http4sClient
@@ -117,12 +117,12 @@ package object http4s {
 
   object descriptors {
     val userAgent: ConfigDescriptor[`User-Agent`] =
-      string.xmapEither(
+      string.transformOrFail(
         s => `User-Agent`.parse(s).left.map(_.message),
         h => Right(h.toString())
       )
     val parserMode: ConfigDescriptor[ParserMode] =
-      string.xmapEither(
+      string.transformOrFail(
         {
           case "strict"  => Right(ParserMode.Strict)
           case "lenient" => Right(ParserMode.Lenient)

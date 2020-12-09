@@ -25,7 +25,7 @@ import software.amazon.awssdk.http.nio.netty.{
 import zio.config._
 import zio.config.ConfigDescriptor._
 import zio.duration._
-import zio.{ZIO, ZLayer, ZManaged}
+import zio.{Has, ZIO, ZLayer, ZManaged}
 
 import scala.jdk.CollectionConverters._
 
@@ -122,10 +122,10 @@ package object netty {
   def configured(
       tlsKeyManagersProvider: Option[TlsKeyManagersProvider] = None,
       tlsTrustManagersProvider: Option[TlsTrustManagersProvider] = None
-  ): ZLayer[ZConfig[NettyClientConfig], Throwable, HttpClient] = {
+  ): ZLayer[Has[NettyClientConfig], Throwable, HttpClient] = {
     def create(
         awsProtocol: AwsProtocol
-    ): ZManaged[ZConfig[NettyClientConfig], Throwable, SdkAsyncHttpClient] =
+    ): ZManaged[Has[NettyClientConfig], Throwable, SdkAsyncHttpClient] =
       ZManaged
         .fromAutoCloseable(ZIO.service[NettyClientConfig].flatMap { config =>
           ZIO.effect {
@@ -203,7 +203,7 @@ package object netty {
 
   object descriptors {
     val httpOrHttps: ConfigDescriptor[HttpOrHttps] =
-      string.xmapEither(
+      string.transformOrFail(
         {
           case "http"  => Right(HttpOrHttps.Http)
           case "https" => Right(HttpOrHttps.Https)
@@ -243,7 +243,7 @@ package object netty {
     )(
         desc: ConfigDescriptor[T]
     ): ConfigDescriptor[Option[NettyOptionValue[JT]]] =
-      nested(opt.name())(desc).optional.xmap(
+      nested(opt.name())(desc).optional.transform(
         _.map(value => NettyOptionValue(opt, toJava(value))),
         opt => opt.map(_.value).map(fromJava)
       )
@@ -300,7 +300,7 @@ package object netty {
           boolChannelOption(AUTO_CLOSE) ?? "Auto close" |@|
           boolChannelOption(
             SINGLE_EVENTEXECUTOR_PER_GROUP
-          ) ?? "Single event executor per group").tupled.xmap(
+          ) ?? "Single event executor per group").tupled.transform(
           tuple =>
             NettyChannelOptions(tuple.productIterator.collect {
               case Some(opt: NettyOptionValue[_]) => opt
@@ -323,7 +323,7 @@ package object netty {
     }
 
     val protocol: ConfigDescriptor[Protocol] =
-      string.xmapEither(
+      string.transformOrFail(
         {
           case "HTTP/1.1" => Right(Protocol.Http11)
           case "HTTP/2"   => Right(Protocol.Http2)
@@ -341,7 +341,7 @@ package object netty {
       )
 
     val sslProvider: ConfigDescriptor[SslProvider] =
-      string.xmapEither(
+      string.transformOrFail(
         {
           case "JDK"            => Right(SslProvider.JDK)
           case "OPENSSL"        => Right(SslProvider.OPENSSL)

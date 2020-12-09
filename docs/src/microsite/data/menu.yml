@@ -9,6 +9,8 @@ options:
     url: docs/wrapper.html
   - title: HTTP
     url: docs/http.html
+  - title: Aspects
+    url: docs/aspects.html
   - title: Configuration
     url: docs/config.html
   - title: Examples

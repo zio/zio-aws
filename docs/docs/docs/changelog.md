@@ -6,7 +6,11 @@ title: Version history
 # Version history
 
 Note: this is a manually maintained list of important changes. Because of having auto-release from CI, this
-list may not reflect _all_ changes immediately. 
+list may not reflect _all_ changes immediately. Dependencies are continuously updated and are not documented here.
+
+#### 3.15.35.5
+- Support for defining dual HTTP/1.1 and HTTP/2 `HttpClient` layers
+- Convert model case classes to `.ReadOnly` trait with `.asReadOnly`
 
 #### 3.15.19.10
 - Fix for libraries that use the `Integer` alias for ints (such as `zio-aws-sqs`)

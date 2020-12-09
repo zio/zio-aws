@@ -10,7 +10,6 @@ import software.amazon.awssdk.core.retry.conditions.{
   OrRetryCondition,
   RetryCondition
 }
-import software.amazon.awssdk.core.retry.{RetryMode, RetryPolicy}
 import software.amazon.awssdk.regions.Region
 import zio.test._
 import zio.config._
@@ -39,25 +38,6 @@ object CommonAwsConfigSpec extends DefaultRunnableSpec {
             |      value = "1"
             |    }
             |  ]
-            |
-            |  retryPolicy {
-            |    mode: default
-            |    numRetries: 3
-            |    additionalRetryConditionsAllowed: false
-            |    backoffStrategy {
-            |      fullJitter {
-            |        baseDelay = 100 ms
-            |        maxBackoffTime = 5 s
-            |      }
-            |    }
-            |    retryCondition {
-            |      or: [
-            |        { maxNumberOfRetries = 10 },
-            |        { retryOnStatusCode = [500, 501] }
-            |      ]
-            |    }
-            |    retryCapacityCondition = none
-            |  }
             |}
             |""".stripMargin
 
@@ -102,28 +82,7 @@ object CommonAwsConfigSpec extends DefaultRunnableSpec {
                     "extraHeaders",
                     _.extraHeaders,
                     equalTo(Map("X-Test" -> List("1")))
-                  ) &&
-                    hasField[CommonClientConfig, Option[RetryPolicy]](
-                      "retryPolicy",
-                      _.retryPolicy,
-                      isSome(
-                        hasField[RetryPolicy, RetryMode](
-                          "mode",
-                          _.retryMode(),
-                          equalTo(RetryMode.defaultRetryMode())
-                        ) &&
-                          hasField[RetryPolicy, Int](
-                            "numRetries",
-                            _.numRetries(),
-                            equalTo(3)
-                          ) &&
-                          hasField[RetryPolicy, RetryCondition](
-                            "retryCondition",
-                            _.retryCondition(),
-                            isSubtype[OrRetryCondition](anything)
-                          )
-                      )
-                    )
+                  )
                 )
               )
           )
