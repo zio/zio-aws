@@ -102,7 +102,7 @@ package object httpclient {
         fromJava: JT => T,
         toJava: T => JT
     )(desc: ConfigDescriptor[T]): ConfigDescriptor[Option[OptionValue[JT]]] =
-      nested(opt.name())(desc).optional.xmap(
+      nested(opt.name())(desc).optional.transform(
         _.map(value => OptionValue(opt, toJava(value))),
         opt => opt.map(_.value).map(fromJava)
       )
@@ -126,7 +126,7 @@ package object httpclient {
       )(int)
 
     val networkInterfaceByName: ConfigDescriptor[NetworkInterface] =
-      string.xmapEither(
+      string.transformOrFail(
         name =>
           Try(NetworkInterface.getByName(name)).toEither.left.map(_.getMessage),
         iface => Right(iface.getName)
@@ -170,7 +170,7 @@ package object httpclient {
           IP_MULTICAST_LOOP
         ) ?? "Loopback for IP multicast datagrams" |@|
         boolSocketOption(TCP_NODELAY) ?? "Disable the Nagle algorithm").tupled
-        .xmap(
+        .transform(
           tuple =>
             ChannelOptions(tuple.productIterator.collect {
               case Some(opt: OptionValue[_]) =>

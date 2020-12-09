@@ -35,7 +35,7 @@ import zio.config._
 import io.github.vigoo.zioaws.netty.descriptors._
 
 val docs = generateDocs(nettyClientConfig)
-println(docs.toTable.asGithubFlavouredMarkdown)
+println(docs.toTable.toGithubFlavouredMarkdown)
 ``` 
 
 ## Akka HTTP
@@ -51,5 +51,5 @@ is also possible by `http4s.customized(customization)`. And similarly to the _Ne
  import io.github.vigoo.zioaws.http4s.descriptors._
  
  val docs2 = generateDocs(blazeClientConfig)
- println(docs2.toTable.asGithubFlavouredMarkdown)
+ println(docs2.toTable.toGithubFlavouredMarkdown)
 ``` 

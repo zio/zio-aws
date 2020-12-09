@@ -30,8 +30,11 @@ import zio.config._
 import io.github.vigoo.zioaws.core.config.descriptors._
 
 val docs = generateDocs(commonAwsConfig)
-println(docs.toTable.asGithubFlavouredMarkdown)
+println(docs.toTable.toGithubFlavouredMarkdown)
 ```
+
+Note that **AWS level retries are disabled** by the configuration layer and it is not exposed in the `CommonAwsConfig` data structure either. The reason for 
+this is that the recommended way to handle retries is to use [aspects on the service layers](aspects.html).
 
 ## Service layer
 Each AWS service's generated client has it own layer that depends on `AwsConfig`. It is possible to reuse the same `AwsConfig` layer

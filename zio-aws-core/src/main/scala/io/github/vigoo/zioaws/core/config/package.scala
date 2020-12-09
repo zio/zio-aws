@@ -11,20 +11,8 @@ import software.amazon.awssdk.awscore.client.builder.{
   AwsAsyncClientBuilder,
   AwsClientBuilder
 }
-import software.amazon.awssdk.awscore.retry.conditions.RetryOnErrorCodeCondition
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration
-import software.amazon.awssdk.core.retry.backoff.{
-  BackoffStrategy,
-  EqualJitterBackoffStrategy,
-  FixedDelayBackoffStrategy,
-  FullJitterBackoffStrategy
-}
-import software.amazon.awssdk.core.retry.conditions._
-import software.amazon.awssdk.core.retry.{
-  RetryMode,
-  RetryPolicy,
-  RetryPolicyContext
-}
+import software.amazon.awssdk.core.retry.{RetryPolicy}
 import software.amazon.awssdk.regions.Region
 import zio.config.ConfigDescriptor._
 import zio.config._
@@ -98,7 +86,6 @@ package object config {
 
   case class CommonClientConfig(
       extraHeaders: Map[String, List[String]],
-      retryPolicy: Option[RetryPolicy],
       apiCallTimeout: Option[Duration],
       apiCallAttemptTimeout: Option[Duration],
       defaultProfileName: Option[String]
@@ -112,7 +99,7 @@ package object config {
   )
 
   def configured()
-      : ZLayer[HttpClient with ZConfig[CommonAwsConfig], Nothing, AwsConfig] =
+      : ZLayer[HttpClient with Has[CommonAwsConfig], Nothing, AwsConfig] =
     ZLayer
       .fromServices[HttpClient.Service, CommonAwsConfig, AwsConfig.Service] {
         (httpClient, commonConfig) =>
@@ -147,9 +134,7 @@ package object config {
                             .toMap
                             .asJava
                         )
-                        .optionallyWith(commonClientConfig.retryPolicy)(
-                          _.retryPolicy
-                        )
+                        .retryPolicy(RetryPolicy.none())
                         .optionallyWith(
                           commonClientConfig.apiCallTimeout
                             .map(zio.duration.Duration.fromScala)
@@ -181,7 +166,7 @@ package object config {
       }
 
   object descriptors {
-    val region: ConfigDescriptor[Region] = string.xmap(Region.of, _.id())
+    val region: ConfigDescriptor[Region] = string.transform(Region.of, _.id())
 
     val awsCredentials: ConfigDescriptor[AwsCredentials] =
       (string("accessKeyId") ?? "AWS access key ID" |@|
@@ -193,7 +178,7 @@ package object config {
 
     val credentialsProvider: ConfigDescriptor[AwsCredentialsProvider] = {
       val defaultCredentialsProvider: ConfigDescriptor[AwsCredentialsProvider] =
-        string.xmapEither(
+        string.transformOrFail(
           s =>
             if (s == "default") Right(DefaultCredentialsProvider.create())
             else Left("Not 'default'"),
@@ -203,7 +188,7 @@ package object config {
           }
         )
       val anonymousCredentialsProvider
-          : ConfigDescriptor[AwsCredentialsProvider] = string.xmapEither(
+          : ConfigDescriptor[AwsCredentialsProvider] = string.transformOrFail(
         s =>
           if (s == "anonymous") Right(AnonymousCredentialsProvider.create())
           else Left("Not 'anonymous'"),
@@ -213,7 +198,7 @@ package object config {
         }
       )
       val staticCredentialsProvider: ConfigDescriptor[AwsCredentialsProvider] =
-        awsCredentials.xmap(
+        awsCredentials.transform(
           creds => StaticCredentialsProvider.create(creds),
           _.resolveCredentials()
         )
@@ -226,301 +211,15 @@ package object config {
         listOrSingleton("value")(string ?? "Header value")).tupled
 
     val rawHeaderMap: ConfigDescriptor[Map[String, List[String]]] =
-      list(rawHeader).xmap(
+      list(rawHeader).transform(
         _.toMap,
         _.toList
       )
 
-    val retryPolicy: ConfigDescriptor[RetryPolicy] = {
-      val default: ConfigDescriptor[RetryPolicy] = string.xmapEither(
-        s =>
-          if (s == "default") Right(RetryPolicy.defaultRetryPolicy())
-          else Left("Not 'default'"),
-        (p: RetryPolicy) =>
-          if (p == RetryPolicy.defaultRetryPolicy()) Right("default")
-          else Left("Not the default retry policy")
-      )
-      val legacy: ConfigDescriptor[RetryPolicy] = string.xmapEither(
-        s =>
-          if (s == "legacy") Right(RetryPolicy.forRetryMode(RetryMode.LEGACY))
-          else Left("Not 'legacy'"),
-        (p: RetryPolicy) =>
-          if (p == RetryPolicy.forRetryMode(RetryMode.LEGACY)) Right("legacy")
-          else Left("Not the legacy retry policy")
-      )
-      val standard: ConfigDescriptor[RetryPolicy] = string.xmapEither(
-        s =>
-          if (s == "standard")
-            Right(RetryPolicy.forRetryMode(RetryMode.STANDARD))
-          else Left("Not 'standard'"),
-        (p: RetryPolicy) =>
-          if (p == RetryPolicy.forRetryMode(RetryMode.STANDARD))
-            Right("standard")
-          else Left("Not the standard retry policy")
-      )
-      val none: ConfigDescriptor[RetryPolicy] = string.xmapEither(
-        s => if (s == "none") Right(RetryPolicy.none()) else Left("Not 'none'"),
-        (p: RetryPolicy) =>
-          if (p == RetryPolicy.none()) Right("none")
-          else Left("Not the 'none' retry policy")
-      )
-      val retryMode: ConfigDescriptor[RetryMode] = string.xmapEither(
-        {
-          case "legacy"   => Right(RetryMode.LEGACY)
-          case "standard" => Right(RetryMode.STANDARD)
-          case "default"  => Right(RetryMode.defaultRetryMode())
-          case s: String =>
-            Left(s"Invalid retry mode '$s'. Use legacy, standard or default'")
-        },
-        {
-          case RetryMode.LEGACY   => Right("legacy")
-          case RetryMode.STANDARD => Right("standard")
-        }
-      )
-      val backoffStrategy: ConfigDescriptor[BackoffStrategy] = {
-        val fullJitter: ConfigDescriptor[BackoffStrategy] =
-          nested("fullJitter")(
-            (duration("baseDelay") |@| duration("maxBackoffTime"))(
-              (baseDelay, maxBackoffTime) =>
-                FullJitterBackoffStrategy
-                  .builder()
-                  .baseDelay(zio.duration.Duration.fromScala(baseDelay))
-                  .maxBackoffTime(
-                    zio.duration.Duration.fromScala(maxBackoffTime)
-                  )
-                  .build(),
-              {
-                case bs: FullJitterBackoffStrategy =>
-                  Some(
-                    (
-                      bs.toBuilder.baseDelay.asScala,
-                      bs.toBuilder.maxBackoffTime.asScala
-                    )
-                  )
-                case _ => None
-              }
-            )
-          )
-        val equalJitter: ConfigDescriptor[BackoffStrategy] =
-          nested("equalJitter")(
-            (duration("baseDelay") |@| duration("maxBackoffTime"))(
-              (baseDelay, maxBackoffTime) =>
-                EqualJitterBackoffStrategy
-                  .builder()
-                  .baseDelay(zio.duration.Duration.fromScala(baseDelay))
-                  .maxBackoffTime(
-                    zio.duration.Duration.fromScala(maxBackoffTime)
-                  )
-                  .build(),
-              {
-                case bs: EqualJitterBackoffStrategy =>
-                  Some(
-                    (
-                      bs.toBuilder.baseDelay.asScala,
-                      bs.toBuilder.maxBackoffTime.asScala
-                    )
-                  )
-                case _ => None
-              }
-            )
-          )
-        val fixed: ConfigDescriptor[BackoffStrategy] =
-          nested("fixed")(
-            duration("backoff")(
-              backoff =>
-                FixedDelayBackoffStrategy
-                  .create(zio.duration.Duration.fromScala(backoff)),
-              {
-                case bs: FixedDelayBackoffStrategy =>
-                  Some(
-                    bs.computeDelayBeforeNextRetry(
-                      RetryPolicyContext.builder().build()
-                    ).asScala
-                  )
-                case _ => None
-              }
-            )
-          )
-        fullJitter <> equalJitter <> fixed
-      }
-
-      def retryCondition: ConfigDescriptor[RetryCondition] = {
-        val default: ConfigDescriptor[RetryCondition] = string.xmapEither(
-          s =>
-            if (s == "default") Right(RetryCondition.defaultRetryCondition())
-            else Left("Not 'default'"),
-          (c: RetryCondition) =>
-            if (c == RetryCondition.defaultRetryCondition()) Right("default")
-            else Left("Not the default retry condition")
-        )
-        val none: ConfigDescriptor[RetryCondition] = string.xmapEither(
-          s =>
-            if (s == "none") Right(RetryCondition.none())
-            else Left("Not 'none'"),
-          (c: RetryCondition) =>
-            if (c == RetryCondition.none()) Right("none")
-            else Left("Not the 'none' retry condition")
-        )
-        val or: ConfigDescriptor[RetryCondition] =
-          nested("or")(
-            list(retryCondition)
-          )(
-            lst => OrRetryCondition.create(lst: _*),
-            _ => None // NOTE: Cannot extract conditions without reflection
-          )
-        val and: ConfigDescriptor[RetryCondition] =
-          nested("and")(
-            list(retryCondition)
-          )(
-            lst => AndRetryCondition.create(lst: _*),
-            _ => None // NOTE: Cannot extract conditions without reflection
-          )
-
-        val maxNumberOfRetries: ConfigDescriptor[RetryCondition] =
-          int("maxNumberOfRetries")(
-            n => MaxNumberOfRetriesCondition.create(n),
-            _ => None // NOTE: Cannot extract conditions without reflection
-          )
-        val retryOn: ConfigDescriptor[RetryCondition] =
-          string("retryOn")(
-            {
-              case "clockSkew"  => RetryOnClockSkewCondition.create()
-              case "throttling" => RetryOnThrottlingCondition.create()
-            },
-            {
-              case _: RetryOnClockSkewCondition  => Some("clockSkew")
-              case _: RetryOnThrottlingCondition => Some("throttling")
-            }
-          )
-        val retryOnErrorCodes: ConfigDescriptor[RetryCondition] =
-          (listOrSingleton("retryOnErrorCode")(string))(
-            codes => RetryOnErrorCodeCondition.create(codes.toSet.asJava),
-            _ => None // NOTE: Cannot extract conditions without reflection
-          )
-        val retryOnExceptions: ConfigDescriptor[RetryCondition] =
-          (listOrSingleton("retryOnException")(string)).xmapEither(
-            lst =>
-              lst
-                .foldLeft[Either[String, List[Class[Exception]]]](
-                  Left("empty list")
-                ) {
-                  case (Left(msg), _) => Left(msg)
-                  case (Right(result), name) =>
-                    Try(
-                      Class.forName(name).asInstanceOf[Class[Exception]]
-                    ) match {
-                      case Failure(exception) => Left(exception.toString)
-                      case Success(value)     => Right(value :: result)
-                    }
-                }
-                .map(classes => RetryOnExceptionsCondition.create(classes: _*)),
-            _ =>
-              Left(
-                "cannot extract RetryOnExceptionsCondition"
-              ) // NOTE: Cannot extract conditions without reflection
-          )
-        val retryOnStatusCodes: ConfigDescriptor[RetryCondition] =
-          (listOrSingleton("retryOnStatusCode")(int))(
-            codes =>
-              RetryOnStatusCodeCondition.create(
-                codes.map(int2Integer).toSet.asJava
-              ),
-            _ => None // NOTE: Cannot extract conditions without reflection
-          )
-        val tokenBucket: ConfigDescriptor[RetryCondition] =
-          nested("tokenBucket")(
-            (int(
-              "bucketSize"
-            ) ?? "Maximum number of tokens in the token bucket" |@|
-              nested("costFunction")(
-                (int(
-                  "throttlingExceptionCost"
-                ) ?? "Number of tokens to be removed on throttling exceptions" |@|
-                  int(
-                    "exceptionCost"
-                  ) ?? "Number of tokens to be removed on other exceptions")(
-                  (throttlingCost, cost) =>
-                    TokenBucketExceptionCostFunction
-                      .builder()
-                      .throttlingExceptionCost(throttlingCost)
-                      .defaultExceptionCost(cost)
-                      .build(),
-                  (_: TokenBucketExceptionCostFunction) =>
-                    None // NOTE: Cannot extract conditions without reflection
-                )
-              ))(
-              (size, costFn) =>
-                TokenBucketRetryCondition
-                  .builder()
-                  .tokenBucketSize(size)
-                  .exceptionCostFunction(costFn)
-                  .build(),
-              _ => None // NOTE: Cannot extract conditions without reflection
-            )
-          )
-
-        default <> none <> or <> and <> maxNumberOfRetries <> retryOn <> retryOnErrorCodes <> retryOnExceptions <> retryOnStatusCodes <> tokenBucket
-      }
-
-      val custom: ConfigDescriptor[RetryPolicy] =
-        (nested("mode")(retryMode) ?? "Retry mode" |@|
-          int("numRetries") ?? "Maximum number of retries" |@|
-          boolean(
-            "additionalRetryConditionsAllowed"
-          ) ?? "Allows additional retry conditions" |@|
-          nested("backoffStrategy")(backoffStrategy).default(
-            BackoffStrategy.defaultStrategy()
-          ) ?? "Backoff strategy for waiting between retries" |@|
-          nested("throttlingBackoffStrategy")(backoffStrategy).default(
-            BackoffStrategy.defaultThrottlingStrategy()
-          ) ?? "Backoff strategy for waiting after throttling error" |@|
-          nested("retryCondition")(
-            retryCondition
-          ) ?? "Condition deciding which request should be retried" |@|
-          nested("retryCapacityCondition")(
-            retryCondition
-          ) ?? "Condition deciding throttling")(
-          (
-              mode,
-              numRetries,
-              additionalRetryConditionsAllowed,
-              backoffStrategy,
-              throttlingBackoffStrategy,
-              retryCondition,
-              retryCapacityCondition
-          ) =>
-            RetryPolicy
-              .builder(mode)
-              .numRetries(numRetries)
-              .additionalRetryConditionsAllowed(
-                additionalRetryConditionsAllowed
-              )
-              .backoffStrategy(backoffStrategy)
-              .throttlingBackoffStrategy(throttlingBackoffStrategy)
-              .retryCondition(retryCondition)
-              .retryCapacityCondition(retryCapacityCondition)
-              .build(),
-          p =>
-            Some(
-              (
-                p.retryMode(),
-                p.numRetries(),
-                p.additionalRetryConditionsAllowed(),
-                p.backoffStrategy(),
-                p.throttlingBackoffStrategy(),
-                p.retryCondition(),
-                p.toBuilder.retryCapacityCondition()
-              )
-            )
-        )
-
-      default <> legacy <> standard <> none <> custom
-    }
     val commonClientConfig: ConfigDescriptor[CommonClientConfig] =
       (nested("extraHeaders")(
         rawHeaderMap
       ) ?? "Extra headers to be sent with each request" |@|
-        nested("retryPolicy")(retryPolicy).optional ?? "Retry policy" |@|
         duration(
           "apiCallTimeout"
         ).optional ?? "Amount of time to allow the client to complete the execution of an API call" |@|
