@@ -38,7 +38,7 @@ jobs:
           key: ${{ runner.os }}-sbt-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties') }}
       
       - name: Build and test core        
-        run: sbt -J-Xmx6g -J-Xms1g ++${{ matrix.scala }} zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
+        run: ./sbt -J-Xmx6g -J-Xms1g ++${{ matrix.scala }} zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
 
       - name: Compress core target directories        
         run: tar cvf targets.tar target project/target zio-aws-codegen/target zio-aws-core/target zio-aws-akka-http/target zio-aws-http4s/target zio-aws-netty/target
