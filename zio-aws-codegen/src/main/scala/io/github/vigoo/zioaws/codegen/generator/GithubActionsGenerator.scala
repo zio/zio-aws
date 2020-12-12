@@ -52,7 +52,6 @@ trait GithubActionsGenerator {
           Job(
             "tag",
             "Tag build",
-            condition = Some(isMaster)
           ).withSteps(
             checkoutCurrentBranch(),
             setupScala(Some(JavaVersion.AdoptJDK18)),
@@ -64,7 +63,7 @@ trait GithubActionsGenerator {
             runSBT(
               "Tag release",
               parameters = List("tagAwsVersion", "ciReleaseTagNextVersion")
-            )
+            ).when(isMaster)
           )
         )
         .addJob(
