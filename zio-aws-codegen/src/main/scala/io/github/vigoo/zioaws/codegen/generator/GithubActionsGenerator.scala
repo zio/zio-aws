@@ -222,7 +222,6 @@ trait GithubActionsGenerator {
 
     yaml.Printer(
       preserveOrder = true,
-      stringStyle = StringStyle.Literal
     ).pretty(workflow.asJson)
   }
 }
