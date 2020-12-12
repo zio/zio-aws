@@ -1,5 +1,5 @@
 # zio-aws
-[![CircleCI](https://circleci.com/gh/vigoo/zio-aws.svg?style=svg)](https://circleci.com/gh/vigoo/zio-aws)
+![CI](https://github.com/vigoo/zio-aws/workflows/CI/badge.svg)
 [![Apache 2 License License](http://img.shields.io/badge/license-APACHE2-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 [![Latest version](https://index.scala-lang.org/vigoo/zio-aws/zio-aws-core/latest.svg)](https://index.scala-lang.org/vigoo/zio-aws/zio-aws-core)
 [![Maven central](https://img.shields.io/maven-central/v/io.github.vigoo/zio-aws-core_2.13.svg?style=flat-square)

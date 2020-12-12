@@ -5,5 +5,7 @@ target/
 .sbtopts
 .metals/
 .vscode/
+.bloop/
 
 private-key.pem
+metals.sbt

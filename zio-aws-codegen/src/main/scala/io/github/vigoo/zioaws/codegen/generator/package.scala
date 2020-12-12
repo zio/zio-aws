@@ -27,7 +27,7 @@ package object generator {
           id: ModelId,
           model: C2jModels
       ): ZIO[Console with Blocking, GeneratorFailure, Set[File]]
-      def generateCircleCiYaml(
+      def generateCiYaml(
           ids: Set[ModelId]
       ): ZIO[Console with Blocking, GeneratorFailure, Unit]
       def generateArtifactList(
@@ -40,7 +40,7 @@ package object generator {
   val live: ZLayer[Has[Parameters], Nothing, Generator] = ZLayer.fromService {
     cfg =>
       new Generator.Service with GeneratorBase with ServiceInterfaceGenerator
-      with ServiceModelGenerator with CircleCiYamlGenerator
+      with ServiceModelGenerator with GithubActionsGenerator
       with ArtifactListGenerator with HasConfig {
         import scala.meta._
 
@@ -107,21 +107,15 @@ package object generator {
             .provideSomeLayer[Blocking](createGeneratorContext(id, model))
         }
 
-        override def generateCircleCiYaml(
+        override def generateCiYaml(
             ids: Set[ModelId]
-        ): ZIO[Console with Blocking, GeneratorFailure, Unit] =
+        ): ZIO[Console with Blocking, GeneratorFailure, Unit] = {
+          val result =
+            generateCiYaml(ids, config.parallelCiJobs, config.separateCiJobs)
           for {
-            source <-
-              Files
-                .readAllBytes(config.circleCiSource)
-                .bimap(
-                  FailedToReadFile,
-                  bytes => new String(bytes.toArray, StandardCharsets.UTF_8)
-                )
-            result =
-              generateCircleCiYaml(ids, config.parallelCircleCiJobs, config.separateCircleCiJobs, source)
-            _ <- writeIfDifferent(config.circleCiTarget, result)
+            _ <- writeIfDifferent(config.ciTarget, result)
           } yield ()
+        }
 
         override def generateArtifactList(
             ids: Set[ModelId]
@@ -141,10 +135,10 @@ package object generator {
   ): ZIO[Generator with Console with Blocking, GeneratorFailure, Set[File]] =
     ZIO.accessM(_.get.generateServiceCode(id, model))
 
-  def generateCircleCiYaml(
+  def generateCiYaml(
       ids: Set[ModelId]
   ): ZIO[Generator with Console with Blocking, GeneratorFailure, Unit] =
-    ZIO.accessM(_.get.generateCircleCiYaml(ids))
+    ZIO.accessM(_.get.generateCiYaml(ids))
 
   def generateArtifactList(
       ids: Set[ModelId]
