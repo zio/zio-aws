@@ -38,10 +38,10 @@ jobs:
           key: ${{ matrix.os }}-sbt-${{ matrix.scala }}-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties') }}
       
       - name: Build and test core        
-        run: ./sbt -J-Xmx6g -J-Xms1g ++${{ matrix.scala }} zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
+        run: ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
 
       - name: Compress core target directories        
-        run: tar cvf targets.tar target project/target zio-aws-codegen/target zio-aws-core/target zio-aws-akka-http/target zio-aws-http4s/target zio-aws-netty/target
+        run: tar cf targets.tar target project/target zio-aws-codegen/target zio-aws-core/target zio-aws-akka-http/target zio-aws-http4s/target zio-aws-netty/target
 
       - name: Upload target directories
         uses: actions/upload-artifact@v2
@@ -86,10 +86,10 @@ jobs:
           rm targets.tar      
 
       - name: Build libraries
-        run: ./sbt -J-Xmx6g -J-Xms1g ++${{ matrix.scala }} zio-aws-accessanalyzer/compile zio-aws-acm/compile zio-aws-acmpca/compile zio-aws-alexaforbusiness/compile zio-aws-amplify/compile zio-aws-apigateway/compile zio-aws-apigatewaymanagementapi/compile zio-aws-apigatewayv2/compile zio-aws-appconfig/compile zio-aws-appflow/compile zio-aws-applicationautoscaling/compile zio-aws-applicationdiscovery/compile zio-aws-applicationinsights/compile zio-aws-appmesh/compile zio-aws-appstream/compile zio-aws-appsync/compile zio-aws-athena/compile zio-aws-autoscaling/compile zio-aws-autoscalingplans/compile zio-aws-backup/compile","zio-aws-batch/compile zio-aws-braket/compile zio-aws-budgets/compile zio-aws-chime/compile zio-aws-cloud9/compile zio-aws-clouddirectory/compile zio-aws-cloudformation/compile zio-aws-cloudfront/compile zio-aws-cloudhsm/compile zio-aws-cloudhsmv2/compile zio-aws-cloudsearch/compile zio-aws-cloudsearchdomain/compile zio-aws-cloudtrail/compile zio-aws-cloudwatch/compile zio-aws-cloudwatchevents/compile zio-aws-cloudwatchlogs/compile zio-aws-codeartifact/compile zio-aws-codebuild/compile zio-aws-codecommit/compile zio-aws-codedeploy/compile
+        run: ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-accessanalyzer/compile zio-aws-acm/compile zio-aws-acmpca/compile zio-aws-alexaforbusiness/compile zio-aws-amplify/compile zio-aws-apigateway/compile zio-aws-apigatewaymanagementapi/compile zio-aws-apigatewayv2/compile zio-aws-appconfig/compile zio-aws-appflow/compile zio-aws-applicationautoscaling/compile zio-aws-applicationdiscovery/compile zio-aws-applicationinsights/compile zio-aws-appmesh/compile zio-aws-appstream/compile zio-aws-appsync/compile zio-aws-athena/compile zio-aws-autoscaling/compile zio-aws-autoscalingplans/compile zio-aws-backup/compile
 
       - name: Compress target directories        
-        run: tar cvf targets.tar generated/zio-aws-accessanalyzer/target generated/zio-aws-acm/target generated/zio-aws-acmpca/target generated/zio-aws-alexaforbusiness/target generated/zio-aws-amplify/target generated/zio-aws-apigateway/target generated/zio-aws-apigatewaymanagementapi/target zio-aws-apigatewayv2/compile generated/zio-aws-appconfig/target generated/zio-aws-appflow/target generated/zio-aws-applicationautoscaling/target generated/zio-aws-applicationdiscovery/target generated/zio-aws-applicationinsights/target generated/zio-aws-appmesh/target generated/zio-aws-appstream/target generated/zio-aws-appsync/target generated/zio-aws-athena/target generated/zio-aws-autoscaling/target generated/zio-aws-autoscalingplans/target generated/zio-aws-backup/target","generated/zio-aws-batch/target generated/zio-aws-braket/target generated/zio-aws-budgets/target generated/zio-aws-chime/target zio-aws-cloud9/compile generated/zio-aws-clouddirectory/target generated/zio-aws-cloudformation/target generated/zio-aws-cloudfront/target generated/zio-aws-cloudhsm/target zio-aws-cloudhsmv2/compile generated/zio-aws-cloudsearch/target generated/zio-aws-cloudsearchdomain/target generated/zio-aws-cloudtrail/target generated/zio-aws-cloudwatch/target generated/zio-aws-cloudwatchevents/target generated/zio-aws-cloudwatchlogs/target generated/zio-aws-codeartifact/target generated/zio-aws-codebuild/target generated/zio-aws-codecommit/target generated/zio-aws-codedeploy/target
+        run: tar cf targets.tar generated/zio-aws-accessanalyzer/target generated/zio-aws-acm/target generated/zio-aws-acmpca/target generated/zio-aws-alexaforbusiness/target generated/zio-aws-amplify/target generated/zio-aws-apigateway/target generated/zio-aws-apigatewaymanagementapi/target zio-aws-apigatewayv2/compile generated/zio-aws-appconfig/target generated/zio-aws-appflow/target generated/zio-aws-applicationautoscaling/target generated/zio-aws-applicationdiscovery/target generated/zio-aws-applicationinsights/target generated/zio-aws-appmesh/target generated/zio-aws-appstream/target generated/zio-aws-appsync/target generated/zio-aws-athena/target generated/zio-aws-autoscaling/target generated/zio-aws-autoscalingplans/target generated/zio-aws-backup/target
 
       - name: Upload target directories
         uses: actions/upload-artifact@v2
@@ -97,3 +97,54 @@ jobs:
           name: target-1-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
           path: targets.tar
 
+
+  integration-test:
+    name: Integration test
+    needs: build-core
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        scala: [2.12.12, 2.13.3]
+        java: [adopt@1.8]
+    runs-on: ${{ matrix.os }}
+    services:
+      localstack:
+        image: localstack/localstack:latest
+        env:
+          LOCALSTACK_HOST: localstack
+          SERVICES: 's3,dynamodb'
+          USE_SSL: "false"
+          DEFAULT_REGION: 'us-east-1'
+          AWS_DEFAULT_REGION: "us-east-1"
+          AWS_ACCESS_KEY_ID: dummy-key
+          AWS_SECRET_ACCESS_KEY: dummy-key
+          DEBUG: "0"
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Setup Java and Scala
+        uses: olafurpg/setup-scala@v10
+        with:
+          java-version: ${{ matrix.java }}
+      - name: Cache SBT
+        uses: actions/cache@v2
+        with:
+          path: | 
+            ~/.ivy2/cache
+            ~/.sbt            
+            ~/.coursier/cache/v1
+            ~/.cache/coursier/v1
+          key: ${{ matrix.os }}-sbt-${{ matrix.scala }}-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties') }}
+      - name: Download core target directories
+        uses: actions/download-artifact@v2
+        with:
+          name: target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
+      - name: Inflate core target directories
+        run: |
+          tar xf targets.tar
+          rm targets.tar      
+
+      - name: Build libraries
+        run: ./sbt -J-Xmx5g -J-Xms5g ++${{ matrix.scala }} examples/compile integtests/test
