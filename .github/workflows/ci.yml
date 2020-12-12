@@ -35,7 +35,7 @@ jobs:
             ~/.sbt            
             ~/.coursier/cache/v1
             ~/.cache/coursier/v1
-        key: ${{ runner.os }}-sbt-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties') }}
+          key: ${{ runner.os }}-sbt-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties') }}
       
       - name: Build and test core        
         run: sbt ++${{ matrix.scala }} zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
