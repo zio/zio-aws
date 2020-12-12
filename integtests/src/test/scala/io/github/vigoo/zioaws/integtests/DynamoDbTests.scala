@@ -1,9 +1,9 @@
 package io.github.vigoo.zioaws.integtests
 
 import java.net.URI
-
 import akka.actor.ActorSystem
 import io.github.vigoo.zioaws.core._
+import io.github.vigoo.zioaws.core.aspects._
 import io.github.vigoo.zioaws.core.config
 import io.github.vigoo.zioaws.dynamodb.model._
 import io.github.vigoo.zioaws.{dynamodb, _}
@@ -13,11 +13,14 @@ import software.amazon.awssdk.auth.credentials.{
 }
 import software.amazon.awssdk.regions.Region
 import zio._
+import zio.clock.Clock
+import zio.console.Console
+import zio.duration._
 import zio.test.Assertion._
 import zio.test.TestAspect._
 import zio.test._
 
-object DynamoDbTests extends DefaultRunnableSpec {
+object DynamoDbTests extends DefaultRunnableSpec with Logging {
 
   val nettyClient = netty.default
   val http4sClient = http4s.default
@@ -33,7 +36,7 @@ object DynamoDbTests extends DefaultRunnableSpec {
         .create(AwsBasicCredentials.create("dummy", "key"))
     ).region(Region.US_WEST_2)
       .endpointOverride(new URI("http://localhost:4566"))
-  )
+  ) @@ callLogging
 
   private def testTable(prefix: String) = {
     for {
@@ -88,7 +91,7 @@ object DynamoDbTests extends DefaultRunnableSpec {
         } yield ()
 
         assertM(steps.run)(succeeds(isUnit))
-      } @@ nondeterministic @@ flaky,
+      } @@ nondeterministic @@ flaky @@ timeout(1.minute),
       testM("scan") {
         // java paginator based streaming
 
@@ -127,7 +130,7 @@ object DynamoDbTests extends DefaultRunnableSpec {
         } yield result.length
 
         assertM(steps)(equalTo(N))
-      } @@ nondeterministic @@ flaky,
+      } @@ nondeterministic @@ flaky @@ timeout(1.minute),
       testM("listTagsOfResource") {
         // simple paginated streaming
         val N = 1000
@@ -156,7 +159,7 @@ object DynamoDbTests extends DefaultRunnableSpec {
         } yield result.length
 
         assertM(steps)(equalTo(N))
-      } @@ nondeterministic @@ flaky
+      } @@ nondeterministic @@ flaky @@ timeout(1.minute)
     )
 
   override def spec = {
@@ -164,15 +167,19 @@ object DynamoDbTests extends DefaultRunnableSpec {
       suite("with Netty")(
         tests("netty"): _*
       ).provideCustomLayer(
-        (nettyClient >>> awsConfig >>> dynamoDb).mapError(TestFailure.die)
+        ((Clock.any ++ Console.any ++ (nettyClient >>> awsConfig)) >>> dynamoDb)
+          .mapError(TestFailure.die)
       ) @@ sequential,
       suite("with http4s")(
         tests("http4s"): _*
-      ).provideCustomLayer((http4sClient >>> awsConfig >>> dynamoDb).mapError(TestFailure.die)) @@ sequential,
+      ).provideCustomLayer(
+        ((Clock.any ++ Console.any ++ (http4sClient >>> awsConfig)) >>> dynamoDb)
+          .mapError(TestFailure.die)
+      ) @@ sequential,
       suite("with akka-http")(
         tests("akkahttp"): _*
       ).provideCustomLayer(
-        (actorSystem >>> akkaHttpClient >>> awsConfig >>> dynamoDb)
+        ((Clock.any ++ Console.any ++ (actorSystem >>> akkaHttpClient >>> awsConfig)) >>> dynamoDb)
           .mapError(TestFailure.die)
       ) @@ sequential
     ) @@ sequential

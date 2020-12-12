@@ -89,7 +89,7 @@ jobs:
         run: ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-accessanalyzer/compile zio-aws-acm/compile zio-aws-acmpca/compile zio-aws-alexaforbusiness/compile zio-aws-amplify/compile zio-aws-apigateway/compile zio-aws-apigatewaymanagementapi/compile zio-aws-apigatewayv2/compile zio-aws-appconfig/compile zio-aws-appflow/compile zio-aws-applicationautoscaling/compile zio-aws-applicationdiscovery/compile zio-aws-applicationinsights/compile zio-aws-appmesh/compile zio-aws-appstream/compile zio-aws-appsync/compile zio-aws-athena/compile zio-aws-autoscaling/compile zio-aws-autoscalingplans/compile zio-aws-backup/compile
 
       - name: Compress target directories        
-        run: tar cf targets.tar generated/zio-aws-accessanalyzer/target generated/zio-aws-acm/target generated/zio-aws-acmpca/target generated/zio-aws-alexaforbusiness/target generated/zio-aws-amplify/target generated/zio-aws-apigateway/target generated/zio-aws-apigatewaymanagementapi/target zio-aws-apigatewayv2/compile generated/zio-aws-appconfig/target generated/zio-aws-appflow/target generated/zio-aws-applicationautoscaling/target generated/zio-aws-applicationdiscovery/target generated/zio-aws-applicationinsights/target generated/zio-aws-appmesh/target generated/zio-aws-appstream/target generated/zio-aws-appsync/target generated/zio-aws-athena/target generated/zio-aws-autoscaling/target generated/zio-aws-autoscalingplans/target generated/zio-aws-backup/target
+        run: tar cf targets.tar generated/accessanalyzer/target generated/acm/target generated/acmpca/target generated/alexaforbusiness/target generated/amplify/target generated/apigateway/target generated/apigatewaymanagementapi/target zio-aws-apigatewayv2/compile generated/appconfig/target generated/appflow/target generated/applicationautoscaling/target generated/applicationdiscovery/target generated/applicationinsights/target generated/appmesh/target generated/appstream/target generated/appsync/target generated/athena/target generated/autoscaling/target generated/autoscalingplans/target generated/backup/target
 
       - name: Upload target directories
         uses: actions/upload-artifact@v2
@@ -146,5 +146,5 @@ jobs:
           tar xf targets.tar
           rm targets.tar      
 
-      - name: Build libraries
+      - name: Build and run tests
         run: ./sbt -J-Xmx5g -J-Xms5g ++${{ matrix.scala }} examples/compile integtests/test
