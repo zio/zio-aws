@@ -108,10 +108,9 @@ object Step {
           "name" := s.name,
           "uses" := s.uses,
           "if" := s.condition,
-          "with" := s.parameters,
+          "with" := (if (s.parameters.nonEmpty) s.parameters.asJson else Json.Null),
           "run" := s.run
         )
-        .dropNullValues
 }
 
 case class ImageRef(ref: String)
@@ -170,7 +169,7 @@ object Job {
           "name" := job.name,
           "runs-on" := job.runsOn,
           "strategy" := job.strategy,
-          "needs" := (if (job.need.nonEmpty) Json.arr(job.need.asJson)
+          "needs" := (if (job.need.nonEmpty) job.need.asJson
                       else Json.Null),
           "services" := (if (job.services.nonEmpty) {
                            Json.obj(
@@ -182,7 +181,6 @@ object Job {
           "if" := job.condition,
           "steps" := StepSequence(job.steps).flatten
         )
-        .dropNullValues
 }
 
 case class Workflow(
@@ -219,5 +217,4 @@ object Workflow {
                    }),
           "jobs" := Json.obj(wf.jobs.map(job => job.id := job): _*)
         )
-        .dropNullValues
 }

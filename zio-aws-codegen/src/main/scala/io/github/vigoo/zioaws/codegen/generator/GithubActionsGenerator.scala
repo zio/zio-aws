@@ -223,7 +223,7 @@ trait GithubActionsGenerator {
     yaml.Printer(
       preserveOrder = true,
       dropNullKeys = true,
-      splitLines = false,
+      splitLines = true,
       lineBreak = LineBreak.Unix,
       version = YamlVersion.Auto
     ).pretty(workflow.asJson)
