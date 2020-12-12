@@ -119,6 +119,8 @@ jobs:
           AWS_ACCESS_KEY_ID: dummy-key
           AWS_SECRET_ACCESS_KEY: dummy-key
           DEBUG: "0"
+        ports:
+          - 4566:4566          
     steps:
       - name: Checkout current branch
         uses: actions/checkout@v2
