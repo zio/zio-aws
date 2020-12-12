@@ -7,6 +7,35 @@ name: CI
     branches-ignore:
     - gh-pages
 jobs:
+  tag:
+    name: Tag build
+    runs-on: ubuntu-latest
+    if: ${{ github.ref == 'refs/heads/master' }}
+    steps:
+    - name: Checkout current branch
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Setup Java and Scala
+      uses: olafurpg/setup-scala@v10
+      with:
+        java-version: adopt@1.8
+    - name: Cache SBT
+      uses: actions/cache@v2
+      with:
+        path: ~/.ivy2/cache
+
+          ~/.sbt
+
+          ~/.coursier/cache/v1
+
+          ~/.cache/coursier/v1
+        key: ubuntu-latest-sbt-2.13.3-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties')
+          }}
+    - name: Setup GIT user
+      uses: fregante/setup-git-user@v1
+    - name: Tag release
+      run: ./sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g tagAwsVersion ciReleaseTagNextVersion
   build-core:
     name: Build and test core
     runs-on: ${{ matrix.os }}
@@ -19,6 +48,8 @@ jobs:
         - 2.13.3
         java:
         - adopt@1.8
+    needs:
+    - tag
     steps:
     - name: Checkout current branch
       uses: actions/checkout@v2
@@ -40,14 +71,9 @@ jobs:
           ~/.cache/coursier/v1
         key: ${{ matrix.os }}-sbt-${{ matrix.scala }}-${{ hashFiles('**/*.sbt') }}-${{
           hashFiles('**/build.properties') }}
-    - name: Setup GIT user
-      uses: fregante/setup-git-user@v1
-    - name: Tag release
-      if: ${{ github.ref == 'refs/heads/master' }}
-      run: ./sbt -J-Xmx6g -J-Xms6g tagAwsVersion ciReleaseTagNextVersion
     - name: Build and test core
-      run: ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-core/test zio-aws-akka-http/test
-        zio-aws-http4s/test zio-aws-netty/test
+      run: ./sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-core/test
+        zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
     - name: Compress core targets
       run: tar cf targets.tar target project/target zio-aws-codegen/target zio-aws-core/target
         zio-aws-akka-http/target zio-aws-http4s/target zio-aws-netty/target
@@ -101,7 +127,7 @@ jobs:
         rm targets.tar
     - name: Build libraries
       if: ${{ github.ref != 'refs/heads/master' }}
-      run: ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-accessanalyzer/compile
+      run: ./sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-accessanalyzer/compile
         zio-aws-acm/compile zio-aws-acmpca/compile zio-aws-alexaforbusiness/compile
         zio-aws-amplify/compile zio-aws-amplifybackend/compile zio-aws-apigateway/compile
         zio-aws-apigatewaymanagementapi/compile zio-aws-apigatewayv2/compile zio-aws-appconfig/compile
@@ -114,7 +140,7 @@ jobs:
         zio-aws-cloudfront/compile
     - name: Build and publish libraries
       if: ${{ github.ref == 'refs/heads/master' }}
-      run: ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-accessanalyzer/publishSigned
+      run: ./sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-accessanalyzer/publishSigned
         zio-aws-acm/publishSigned zio-aws-acmpca/publishSigned zio-aws-alexaforbusiness/publishSigned
         zio-aws-amplify/publishSigned zio-aws-amplifybackend/publishSigned zio-aws-apigateway/publishSigned
         zio-aws-apigatewaymanagementapi/publishSigned zio-aws-apigatewayv2/publishSigned
@@ -181,7 +207,7 @@ jobs:
         rm targets.tar
     - name: Build libraries
       if: ${{ github.ref != 'refs/heads/master' }}
-      run: ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-cloudhsm/compile
+      run: ./sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-cloudhsm/compile
         zio-aws-cloudhsmv2/compile zio-aws-cloudsearch/compile zio-aws-cloudsearchdomain/compile
         zio-aws-cloudtrail/compile zio-aws-cloudwatch/compile zio-aws-cloudwatchevents/compile
         zio-aws-cloudwatchlogs/compile zio-aws-codeartifact/compile zio-aws-codebuild/compile
@@ -195,7 +221,7 @@ jobs:
         zio-aws-customerprofiles/compile
     - name: Build and publish libraries
       if: ${{ github.ref == 'refs/heads/master' }}
-      run: ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-cloudhsm/publishSigned
+      run: ./sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-cloudhsm/publishSigned
         zio-aws-cloudhsmv2/publishSigned zio-aws-cloudsearch/publishSigned zio-aws-cloudsearchdomain/publishSigned
         zio-aws-cloudtrail/publishSigned zio-aws-cloudwatch/publishSigned zio-aws-cloudwatchevents/publishSigned
         zio-aws-cloudwatchlogs/publishSigned zio-aws-codeartifact/publishSigned zio-aws-codebuild/publishSigned
@@ -263,7 +289,7 @@ jobs:
         rm targets.tar
     - name: Build libraries
       if: ${{ github.ref != 'refs/heads/master' }}
-      run: ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-databasemigration/compile
+      run: ./sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-databasemigration/compile
         zio-aws-databrew/compile zio-aws-dataexchange/compile zio-aws-datapipeline/compile
         zio-aws-datasync/compile zio-aws-dax/compile zio-aws-detective/compile zio-aws-devicefarm/compile
         zio-aws-devopsguru/compile zio-aws-directconnect/compile zio-aws-directory/compile
@@ -275,7 +301,7 @@ jobs:
         zio-aws-elasticsearch/compile zio-aws-elastictranscoder/compile zio-aws-emr/compile
     - name: Build and publish libraries
       if: ${{ github.ref == 'refs/heads/master' }}
-      run: ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-databasemigration/publishSigned
+      run: ./sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-databasemigration/publishSigned
         zio-aws-databrew/publishSigned zio-aws-dataexchange/publishSigned zio-aws-datapipeline/publishSigned
         zio-aws-datasync/publishSigned zio-aws-dax/publishSigned zio-aws-detective/publishSigned
         zio-aws-devicefarm/publishSigned zio-aws-devopsguru/publishSigned zio-aws-directconnect/publishSigned
@@ -342,7 +368,7 @@ jobs:
         rm targets.tar
     - name: Build libraries
       if: ${{ github.ref != 'refs/heads/master' }}
-      run: ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-emrcontainers/compile
+      run: ./sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-emrcontainers/compile
         zio-aws-eventbridge/compile zio-aws-firehose/compile zio-aws-fms/compile zio-aws-forecast/compile
         zio-aws-forecastquery/compile zio-aws-frauddetector/compile zio-aws-fsx/compile
         zio-aws-gamelift/compile zio-aws-glacier/compile zio-aws-globalaccelerator/compile
@@ -355,7 +381,7 @@ jobs:
         zio-aws-iotjobsdataplane/compile zio-aws-iotsecuretunneling/compile
     - name: Build and publish libraries
       if: ${{ github.ref == 'refs/heads/master' }}
-      run: ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-emrcontainers/publishSigned
+      run: ./sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-emrcontainers/publishSigned
         zio-aws-eventbridge/publishSigned zio-aws-firehose/publishSigned zio-aws-fms/publishSigned
         zio-aws-forecast/publishSigned zio-aws-forecastquery/publishSigned zio-aws-frauddetector/publishSigned
         zio-aws-fsx/publishSigned zio-aws-gamelift/publishSigned zio-aws-glacier/publishSigned
@@ -422,7 +448,7 @@ jobs:
         rm targets.tar
     - name: Build libraries
       if: ${{ github.ref != 'refs/heads/master' }}
-      run: ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-iotsitewise/compile
+      run: ./sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-iotsitewise/compile
         zio-aws-iotthingsgraph/compile zio-aws-ivs/compile zio-aws-kafka/compile zio-aws-kendra/compile
         zio-aws-kinesis/compile zio-aws-kinesisanalytics/compile zio-aws-kinesisanalyticsv2/compile
         zio-aws-kinesisvideo/compile zio-aws-kinesisvideoarchivedmedia/compile zio-aws-kinesisvideomedia/compile
@@ -435,7 +461,7 @@ jobs:
         zio-aws-mediaconnect/compile zio-aws-mediaconvert/compile zio-aws-medialive/compile
     - name: Build and publish libraries
       if: ${{ github.ref == 'refs/heads/master' }}
-      run: ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-iotsitewise/publishSigned
+      run: ./sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-iotsitewise/publishSigned
         zio-aws-iotthingsgraph/publishSigned zio-aws-ivs/publishSigned zio-aws-kafka/publishSigned
         zio-aws-kendra/publishSigned zio-aws-kinesis/publishSigned zio-aws-kinesisanalytics/publishSigned
         zio-aws-kinesisanalyticsv2/publishSigned zio-aws-kinesisvideo/publishSigned
@@ -503,7 +529,7 @@ jobs:
         rm targets.tar
     - name: Build libraries
       if: ${{ github.ref != 'refs/heads/master' }}
-      run: ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-mediapackage/compile
+      run: ./sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-mediapackage/compile
         zio-aws-mediapackagevod/compile zio-aws-mediastore/compile zio-aws-mediastoredata/compile
         zio-aws-mediatailor/compile zio-aws-migrationhub/compile zio-aws-migrationhubconfig/compile
         zio-aws-mobile/compile zio-aws-mq/compile zio-aws-mturk/compile zio-aws-mwaa/compile
@@ -516,7 +542,7 @@ jobs:
         zio-aws-ram/compile
     - name: Build and publish libraries
       if: ${{ github.ref == 'refs/heads/master' }}
-      run: ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-mediapackage/publishSigned
+      run: ./sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-mediapackage/publishSigned
         zio-aws-mediapackagevod/publishSigned zio-aws-mediastore/publishSigned zio-aws-mediastoredata/publishSigned
         zio-aws-mediatailor/publishSigned zio-aws-migrationhub/publishSigned zio-aws-migrationhubconfig/publishSigned
         zio-aws-mobile/publishSigned zio-aws-mq/publishSigned zio-aws-mturk/publishSigned
@@ -583,19 +609,20 @@ jobs:
         rm targets.tar
     - name: Build libraries
       if: ${{ github.ref != 'refs/heads/master' }}
-      run: ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-rds/compile zio-aws-rdsdata/compile
-        zio-aws-redshift/compile zio-aws-redshiftdata/compile zio-aws-rekognition/compile
-        zio-aws-resourcegroups/compile zio-aws-resourcegroupstaggingapi/compile zio-aws-robomaker/compile
-        zio-aws-route53/compile zio-aws-route53domains/compile zio-aws-route53resolver/compile
-        zio-aws-s3/compile zio-aws-s3control/compile zio-aws-s3outposts/compile zio-aws-sagemaker/compile
-        zio-aws-sagemakera2iruntime/compile zio-aws-sagemakeredge/compile zio-aws-sagemakerfeaturestoreruntime/compile
+      run: ./sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-rds/compile
+        zio-aws-rdsdata/compile zio-aws-redshift/compile zio-aws-redshiftdata/compile
+        zio-aws-rekognition/compile zio-aws-resourcegroups/compile zio-aws-resourcegroupstaggingapi/compile
+        zio-aws-robomaker/compile zio-aws-route53/compile zio-aws-route53domains/compile
+        zio-aws-route53resolver/compile zio-aws-s3/compile zio-aws-s3control/compile
+        zio-aws-s3outposts/compile zio-aws-sagemaker/compile zio-aws-sagemakera2iruntime/compile
+        zio-aws-sagemakeredge/compile zio-aws-sagemakerfeaturestoreruntime/compile
         zio-aws-sagemakerruntime/compile zio-aws-savingsplans/compile zio-aws-schemas/compile
         zio-aws-secretsmanager/compile zio-aws-securityhub/compile zio-aws-serverlessapplicationrepository/compile
         zio-aws-servicecatalog/compile zio-aws-servicecatalogappregistry/compile zio-aws-servicediscovery/compile
         zio-aws-servicequotas/compile zio-aws-ses/compile zio-aws-sesv2/compile zio-aws-sfn/compile
     - name: Build and publish libraries
       if: ${{ github.ref == 'refs/heads/master' }}
-      run: ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-rds/publishSigned
+      run: ./sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-rds/publishSigned
         zio-aws-rdsdata/publishSigned zio-aws-redshift/publishSigned zio-aws-redshiftdata/publishSigned
         zio-aws-rekognition/publishSigned zio-aws-resourcegroups/publishSigned zio-aws-resourcegroupstaggingapi/publishSigned
         zio-aws-robomaker/publishSigned zio-aws-route53/publishSigned zio-aws-route53domains/publishSigned
@@ -663,18 +690,19 @@ jobs:
         rm targets.tar
     - name: Build libraries
       if: ${{ github.ref != 'refs/heads/master' }}
-      run: ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-shield/compile zio-aws-signer/compile
-        zio-aws-sms/compile zio-aws-snowball/compile zio-aws-sns/compile zio-aws-sqs/compile
-        zio-aws-ssm/compile zio-aws-sso/compile zio-aws-ssoadmin/compile zio-aws-ssooidc/compile
-        zio-aws-storagegateway/compile zio-aws-sts/compile zio-aws-support/compile
-        zio-aws-swf/compile zio-aws-synthetics/compile zio-aws-textract/compile zio-aws-timestreamquery/compile
-        zio-aws-timestreamwrite/compile zio-aws-transcribe/compile zio-aws-transcribestreaming/compile
-        zio-aws-transfer/compile zio-aws-translate/compile zio-aws-waf/compile zio-aws-wafregional/compile
-        zio-aws-wafv2/compile zio-aws-workdocs/compile zio-aws-worklink/compile zio-aws-workmail/compile
-        zio-aws-workmailmessageflow/compile zio-aws-workspaces/compile zio-aws-xray/compile
+      run: ./sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-shield/compile
+        zio-aws-signer/compile zio-aws-sms/compile zio-aws-snowball/compile zio-aws-sns/compile
+        zio-aws-sqs/compile zio-aws-ssm/compile zio-aws-sso/compile zio-aws-ssoadmin/compile
+        zio-aws-ssooidc/compile zio-aws-storagegateway/compile zio-aws-sts/compile
+        zio-aws-support/compile zio-aws-swf/compile zio-aws-synthetics/compile zio-aws-textract/compile
+        zio-aws-timestreamquery/compile zio-aws-timestreamwrite/compile zio-aws-transcribe/compile
+        zio-aws-transcribestreaming/compile zio-aws-transfer/compile zio-aws-translate/compile
+        zio-aws-waf/compile zio-aws-wafregional/compile zio-aws-wafv2/compile zio-aws-workdocs/compile
+        zio-aws-worklink/compile zio-aws-workmail/compile zio-aws-workmailmessageflow/compile
+        zio-aws-workspaces/compile zio-aws-xray/compile
     - name: Build and publish libraries
       if: ${{ github.ref == 'refs/heads/master' }}
-      run: ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-shield/publishSigned
+      run: ./sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-shield/publishSigned
         zio-aws-signer/publishSigned zio-aws-sms/publishSigned zio-aws-snowball/publishSigned
         zio-aws-sns/publishSigned zio-aws-sqs/publishSigned zio-aws-ssm/publishSigned
         zio-aws-sso/publishSigned zio-aws-ssoadmin/publishSigned zio-aws-ssooidc/publishSigned
@@ -754,7 +782,8 @@ jobs:
 
         rm targets.tar
     - name: Build and run tests
-      run: ./sbt -J-Xmx5g -J-Xms5g ++${{ matrix.scala }} examples/compile integtests/test
+      run: ./sbt -J-XX:+UseG1GC -J-Xmx5g -J-Xms5g ++${{ matrix.scala }} examples/compile
+        integtests/test
   release:
     name: Release
     runs-on: ubuntu-latest
@@ -936,7 +965,7 @@ jobs:
 
         rm targets.tar
     - name: Publish artifacts
-      run: ./sbt -J-Xmx5g -J-Xms5g +publishSigned sonatypeBundleRelease
+      run: ./sbt -J-XX:+UseG1GC -J-Xmx5g -J-Xms5g +publishSigned sonatypeBundleRelease
   microsite:
     name: Build and publish microsite
     runs-on: ubuntu-latest
@@ -980,4 +1009,4 @@ jobs:
 
         gem install jekyll-sitemap -v 1.4.0
     - name: Build and publish microsite
-      run: ./sbt -J-Xmx4g -J-Xms4g ++2.13.3 generateArtifactList docs/publishMicrosite
+      run: ./sbt -J-XX:+UseG1GC -J-Xmx4g -J-Xms4g ++2.13.3 generateArtifactList docs/publishMicrosite

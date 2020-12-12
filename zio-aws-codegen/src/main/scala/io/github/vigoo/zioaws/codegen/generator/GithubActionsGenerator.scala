@@ -14,7 +14,7 @@ trait GithubActionsGenerator {
   def generateCiYaml(
       ids: Set[ModelId],
       parallelJobs: Int,
-      separateJobs: Set[String],
+      separateJobs: Set[String]
   ): String = {
     val sortedProjectNames =
       ids
@@ -50,18 +50,33 @@ trait GithubActionsGenerator {
         )
         .addJob(
           Job(
+            "tag",
+            "Tag build",
+            condition = Some(isMaster)
+          ).withSteps(
+            checkoutCurrentBranch(),
+            setupScala(Some(JavaVersion.AdoptJDK18)),
+            cacheSBT(
+              os = Some(OS.UbuntuLatest),
+              scalaVersion = Some(scala213)
+            ),
+            setupGitUser(),
+            runSBT(
+              "Tag release",
+              parameters = List("tagAwsVersion", "ciReleaseTagNextVersion")
+            )
+          )
+        )
+        .addJob(
+          Job(
             "build-core",
-            "Build and test core"
+            "Build and test core",
+            need = Seq("tag")
           ).matrix(scalaVersions)
             .withSteps(
               checkoutCurrentBranch(),
               setupScala(),
               cacheSBT(),
-              setupGitUser(),
-              runSBT(
-                "Tag release",
-                parameters = List("tagAwsVersion", "ciReleaseTagNextVersion")
-              ).when(isMaster),
               runSBT(
                 "Build and test core",
                 parameters = List(
@@ -153,16 +168,15 @@ trait GithubActionsGenerator {
                   "integtests/test"
                 ),
                 heapGb = 5
+              )
             )
-          )
         )
         .addJob(
           Job(
             "release",
             "Release",
-            need =
-              Seq("build-core", "integration-test") ++
-                grouped.indices.map(idx => s"build-clients-$idx"),
+            need = Seq("build-core", "integration-test") ++
+              grouped.indices.map(idx => s"build-clients-$idx"),
             condition = Some(isMaster)
           ).withSteps(
             checkoutCurrentBranch(),
@@ -220,12 +234,14 @@ trait GithubActionsGenerator {
           )
         )
 
-    yaml.Printer(
-      preserveOrder = true,
-      dropNullKeys = true,
-      splitLines = true,
-      lineBreak = LineBreak.Unix,
-      version = YamlVersion.Auto
-    ).pretty(workflow.asJson)
+    yaml
+      .Printer(
+        preserveOrder = true,
+        dropNullKeys = true,
+        splitLines = true,
+        lineBreak = LineBreak.Unix,
+        version = YamlVersion.Auto
+      )
+      .pretty(workflow.asJson)
   }
 }
