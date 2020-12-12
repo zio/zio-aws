@@ -60,3 +60,5 @@ case class Model(
 }
 
 case class NamedShape(name: String, shape: Shape)
+
+case class PropertyNames(javaName: String, wrapperName: String)

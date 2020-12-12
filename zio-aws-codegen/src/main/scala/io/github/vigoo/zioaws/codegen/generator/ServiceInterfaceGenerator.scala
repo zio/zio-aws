@@ -459,7 +459,7 @@ trait ServiceInterfaceGenerator {
           awsItemType <- TypeMapping.toJavaType(itemModel)
           responseModel <- context.get(responseName.value)
           property <- propertyName(responseModel, listModel, memberName)
-          propertyNameTerm = Term.Name(property)
+          propertyNameTerm = Term.Name(property.javaName)
           streamedPaginator =
             if (isSimple) {
               ServiceMethod(
@@ -526,7 +526,7 @@ trait ServiceInterfaceGenerator {
 
           responseModel <- context.get(responseName.value)
           property <- propertyName(responseModel, mapModel, memberName)
-          propertyNameTerm = Term.Name(property)
+          propertyNameTerm = Term.Name(property.javaName)
           streamedPaginator =
             if (isSimple) {
               ServiceMethod(
@@ -583,7 +583,7 @@ trait ServiceInterfaceGenerator {
           awsItemType <- TypeMapping.toJavaType(stringModel)
           responseModel <- context.get(responseName.value)
           property <- propertyName(responseModel, stringModel, memberName)
-          propertyNameTerm = Term.Name(property)
+          propertyNameTerm = Term.Name(property.javaName)
           streamedPaginator =
             if (isSimple) {
               ServiceMethod(

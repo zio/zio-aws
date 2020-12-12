@@ -277,19 +277,20 @@ trait ServiceModelGenerator {
       fields <- ZIO.foreach(fieldList) { case (memberName, _) =>
         val finalFieldModel = fieldModels(memberName)
         val property = fieldNames(memberName)
-        val propertyNameLit = Lit.String(property)
-        val propertyNameTerm = Term.Name(property)
+        val propertyNameLit = Lit.String(property.wrapperName)
+        val propertyNameTerm = Term.Name(property.wrapperName)
+        val propertyNameJavaTerm = Term.Name(property.javaName)
 
         val propertyValueNameTerm =
-          if (fieldNames.values.toSet.contains(property + "Value")) {
-            Term.Name(property + "Value_")
+          if (fieldNames.values.toSet.contains(property.wrapperName + "Value")) {
+            Term.Name(property.wrapperName + "Value_")
           } else {
-            Term.Name(property + "Value")
+            Term.Name(property.wrapperName + "Value")
           }
 
         val fluentSetter = Term.Name(
           namingStrategy.getFluentSetterMethodName(
-            property,
+            property.javaName,
             m.shape,
             finalFieldModel.shape
           )
@@ -304,7 +305,7 @@ trait ServiceModelGenerator {
                     wrapSdkValue(
                       finalFieldModel,
                       Term.Apply(
-                        Term.Select(Term.Name("impl"), propertyNameTerm),
+                        Term.Select(Term.Name("impl"), propertyNameJavaTerm),
                         List.empty
                       )
                     ).flatMap { wrappedGet =>
@@ -327,7 +328,7 @@ trait ServiceModelGenerator {
                 }
               } else {
                 val get = Term.Apply(
-                  Term.Select(Term.Name("impl"), propertyNameTerm),
+                  Term.Select(Term.Name("impl"), propertyNameJavaTerm),
                   List.empty
                 )
                 val valueTerm = Term.Name("value")
