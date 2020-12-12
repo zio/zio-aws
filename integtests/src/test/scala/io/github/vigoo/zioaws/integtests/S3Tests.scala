@@ -1,9 +1,9 @@
 package io.github.vigoo.zioaws.integtests
 
 import java.net.URI
-
 import akka.actor.ActorSystem
-import io.github.vigoo.zioaws.core.config
+import io.github.vigoo.zioaws.core.{AwsError, config}
+import io.github.vigoo.zioaws.core.aspects._
 import io.github.vigoo.zioaws.s3.model._
 import io.github.vigoo.zioaws.{akkahttp, http4s, netty, s3}
 import software.amazon.awssdk.auth.credentials.{
@@ -12,12 +12,15 @@ import software.amazon.awssdk.auth.credentials.{
 }
 import software.amazon.awssdk.regions.Region
 import zio._
+import zio.clock._
+import zio.console._
+import zio.duration._
 import zio.stream.ZStream
 import zio.test.Assertion._
 import zio.test.TestAspect._
 import zio.test._
 
-object S3Tests extends DefaultRunnableSpec {
+object S3Tests extends DefaultRunnableSpec with Logging {
   val nettyClient = netty.default
   val http4sClient = http4s.default
 
@@ -34,7 +37,7 @@ object S3Tests extends DefaultRunnableSpec {
         .create(AwsBasicCredentials.create("dummy", "key"))
     ).region(Region.US_WEST_2)
       .endpointOverride(new URI("http://localhost:4566"))
-  )
+  ) @@ callLogging
 
   private def testBucket(prefix: String) = {
     for {
@@ -73,7 +76,7 @@ object S3Tests extends DefaultRunnableSpec {
         } yield ()
 
         assertM(steps.run)(succeeds(isUnit))
-      } @@ nondeterministic @@ flaky,
+      } @@ nondeterministic @@ flaky @@ timeout(1.minute),
       testM(
         "can upload and download items as byte streams with known content length"
       ) {
@@ -120,7 +123,8 @@ object S3Tests extends DefaultRunnableSpec {
         } yield testData == receivedData
 
         assertM(steps)(isTrue)
-      } @@ (if (ignoreUpload) ignore else identity) @@ nondeterministic @@ flaky
+      } @@ (if (ignoreUpload) ignore
+            else identity) @@ nondeterministic @@ flaky @@ timeout(1.minute)
     )
 
   override def spec = {
@@ -128,15 +132,19 @@ object S3Tests extends DefaultRunnableSpec {
       suite("with Netty")(
         tests("netty"): _*
       ).provideCustomLayer(
-        (nettyClient >>> awsConfig >>> s3Client).mapError(TestFailure.die)
+        ((Clock.any ++ Console.any ++ (nettyClient >>> awsConfig)) >>> s3Client)
+          .mapError(TestFailure.die)
       ) @@ sequential,
-     suite("with http4s")(
-       tests("http4s"): _*
-     ).provideCustomLayer((http4sClient >>> awsConfig >>> s3Client).mapError(TestFailure.die)) @@ sequential,
+      suite("with http4s")(
+        tests("http4s"): _*
+      ).provideCustomLayer(
+        ((Clock.any ++ Console.any ++ (http4sClient >>> awsConfig)) >>> s3Client)
+          .mapError(TestFailure.die)
+      ) @@ sequential,
       suite("with akka-http")(
         tests("akkahttp", ignoreUpload = true): _*
       ).provideCustomLayer(
-        (actorSystem >>> akkaHttpClient >>> awsConfig >>> s3Client)
+        ((Clock.any ++ Console.any ++ (actorSystem >>> akkaHttpClient >>> awsConfig)) >>> s3Client)
           .mapError(TestFailure.die)
       ) @@ sequential
     ) @@ sequential

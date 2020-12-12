@@ -4,10 +4,9 @@ import zio.nio.core.file.Path
 
 case class Parameters(
     targetRoot: Path,
-    circleCiSource: Path,
-    circleCiTarget: Path,
-    parallelCircleCiJobs: Int,
-    separateCircleCiJobs: Set[String],
+    ciTarget: Path,
+    parallelCiJobs: Int,
+    separateCiJobs: Set[String],
     artifactListTarget: Path,
     version: String
 )

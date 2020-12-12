@@ -122,7 +122,7 @@ trait GeneratorBase {
       model: Model,
       fieldModel: Model,
       name: String
-  ): ZIO[GeneratorContext, Nothing, String] = {
+  ): ZIO[GeneratorContext, Nothing, PropertyNames] = {
     getNamingStrategy.flatMap { namingStrategy =>
       getModels.map { models =>
         val shapeModifiers = Option(
@@ -145,6 +145,7 @@ trait GeneratorBase {
               .find(_.isDefined)
               .flatten
               .map(_.uncapitalize)
+              .map(name => PropertyNames(name, name))
           }
           .getOrElse {
             val getterMethod = namingStrategy.getFluentGetterMethodName(
@@ -152,9 +153,15 @@ trait GeneratorBase {
               model.shape,
               fieldModel.shape
             )
-            getterMethod
+
+            val stripped = getterMethod
               .stripSuffix("AsString")
               .stripSuffix("AsStrings")
+            if (fieldModel.typ == ModelType.String) {
+              PropertyNames(getterMethod, stripped)
+            } else {
+              PropertyNames(stripped, stripped)
+            }
           }
       }
     }
