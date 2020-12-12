@@ -3,7 +3,7 @@ package io.github.vigoo.zioaws.codegen.generator
 import io.circe.Json
 import io.circe.syntax._
 import io.circe.yaml
-import io.circe.yaml.Printer.StringStyle
+import io.circe.yaml.Printer.{LineBreak, StringStyle, YamlVersion}
 import io.github.vigoo.zioaws.codegen.loader.ModelId
 import io.github.vigoo.zioaws.codegen.githubactions._
 import io.github.vigoo.zioaws.codegen.githubactions.ScalaWorkflow._
@@ -222,6 +222,10 @@ trait GithubActionsGenerator {
 
     yaml.Printer(
       preserveOrder = true,
+      dropNullKeys = true,
+      splitLines = false,
+      lineBreak = LineBreak.Unix,
+      version = YamlVersion.Auto
     ).pretty(workflow.asJson)
   }
 }
