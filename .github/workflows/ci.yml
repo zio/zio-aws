@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  pull_request:
+    branches-ignore: 
+      - gh-pages
+
+  push:
+    branches-ignore: 
+      - gh-pages
+
+jobs:
+  build:
+    name: Build and test
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        scala: [2.12.12, 2.13.3]
+        java: [adopt@1.8]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Setup Java and Scala
+        uses: olafurpg/setup-scala@v10
+        with:
+          java-version: ${{ matrix.java }}
+      - name: Cache SBT
+        uses: actions/cache@v2
+        with:
+          path: | 
+            ~/.ivy2/cache
+            ~/.sbt            
+            ~/.coursier/cache/v1
+            ~/.cache/coursier/v1
+        key: ${{ runner.os }}-sbt-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties') }}
+      
+      - name: Build and test core        
+        run: sbt ++${{ matrix.scala }} zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
+
+      - name: Compress core target directories        
+        run: tar cvf targets.tar target project/target zio-aws-codegen/target zio-aws-core/target zio-aws-akka-http/target zio-aws-http4s/target zio-aws-netty/target
+
+      - name: Upload target directories
+        uses: actions/upload-artifact@v2
+        with:
+          name: target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
+          path: targets.tar
