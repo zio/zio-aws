@@ -5,11 +5,9 @@ import scala.xml.transform.{RewriteRule, RuleTransformer}
 
 enablePlugins(Common, ZioAwsCodegenPlugin, GitVersioning)
 
-ThisBuild / circleCiParallelJobs := 12
-ThisBuild / circleCiSeparateJobs := Seq("zio-aws-ec2")
-
-ThisBuild / circleCiSource := file(".circleci/.config.base.yml")
-ThisBuild / circleCiTarget := file(".circleci/config.yml")
+ThisBuild / ciParallelJobs := 8
+ThisBuild / ciSeparateJobs := Seq("")
+ThisBuild / ciTarget := file(".github/workflows/ci.yml")
 ThisBuild / artifactListTarget := file("docs/docs/docs/artifacts.md")
 
 Global / pgpPublicRing := file("/tmp/public.asc")

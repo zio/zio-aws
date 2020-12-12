@@ -16,16 +16,15 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
     val awsLibraryVersion = settingKey[String](
       "Specifies the version of the  AWS Java SDK to depend on"
     )
-    val circleCiParallelJobs =
+    val ciParallelJobs =
       settingKey[Int]("Number of parallel jobs in the generated circleCi file")
-    val circleCiSeparateJobs = settingKey[Seq[String]]("List of subprojects to have their individual circleCi jobs")
-    val circleCiSource = settingKey[File]("circleCi source file")
-    val circleCiTarget = settingKey[File]("circleCi target file")
+    val ciSeparateJobs = settingKey[Seq[String]]("List of subprojects to have their individual circleCi jobs")
+    val ciTarget = settingKey[File]("circleCi target file")
     val artifactListTarget =
       settingKey[File]("artifact list markdown target file")
 
-    val generateCircleCiYaml =
-      taskKey[Unit]("Regenerates the .circleCi.yml file")
+    val generateCiYaml =
+      taskKey[Unit]("Regenerates the CI workflow file")
     val generateArtifactList =
       taskKey[Unit]("Regenerates the artifact list markdown file")
 
@@ -40,19 +39,17 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
         }
 
         val targetRoot = (sourceManaged in Compile).value
-        val circleCiSrc = circleCiSource.value
-        val circleCiDst = circleCiTarget.value
-        val parallelJobs = circleCiParallelJobs.value
-        val separateJobs = circleCiSeparateJobs.value
+        val circleCiDst = ciTarget.value
+        val parallelJobs = ciParallelJobs.value
+        val separateJobs = ciSeparateJobs.value
         val artifactLstTarget = artifactListTarget.value
         val ver = version.value
 
         val params = Parameters(
           targetRoot = Path.fromJava(targetRoot.toPath),
-          circleCiSource = Path.fromJava(circleCiSrc.toPath),
-          circleCiTarget = Path.fromJava(circleCiDst.toPath),
-          parallelCircleCiJobs = parallelJobs,
-          separateCircleCiJobs = separateJobs.toSet,
+          ciTarget = Path.fromJava(circleCiDst.toPath),
+          parallelCiJobs = parallelJobs,
+          separateCiJobs = separateJobs.toSet,
           artifactListTarget = Path.fromJava(artifactLstTarget.toPath),
           version = ver
         )
@@ -84,7 +81,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
   case class GeneratorError(error: GeneratorFailure) extends Error
 
   override lazy val projectSettings = Seq(
-    generateCircleCiYaml := generateCircleCiYamlTask.value,
+    generateCiYaml := generateCiYamlTask.value,
     generateArtifactList := generateArtifactListTask.value
   )
 
@@ -103,22 +100,20 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
     }
   }
 
-  private lazy val generateCircleCiYamlTask = Def.task {
+  private lazy val generateCiYamlTask = Def.task {
     val log = streams.value.log
     val targetRoot = (sourceManaged in Compile).value
-    val circleCiSrc = circleCiSource.value
-    val circleCiDst = circleCiTarget.value
-    val parallelJobs = circleCiParallelJobs.value
-    val separateJobs = circleCiSeparateJobs.value
+    val circleCiDst = ciTarget.value
+    val parallelJobs = ciParallelJobs.value
+    val separateJobs = ciSeparateJobs.value
     val artifactLstTarget = artifactListTarget.value
     val ver = version.value
 
     val params = Parameters(
       targetRoot = Path.fromJava(targetRoot.toPath),
-      circleCiSource = Path.fromJava(circleCiSrc.toPath),
-      circleCiTarget = Path.fromJava(circleCiDst.toPath),
-      parallelCircleCiJobs = parallelJobs,
-      separateCircleCiJobs = separateJobs.toSet,
+      ciTarget = Path.fromJava(circleCiDst.toPath),
+      parallelCiJobs = parallelJobs,
+      separateCiJobs = separateJobs.toSet,
       artifactListTarget = Path.fromJava(artifactLstTarget.toPath),
       version = ver
     )
@@ -128,9 +123,9 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
       val env = loader.live ++ (cfg >+> generator.live)
       val task =
         for {
-          _ <- ZIO.effect(log.info(s"Regenerating ${params.circleCiTarget}"))
+          _ <- ZIO.effect(log.info(s"Regenerating ${params.ciTarget}"))
           ids <- loader.findModels()
-          _ <- generator.generateCircleCiYaml(ids)
+          _ <- generator.generateCiYaml(ids)
         } yield ()
       task.provideCustomLayer(env).catchAll { generatorError =>
         ZIO
@@ -143,19 +138,17 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
   private lazy val generateArtifactListTask = Def.task {
     val log = streams.value.log
     val targetRoot = (sourceManaged in Compile).value
-    val circleCiSrc = circleCiSource.value
-    val circleCiDst = circleCiTarget.value
-    val parallelJobs = circleCiParallelJobs.value
-    val separateJobs = circleCiSeparateJobs.value
+    val circleCiDst = ciTarget.value
+    val parallelJobs = ciParallelJobs.value
+    val separateJobs = ciSeparateJobs.value
     val artifactLstTarget = artifactListTarget.value
     val ver = version.value
 
     val params = Parameters(
       targetRoot = Path.fromJava(targetRoot.toPath),
-      circleCiSource = Path.fromJava(circleCiSrc.toPath),
-      circleCiTarget = Path.fromJava(circleCiDst.toPath),
-      parallelCircleCiJobs = parallelJobs,
-      separateCircleCiJobs = separateJobs.toSet,
+      ciTarget = Path.fromJava(circleCiDst.toPath),
+      parallelCiJobs = parallelJobs,
+      separateCiJobs = separateJobs.toSet,
       artifactListTarget = Path.fromJava(artifactLstTarget.toPath),
       version = ver
     )

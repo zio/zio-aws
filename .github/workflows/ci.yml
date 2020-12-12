@@ -1,257 +1,1267 @@
-name: CI
-
-on:
+name: |-
+  CI
+'on':
   pull_request:
-    branches-ignore: 
-      - gh-pages
-
+    branches-ignore:
+    - |-
+      gh-pages
   push:
-    branches-ignore: 
-      - gh-pages
-
+    branches-ignore:
+    - |-
+      gh-pages
 jobs:
   build-core:
-    name: Build and test core
+    name: |-
+      Build and test core
+    runs-on: |-
+      ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
-        scala: [2.12.12, 2.13.3]
-        java: [adopt@1.8]
-    runs-on: ${{ matrix.os }}
+        os:
+        - |-
+          ubuntu-latest
+        scala:
+        - |-
+          2.12.12
+        - |-
+          2.13.3
+        java:
+        - |-
+          adopt@1.8
     steps:
-      - name: Checkout current branch
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      - name: Setup Java and Scala
-        uses: olafurpg/setup-scala@v10
-        with:
-          java-version: ${{ matrix.java }}
-      - name: Cache SBT
-        uses: actions/cache@v2
-        with:
-          path: | 
-            ~/.ivy2/cache
-            ~/.sbt            
-            ~/.coursier/cache/v1
-            ~/.cache/coursier/v1
-          key: ${{ matrix.os }}-sbt-${{ matrix.scala }}-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties') }}
-      
-
-      - name: Setup GIT user
-        uses: fregante/setup-git-user@v1
-
-      - name: Tag release
-        if: ${{ github.ref == 'refs/heads/master' }}
-        run: ./sbt tagAwsVersion ciReleaseTagNextVersion
-
-      - name: Build and test core        
-        run: ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
-
-      - name: Compress core target directories        
-        run: tar cf targets.tar target project/target zio-aws-codegen/target zio-aws-core/target zio-aws-akka-http/target zio-aws-http4s/target zio-aws-netty/target
-
-      - name: Upload target directories
-        uses: actions/upload-artifact@v2
-        with:
-          name: target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
-          path: targets.tar
-
+    - name: |-
+        Checkout current branch
+      uses: |-
+        actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: |-
+        Setup Java and Scala
+      uses: |-
+        olafurpg/setup-scala@v10
+      with:
+        java-version: |-
+          ${{ matrix.java }}
+    - name: |-
+        Cache SBT
+      uses: |-
+        actions/cache@v2
+      with:
+        path: |-
+          ~/.ivy2/cache
+          ~/.sbt
+          ~/.coursier/cache/v1
+          ~/.cache/coursier/v1
+        key: |-
+          ${{ matrix.os }}-sbt-${{ matrix.scala }}-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties') }}
+    - name: |-
+        Setup GIT user
+      uses: |-
+        fregante/setup-git-user@v1
+      with: {}
+    - name: |-
+        Tag release
+      if: |-
+        ${{ github.ref == 'refs/heads/master }}
+      with: {}
+      run: |-
+        ./sbt -J-Xmx6g -J-Xms6g tagAwsVersion ciReleaseTagNextVersion
+    - name: |-
+        Build and test core
+      with: {}
+      run: |-
+        ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
+    - name: |-
+        Compress core targets
+      with: {}
+      run: |-
+        tar cf targets.tar target project/target zio-aws-codegen/target zio-aws-core/target zio-aws-akka-http/target zio-aws-http4s/target zio-aws-netty/target
+    - name: |-
+        Upload core targets
+      uses: |-
+        actions/upload-artifact@v2
+      with:
+        name: |-
+          target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
+        path: |-
+          targets.tar
+  build-clients-0:
+    name: |-
+      Build client libraries #0
+    runs-on: |-
+      ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+        - |-
+          ubuntu-latest
+        scala:
+        - |-
+          2.12.12
+        - |-
+          2.13.3
+        java:
+        - |-
+          adopt@1.8
+    needs:
+    - - |-
+        build-core
+    steps:
+    - name: |-
+        Checkout current branch
+      uses: |-
+        actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: |-
+        Setup Java and Scala
+      uses: |-
+        olafurpg/setup-scala@v10
+      with:
+        java-version: |-
+          ${{ matrix.java }}
+    - name: |-
+        Cache SBT
+      uses: |-
+        actions/cache@v2
+      with:
+        path: |-
+          ~/.ivy2/cache
+          ~/.sbt
+          ~/.coursier/cache/v1
+          ~/.cache/coursier/v1
+        key: |-
+          ${{ matrix.os }}-sbt-${{ matrix.scala }}-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties') }}
+    - name: |-
+        Download stored core targets
+      uses: |-
+        actions/download-artifact@v2
+      with:
+        name: |-
+          target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
+    - name: |-
+        Inflate core targets
+      with: {}
+      run: |-
+        tar xf targets.tar
+        rm targets.tar
+    - name: |-
+        Build libraries
+      if: |-
+        ${{ github.ref != 'refs/heads/master }}
+      with: {}
+      run: |-
+        ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-accessanalyzer/compile zio-aws-acm/compile zio-aws-acmpca/compile zio-aws-alexaforbusiness/compile zio-aws-amplify/compile zio-aws-amplifybackend/compile zio-aws-apigateway/compile zio-aws-apigatewaymanagementapi/compile zio-aws-apigatewayv2/compile zio-aws-appconfig/compile zio-aws-appflow/compile zio-aws-appintegrations/compile zio-aws-applicationautoscaling/compile zio-aws-applicationdiscovery/compile zio-aws-applicationinsights/compile zio-aws-appmesh/compile zio-aws-appstream/compile zio-aws-appsync/compile zio-aws-athena/compile zio-aws-auditmanager/compile zio-aws-autoscaling/compile zio-aws-autoscalingplans/compile zio-aws-backup/compile zio-aws-batch/compile zio-aws-braket/compile zio-aws-budgets/compile zio-aws-chime/compile zio-aws-cloud9/compile zio-aws-clouddirectory/compile zio-aws-cloudformation/compile zio-aws-cloudfront/compile
+    - name: |-
+        Build and publish libraries
+      if: |-
+        ${{ github.ref == 'refs/heads/master }}
+      with: {}
+      run: |-
+        ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-accessanalyzer/publishSigned zio-aws-acm/publishSigned zio-aws-acmpca/publishSigned zio-aws-alexaforbusiness/publishSigned zio-aws-amplify/publishSigned zio-aws-amplifybackend/publishSigned zio-aws-apigateway/publishSigned zio-aws-apigatewaymanagementapi/publishSigned zio-aws-apigatewayv2/publishSigned zio-aws-appconfig/publishSigned zio-aws-appflow/publishSigned zio-aws-appintegrations/publishSigned zio-aws-applicationautoscaling/publishSigned zio-aws-applicationdiscovery/publishSigned zio-aws-applicationinsights/publishSigned zio-aws-appmesh/publishSigned zio-aws-appstream/publishSigned zio-aws-appsync/publishSigned zio-aws-athena/publishSigned zio-aws-auditmanager/publishSigned zio-aws-autoscaling/publishSigned zio-aws-autoscalingplans/publishSigned zio-aws-backup/publishSigned zio-aws-batch/publishSigned zio-aws-braket/publishSigned zio-aws-budgets/publishSigned zio-aws-chime/publishSigned zio-aws-cloud9/publishSigned zio-aws-clouddirectory/publishSigned zio-aws-cloudformation/publishSigned zio-aws-cloudfront/publishSigned
+    - name: |-
+        Compress clients-0 targets
+      if: |-
+        ${{ github.ref == 'refs/heads/master }}
+      with: {}
+      run: |-
+        tar cf targets.tar target
+    - name: |-
+        Upload clients-0 targets
+      uses: |-
+        actions/upload-artifact@v2
+      if: |-
+        ${{ github.ref == 'refs/heads/master }}
+      with:
+        name: |-
+          target-clients-0-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
+        path: |-
+          targets.tar
   build-clients-1:
-    name: 'Build client libraries #1'
-    needs: build-core
+    name: |-
+      Build client libraries #1
+    runs-on: |-
+      ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
-        scala: [2.12.12, 2.13.3]
-        java: [adopt@1.8]
-    runs-on: ${{ matrix.os }}
+        os:
+        - |-
+          ubuntu-latest
+        scala:
+        - |-
+          2.12.12
+        - |-
+          2.13.3
+        java:
+        - |-
+          adopt@1.8
+    needs:
+    - - |-
+        build-core
     steps:
-      - name: Checkout current branch
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      - name: Setup Java and Scala
-        uses: olafurpg/setup-scala@v10
-        with:
-          java-version: ${{ matrix.java }}
-      - name: Cache SBT
-        uses: actions/cache@v2
-        with:
-          path: | 
-            ~/.ivy2/cache
-            ~/.sbt            
-            ~/.coursier/cache/v1
-            ~/.cache/coursier/v1
-          key: ${{ matrix.os }}-sbt-${{ matrix.scala }}-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties') }}
-      - name: Download core target directories
-        uses: actions/download-artifact@v2
-        with:
-          name: target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
-      - name: Inflate core target directories
-        run: |
-          tar xf targets.tar
-          rm targets.tar      
-
-      - name: Build libraries
-        if: ${{ github.ref != 'refs/heads/master' }}
-        run: ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-accessanalyzer/compile zio-aws-acm/compile zio-aws-acmpca/compile zio-aws-alexaforbusiness/compile zio-aws-amplify/compile zio-aws-apigateway/compile zio-aws-apigatewaymanagementapi/compile zio-aws-apigatewayv2/compile zio-aws-appconfig/compile zio-aws-appflow/compile zio-aws-applicationautoscaling/compile zio-aws-applicationdiscovery/compile zio-aws-applicationinsights/compile zio-aws-appmesh/compile zio-aws-appstream/compile zio-aws-appsync/compile zio-aws-athena/compile zio-aws-autoscaling/compile zio-aws-autoscalingplans/compile zio-aws-backup/compile
-
-      - name: Build and publish libraries
-        if: ${{ github.ref == 'refs/heads/master' }}
-        run: ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-accessanalyzer/publishSigned zio-aws-acm/publishSigned zio-aws-acmpca/publishSigned zio-aws-alexaforbusiness/publishSigned zio-aws-amplify/publishSigned zio-aws-apigateway/publishSigned zio-aws-apigatewaymanagementapi/publishSigned zio-aws-apigatewayv2/publishSigned zio-aws-appconfig/publishSigned zio-aws-appflow/publishSigned zio-aws-applicationautoscaling/publishSigned zio-aws-applicationdiscovery/publishSigned zio-aws-applicationinsights/publishSigned zio-aws-appmesh/publishSigned zio-aws-appstream/publishSigned zio-aws-appsync/publishSigned zio-aws-athena/publishSigned zio-aws-autoscaling/publishSigned zio-aws-autoscalingplans/publishSigned zio-aws-backup/publishSigned
-
-      - name: Compress target directories        
-        if: ${{ github.ref == 'refs/heads/master' }}
-        run: tar cf targets.tar target/sonatype-staging
-
-      - name: Upload target directories
-        uses: actions/upload-artifact@v2
-        with:
-          name: target-1-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
-          path: targets.tar
-
-  integration-test:
-    name: Integration test
-    needs: build-core
+    - name: |-
+        Checkout current branch
+      uses: |-
+        actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: |-
+        Setup Java and Scala
+      uses: |-
+        olafurpg/setup-scala@v10
+      with:
+        java-version: |-
+          ${{ matrix.java }}
+    - name: |-
+        Cache SBT
+      uses: |-
+        actions/cache@v2
+      with:
+        path: |-
+          ~/.ivy2/cache
+          ~/.sbt
+          ~/.coursier/cache/v1
+          ~/.cache/coursier/v1
+        key: |-
+          ${{ matrix.os }}-sbt-${{ matrix.scala }}-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties') }}
+    - name: |-
+        Download stored core targets
+      uses: |-
+        actions/download-artifact@v2
+      with:
+        name: |-
+          target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
+    - name: |-
+        Inflate core targets
+      with: {}
+      run: |-
+        tar xf targets.tar
+        rm targets.tar
+    - name: |-
+        Build libraries
+      if: |-
+        ${{ github.ref != 'refs/heads/master }}
+      with: {}
+      run: |-
+        ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-cloudhsm/compile zio-aws-cloudhsmv2/compile zio-aws-cloudsearch/compile zio-aws-cloudsearchdomain/compile zio-aws-cloudtrail/compile zio-aws-cloudwatch/compile zio-aws-cloudwatchevents/compile zio-aws-cloudwatchlogs/compile zio-aws-codeartifact/compile zio-aws-codebuild/compile zio-aws-codecommit/compile zio-aws-codedeploy/compile zio-aws-codeguruprofiler/compile zio-aws-codegurureviewer/compile zio-aws-codepipeline/compile zio-aws-codestar/compile zio-aws-codestarconnections/compile zio-aws-codestarnotifications/compile zio-aws-cognitoidentity/compile zio-aws-cognitoidentityprovider/compile zio-aws-cognitosync/compile zio-aws-comprehend/compile zio-aws-comprehendmedical/compile zio-aws-computeoptimizer/compile zio-aws-config/compile zio-aws-connect/compile zio-aws-connectcontactlens/compile zio-aws-connectparticipant/compile zio-aws-costandusagereport/compile zio-aws-costexplorer/compile zio-aws-customerprofiles/compile
+    - name: |-
+        Build and publish libraries
+      if: |-
+        ${{ github.ref == 'refs/heads/master }}
+      with: {}
+      run: |-
+        ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-cloudhsm/publishSigned zio-aws-cloudhsmv2/publishSigned zio-aws-cloudsearch/publishSigned zio-aws-cloudsearchdomain/publishSigned zio-aws-cloudtrail/publishSigned zio-aws-cloudwatch/publishSigned zio-aws-cloudwatchevents/publishSigned zio-aws-cloudwatchlogs/publishSigned zio-aws-codeartifact/publishSigned zio-aws-codebuild/publishSigned zio-aws-codecommit/publishSigned zio-aws-codedeploy/publishSigned zio-aws-codeguruprofiler/publishSigned zio-aws-codegurureviewer/publishSigned zio-aws-codepipeline/publishSigned zio-aws-codestar/publishSigned zio-aws-codestarconnections/publishSigned zio-aws-codestarnotifications/publishSigned zio-aws-cognitoidentity/publishSigned zio-aws-cognitoidentityprovider/publishSigned zio-aws-cognitosync/publishSigned zio-aws-comprehend/publishSigned zio-aws-comprehendmedical/publishSigned zio-aws-computeoptimizer/publishSigned zio-aws-config/publishSigned zio-aws-connect/publishSigned zio-aws-connectcontactlens/publishSigned zio-aws-connectparticipant/publishSigned zio-aws-costandusagereport/publishSigned zio-aws-costexplorer/publishSigned zio-aws-customerprofiles/publishSigned
+    - name: |-
+        Compress clients-1 targets
+      if: |-
+        ${{ github.ref == 'refs/heads/master }}
+      with: {}
+      run: |-
+        tar cf targets.tar target
+    - name: |-
+        Upload clients-1 targets
+      uses: |-
+        actions/upload-artifact@v2
+      if: |-
+        ${{ github.ref == 'refs/heads/master }}
+      with:
+        name: |-
+          target-clients-1-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
+        path: |-
+          targets.tar
+  build-clients-2:
+    name: |-
+      Build client libraries #2
+    runs-on: |-
+      ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
-        scala: [2.12.12, 2.13.3]
-        java: [adopt@1.8]
-    runs-on: ${{ matrix.os }}
+        os:
+        - |-
+          ubuntu-latest
+        scala:
+        - |-
+          2.12.12
+        - |-
+          2.13.3
+        java:
+        - |-
+          adopt@1.8
+    needs:
+    - - |-
+        build-core
+    steps:
+    - name: |-
+        Checkout current branch
+      uses: |-
+        actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: |-
+        Setup Java and Scala
+      uses: |-
+        olafurpg/setup-scala@v10
+      with:
+        java-version: |-
+          ${{ matrix.java }}
+    - name: |-
+        Cache SBT
+      uses: |-
+        actions/cache@v2
+      with:
+        path: |-
+          ~/.ivy2/cache
+          ~/.sbt
+          ~/.coursier/cache/v1
+          ~/.cache/coursier/v1
+        key: |-
+          ${{ matrix.os }}-sbt-${{ matrix.scala }}-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties') }}
+    - name: |-
+        Download stored core targets
+      uses: |-
+        actions/download-artifact@v2
+      with:
+        name: |-
+          target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
+    - name: |-
+        Inflate core targets
+      with: {}
+      run: |-
+        tar xf targets.tar
+        rm targets.tar
+    - name: |-
+        Build libraries
+      if: |-
+        ${{ github.ref != 'refs/heads/master }}
+      with: {}
+      run: |-
+        ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-databasemigration/compile zio-aws-databrew/compile zio-aws-dataexchange/compile zio-aws-datapipeline/compile zio-aws-datasync/compile zio-aws-dax/compile zio-aws-detective/compile zio-aws-devicefarm/compile zio-aws-devopsguru/compile zio-aws-directconnect/compile zio-aws-directory/compile zio-aws-dlm/compile zio-aws-docdb/compile zio-aws-dynamodb/compile zio-aws-dynamodbstreams/compile zio-aws-ebs/compile zio-aws-ec2/compile zio-aws-ec2instanceconnect/compile zio-aws-ecr/compile zio-aws-ecrpublic/compile zio-aws-ecs/compile zio-aws-efs/compile zio-aws-eks/compile zio-aws-elasticache/compile zio-aws-elasticbeanstalk/compile zio-aws-elasticinference/compile zio-aws-elasticloadbalancing/compile zio-aws-elasticloadbalancingv2/compile zio-aws-elasticsearch/compile zio-aws-elastictranscoder/compile zio-aws-emr/compile
+    - name: |-
+        Build and publish libraries
+      if: |-
+        ${{ github.ref == 'refs/heads/master }}
+      with: {}
+      run: |-
+        ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-databasemigration/publishSigned zio-aws-databrew/publishSigned zio-aws-dataexchange/publishSigned zio-aws-datapipeline/publishSigned zio-aws-datasync/publishSigned zio-aws-dax/publishSigned zio-aws-detective/publishSigned zio-aws-devicefarm/publishSigned zio-aws-devopsguru/publishSigned zio-aws-directconnect/publishSigned zio-aws-directory/publishSigned zio-aws-dlm/publishSigned zio-aws-docdb/publishSigned zio-aws-dynamodb/publishSigned zio-aws-dynamodbstreams/publishSigned zio-aws-ebs/publishSigned zio-aws-ec2/publishSigned zio-aws-ec2instanceconnect/publishSigned zio-aws-ecr/publishSigned zio-aws-ecrpublic/publishSigned zio-aws-ecs/publishSigned zio-aws-efs/publishSigned zio-aws-eks/publishSigned zio-aws-elasticache/publishSigned zio-aws-elasticbeanstalk/publishSigned zio-aws-elasticinference/publishSigned zio-aws-elasticloadbalancing/publishSigned zio-aws-elasticloadbalancingv2/publishSigned zio-aws-elasticsearch/publishSigned zio-aws-elastictranscoder/publishSigned zio-aws-emr/publishSigned
+    - name: |-
+        Compress clients-2 targets
+      if: |-
+        ${{ github.ref == 'refs/heads/master }}
+      with: {}
+      run: |-
+        tar cf targets.tar target
+    - name: |-
+        Upload clients-2 targets
+      uses: |-
+        actions/upload-artifact@v2
+      if: |-
+        ${{ github.ref == 'refs/heads/master }}
+      with:
+        name: |-
+          target-clients-2-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
+        path: |-
+          targets.tar
+  build-clients-3:
+    name: |-
+      Build client libraries #3
+    runs-on: |-
+      ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+        - |-
+          ubuntu-latest
+        scala:
+        - |-
+          2.12.12
+        - |-
+          2.13.3
+        java:
+        - |-
+          adopt@1.8
+    needs:
+    - - |-
+        build-core
+    steps:
+    - name: |-
+        Checkout current branch
+      uses: |-
+        actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: |-
+        Setup Java and Scala
+      uses: |-
+        olafurpg/setup-scala@v10
+      with:
+        java-version: |-
+          ${{ matrix.java }}
+    - name: |-
+        Cache SBT
+      uses: |-
+        actions/cache@v2
+      with:
+        path: |-
+          ~/.ivy2/cache
+          ~/.sbt
+          ~/.coursier/cache/v1
+          ~/.cache/coursier/v1
+        key: |-
+          ${{ matrix.os }}-sbt-${{ matrix.scala }}-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties') }}
+    - name: |-
+        Download stored core targets
+      uses: |-
+        actions/download-artifact@v2
+      with:
+        name: |-
+          target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
+    - name: |-
+        Inflate core targets
+      with: {}
+      run: |-
+        tar xf targets.tar
+        rm targets.tar
+    - name: |-
+        Build libraries
+      if: |-
+        ${{ github.ref != 'refs/heads/master }}
+      with: {}
+      run: |-
+        ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-emrcontainers/compile zio-aws-eventbridge/compile zio-aws-firehose/compile zio-aws-fms/compile zio-aws-forecast/compile zio-aws-forecastquery/compile zio-aws-frauddetector/compile zio-aws-fsx/compile zio-aws-gamelift/compile zio-aws-glacier/compile zio-aws-globalaccelerator/compile zio-aws-glue/compile zio-aws-greengrass/compile zio-aws-groundstation/compile zio-aws-guardduty/compile zio-aws-health/compile zio-aws-healthlake/compile zio-aws-honeycode/compile zio-aws-iam/compile zio-aws-identitystore/compile zio-aws-imagebuilder/compile zio-aws-inspector/compile zio-aws-iot/compile zio-aws-iot1clickdevices/compile zio-aws-iot1clickprojects/compile zio-aws-iotanalytics/compile zio-aws-iotdataplane/compile zio-aws-iotevents/compile zio-aws-ioteventsdata/compile zio-aws-iotjobsdataplane/compile zio-aws-iotsecuretunneling/compile
+    - name: |-
+        Build and publish libraries
+      if: |-
+        ${{ github.ref == 'refs/heads/master }}
+      with: {}
+      run: |-
+        ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-emrcontainers/publishSigned zio-aws-eventbridge/publishSigned zio-aws-firehose/publishSigned zio-aws-fms/publishSigned zio-aws-forecast/publishSigned zio-aws-forecastquery/publishSigned zio-aws-frauddetector/publishSigned zio-aws-fsx/publishSigned zio-aws-gamelift/publishSigned zio-aws-glacier/publishSigned zio-aws-globalaccelerator/publishSigned zio-aws-glue/publishSigned zio-aws-greengrass/publishSigned zio-aws-groundstation/publishSigned zio-aws-guardduty/publishSigned zio-aws-health/publishSigned zio-aws-healthlake/publishSigned zio-aws-honeycode/publishSigned zio-aws-iam/publishSigned zio-aws-identitystore/publishSigned zio-aws-imagebuilder/publishSigned zio-aws-inspector/publishSigned zio-aws-iot/publishSigned zio-aws-iot1clickdevices/publishSigned zio-aws-iot1clickprojects/publishSigned zio-aws-iotanalytics/publishSigned zio-aws-iotdataplane/publishSigned zio-aws-iotevents/publishSigned zio-aws-ioteventsdata/publishSigned zio-aws-iotjobsdataplane/publishSigned zio-aws-iotsecuretunneling/publishSigned
+    - name: |-
+        Compress clients-3 targets
+      if: |-
+        ${{ github.ref == 'refs/heads/master }}
+      with: {}
+      run: |-
+        tar cf targets.tar target
+    - name: |-
+        Upload clients-3 targets
+      uses: |-
+        actions/upload-artifact@v2
+      if: |-
+        ${{ github.ref == 'refs/heads/master }}
+      with:
+        name: |-
+          target-clients-3-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
+        path: |-
+          targets.tar
+  build-clients-4:
+    name: |-
+      Build client libraries #4
+    runs-on: |-
+      ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+        - |-
+          ubuntu-latest
+        scala:
+        - |-
+          2.12.12
+        - |-
+          2.13.3
+        java:
+        - |-
+          adopt@1.8
+    needs:
+    - - |-
+        build-core
+    steps:
+    - name: |-
+        Checkout current branch
+      uses: |-
+        actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: |-
+        Setup Java and Scala
+      uses: |-
+        olafurpg/setup-scala@v10
+      with:
+        java-version: |-
+          ${{ matrix.java }}
+    - name: |-
+        Cache SBT
+      uses: |-
+        actions/cache@v2
+      with:
+        path: |-
+          ~/.ivy2/cache
+          ~/.sbt
+          ~/.coursier/cache/v1
+          ~/.cache/coursier/v1
+        key: |-
+          ${{ matrix.os }}-sbt-${{ matrix.scala }}-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties') }}
+    - name: |-
+        Download stored core targets
+      uses: |-
+        actions/download-artifact@v2
+      with:
+        name: |-
+          target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
+    - name: |-
+        Inflate core targets
+      with: {}
+      run: |-
+        tar xf targets.tar
+        rm targets.tar
+    - name: |-
+        Build libraries
+      if: |-
+        ${{ github.ref != 'refs/heads/master }}
+      with: {}
+      run: |-
+        ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-iotsitewise/compile zio-aws-iotthingsgraph/compile zio-aws-ivs/compile zio-aws-kafka/compile zio-aws-kendra/compile zio-aws-kinesis/compile zio-aws-kinesisanalytics/compile zio-aws-kinesisanalyticsv2/compile zio-aws-kinesisvideo/compile zio-aws-kinesisvideoarchivedmedia/compile zio-aws-kinesisvideomedia/compile zio-aws-kinesisvideosignaling/compile zio-aws-kms/compile zio-aws-lakeformation/compile zio-aws-lambda/compile zio-aws-lexmodelbuilding/compile zio-aws-lexruntime/compile zio-aws-licensemanager/compile zio-aws-lightsail/compile zio-aws-lookoutvision/compile zio-aws-machinelearning/compile zio-aws-macie/compile zio-aws-macie2/compile zio-aws-managedblockchain/compile zio-aws-marketplacecatalog/compile zio-aws-marketplacecommerceanalytics/compile zio-aws-marketplaceentitlement/compile zio-aws-marketplacemetering/compile zio-aws-mediaconnect/compile zio-aws-mediaconvert/compile zio-aws-medialive/compile
+    - name: |-
+        Build and publish libraries
+      if: |-
+        ${{ github.ref == 'refs/heads/master }}
+      with: {}
+      run: |-
+        ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-iotsitewise/publishSigned zio-aws-iotthingsgraph/publishSigned zio-aws-ivs/publishSigned zio-aws-kafka/publishSigned zio-aws-kendra/publishSigned zio-aws-kinesis/publishSigned zio-aws-kinesisanalytics/publishSigned zio-aws-kinesisanalyticsv2/publishSigned zio-aws-kinesisvideo/publishSigned zio-aws-kinesisvideoarchivedmedia/publishSigned zio-aws-kinesisvideomedia/publishSigned zio-aws-kinesisvideosignaling/publishSigned zio-aws-kms/publishSigned zio-aws-lakeformation/publishSigned zio-aws-lambda/publishSigned zio-aws-lexmodelbuilding/publishSigned zio-aws-lexruntime/publishSigned zio-aws-licensemanager/publishSigned zio-aws-lightsail/publishSigned zio-aws-lookoutvision/publishSigned zio-aws-machinelearning/publishSigned zio-aws-macie/publishSigned zio-aws-macie2/publishSigned zio-aws-managedblockchain/publishSigned zio-aws-marketplacecatalog/publishSigned zio-aws-marketplacecommerceanalytics/publishSigned zio-aws-marketplaceentitlement/publishSigned zio-aws-marketplacemetering/publishSigned zio-aws-mediaconnect/publishSigned zio-aws-mediaconvert/publishSigned zio-aws-medialive/publishSigned
+    - name: |-
+        Compress clients-4 targets
+      if: |-
+        ${{ github.ref == 'refs/heads/master }}
+      with: {}
+      run: |-
+        tar cf targets.tar target
+    - name: |-
+        Upload clients-4 targets
+      uses: |-
+        actions/upload-artifact@v2
+      if: |-
+        ${{ github.ref == 'refs/heads/master }}
+      with:
+        name: |-
+          target-clients-4-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
+        path: |-
+          targets.tar
+  build-clients-5:
+    name: |-
+      Build client libraries #5
+    runs-on: |-
+      ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+        - |-
+          ubuntu-latest
+        scala:
+        - |-
+          2.12.12
+        - |-
+          2.13.3
+        java:
+        - |-
+          adopt@1.8
+    needs:
+    - - |-
+        build-core
+    steps:
+    - name: |-
+        Checkout current branch
+      uses: |-
+        actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: |-
+        Setup Java and Scala
+      uses: |-
+        olafurpg/setup-scala@v10
+      with:
+        java-version: |-
+          ${{ matrix.java }}
+    - name: |-
+        Cache SBT
+      uses: |-
+        actions/cache@v2
+      with:
+        path: |-
+          ~/.ivy2/cache
+          ~/.sbt
+          ~/.coursier/cache/v1
+          ~/.cache/coursier/v1
+        key: |-
+          ${{ matrix.os }}-sbt-${{ matrix.scala }}-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties') }}
+    - name: |-
+        Download stored core targets
+      uses: |-
+        actions/download-artifact@v2
+      with:
+        name: |-
+          target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
+    - name: |-
+        Inflate core targets
+      with: {}
+      run: |-
+        tar xf targets.tar
+        rm targets.tar
+    - name: |-
+        Build libraries
+      if: |-
+        ${{ github.ref != 'refs/heads/master }}
+      with: {}
+      run: |-
+        ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-mediapackage/compile zio-aws-mediapackagevod/compile zio-aws-mediastore/compile zio-aws-mediastoredata/compile zio-aws-mediatailor/compile zio-aws-migrationhub/compile zio-aws-migrationhubconfig/compile zio-aws-mobile/compile zio-aws-mq/compile zio-aws-mturk/compile zio-aws-mwaa/compile zio-aws-neptune/compile zio-aws-networkfirewall/compile zio-aws-networkmanager/compile zio-aws-opsworks/compile zio-aws-opsworkscm/compile zio-aws-organizations/compile zio-aws-outposts/compile zio-aws-personalize/compile zio-aws-personalizeevents/compile zio-aws-personalizeruntime/compile zio-aws-pi/compile zio-aws-pinpoint/compile zio-aws-pinpointemail/compile zio-aws-pinpointsmsvoice/compile zio-aws-polly/compile zio-aws-pricing/compile zio-aws-qldb/compile zio-aws-qldbsession/compile zio-aws-quicksight/compile zio-aws-ram/compile
+    - name: |-
+        Build and publish libraries
+      if: |-
+        ${{ github.ref == 'refs/heads/master }}
+      with: {}
+      run: |-
+        ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-mediapackage/publishSigned zio-aws-mediapackagevod/publishSigned zio-aws-mediastore/publishSigned zio-aws-mediastoredata/publishSigned zio-aws-mediatailor/publishSigned zio-aws-migrationhub/publishSigned zio-aws-migrationhubconfig/publishSigned zio-aws-mobile/publishSigned zio-aws-mq/publishSigned zio-aws-mturk/publishSigned zio-aws-mwaa/publishSigned zio-aws-neptune/publishSigned zio-aws-networkfirewall/publishSigned zio-aws-networkmanager/publishSigned zio-aws-opsworks/publishSigned zio-aws-opsworkscm/publishSigned zio-aws-organizations/publishSigned zio-aws-outposts/publishSigned zio-aws-personalize/publishSigned zio-aws-personalizeevents/publishSigned zio-aws-personalizeruntime/publishSigned zio-aws-pi/publishSigned zio-aws-pinpoint/publishSigned zio-aws-pinpointemail/publishSigned zio-aws-pinpointsmsvoice/publishSigned zio-aws-polly/publishSigned zio-aws-pricing/publishSigned zio-aws-qldb/publishSigned zio-aws-qldbsession/publishSigned zio-aws-quicksight/publishSigned zio-aws-ram/publishSigned
+    - name: |-
+        Compress clients-5 targets
+      if: |-
+        ${{ github.ref == 'refs/heads/master }}
+      with: {}
+      run: |-
+        tar cf targets.tar target
+    - name: |-
+        Upload clients-5 targets
+      uses: |-
+        actions/upload-artifact@v2
+      if: |-
+        ${{ github.ref == 'refs/heads/master }}
+      with:
+        name: |-
+          target-clients-5-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
+        path: |-
+          targets.tar
+  build-clients-6:
+    name: |-
+      Build client libraries #6
+    runs-on: |-
+      ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+        - |-
+          ubuntu-latest
+        scala:
+        - |-
+          2.12.12
+        - |-
+          2.13.3
+        java:
+        - |-
+          adopt@1.8
+    needs:
+    - - |-
+        build-core
+    steps:
+    - name: |-
+        Checkout current branch
+      uses: |-
+        actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: |-
+        Setup Java and Scala
+      uses: |-
+        olafurpg/setup-scala@v10
+      with:
+        java-version: |-
+          ${{ matrix.java }}
+    - name: |-
+        Cache SBT
+      uses: |-
+        actions/cache@v2
+      with:
+        path: |-
+          ~/.ivy2/cache
+          ~/.sbt
+          ~/.coursier/cache/v1
+          ~/.cache/coursier/v1
+        key: |-
+          ${{ matrix.os }}-sbt-${{ matrix.scala }}-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties') }}
+    - name: |-
+        Download stored core targets
+      uses: |-
+        actions/download-artifact@v2
+      with:
+        name: |-
+          target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
+    - name: |-
+        Inflate core targets
+      with: {}
+      run: |-
+        tar xf targets.tar
+        rm targets.tar
+    - name: |-
+        Build libraries
+      if: |-
+        ${{ github.ref != 'refs/heads/master }}
+      with: {}
+      run: |-
+        ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-rds/compile zio-aws-rdsdata/compile zio-aws-redshift/compile zio-aws-redshiftdata/compile zio-aws-rekognition/compile zio-aws-resourcegroups/compile zio-aws-resourcegroupstaggingapi/compile zio-aws-robomaker/compile zio-aws-route53/compile zio-aws-route53domains/compile zio-aws-route53resolver/compile zio-aws-s3/compile zio-aws-s3control/compile zio-aws-s3outposts/compile zio-aws-sagemaker/compile zio-aws-sagemakera2iruntime/compile zio-aws-sagemakeredge/compile zio-aws-sagemakerfeaturestoreruntime/compile zio-aws-sagemakerruntime/compile zio-aws-savingsplans/compile zio-aws-schemas/compile zio-aws-secretsmanager/compile zio-aws-securityhub/compile zio-aws-serverlessapplicationrepository/compile zio-aws-servicecatalog/compile zio-aws-servicecatalogappregistry/compile zio-aws-servicediscovery/compile zio-aws-servicequotas/compile zio-aws-ses/compile zio-aws-sesv2/compile zio-aws-sfn/compile
+    - name: |-
+        Build and publish libraries
+      if: |-
+        ${{ github.ref == 'refs/heads/master }}
+      with: {}
+      run: |-
+        ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-rds/publishSigned zio-aws-rdsdata/publishSigned zio-aws-redshift/publishSigned zio-aws-redshiftdata/publishSigned zio-aws-rekognition/publishSigned zio-aws-resourcegroups/publishSigned zio-aws-resourcegroupstaggingapi/publishSigned zio-aws-robomaker/publishSigned zio-aws-route53/publishSigned zio-aws-route53domains/publishSigned zio-aws-route53resolver/publishSigned zio-aws-s3/publishSigned zio-aws-s3control/publishSigned zio-aws-s3outposts/publishSigned zio-aws-sagemaker/publishSigned zio-aws-sagemakera2iruntime/publishSigned zio-aws-sagemakeredge/publishSigned zio-aws-sagemakerfeaturestoreruntime/publishSigned zio-aws-sagemakerruntime/publishSigned zio-aws-savingsplans/publishSigned zio-aws-schemas/publishSigned zio-aws-secretsmanager/publishSigned zio-aws-securityhub/publishSigned zio-aws-serverlessapplicationrepository/publishSigned zio-aws-servicecatalog/publishSigned zio-aws-servicecatalogappregistry/publishSigned zio-aws-servicediscovery/publishSigned zio-aws-servicequotas/publishSigned zio-aws-ses/publishSigned zio-aws-sesv2/publishSigned zio-aws-sfn/publishSigned
+    - name: |-
+        Compress clients-6 targets
+      if: |-
+        ${{ github.ref == 'refs/heads/master }}
+      with: {}
+      run: |-
+        tar cf targets.tar target
+    - name: |-
+        Upload clients-6 targets
+      uses: |-
+        actions/upload-artifact@v2
+      if: |-
+        ${{ github.ref == 'refs/heads/master }}
+      with:
+        name: |-
+          target-clients-6-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
+        path: |-
+          targets.tar
+  build-clients-7:
+    name: |-
+      Build client libraries #7
+    runs-on: |-
+      ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+        - |-
+          ubuntu-latest
+        scala:
+        - |-
+          2.12.12
+        - |-
+          2.13.3
+        java:
+        - |-
+          adopt@1.8
+    needs:
+    - - |-
+        build-core
+    steps:
+    - name: |-
+        Checkout current branch
+      uses: |-
+        actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: |-
+        Setup Java and Scala
+      uses: |-
+        olafurpg/setup-scala@v10
+      with:
+        java-version: |-
+          ${{ matrix.java }}
+    - name: |-
+        Cache SBT
+      uses: |-
+        actions/cache@v2
+      with:
+        path: |-
+          ~/.ivy2/cache
+          ~/.sbt
+          ~/.coursier/cache/v1
+          ~/.cache/coursier/v1
+        key: |-
+          ${{ matrix.os }}-sbt-${{ matrix.scala }}-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties') }}
+    - name: |-
+        Download stored core targets
+      uses: |-
+        actions/download-artifact@v2
+      with:
+        name: |-
+          target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
+    - name: |-
+        Inflate core targets
+      with: {}
+      run: |-
+        tar xf targets.tar
+        rm targets.tar
+    - name: |-
+        Build libraries
+      if: |-
+        ${{ github.ref != 'refs/heads/master }}
+      with: {}
+      run: |-
+        ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-shield/compile zio-aws-signer/compile zio-aws-sms/compile zio-aws-snowball/compile zio-aws-sns/compile zio-aws-sqs/compile zio-aws-ssm/compile zio-aws-sso/compile zio-aws-ssoadmin/compile zio-aws-ssooidc/compile zio-aws-storagegateway/compile zio-aws-sts/compile zio-aws-support/compile zio-aws-swf/compile zio-aws-synthetics/compile zio-aws-textract/compile zio-aws-timestreamquery/compile zio-aws-timestreamwrite/compile zio-aws-transcribe/compile zio-aws-transcribestreaming/compile zio-aws-transfer/compile zio-aws-translate/compile zio-aws-waf/compile zio-aws-wafregional/compile zio-aws-wafv2/compile zio-aws-workdocs/compile zio-aws-worklink/compile zio-aws-workmail/compile zio-aws-workmailmessageflow/compile zio-aws-workspaces/compile zio-aws-xray/compile
+    - name: |-
+        Build and publish libraries
+      if: |-
+        ${{ github.ref == 'refs/heads/master }}
+      with: {}
+      run: |-
+        ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-shield/publishSigned zio-aws-signer/publishSigned zio-aws-sms/publishSigned zio-aws-snowball/publishSigned zio-aws-sns/publishSigned zio-aws-sqs/publishSigned zio-aws-ssm/publishSigned zio-aws-sso/publishSigned zio-aws-ssoadmin/publishSigned zio-aws-ssooidc/publishSigned zio-aws-storagegateway/publishSigned zio-aws-sts/publishSigned zio-aws-support/publishSigned zio-aws-swf/publishSigned zio-aws-synthetics/publishSigned zio-aws-textract/publishSigned zio-aws-timestreamquery/publishSigned zio-aws-timestreamwrite/publishSigned zio-aws-transcribe/publishSigned zio-aws-transcribestreaming/publishSigned zio-aws-transfer/publishSigned zio-aws-translate/publishSigned zio-aws-waf/publishSigned zio-aws-wafregional/publishSigned zio-aws-wafv2/publishSigned zio-aws-workdocs/publishSigned zio-aws-worklink/publishSigned zio-aws-workmail/publishSigned zio-aws-workmailmessageflow/publishSigned zio-aws-workspaces/publishSigned zio-aws-xray/publishSigned
+    - name: |-
+        Compress clients-7 targets
+      if: |-
+        ${{ github.ref == 'refs/heads/master }}
+      with: {}
+      run: |-
+        tar cf targets.tar target
+    - name: |-
+        Upload clients-7 targets
+      uses: |-
+        actions/upload-artifact@v2
+      if: |-
+        ${{ github.ref == 'refs/heads/master }}
+      with:
+        name: |-
+          target-clients-7-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
+        path: |-
+          targets.tar
+  integration-test:
+    name: |-
+      Integration test
+    runs-on: |-
+      ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+        - |-
+          ubuntu-latest
+        scala:
+        - |-
+          2.12.12
+        - |-
+          2.13.3
+        java:
+        - |-
+          adopt@1.8
+    needs:
+    - - |-
+        build-core
     services:
       localstack:
-        image: localstack/localstack:latest
+        image: |-
+          localstack/localstack:latest
         env:
-          LOCALSTACK_HOST: localstack
-          SERVICES: 's3,dynamodb'
-          USE_SSL: "false"
-          DEFAULT_REGION: 'us-east-1'
-          AWS_DEFAULT_REGION: "us-east-1"
-          AWS_ACCESS_KEY_ID: dummy-key
-          AWS_SECRET_ACCESS_KEY: dummy-key
-          DEBUG: "0"
+          DEFAULT_REGION: |-
+            us-east-1
+          DEBUG: |-
+            0
+          SERVICES: |-
+            s3,dynamodb
+          AWS_ACCESS_KEY_ID: |-
+            dummy-key
+          AWS_SECRET_ACCESS_KEY: |-
+            dummy-key
+          LOCALSTACK_HOST: |-
+            localstack
+          AWS_DEFAULT_REGION: |-
+            us-east-1
+          USE_SSL: |-
+            false
         ports:
-          - 4566:4566          
+        - |-
+          4566:4566
     steps:
-      - name: Checkout current branch
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      - name: Setup Java and Scala
-        uses: olafurpg/setup-scala@v10
-        with:
-          java-version: ${{ matrix.java }}
-      - name: Cache SBT
-        uses: actions/cache@v2
-        with:
-          path: | 
-            ~/.ivy2/cache
-            ~/.sbt            
-            ~/.coursier/cache/v1
-            ~/.cache/coursier/v1
-          key: ${{ matrix.os }}-sbt-${{ matrix.scala }}-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties') }}
-      - name: Download core target directories
-        uses: actions/download-artifact@v2
-        with:
-          name: target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
-      - name: Inflate core target directories
-        run: |
-          tar xf targets.tar
-          rm targets.tar      
-
-      - name: Build and run tests
-        run: ./sbt -J-Xmx5g -J-Xms5g ++${{ matrix.scala }} examples/compile integtests/test
-
+    - name: |-
+        Checkout current branch
+      uses: |-
+        actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: |-
+        Setup Java and Scala
+      uses: |-
+        olafurpg/setup-scala@v10
+      with:
+        java-version: |-
+          ${{ matrix.java }}
+    - name: |-
+        Cache SBT
+      uses: |-
+        actions/cache@v2
+      with:
+        path: |-
+          ~/.ivy2/cache
+          ~/.sbt
+          ~/.coursier/cache/v1
+          ~/.cache/coursier/v1
+        key: |-
+          ${{ matrix.os }}-sbt-${{ matrix.scala }}-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties') }}
+    - name: |-
+        Download stored core targets
+      uses: |-
+        actions/download-artifact@v2
+      with:
+        name: |-
+          target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
+    - name: |-
+        Inflate core targets
+      with: {}
+      run: |-
+        tar xf targets.tar
+        rm targets.tar
+    - name: |-
+        Build and run tests
+      with: {}
+      run: |-
+        ./sbt -J-Xmx5g -J-Xms5g ++${{ matrix.scala }} examples/compile integtests/test
   release:
-    name: Release
-    needs: 
-      - build-core
-      - integration-test
-      - build-clients-1
-    runs-on: ubuntu-latest
-    if: ${{ github.ref == 'refs/heads/master' }}
+    name: |-
+      Release
+    runs-on: |-
+      ubuntu-latest
+    needs:
+    - - |-
+        build-core
+      - |-
+        integration-test
+      - |-
+        build-clients-0
+      - |-
+        build-clients-1
+      - |-
+        build-clients-2
+      - |-
+        build-clients-3
+      - |-
+        build-clients-4
+      - |-
+        build-clients-5
+      - |-
+        build-clients-6
+      - |-
+        build-clients-7
+    if: |-
+      ${{ github.ref == 'refs/heads/master }}
     steps:
-      - name: Checkout current branch
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      - name: Setup Java and Scala
-        uses: olafurpg/setup-scala@v10
-        with:
-          java-version: adopt@1.8
-      - name: Cache SBT
-        uses: actions/cache@v2
-        with:
-          path: | 
-            ~/.ivy2/cache
-            ~/.sbt            
-            ~/.coursier/cache/v1
-            ~/.cache/coursier/v1
-          key: ubuntu-latest-sbt-2.13.3-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties') }}
-      
-      - name: Download core target directories
-        uses: actions/download-artifact@v2
-        with:
-          name: target-core-ubuntu-latest-2.13.3-adopt@1.8
-      - name: Inflate core target directories
-        run: |
-          tar xf targets.tar
-          rm targets.tar      
-      
-      - name: 'Download clients #1 directories'
-        uses: actions/download-artifact@v2
-        with:
-          name: target-1-ubuntu-latest-2.13.3-adopt@1.8
-      - name: 'Inflate clients #1 target directories'
-        run: |
-          tar xf targets.tar
-          rm targets.tar                
-
-      - name: Publish artifacts
-        run: ./sbt -J-Xmx5g -J-Xms5g +publishSigned sonatypeBundleRelease
-
+    - name: |-
+        Checkout current branch
+      uses: |-
+        actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: |-
+        Setup Java and Scala
+      uses: |-
+        olafurpg/setup-scala@v10
+      with:
+        java-version: |-
+          adopt@1.8
+    - name: |-
+        Cache SBT
+      uses: |-
+        actions/cache@v2
+      with:
+        path: |-
+          ~/.ivy2/cache
+          ~/.sbt
+          ~/.coursier/cache/v1
+          ~/.cache/coursier/v1
+        key: |-
+          ubuntu-latest-sbt-2.13.3-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties') }}
+    - name: |-
+        Download stored core targets
+      uses: |-
+        actions/download-artifact@v2
+      with:
+        name: |-
+          target-core-ubuntu-latest-2.13.3-adopt@1.8
+    - name: |-
+        Inflate core targets
+      with: {}
+      run: |-
+        tar xf targets.tar
+        rm targets.tar
+    - name: |-
+        Download stored clients-0 targets
+      uses: |-
+        actions/download-artifact@v2
+      with:
+        name: |-
+          target-clients-0-ubuntu-latest-2.13.3-adopt@1.8
+    - name: |-
+        Inflate clients-0 targets
+      with: {}
+      run: |-
+        tar xf targets.tar
+        rm targets.tar
+    - name: |-
+        Download stored clients-1 targets
+      uses: |-
+        actions/download-artifact@v2
+      with:
+        name: |-
+          target-clients-1-ubuntu-latest-2.13.3-adopt@1.8
+    - name: |-
+        Inflate clients-1 targets
+      with: {}
+      run: |-
+        tar xf targets.tar
+        rm targets.tar
+    - name: |-
+        Download stored clients-2 targets
+      uses: |-
+        actions/download-artifact@v2
+      with:
+        name: |-
+          target-clients-2-ubuntu-latest-2.13.3-adopt@1.8
+    - name: |-
+        Inflate clients-2 targets
+      with: {}
+      run: |-
+        tar xf targets.tar
+        rm targets.tar
+    - name: |-
+        Download stored clients-3 targets
+      uses: |-
+        actions/download-artifact@v2
+      with:
+        name: |-
+          target-clients-3-ubuntu-latest-2.13.3-adopt@1.8
+    - name: |-
+        Inflate clients-3 targets
+      with: {}
+      run: |-
+        tar xf targets.tar
+        rm targets.tar
+    - name: |-
+        Download stored clients-4 targets
+      uses: |-
+        actions/download-artifact@v2
+      with:
+        name: |-
+          target-clients-4-ubuntu-latest-2.13.3-adopt@1.8
+    - name: |-
+        Inflate clients-4 targets
+      with: {}
+      run: |-
+        tar xf targets.tar
+        rm targets.tar
+    - name: |-
+        Download stored clients-5 targets
+      uses: |-
+        actions/download-artifact@v2
+      with:
+        name: |-
+          target-clients-5-ubuntu-latest-2.13.3-adopt@1.8
+    - name: |-
+        Inflate clients-5 targets
+      with: {}
+      run: |-
+        tar xf targets.tar
+        rm targets.tar
+    - name: |-
+        Download stored clients-6 targets
+      uses: |-
+        actions/download-artifact@v2
+      with:
+        name: |-
+          target-clients-6-ubuntu-latest-2.13.3-adopt@1.8
+    - name: |-
+        Inflate clients-6 targets
+      with: {}
+      run: |-
+        tar xf targets.tar
+        rm targets.tar
+    - name: |-
+        Download stored clients-7 targets
+      uses: |-
+        actions/download-artifact@v2
+      with:
+        name: |-
+          target-clients-7-ubuntu-latest-2.13.3-adopt@1.8
+    - name: |-
+        Inflate clients-7 targets
+      with: {}
+      run: |-
+        tar xf targets.tar
+        rm targets.tar
+    - name: |-
+        Download stored core targets
+      uses: |-
+        actions/download-artifact@v2
+      with:
+        name: |-
+          target-core-ubuntu-latest-2.12.12-adopt@1.8
+    - name: |-
+        Inflate core targets
+      with: {}
+      run: |-
+        tar xf targets.tar
+        rm targets.tar
+    - name: |-
+        Download stored clients-0 targets
+      uses: |-
+        actions/download-artifact@v2
+      with:
+        name: |-
+          target-clients-0-ubuntu-latest-2.12.12-adopt@1.8
+    - name: |-
+        Inflate clients-0 targets
+      with: {}
+      run: |-
+        tar xf targets.tar
+        rm targets.tar
+    - name: |-
+        Download stored clients-1 targets
+      uses: |-
+        actions/download-artifact@v2
+      with:
+        name: |-
+          target-clients-1-ubuntu-latest-2.12.12-adopt@1.8
+    - name: |-
+        Inflate clients-1 targets
+      with: {}
+      run: |-
+        tar xf targets.tar
+        rm targets.tar
+    - name: |-
+        Download stored clients-2 targets
+      uses: |-
+        actions/download-artifact@v2
+      with:
+        name: |-
+          target-clients-2-ubuntu-latest-2.12.12-adopt@1.8
+    - name: |-
+        Inflate clients-2 targets
+      with: {}
+      run: |-
+        tar xf targets.tar
+        rm targets.tar
+    - name: |-
+        Download stored clients-3 targets
+      uses: |-
+        actions/download-artifact@v2
+      with:
+        name: |-
+          target-clients-3-ubuntu-latest-2.12.12-adopt@1.8
+    - name: |-
+        Inflate clients-3 targets
+      with: {}
+      run: |-
+        tar xf targets.tar
+        rm targets.tar
+    - name: |-
+        Download stored clients-4 targets
+      uses: |-
+        actions/download-artifact@v2
+      with:
+        name: |-
+          target-clients-4-ubuntu-latest-2.12.12-adopt@1.8
+    - name: |-
+        Inflate clients-4 targets
+      with: {}
+      run: |-
+        tar xf targets.tar
+        rm targets.tar
+    - name: |-
+        Download stored clients-5 targets
+      uses: |-
+        actions/download-artifact@v2
+      with:
+        name: |-
+          target-clients-5-ubuntu-latest-2.12.12-adopt@1.8
+    - name: |-
+        Inflate clients-5 targets
+      with: {}
+      run: |-
+        tar xf targets.tar
+        rm targets.tar
+    - name: |-
+        Download stored clients-6 targets
+      uses: |-
+        actions/download-artifact@v2
+      with:
+        name: |-
+          target-clients-6-ubuntu-latest-2.12.12-adopt@1.8
+    - name: |-
+        Inflate clients-6 targets
+      with: {}
+      run: |-
+        tar xf targets.tar
+        rm targets.tar
+    - name: |-
+        Download stored clients-7 targets
+      uses: |-
+        actions/download-artifact@v2
+      with:
+        name: |-
+          target-clients-7-ubuntu-latest-2.12.12-adopt@1.8
+    - name: |-
+        Inflate clients-7 targets
+      with: {}
+      run: |-
+        tar xf targets.tar
+        rm targets.tar
+    - name: |-
+        Publish artifacts
+      with: {}
+      run: |-
+        ./sbt -J-Xmx5g -J-Xms5g +publishSigned sonatypeBundleRelease
   microsite:
-    name: Build and publish microsite
-    needs: 
-      - build-core
-    runs-on: ubuntu-latest
-    if: ${{ github.ref == 'refs/heads/master' }}      
+    name: |-
+      Build and publish microsite
+    runs-on: |-
+      ubuntu-latest
+    needs:
+    - - |-
+        build-core
+    if: |-
+      ${{ github.ref == 'refs/heads/master }}
     steps:
-      - name: Checkout current branch
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      - name: Setup Java and Scala
-        uses: olafurpg/setup-scala@v10
-        with:
-          java-version: adopt@1.8                    
-      - name: Cache SBT
-        uses: actions/cache@v2
-        with:
-          path: | 
-            ~/.ivy2/cache
-            ~/.sbt            
-            ~/.coursier/cache/v1
-            ~/.cache/coursier/v1
-          key: ubuntu-latest-sbt-2.13.3-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties') }}
-      
-      - name: Setup GIT user
-        uses: fregante/setup-git-user@v1
-
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 2.6.6
-          bundler-cache: true
-              
-      - name: Install jekyll
-        run: |
-          gem install sass
-          gem install jekyll -v 4.0.0
-          gem install jemoji -v 0.11.1
-          gem install jekyll-sitemap -v 1.4.0
-
-      - name: Build and test core        
-        run: ./sbt -J-Xmx4g -J-Xms4g ++2.13.3 generateArtifactList docs/publishMicrosite
+    - name: |-
+        Checkout current branch
+      uses: |-
+        actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: |-
+        Setup Java and Scala
+      uses: |-
+        olafurpg/setup-scala@v10
+      with:
+        java-version: |-
+          adopt@1.8
+    - name: |-
+        Cache SBT
+      uses: |-
+        actions/cache@v2
+      with:
+        path: |-
+          ~/.ivy2/cache
+          ~/.sbt
+          ~/.coursier/cache/v1
+          ~/.cache/coursier/v1
+        key: |-
+          ubuntu-latest-sbt-2.13.3-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties') }}
+    - name: |-
+        Setup GIT user
+      uses: |-
+        fregante/setup-git-user@v1
+      with: {}
+    - name: |-
+        Setup Ruby
+      uses: |-
+        ruby/setup-ruby@v1
+      with:
+        ruby-version: |-
+          2.6.6
+        bundler-cache: true
+    - name: |-
+        Install Jekyll
+      with: {}
+      run: |-
+        gem install sass
+        gem install jekyll -v 4.0.0
+        gem install jemoji -v 0.11.1
+        gem install jekyll-sitemap -v 1.4.0
+    - name: |-
+        Build and publish microsite
+      with: {}
+      run: |-
+        ./sbt -J-Xmx4g -J-Xms4g ++2.13.3 generateArtifactList docs/publishMicrosite
