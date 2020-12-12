@@ -282,7 +282,11 @@ trait ServiceModelGenerator {
         val propertyNameJavaTerm = Term.Name(property.javaName)
 
         val propertyValueNameTerm =
-          if (fieldNames.values.toSet.contains(property.wrapperName + "Value")) {
+          if (
+            fieldNames.values.toSet
+              .map((names: PropertyNames) => names.wrapperName)
+              .contains(property.wrapperName + "Value")
+          ) {
             Term.Name(property.wrapperName + "Value_")
           } else {
             Term.Name(property.wrapperName + "Value")
