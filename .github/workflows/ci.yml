@@ -37,6 +37,14 @@ jobs:
             ~/.cache/coursier/v1
           key: ${{ matrix.os }}-sbt-${{ matrix.scala }}-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties') }}
       
+
+      - name: Setup GIT user
+        uses: fregante/setup-git-user@v1
+
+      - name: Tag release
+        if: ${{ github.ref == 'refs/heads/master' }}
+        run: ./sbt tagAwsVersion ciReleaseTagNextVersion
+
       - name: Build and test core        
         run: ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-core/test zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
 
@@ -86,17 +94,22 @@ jobs:
           rm targets.tar      
 
       - name: Build libraries
+        if: ${{ github.ref != 'refs/heads/master' }}
         run: ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-accessanalyzer/compile zio-aws-acm/compile zio-aws-acmpca/compile zio-aws-alexaforbusiness/compile zio-aws-amplify/compile zio-aws-apigateway/compile zio-aws-apigatewaymanagementapi/compile zio-aws-apigatewayv2/compile zio-aws-appconfig/compile zio-aws-appflow/compile zio-aws-applicationautoscaling/compile zio-aws-applicationdiscovery/compile zio-aws-applicationinsights/compile zio-aws-appmesh/compile zio-aws-appstream/compile zio-aws-appsync/compile zio-aws-athena/compile zio-aws-autoscaling/compile zio-aws-autoscalingplans/compile zio-aws-backup/compile
 
+      - name: Build and publish libraries
+        if: ${{ github.ref == 'refs/heads/master' }}
+        run: ./sbt -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-accessanalyzer/publishSigned zio-aws-acm/publishSigned zio-aws-acmpca/publishSigned zio-aws-alexaforbusiness/publishSigned zio-aws-amplify/publishSigned zio-aws-apigateway/publishSigned zio-aws-apigatewaymanagementapi/publishSigned zio-aws-apigatewayv2/publishSigned zio-aws-appconfig/publishSigned zio-aws-appflow/publishSigned zio-aws-applicationautoscaling/publishSigned zio-aws-applicationdiscovery/publishSigned zio-aws-applicationinsights/publishSigned zio-aws-appmesh/publishSigned zio-aws-appstream/publishSigned zio-aws-appsync/publishSigned zio-aws-athena/publishSigned zio-aws-autoscaling/publishSigned zio-aws-autoscalingplans/publishSigned zio-aws-backup/publishSigned
+
       - name: Compress target directories        
-        run: tar cf targets.tar generated/accessanalyzer/target generated/acm/target generated/acmpca/target generated/alexaforbusiness/target generated/amplify/target generated/apigateway/target generated/apigatewaymanagementapi/target generated/apigatewayv2/target generated/appconfig/target generated/appflow/target generated/applicationautoscaling/target generated/applicationdiscovery/target generated/applicationinsights/target generated/appmesh/target generated/appstream/target generated/appsync/target generated/athena/target generated/autoscaling/target generated/autoscalingplans/target generated/backup/target
+        if: ${{ github.ref == 'refs/heads/master' }}
+        run: tar cf targets.tar target/sonatype-staging
 
       - name: Upload target directories
         uses: actions/upload-artifact@v2
         with:
           name: target-1-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
           path: targets.tar
-
 
   integration-test:
     name: Integration test
@@ -150,3 +163,95 @@ jobs:
 
       - name: Build and run tests
         run: ./sbt -J-Xmx5g -J-Xms5g ++${{ matrix.scala }} examples/compile integtests/test
+
+  release:
+    name: Release
+    needs: 
+      - build-core
+      - integration-test
+      - build-clients-1
+    runs-on: ubuntu-latest
+    if: ${{ github.ref == 'refs/heads/master' }}
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Setup Java and Scala
+        uses: olafurpg/setup-scala@v10
+        with:
+          java-version: adopt@1.8
+      - name: Cache SBT
+        uses: actions/cache@v2
+        with:
+          path: | 
+            ~/.ivy2/cache
+            ~/.sbt            
+            ~/.coursier/cache/v1
+            ~/.cache/coursier/v1
+          key: ubuntu-latest-sbt-2.13.3-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties') }}
+      
+      - name: Download core target directories
+        uses: actions/download-artifact@v2
+        with:
+          name: target-core-ubuntu-latest-2.13.3-adopt@1.8
+      - name: Inflate core target directories
+        run: |
+          tar xf targets.tar
+          rm targets.tar      
+      
+      - name: 'Download clients #1 directories'
+        uses: actions/download-artifact@v2
+        with:
+          name: target-1-ubuntu-latest-2.13.3-adopt@1.8
+      - name: 'Inflate clients #1 target directories'
+        run: |
+          tar xf targets.tar
+          rm targets.tar                
+
+      - name: Publish artifacts
+        run: ./sbt -J-Xmx5g -J-Xms5g +publishSigned sonatypeBundleRelease
+
+  microsite:
+    name: Build and publish microsite
+    needs: 
+      - build-core
+    runs-on: ubuntu-latest
+    if: ${{ github.ref == 'refs/heads/master' }}      
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Setup Java and Scala
+        uses: olafurpg/setup-scala@v10
+        with:
+          java-version: adopt@1.8                    
+      - name: Cache SBT
+        uses: actions/cache@v2
+        with:
+          path: | 
+            ~/.ivy2/cache
+            ~/.sbt            
+            ~/.coursier/cache/v1
+            ~/.cache/coursier/v1
+          key: ubuntu-latest-sbt-2.13.3-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties') }}
+      
+      - name: Setup GIT user
+        uses: fregante/setup-git-user@v1
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 2.6.6
+          bundler-cache: true
+              
+      - name: Install jekyll
+        run: |
+          gem install sass
+          gem install jekyll -v 4.0.0
+          gem install jemoji -v 0.11.1
+          gem install jekyll-sitemap -v 1.4.0
+
+      - name: Build and test core        
+        run: ./sbt -J-Xmx4g -J-Xms4g ++2.13.3 generateArtifactList docs/publishMicrosite
