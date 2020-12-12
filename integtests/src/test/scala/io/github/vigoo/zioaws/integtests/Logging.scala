@@ -15,11 +15,7 @@ trait Logging {
         f.either.timed
           .flatMap {
             case (duration, Right(r @ Described(result, description))) =>
-              console
-                .putStrLn(
-                  s"[${description.service}/${description.operation}] ran for $duration"
-                )
-                .as(r)
+              ZIO.succeed(r)
             case (duration, Left(error)) =>
               console
                 .putStrLn(
