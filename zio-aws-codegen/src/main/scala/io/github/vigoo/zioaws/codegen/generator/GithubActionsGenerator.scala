@@ -76,6 +76,7 @@ trait GithubActionsGenerator {
               checkoutCurrentBranch(),
               setupScala(),
               setupGPG().when(isMaster),
+              loadPGPSecret.when(isMaster),
               cacheSBT(),
               runSBT(
                 "Build and test core",
@@ -94,7 +95,7 @@ trait GithubActionsGenerator {
                   "zio-aws-core/publishSigned",
                   "zio-aws-akka-http/publishSigned",
                   "zio-aws-http4s/publishSigned",
-                  "zio-aws-netty/publishSigned",
+                  "zio-aws-netty/publishSigned"
                 ),
                 env = Map(
                   "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
@@ -126,6 +127,7 @@ trait GithubActionsGenerator {
                 checkoutCurrentBranch(),
                 setupScala(),
                 setupGPG().when(isMaster),
+                loadPGPSecret().when(isMaster),
                 cacheSBT(),
                 loadStoredTarget("core"),
                 runSBT(
@@ -201,6 +203,7 @@ trait GithubActionsGenerator {
             checkoutCurrentBranch(),
             setupScala(Some(JavaVersion.AdoptJDK18)),
             setupGPG(),
+            loadPGPSecret(),
             cacheSBT(
               os = Some(OS.UbuntuLatest),
               scalaVersion = Some(scala213)

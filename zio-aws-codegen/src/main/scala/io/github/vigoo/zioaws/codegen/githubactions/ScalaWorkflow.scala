@@ -62,7 +62,12 @@ object ScalaWorkflow {
       uses = Some(ActionRef("fregante/setup-git-user@v1"))
     )
 
-  def runSBT(name: String, parameters: List[String], heapGb: Int = 6, env: Map[String, String] = Map.empty): Step =
+  def runSBT(
+      name: String,
+      parameters: List[String],
+      heapGb: Int = 6,
+      env: Map[String, String] = Map.empty
+  ): Step =
     SingleStep(
       name,
       run = Some(
@@ -166,7 +171,16 @@ object ScalaWorkflow {
       )
     )
 
-  val isMaster: Condition = Condition("${{ github.ref == 'refs/heads/master' }}")
+  def loadPGPSecret(): Step =
+    SingleStep(
+      "Load PGP secret",
+      run = Some("./github/import-key.sh"),
+      env = Map("PGP_SECRET" -> "${{ secrets.PGP_SECRET }}")
+    )
+
+  val isMaster: Condition = Condition(
+    "${{ github.ref == 'refs/heads/master' }}"
+  )
   val isNotMaster: Condition = Condition(
     "${{ github.ref != 'refs/heads/master' }}"
   )
