@@ -1076,6 +1076,8 @@ jobs:
     - name: Publish artifacts
       run: ./sbt -J-XX:+UseG1GC -J-Xmx5g -J-Xms5g +publishSigned sonatypeBundleRelease
       env:
+        PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+        PGP_SECRET: ${{ secrets.PGP_SECRET }}
         SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
         SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
   microsite:

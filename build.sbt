@@ -151,6 +151,8 @@ lazy val docs = project
     ),
     micrositeAnalyticsToken := "UA-56320875-3",
     includeFilter in makeSite := "*.html" | "*.css" | "*.png" | "*.jpg" | "*.gif" | "*.js" | "*.swf" | "*.txt" | "*.xml" | "*.svg",
+    micrositePushSiteWith := GitHub4s,
+    micrositeGithubToken := sys.env.get("GITHUB_TOKEN"),
     // Temporary fix to avoid including mdoc in the published POM
 
     // skip dependency elements with a scope

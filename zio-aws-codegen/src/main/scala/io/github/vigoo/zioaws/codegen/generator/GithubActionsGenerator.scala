@@ -228,6 +228,8 @@ trait GithubActionsGenerator {
               ),
               heapGb = 5,
               env = Map(
+                "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
+                "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}",
                 "SONATYPE_USERNAME" -> "${{ secrets.SONATYPE_USERNAME }}",
                 "SONATYPE_PASSWORD" -> "${{ secrets.SONATYPE_PASSWORD }}"
               )
