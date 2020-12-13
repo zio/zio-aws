@@ -174,7 +174,7 @@ object ScalaWorkflow {
   def loadPGPSecret(): Step =
     SingleStep(
       "Load PGP secret",
-      run = Some("./github/import-key.sh"),
+      run = Some(".github/import-key.sh"),
       env = Map("PGP_SECRET" -> "${{ secrets.PGP_SECRET }}")
     )
 

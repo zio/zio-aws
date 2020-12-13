@@ -64,7 +64,7 @@ jobs:
       if: ${{ github.ref == 'refs/heads/master' }}
     - name: Load PGP secret
       if: ${{ github.ref == 'refs/heads/master' }}
-      run: ./github/import-key.sh
+      run: .github/import-key.sh
       env:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Cache SBT
@@ -125,7 +125,7 @@ jobs:
       if: ${{ github.ref == 'refs/heads/master' }}
     - name: Load PGP secret
       if: ${{ github.ref == 'refs/heads/master' }}
-      run: ./github/import-key.sh
+      run: .github/import-key.sh
       env:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Cache SBT
@@ -216,7 +216,7 @@ jobs:
       if: ${{ github.ref == 'refs/heads/master' }}
     - name: Load PGP secret
       if: ${{ github.ref == 'refs/heads/master' }}
-      run: ./github/import-key.sh
+      run: .github/import-key.sh
       env:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Cache SBT
@@ -309,7 +309,7 @@ jobs:
       if: ${{ github.ref == 'refs/heads/master' }}
     - name: Load PGP secret
       if: ${{ github.ref == 'refs/heads/master' }}
-      run: ./github/import-key.sh
+      run: .github/import-key.sh
       env:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Cache SBT
@@ -399,7 +399,7 @@ jobs:
       if: ${{ github.ref == 'refs/heads/master' }}
     - name: Load PGP secret
       if: ${{ github.ref == 'refs/heads/master' }}
-      run: ./github/import-key.sh
+      run: .github/import-key.sh
       env:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Cache SBT
@@ -490,7 +490,7 @@ jobs:
       if: ${{ github.ref == 'refs/heads/master' }}
     - name: Load PGP secret
       if: ${{ github.ref == 'refs/heads/master' }}
-      run: ./github/import-key.sh
+      run: .github/import-key.sh
       env:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Cache SBT
@@ -582,7 +582,7 @@ jobs:
       if: ${{ github.ref == 'refs/heads/master' }}
     - name: Load PGP secret
       if: ${{ github.ref == 'refs/heads/master' }}
-      run: ./github/import-key.sh
+      run: .github/import-key.sh
       env:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Cache SBT
@@ -673,7 +673,7 @@ jobs:
       if: ${{ github.ref == 'refs/heads/master' }}
     - name: Load PGP secret
       if: ${{ github.ref == 'refs/heads/master' }}
-      run: ./github/import-key.sh
+      run: .github/import-key.sh
       env:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Cache SBT
@@ -765,7 +765,7 @@ jobs:
       if: ${{ github.ref == 'refs/heads/master' }}
     - name: Load PGP secret
       if: ${{ github.ref == 'refs/heads/master' }}
-      run: ./github/import-key.sh
+      run: .github/import-key.sh
       env:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Cache SBT
@@ -914,7 +914,7 @@ jobs:
     - name: Setup GPG
       uses: olafurpg/setup-gpg@v3
     - name: Load PGP secret
-      run: ./github/import-key.sh
+      run: .github/import-key.sh
       env:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Cache SBT
