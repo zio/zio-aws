@@ -1122,3 +1122,5 @@ jobs:
         gem install jekyll-sitemap -v 1.4.0
     - name: Build and publish microsite
       run: ./sbt -J-XX:+UseG1GC -J-Xmx4g -J-Xms4g ++2.13.3 generateArtifactList docs/publishMicrosite
+      env:
+        GITHUB_TOKEN: ${{ secrets.ADMIN_GITHUB_TOKEN }}

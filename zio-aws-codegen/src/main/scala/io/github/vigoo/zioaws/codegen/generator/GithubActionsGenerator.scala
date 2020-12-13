@@ -256,7 +256,10 @@ trait GithubActionsGenerator {
                 "generateArtifactList",
                 "docs/publishMicrosite"
               ),
-              heapGb = 4
+              heapGb = 4,
+              env = Map(
+                "GITHUB_TOKEN" -> "${{ secrets.ADMIN_GITHUB_TOKEN }}"
+              )
             )
           )
         )
