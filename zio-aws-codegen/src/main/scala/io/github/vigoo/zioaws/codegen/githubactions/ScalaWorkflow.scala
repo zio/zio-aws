@@ -56,12 +56,13 @@ object ScalaWorkflow {
       uses = Some(ActionRef("fregante/setup-git-user@v1"))
     )
 
-  def runSBT(name: String, parameters: List[String], heapGb: Int = 6): Step =
+  def runSBT(name: String, parameters: List[String], heapGb: Int = 6, env: Map[String, String] = Map.empty): Step =
     SingleStep(
       name,
       run = Some(
         s"./sbt -J-XX:+UseG1GC -J-Xmx${heapGb}g -J-Xms${heapGb}g ${parameters.mkString(" ")}"
-      )
+      ),
+      env = env
     )
 
   def storeTargets(

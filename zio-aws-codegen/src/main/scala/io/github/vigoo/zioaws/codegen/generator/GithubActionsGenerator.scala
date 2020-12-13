@@ -51,7 +51,7 @@ trait GithubActionsGenerator {
         .addJob(
           Job(
             "tag",
-            "Tag build",
+            "Tag build"
           ).withSteps(
             checkoutCurrentBranch(),
             setupScala(Some(JavaVersion.AdoptJDK18)),
@@ -120,7 +120,11 @@ trait GithubActionsGenerator {
                 runSBT(
                   "Build and publish libraries",
                   parameters = "++${{ matrix.scala }}" :: group
-                    .map(name => s"$name/publishSigned")
+                    .map(name => s"$name/publishSigned"),
+                  env = Map(
+                    "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
+                    "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}"
+                  )
                 ).when(isMaster),
                 storeTargets(
                   s"clients-$idx",
@@ -202,7 +206,11 @@ trait GithubActionsGenerator {
                 "+publishSigned",
                 "sonatypeBundleRelease"
               ),
-              heapGb = 5
+              heapGb = 5,
+              env = Map(
+                "SONATYPE_USERNAME" -> "${{ secrets.SONATYPE_USERNAME }}",
+                "SONATYPE_PASSWORD" -> "${{ secrets.SONATYPE_PASSWORD }}"
+              )
             )
           )
         )

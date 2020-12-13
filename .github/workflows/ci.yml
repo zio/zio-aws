@@ -152,6 +152,9 @@ jobs:
         zio-aws-batch/publishSigned zio-aws-braket/publishSigned zio-aws-budgets/publishSigned
         zio-aws-chime/publishSigned zio-aws-cloud9/publishSigned zio-aws-clouddirectory/publishSigned
         zio-aws-cloudformation/publishSigned zio-aws-cloudfront/publishSigned
+      env:
+        PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+        PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress clients-0 targets
       if: ${{ github.ref == 'refs/heads/master' }}
       run: tar cf targets.tar target
@@ -234,6 +237,9 @@ jobs:
         zio-aws-connectcontactlens/publishSigned zio-aws-connectparticipant/publishSigned
         zio-aws-costandusagereport/publishSigned zio-aws-costexplorer/publishSigned
         zio-aws-customerprofiles/publishSigned
+      env:
+        PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+        PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress clients-1 targets
       if: ${{ github.ref == 'refs/heads/master' }}
       run: tar cf targets.tar target
@@ -313,6 +319,9 @@ jobs:
         zio-aws-elasticinference/publishSigned zio-aws-elasticloadbalancing/publishSigned
         zio-aws-elasticloadbalancingv2/publishSigned zio-aws-elasticsearch/publishSigned
         zio-aws-elastictranscoder/publishSigned zio-aws-emr/publishSigned
+      env:
+        PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+        PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress clients-2 targets
       if: ${{ github.ref == 'refs/heads/master' }}
       run: tar cf targets.tar target
@@ -393,6 +402,9 @@ jobs:
         zio-aws-iotanalytics/publishSigned zio-aws-iotdataplane/publishSigned zio-aws-iotevents/publishSigned
         zio-aws-ioteventsdata/publishSigned zio-aws-iotjobsdataplane/publishSigned
         zio-aws-iotsecuretunneling/publishSigned
+      env:
+        PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+        PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress clients-3 targets
       if: ${{ github.ref == 'refs/heads/master' }}
       run: tar cf targets.tar target
@@ -474,6 +486,9 @@ jobs:
         zio-aws-marketplacecommerceanalytics/publishSigned zio-aws-marketplaceentitlement/publishSigned
         zio-aws-marketplacemetering/publishSigned zio-aws-mediaconnect/publishSigned
         zio-aws-mediaconvert/publishSigned zio-aws-medialive/publishSigned
+      env:
+        PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+        PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress clients-4 targets
       if: ${{ github.ref == 'refs/heads/master' }}
       run: tar cf targets.tar target
@@ -554,6 +569,9 @@ jobs:
         zio-aws-pinpointsmsvoice/publishSigned zio-aws-polly/publishSigned zio-aws-pricing/publishSigned
         zio-aws-qldb/publishSigned zio-aws-qldbsession/publishSigned zio-aws-quicksight/publishSigned
         zio-aws-ram/publishSigned
+      env:
+        PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+        PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress clients-5 targets
       if: ${{ github.ref == 'refs/heads/master' }}
       run: tar cf targets.tar target
@@ -635,6 +653,9 @@ jobs:
         zio-aws-servicecatalogappregistry/publishSigned zio-aws-servicediscovery/publishSigned
         zio-aws-servicequotas/publishSigned zio-aws-ses/publishSigned zio-aws-sesv2/publishSigned
         zio-aws-sfn/publishSigned
+      env:
+        PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+        PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress clients-6 targets
       if: ${{ github.ref == 'refs/heads/master' }}
       run: tar cf targets.tar target
@@ -714,6 +735,9 @@ jobs:
         zio-aws-wafregional/publishSigned zio-aws-wafv2/publishSigned zio-aws-workdocs/publishSigned
         zio-aws-worklink/publishSigned zio-aws-workmail/publishSigned zio-aws-workmailmessageflow/publishSigned
         zio-aws-workspaces/publishSigned zio-aws-xray/publishSigned
+      env:
+        PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+        PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress clients-7 targets
       if: ${{ github.ref == 'refs/heads/master' }}
       run: tar cf targets.tar target
@@ -966,6 +990,9 @@ jobs:
         rm targets.tar
     - name: Publish artifacts
       run: ./sbt -J-XX:+UseG1GC -J-Xmx5g -J-Xms5g +publishSigned sonatypeBundleRelease
+      env:
+        SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+        SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
   microsite:
     name: Build and publish microsite
     runs-on: ubuntu-latest

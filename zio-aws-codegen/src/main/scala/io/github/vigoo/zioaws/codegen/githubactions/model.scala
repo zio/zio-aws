@@ -85,7 +85,8 @@ object Step {
       uses: Option[ActionRef] = None,
       condition: Option[Condition] = None,
       parameters: Map[String, Json] = Map.empty,
-      run: Option[String] = None
+      run: Option[String] = None,
+      env: Map[String, String] = Map.empty,
   ) extends Step {
     override def when(condition: Condition): Step =
       copy(condition = Some(condition))
@@ -109,7 +110,8 @@ object Step {
           "uses" := s.uses,
           "if" := s.condition,
           "with" := (if (s.parameters.nonEmpty) s.parameters.asJson else Json.Null),
-          "run" := s.run
+          "run" := s.run,
+          "env" := (if (s.env.nonEmpty) s.env.asJson else Json.Null)
         )
 }
 
