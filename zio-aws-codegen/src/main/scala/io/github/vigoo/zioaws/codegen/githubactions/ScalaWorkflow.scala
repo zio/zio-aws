@@ -178,6 +178,15 @@ object ScalaWorkflow {
       env = Map("PGP_SECRET" -> "${{ secrets.PGP_SECRET }}")
     )
 
+  def turnstyle(): Step =
+    SingleStep(
+      "Turnstyle",
+      uses = Some(ActionRef("softprops/turnstyle@v1")),
+      env = Map(
+        "GITHUB_TOKEN" -> "${{ secrets.ADMIN_GITHUB_TOKEN }}"
+      )
+    )
+
   val isMaster: Condition = Condition(
     "${{ github.ref == 'refs/heads/master' }}"
   )

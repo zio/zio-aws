@@ -33,6 +33,11 @@ jobs:
           }}
     - name: Setup GIT user
       uses: fregante/setup-git-user@v1
+    - name: Turnstyle
+      uses: softprops/turnstyle@v1
+      if: ${{ github.ref == 'refs/heads/master' }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.ADMIN_GITHUB_TOKEN }}
     - name: Tag release
       if: ${{ github.ref == 'refs/heads/master' }}
       run: ./sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g tagAwsVersion ciReleaseTagNextVersion
@@ -1084,7 +1089,7 @@ jobs:
     name: Build and publish microsite
     runs-on: ubuntu-latest
     needs:
-    - build-core
+    - release
     if: ${{ github.ref == 'refs/heads/master' }}
     steps:
     - name: Checkout current branch

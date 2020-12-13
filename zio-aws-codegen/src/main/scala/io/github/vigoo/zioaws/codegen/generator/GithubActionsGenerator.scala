@@ -60,6 +60,7 @@ trait GithubActionsGenerator {
               scalaVersion = Some(scala213)
             ),
             setupGitUser(),
+            turnstyle().when(isMaster),
             runSBT(
               "Tag release",
               parameters = List("tagAwsVersion", "ciReleaseTagNextVersion")
@@ -240,7 +241,7 @@ trait GithubActionsGenerator {
           Job(
             "microsite",
             "Build and publish microsite",
-            need = Seq("build-core"),
+            need = Seq("release"),
             condition = Some(isMaster)
           ).withSteps(
             checkoutCurrentBranch(),
