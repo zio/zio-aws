@@ -59,6 +59,9 @@ jobs:
       uses: olafurpg/setup-scala@v10
       with:
         java-version: ${{ matrix.java }}
+    - name: Setup GPG
+      uses: olafurpg/setup-gpg@v3
+      if: ${{ github.ref == 'refs/heads/master' }}
     - name: Cache SBT
       uses: actions/cache@v2
       with:
@@ -74,8 +77,15 @@ jobs:
     - name: Build and test core
       run: ./sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-core/test
         zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
+    - name: Publish core
+      if: ${{ github.ref == 'refs/heads/master' }}
+      run: ./sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-core/publishSigned
+        zio-aws-akka-http/publishSigned zio-aws-http4s/publishSigned zio-aws-netty/publishSigned
+      env:
+        PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+        PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress core targets
-      run: tar cf targets.tar target project/target zio-aws-codegen/target zio-aws-core/target
+      run: tar cvf targets.tar target project/target zio-aws-codegen/target zio-aws-core/target
         zio-aws-akka-http/target zio-aws-http4s/target zio-aws-netty/target
     - name: Upload core targets
       uses: actions/upload-artifact@v2
@@ -105,6 +115,9 @@ jobs:
       uses: olafurpg/setup-scala@v10
       with:
         java-version: ${{ matrix.java }}
+    - name: Setup GPG
+      uses: olafurpg/setup-gpg@v3
+      if: ${{ github.ref == 'refs/heads/master' }}
     - name: Cache SBT
       uses: actions/cache@v2
       with:
@@ -122,7 +135,7 @@ jobs:
       with:
         name: target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
     - name: Inflate core targets
-      run: tar xf targets.tar
+      run: tar xvf targets.tar
 
         rm targets.tar
     - name: Build libraries
@@ -157,7 +170,7 @@ jobs:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress clients-0 targets
       if: ${{ github.ref == 'refs/heads/master' }}
-      run: tar cf targets.tar target
+      run: tar cvf targets.tar target
     - name: Upload clients-0 targets
       uses: actions/upload-artifact@v2
       if: ${{ github.ref == 'refs/heads/master' }}
@@ -188,6 +201,9 @@ jobs:
       uses: olafurpg/setup-scala@v10
       with:
         java-version: ${{ matrix.java }}
+    - name: Setup GPG
+      uses: olafurpg/setup-gpg@v3
+      if: ${{ github.ref == 'refs/heads/master' }}
     - name: Cache SBT
       uses: actions/cache@v2
       with:
@@ -205,7 +221,7 @@ jobs:
       with:
         name: target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
     - name: Inflate core targets
-      run: tar xf targets.tar
+      run: tar xvf targets.tar
 
         rm targets.tar
     - name: Build libraries
@@ -242,7 +258,7 @@ jobs:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress clients-1 targets
       if: ${{ github.ref == 'refs/heads/master' }}
-      run: tar cf targets.tar target
+      run: tar cvf targets.tar target
     - name: Upload clients-1 targets
       uses: actions/upload-artifact@v2
       if: ${{ github.ref == 'refs/heads/master' }}
@@ -273,6 +289,9 @@ jobs:
       uses: olafurpg/setup-scala@v10
       with:
         java-version: ${{ matrix.java }}
+    - name: Setup GPG
+      uses: olafurpg/setup-gpg@v3
+      if: ${{ github.ref == 'refs/heads/master' }}
     - name: Cache SBT
       uses: actions/cache@v2
       with:
@@ -290,7 +309,7 @@ jobs:
       with:
         name: target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
     - name: Inflate core targets
-      run: tar xf targets.tar
+      run: tar xvf targets.tar
 
         rm targets.tar
     - name: Build libraries
@@ -324,7 +343,7 @@ jobs:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress clients-2 targets
       if: ${{ github.ref == 'refs/heads/master' }}
-      run: tar cf targets.tar target
+      run: tar cvf targets.tar target
     - name: Upload clients-2 targets
       uses: actions/upload-artifact@v2
       if: ${{ github.ref == 'refs/heads/master' }}
@@ -355,6 +374,9 @@ jobs:
       uses: olafurpg/setup-scala@v10
       with:
         java-version: ${{ matrix.java }}
+    - name: Setup GPG
+      uses: olafurpg/setup-gpg@v3
+      if: ${{ github.ref == 'refs/heads/master' }}
     - name: Cache SBT
       uses: actions/cache@v2
       with:
@@ -372,7 +394,7 @@ jobs:
       with:
         name: target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
     - name: Inflate core targets
-      run: tar xf targets.tar
+      run: tar xvf targets.tar
 
         rm targets.tar
     - name: Build libraries
@@ -407,7 +429,7 @@ jobs:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress clients-3 targets
       if: ${{ github.ref == 'refs/heads/master' }}
-      run: tar cf targets.tar target
+      run: tar cvf targets.tar target
     - name: Upload clients-3 targets
       uses: actions/upload-artifact@v2
       if: ${{ github.ref == 'refs/heads/master' }}
@@ -438,6 +460,9 @@ jobs:
       uses: olafurpg/setup-scala@v10
       with:
         java-version: ${{ matrix.java }}
+    - name: Setup GPG
+      uses: olafurpg/setup-gpg@v3
+      if: ${{ github.ref == 'refs/heads/master' }}
     - name: Cache SBT
       uses: actions/cache@v2
       with:
@@ -455,7 +480,7 @@ jobs:
       with:
         name: target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
     - name: Inflate core targets
-      run: tar xf targets.tar
+      run: tar xvf targets.tar
 
         rm targets.tar
     - name: Build libraries
@@ -491,7 +516,7 @@ jobs:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress clients-4 targets
       if: ${{ github.ref == 'refs/heads/master' }}
-      run: tar cf targets.tar target
+      run: tar cvf targets.tar target
     - name: Upload clients-4 targets
       uses: actions/upload-artifact@v2
       if: ${{ github.ref == 'refs/heads/master' }}
@@ -522,6 +547,9 @@ jobs:
       uses: olafurpg/setup-scala@v10
       with:
         java-version: ${{ matrix.java }}
+    - name: Setup GPG
+      uses: olafurpg/setup-gpg@v3
+      if: ${{ github.ref == 'refs/heads/master' }}
     - name: Cache SBT
       uses: actions/cache@v2
       with:
@@ -539,7 +567,7 @@ jobs:
       with:
         name: target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
     - name: Inflate core targets
-      run: tar xf targets.tar
+      run: tar xvf targets.tar
 
         rm targets.tar
     - name: Build libraries
@@ -574,7 +602,7 @@ jobs:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress clients-5 targets
       if: ${{ github.ref == 'refs/heads/master' }}
-      run: tar cf targets.tar target
+      run: tar cvf targets.tar target
     - name: Upload clients-5 targets
       uses: actions/upload-artifact@v2
       if: ${{ github.ref == 'refs/heads/master' }}
@@ -605,6 +633,9 @@ jobs:
       uses: olafurpg/setup-scala@v10
       with:
         java-version: ${{ matrix.java }}
+    - name: Setup GPG
+      uses: olafurpg/setup-gpg@v3
+      if: ${{ github.ref == 'refs/heads/master' }}
     - name: Cache SBT
       uses: actions/cache@v2
       with:
@@ -622,7 +653,7 @@ jobs:
       with:
         name: target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
     - name: Inflate core targets
-      run: tar xf targets.tar
+      run: tar xvf targets.tar
 
         rm targets.tar
     - name: Build libraries
@@ -658,7 +689,7 @@ jobs:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress clients-6 targets
       if: ${{ github.ref == 'refs/heads/master' }}
-      run: tar cf targets.tar target
+      run: tar cvf targets.tar target
     - name: Upload clients-6 targets
       uses: actions/upload-artifact@v2
       if: ${{ github.ref == 'refs/heads/master' }}
@@ -689,6 +720,9 @@ jobs:
       uses: olafurpg/setup-scala@v10
       with:
         java-version: ${{ matrix.java }}
+    - name: Setup GPG
+      uses: olafurpg/setup-gpg@v3
+      if: ${{ github.ref == 'refs/heads/master' }}
     - name: Cache SBT
       uses: actions/cache@v2
       with:
@@ -706,7 +740,7 @@ jobs:
       with:
         name: target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
     - name: Inflate core targets
-      run: tar xf targets.tar
+      run: tar xvf targets.tar
 
         rm targets.tar
     - name: Build libraries
@@ -740,7 +774,7 @@ jobs:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress clients-7 targets
       if: ${{ github.ref == 'refs/heads/master' }}
-      run: tar cf targets.tar target
+      run: tar cvf targets.tar target
     - name: Upload clients-7 targets
       uses: actions/upload-artifact@v2
       if: ${{ github.ref == 'refs/heads/master' }}
@@ -802,7 +836,7 @@ jobs:
       with:
         name: target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
     - name: Inflate core targets
-      run: tar xf targets.tar
+      run: tar xvf targets.tar
 
         rm targets.tar
     - name: Build and run tests
@@ -832,6 +866,8 @@ jobs:
       uses: olafurpg/setup-scala@v10
       with:
         java-version: adopt@1.8
+    - name: Setup GPG
+      uses: olafurpg/setup-gpg@v3
     - name: Cache SBT
       uses: actions/cache@v2
       with:
@@ -849,7 +885,7 @@ jobs:
       with:
         name: target-core-ubuntu-latest-2.13.3-adopt@1.8
     - name: Inflate core targets
-      run: tar xf targets.tar
+      run: tar xvf targets.tar
 
         rm targets.tar
     - name: Download stored clients-0 targets
@@ -857,7 +893,7 @@ jobs:
       with:
         name: target-clients-0-ubuntu-latest-2.13.3-adopt@1.8
     - name: Inflate clients-0 targets
-      run: tar xf targets.tar
+      run: tar xvf targets.tar
 
         rm targets.tar
     - name: Download stored clients-1 targets
@@ -865,7 +901,7 @@ jobs:
       with:
         name: target-clients-1-ubuntu-latest-2.13.3-adopt@1.8
     - name: Inflate clients-1 targets
-      run: tar xf targets.tar
+      run: tar xvf targets.tar
 
         rm targets.tar
     - name: Download stored clients-2 targets
@@ -873,7 +909,7 @@ jobs:
       with:
         name: target-clients-2-ubuntu-latest-2.13.3-adopt@1.8
     - name: Inflate clients-2 targets
-      run: tar xf targets.tar
+      run: tar xvf targets.tar
 
         rm targets.tar
     - name: Download stored clients-3 targets
@@ -881,7 +917,7 @@ jobs:
       with:
         name: target-clients-3-ubuntu-latest-2.13.3-adopt@1.8
     - name: Inflate clients-3 targets
-      run: tar xf targets.tar
+      run: tar xvf targets.tar
 
         rm targets.tar
     - name: Download stored clients-4 targets
@@ -889,7 +925,7 @@ jobs:
       with:
         name: target-clients-4-ubuntu-latest-2.13.3-adopt@1.8
     - name: Inflate clients-4 targets
-      run: tar xf targets.tar
+      run: tar xvf targets.tar
 
         rm targets.tar
     - name: Download stored clients-5 targets
@@ -897,7 +933,7 @@ jobs:
       with:
         name: target-clients-5-ubuntu-latest-2.13.3-adopt@1.8
     - name: Inflate clients-5 targets
-      run: tar xf targets.tar
+      run: tar xvf targets.tar
 
         rm targets.tar
     - name: Download stored clients-6 targets
@@ -905,7 +941,7 @@ jobs:
       with:
         name: target-clients-6-ubuntu-latest-2.13.3-adopt@1.8
     - name: Inflate clients-6 targets
-      run: tar xf targets.tar
+      run: tar xvf targets.tar
 
         rm targets.tar
     - name: Download stored clients-7 targets
@@ -913,7 +949,7 @@ jobs:
       with:
         name: target-clients-7-ubuntu-latest-2.13.3-adopt@1.8
     - name: Inflate clients-7 targets
-      run: tar xf targets.tar
+      run: tar xvf targets.tar
 
         rm targets.tar
     - name: Download stored core targets
@@ -921,7 +957,7 @@ jobs:
       with:
         name: target-core-ubuntu-latest-2.12.12-adopt@1.8
     - name: Inflate core targets
-      run: tar xf targets.tar
+      run: tar xvf targets.tar
 
         rm targets.tar
     - name: Download stored clients-0 targets
@@ -929,7 +965,7 @@ jobs:
       with:
         name: target-clients-0-ubuntu-latest-2.12.12-adopt@1.8
     - name: Inflate clients-0 targets
-      run: tar xf targets.tar
+      run: tar xvf targets.tar
 
         rm targets.tar
     - name: Download stored clients-1 targets
@@ -937,7 +973,7 @@ jobs:
       with:
         name: target-clients-1-ubuntu-latest-2.12.12-adopt@1.8
     - name: Inflate clients-1 targets
-      run: tar xf targets.tar
+      run: tar xvf targets.tar
 
         rm targets.tar
     - name: Download stored clients-2 targets
@@ -945,7 +981,7 @@ jobs:
       with:
         name: target-clients-2-ubuntu-latest-2.12.12-adopt@1.8
     - name: Inflate clients-2 targets
-      run: tar xf targets.tar
+      run: tar xvf targets.tar
 
         rm targets.tar
     - name: Download stored clients-3 targets
@@ -953,7 +989,7 @@ jobs:
       with:
         name: target-clients-3-ubuntu-latest-2.12.12-adopt@1.8
     - name: Inflate clients-3 targets
-      run: tar xf targets.tar
+      run: tar xvf targets.tar
 
         rm targets.tar
     - name: Download stored clients-4 targets
@@ -961,7 +997,7 @@ jobs:
       with:
         name: target-clients-4-ubuntu-latest-2.12.12-adopt@1.8
     - name: Inflate clients-4 targets
-      run: tar xf targets.tar
+      run: tar xvf targets.tar
 
         rm targets.tar
     - name: Download stored clients-5 targets
@@ -969,7 +1005,7 @@ jobs:
       with:
         name: target-clients-5-ubuntu-latest-2.12.12-adopt@1.8
     - name: Inflate clients-5 targets
-      run: tar xf targets.tar
+      run: tar xvf targets.tar
 
         rm targets.tar
     - name: Download stored clients-6 targets
@@ -977,7 +1013,7 @@ jobs:
       with:
         name: target-clients-6-ubuntu-latest-2.12.12-adopt@1.8
     - name: Inflate clients-6 targets
-      run: tar xf targets.tar
+      run: tar xvf targets.tar
 
         rm targets.tar
     - name: Download stored clients-7 targets
@@ -985,7 +1021,7 @@ jobs:
       with:
         name: target-clients-7-ubuntu-latest-2.12.12-adopt@1.8
     - name: Inflate clients-7 targets
-      run: tar xf targets.tar
+      run: tar xvf targets.tar
 
         rm targets.tar
     - name: Publish artifacts

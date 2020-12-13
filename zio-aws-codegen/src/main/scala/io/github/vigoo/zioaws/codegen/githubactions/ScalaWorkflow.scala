@@ -28,6 +28,12 @@ object ScalaWorkflow {
       )
     )
 
+  def setupGPG(): Step =
+    SingleStep(
+      "Setup GPG",
+      uses = Some(ActionRef("olafurpg/setup-gpg@v3"))
+    )
+
   def cacheSBT(
       os: Option[OS] = None,
       scalaVersion: Option[ScalaVersion] = None
@@ -81,7 +87,7 @@ object ScalaWorkflow {
         SingleStep(
           s"Compress $id targets",
           run = Some(
-            s"tar cf targets.tar ${directories.map(dir => s"$dir/target".dropWhile(_ == '/')).mkString(" ")}"
+            s"tar cvf targets.tar ${directories.map(dir => s"$dir/target".dropWhile(_ == '/')).mkString(" ")}"
           )
         ),
         SingleStep(
@@ -118,7 +124,7 @@ object ScalaWorkflow {
         SingleStep(
           s"Inflate $id targets",
           run = Some(
-            "tar xf targets.tar\nrm targets.tar"
+            "tar xvf targets.tar\nrm targets.tar"
           )
         )
       )
