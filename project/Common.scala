@@ -11,7 +11,7 @@ import scala.collection.JavaConverters._
 object Common extends AutoPlugin {
 
   object autoImport {
-    val zioVersion = "1.0.4"
+    val zioVersion = "1.0.4-2"
     val zioCatsInteropVersion = "2.2.0.1"
     val zioReactiveStreamsInteropVersion = "1.3.0.7-2"
     val zioConfigVersion = "1.0.0-RC32"
@@ -19,7 +19,7 @@ object Common extends AutoPlugin {
 
     val awsVersion = "2.15.74"
     val awsSubVersion = awsVersion.drop(awsVersion.indexOf('.') + 1)
-    val http4sVersion = "0.21.16"
+    val http4sVersion = "0.21.17"
     val fs2Version = "2.5.0"
 
     val majorVersion = "3"
