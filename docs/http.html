@@ -1,0 +1,579 @@
+<!DOCTYPE html><html><head><title>zio-aws: HTTP</title><meta charset="utf-8" /><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Daniel Vigovszky" /><meta name="description" content="Low-level AWS wrapper for ZIO for all AWS services" /><meta name="og:image" content="https://vigoo.github.io/zio-aws/img/poster.png" /><meta name="image" property="og:image" content="https://vigoo.github.io/zio-aws/img/poster.png" /><meta name="og:title" content="zio-aws: HTTP" /><meta name="title" property="og:title" content="zio-aws: HTTP" /><meta name="og:site_name" content="zio-aws" /><meta name="og:url" content="https://vigoo.github.io/zio-aws/" /><meta name="og:type" content="website" /><meta name="og:description" content="Low-level AWS wrapper for ZIO for all AWS services" /><link rel="icon" type="image/png" href="https://vigoo.github.io/zio-aws/img/favicon.png" /><meta name="twitter:title" content="zio-aws: HTTP" /><meta name="twitter:image" content="https://vigoo.github.io/zio-aws/img/poster.png" /><meta name="twitter:description" content="Low-level AWS wrapper for ZIO for all AWS services" /><meta name="twitter:card" content="summary_large_image" /><meta name="twitter:creator" content="@dvigovszky" /><link rel="icon" type="image/png" sizes="16x16" href="https://vigoo.github.io/zio-aws/img/favicon16x16.png" /><link rel="icon" type="image/png" sizes="24x24" href="https://vigoo.github.io/zio-aws/img/favicon24x24.png" /><link rel="icon" type="image/png" sizes="32x32" href="https://vigoo.github.io/zio-aws/img/favicon32x32.png" /><link rel="icon" type="image/png" sizes="48x48" href="https://vigoo.github.io/zio-aws/img/favicon48x48.png" /><link rel="icon" type="image/png" sizes="57x57" href="https://vigoo.github.io/zio-aws/img/favicon57x57.png" /><link rel="icon" type="image/png" sizes="60x60" href="https://vigoo.github.io/zio-aws/img/favicon60x60.png" /><link rel="icon" type="image/png" sizes="64x64" href="https://vigoo.github.io/zio-aws/img/favicon64x64.png" /><link rel="icon" type="image/png" sizes="70x70" href="https://vigoo.github.io/zio-aws/img/favicon70x70.png" /><link rel="icon" type="image/png" sizes="72x72" href="https://vigoo.github.io/zio-aws/img/favicon72x72.png" /><link rel="icon" type="image/png" sizes="76x76" href="https://vigoo.github.io/zio-aws/img/favicon76x76.png" /><link rel="icon" type="image/png" sizes="96x96" href="https://vigoo.github.io/zio-aws/img/favicon96x96.png" /><link rel="icon" type="image/png" sizes="114x114" href="https://vigoo.github.io/zio-aws/img/favicon114x114.png" /><link rel="icon" type="image/png" sizes="120x120" href="https://vigoo.github.io/zio-aws/img/favicon120x120.png" /><link rel="icon" type="image/png" sizes="128x128" href="https://vigoo.github.io/zio-aws/img/favicon128x128.png" /><link rel="icon" type="image/png" sizes="144x144" href="https://vigoo.github.io/zio-aws/img/favicon144x144.png" /><link rel="icon" type="image/png" sizes="150x150" href="https://vigoo.github.io/zio-aws/img/favicon150x150.png" /><link rel="icon" type="image/png" sizes="152x152" href="https://vigoo.github.io/zio-aws/img/favicon152x152.png" /><link rel="icon" type="image/png" sizes="196x196" href="https://vigoo.github.io/zio-aws/img/favicon196x196.png" /><link rel="icon" type="image/png" sizes="310x310" href="https://vigoo.github.io/zio-aws/img/favicon310x310.png" /><link rel="icon" type="image/png" sizes="310x150" href="https://vigoo.github.io/zio-aws/img/favicon310x150.png" /><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" /><link rel="stylesheet" href="https://vigoo.github.io/zio-aws/highlight/styles/vs.css" /><link rel="stylesheet" href="/zio-aws/css/light-style.css" /><script async="async">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-56320875-3' , 'auto');
+ga('send', 'pageview');
+      </script></head><body class="docs"><div id="wrapper"><div id="sidebar-wrapper"><div id="sidebar-brand"><a href="/zio-aws/" class="brand"><div class="brand-wrapper"></div><span>zio-aws</span></a><button id="main-toggle" class="sidebar-toggle"><span class="close"></span></button></div><div class="sidebar-nav"> <div class="sidebar-nav-item  "><a href="/zio-aws/index" title="Home" class="">Home</a></div> <div class="sidebar-nav-item  "><a href="/zio-aws/docs/index.html" title="Getting started" class="">Getting started</a></div> <div class="sidebar-nav-item  "><a href="/zio-aws/docs/artifacts.html" title="Artifacts" class="">Artifacts</a></div> <div class="sidebar-nav-item  "><a href="/zio-aws/docs/wrapper.html" title="Wrappers" class="">Wrappers</a></div> <div class="sidebar-nav-item active "><a href="/zio-aws/docs/http.html" title="HTTP" class="active">HTTP</a></div> <div class="sidebar-nav-item  "><a href="/zio-aws/docs/aspects.html" title="Aspects" class="">Aspects</a></div> <div class="sidebar-nav-item  "><a href="/zio-aws/docs/config.html" title="Configuration" class="">Configuration</a></div> <div class="sidebar-nav-item  "><a href="/zio-aws/docs/examples.html" title="Examples" class="">Examples</a></div> <div class="sidebar-nav-item  "><a href="/zio-aws/docs/changelog.html" title="Version history" class="">Version history</a></div></div></div><div id="page-content-wrapper"><div class="nav"><div class="container-fluid"><div class="row"><div class="col-lg-12"><div class="action-menu pull-left clearfix"><a href="#menu-toggle" id="menu-toggle"><i class="fa fa-bars" aria-hidden="true"></i></a></div><ul class="pull-right"><li class="search-nav"><div id="search-dropdown"><label><i class="fa fa-search"></i>Search</label><input id="search-bar" type="text" placeholder="Enter keywords here..." onclick="displayToggleSearch(event)" /><ul id="search-dropdown-content" class="dropdown dropdown-content"></ul></div></li><li id="gh-eyes-item" class="hidden-xs to-uppercase"><a href="https://github.com/vigoo/zio-aws" target="_blank" rel="noopener noreferrer"><i class="fa fa-eye"></i><span>Watchers<span id="eyes" class="label label-default">--</span></span></a></li><li id="gh-stars-item" class="hidden-xs to-uppercase"><a href="https://github.com/vigoo/zio-aws" target="_blank" rel="noopener noreferrer"><i class="fa fa-star-o"></i><span>Stars<span id="stars" class="label label-default">--</span></span></a></li></ul></div></div></div></div><div id="content" data-github-owner="vigoo" data-github-repo="zio-aws"><div class="content-wrapper"><section><h1 id="http-implementations">HTTP implementations</h1>
+
+<p>By default the AWS Java SDK uses <em>netty</em> under the hood to make the HTTP client calls. <code class="highlighter-rouge">zio-aws</code> defines the http client
+as a <em>layer</em> (<code class="highlighter-rouge">HttpClient</code>) that has to be provided to the <em>AWS configuration layer</em>.</p>
+
+<p>Currently the following implementations can be used:</p>
+<ul>
+  <li><code class="highlighter-rouge">zio-aws-netty</code> contains the default netty implementation packed as a layer</li>
+  <li><code class="highlighter-rouge">zio-aws-akka-http</code> is based on Matthias Lüneberg’s <a href="https://github.com/matsluni/aws-spi-akka-http">aws-spi-akka-http library</a></li>
+  <li><code class="highlighter-rouge">zio-aws-http4s</code> is an implementation on top of <em>http4s</em></li>
+</ul>
+
+<h2 id="netty">Netty</h2>
+<p>The default HTTP implementation in the AWS Java SDK is <em>Netty</em>. To use it with the default settings, use the <code class="highlighter-rouge">netty.default</code>
+layer to provide the <code class="highlighter-rouge">HttpClient</code> for the <code class="highlighter-rouge">AwsConfig</code> layer. It is also possible to customize the <code class="highlighter-rouge">NettyNioAsyncHttpClient</code> 
+directly by manipulation it’s <code class="highlighter-rouge">Builder</code>, by using the <code class="highlighter-rouge">netty.customized(customization)</code> layer.</p>
+
+<p>The recommended way for configuration is to use the zio-config support:</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">configured</span><span class="o">(</span>
+      <span class="n">tlsKeyManagersProvider</span><span class="k">:</span> <span class="kt">Option</span><span class="o">[</span><span class="kt">TlsKeyManagersProvider</span><span class="o">]</span> <span class="k">=</span> <span class="nc">None</span><span class="o">,</span>
+      <span class="n">tlsTrustManagersProvider</span><span class="k">:</span> <span class="kt">Option</span><span class="o">[</span><span class="kt">TlsTrustManagersProvider</span><span class="o">]</span> <span class="k">=</span> <span class="nc">None</span>
+  <span class="o">)</span><span class="k">:</span> <span class="kt">ZLayer</span><span class="o">[</span><span class="kt">ZConfig</span><span class="o">[</span><span class="kt">NettyClientConfig</span><span class="o">]</span>, <span class="kt">Throwable</span>, <span class="kt">HttpClient</span><span class="o">]</span>
+</code></pre></div></div>
+
+<p>Everything except the TLS key and trust managers are described by the zio-config provided <code class="highlighter-rouge">NettyClientConfig</code> data structure.
+See the following table for all the options:</p>
+
+<h2 id="configuration-details">Configuration Details</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>FieldName</th>
+      <th>Format</th>
+      <th>Description</th>
+      <th>Sources</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td> </td>
+      <td><a href="fielddescriptions">all-of</a></td>
+      <td> </td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="field-descriptions">Field Descriptions</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>FieldName</th>
+      <th>Format</th>
+      <th>Description</th>
+      <th>Sources</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>maxConcurrency</td>
+      <td>primitive</td>
+      <td>value of type int, default value: 50, Maximum number of allowed concurrent requests</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>maxPendingConnectionAcquires</td>
+      <td>primitive</td>
+      <td>value of type int, default value: 10000, The maximum number of pending acquires allowed</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>readTimeout</td>
+      <td>primitive</td>
+      <td>value of type duration, default value: PT30S, The amount of time to wait for a read on a socket</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>writeTimeout</td>
+      <td>primitive</td>
+      <td>value of type duration, default value: PT30S, The amount of time to wait for a write on a socket</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>connectionTimeout</td>
+      <td>primitive</td>
+      <td>value of type duration, default value: PT2S, The amount of time to wait when initially establishing a connection before giving up</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>connectionAcquisitionTimeout</td>
+      <td>primitive</td>
+      <td>value of type duration, default value: PT10S, The amount of time to wait when acquiring a connection from the pool before giving up</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>connectionTimeToLive</td>
+      <td>primitive</td>
+      <td>value of type duration, default value: PT0S, The maximum amount of time that a connection should be allowed to remain open, regardless of usage frequency</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>connectionMaxIdleTime</td>
+      <td>primitive</td>
+      <td>value of type duration, default value: PT5S, Maximum amount of time that a connection should be allowed to remain open while idle</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>useIdleConnectionReaper</td>
+      <td>primitive</td>
+      <td>value of type boolean, default value: true, If true, the idle connections in the pool should be closed</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>protocol</td>
+      <td>primitive</td>
+      <td>value of type string, default value: Dual, HTTP/1.1 or HTTP/2 or Dual</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td><a href="channeloptions">channelOptions</a></td>
+      <td><a href="channeloptions">all-of</a></td>
+      <td>default value: NettyChannelOptions(Vector()), Custom Netty channel options</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>sslProvider</td>
+      <td>primitive</td>
+      <td>value of type string, optional value, The SSL provider to be used</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td><a href="proxy">proxy</a></td>
+      <td><a href="proxy">all-of</a></td>
+      <td>optional value, Proxy configuration</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td><a href="http2">http2</a></td>
+      <td><a href="http2">all-of</a></td>
+      <td>optional value, HTTP/2 specific options</td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="channeloptions">channelOptions</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>FieldName</th>
+      <th>Format</th>
+      <th>Description</th>
+      <th>Sources</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>SO_BROADCAST</td>
+      <td>primitive</td>
+      <td>value of type boolean, optional value, Allow transmission of broadcast datagrams</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>SO_KEEPALIVE</td>
+      <td>primitive</td>
+      <td>value of type boolean, optional value, Keep connection alive</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>SO_SNDBUF</td>
+      <td>primitive</td>
+      <td>value of type int, optional value, The size of the socket send buffer</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>SO_RCVBUF</td>
+      <td>primitive</td>
+      <td>value of type int, optional value, The size of the socket receive buffer</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>SO_REUSEADDR</td>
+      <td>primitive</td>
+      <td>value of type boolean, optional value, Re-use address</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>SO_LINGER</td>
+      <td>primitive</td>
+      <td>value of type int, optional value, Linger on close if data is present</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>IP_TOS</td>
+      <td>primitive</td>
+      <td>value of type int, optional value, The ToS octet in the IP header</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>IP_MULTICAST_IF</td>
+      <td>primitive</td>
+      <td>value of type string, optional value, The network interface’s name for IP multicast datagrams</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>IP_MULTICAST_TTL</td>
+      <td>primitive</td>
+      <td>value of type int, optional value, The time-to-live for IP multicast datagrams</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>IP_MULTICAST_LOOP</td>
+      <td>primitive</td>
+      <td>value of type boolean, optional value, Loopback for IP multicast datagrams</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>TCP_NODELAY</td>
+      <td>primitive</td>
+      <td>value of type boolean, optional value, Disable the Nagle algorithm</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>CONNECT_TIMEOUT_MILLIS</td>
+      <td>primitive</td>
+      <td>value of type duration, optional value, Connect timeout</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>WRITE_SPIN_COUNT</td>
+      <td>primitive</td>
+      <td>value of type int, optional value, Write spin count</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>ALLOW_HALF_CLOSURE</td>
+      <td>primitive</td>
+      <td>value of type boolean, optional value, Allow half closure</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>AUTO_READ</td>
+      <td>primitive</td>
+      <td>value of type boolean, optional value, Auto read</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>AUTO_CLOSE</td>
+      <td>primitive</td>
+      <td>value of type boolean, optional value, Auto close</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>SINGLE_EVENTEXECUTOR_PER_GROUP</td>
+      <td>primitive</td>
+      <td>value of type boolean, optional value, Single event executor per group</td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="proxy">proxy</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>FieldName</th>
+      <th>Format</th>
+      <th>Description</th>
+      <th>Sources</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>scheme</td>
+      <td>primitive</td>
+      <td>value of type string, default value: Http, The proxy scheme</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>host</td>
+      <td>primitive</td>
+      <td>value of type string, Hostname of the proxy</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>port</td>
+      <td>primitive</td>
+      <td>value of type int, Port of the proxy</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>nonProxyHosts</td>
+      <td>list</td>
+      <td>value of type string, default value: Set(), Hosts that should not be proxied</td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="http2">http2</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>FieldName</th>
+      <th>Format</th>
+      <th>Description</th>
+      <th>Sources</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>maxStreams</td>
+      <td>primitive</td>
+      <td>value of type long, Max number of concurrent streams per connection</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>initialWindowSize</td>
+      <td>primitive</td>
+      <td>value of type int, Initial window size of a stream</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>healthCheckPingPeriod</td>
+      <td>primitive</td>
+      <td>value of type duration, default value: PT5S, The period that the Netty client will send PING frames to the remote endpoint</td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="akka-http">Akka HTTP</h2>
+<p>The <em>Akka HTTP implementation</em> can be chosen by using the <code class="highlighter-rouge">akkahttp.client()</code> layer for providing <code class="highlighter-rouge">HttpClient</code> to <code class="highlighter-rouge">AwsConfig</code>.
+This implementation uses the <a href="https://doc.akka.io/docs/akka-http/current/configuration.html">standard akka-http settings</a> from the application’s <em>Lightbend config</em>,
+it is not described with zio-config descriptors.</p>
+
+<h2 id="http4s">http4s</h2>
+<p>Another alternative is the <em>http4s client</em>. To use the default settings, provide the <code class="highlighter-rouge">http4s.default</code> layer to <code class="highlighter-rouge">AwsConfig</code>. Customization by manipulating the builder
+is also possible by <code class="highlighter-rouge">http4s.customized(customization)</code>. And similarly to the <em>Netty</em> client, configuration is also possible via zio-config:</p>
+
+<h2 id="configuration-details-1">Configuration Details</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>FieldName</th>
+      <th>Format</th>
+      <th>Description</th>
+      <th>Sources</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td> </td>
+      <td><a href="fielddescriptions">all-of</a></td>
+      <td> </td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="field-descriptions-1">Field Descriptions</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>FieldName</th>
+      <th>Format</th>
+      <th>Description</th>
+      <th>Sources</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>responseHeaderTimeout</td>
+      <td>primitive</td>
+      <td>value of type duration, default value: Duration.Inf, Timeout for receiving the header part of the response</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>idleTimeout</td>
+      <td>primitive</td>
+      <td>value of type duration, default value: 1 minute, Timeout for client connection staying idle</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>requestTimeout</td>
+      <td>primitive</td>
+      <td>value of type duration, default value: 45 seconds, Timeout for the whole request</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>connectTimeout</td>
+      <td>primitive</td>
+      <td>value of type duration, default value: 10 seconds, Timeout for connecting to the server</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>userAgent</td>
+      <td>primitive</td>
+      <td>value of type string, default value: User-Agent: http4s-blaze/1.0.0-RC32, User-Agent header sent by the client</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>maxTotalConnections</td>
+      <td>primitive</td>
+      <td>value of type int, default value: 10, Maximum number of parallel connections</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>maxWaitQueueLimit</td>
+      <td>primitive</td>
+      <td>value of type int, default value: 256, Maximum number of requests in queue</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>checkEndpointIdentification</td>
+      <td>primitive</td>
+      <td>value of type boolean, default value: true, Check https identity</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>maxResponseLineSize</td>
+      <td>primitive</td>
+      <td>value of type int, default value: 4096, Maximum line length of headers in response</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>maxHeaderLength</td>
+      <td>primitive</td>
+      <td>value of type int, default value: 40960, Maximum total length of the response headers</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>maxChunkSize</td>
+      <td>primitive</td>
+      <td>value of type int, default value: 2147483647, Maximum chunk size</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>chunkBufferMaxSize</td>
+      <td>primitive</td>
+      <td>value of type int, default value: 1048576, Maximum size of the chunk buffer</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>parserMode</td>
+      <td>primitive</td>
+      <td>value of type string, default value: Strict, Parser mode, strict or lenient</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>bufferSize</td>
+      <td>primitive</td>
+      <td>value of type int, default value: 8192, Buffer size</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td><a href="channeloptions">channelOptions</a></td>
+      <td><a href="channeloptions">all-of</a></td>
+      <td>default value: ChannelOptions(Vector(OptionValue(TCP_NODELAY,true))), Collection of socket options</td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="channeloptions-1">channelOptions</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>FieldName</th>
+      <th>Format</th>
+      <th>Description</th>
+      <th>Sources</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>SO_BROADCAST</td>
+      <td>primitive</td>
+      <td>value of type boolean, optional value, Allow transmission of broadcast datagrams</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>SO_KEEPALIVE</td>
+      <td>primitive</td>
+      <td>value of type boolean, optional value, Keep connection alive</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>SO_SNDBUF</td>
+      <td>primitive</td>
+      <td>value of type int, optional value, The size of the socket send buffer</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>SO_RCVBUF</td>
+      <td>primitive</td>
+      <td>value of type int, optional value, The size of the socket receive buffer</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>SO_REUSEADDR</td>
+      <td>primitive</td>
+      <td>value of type boolean, optional value, Re-use address</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>SO_LINGER</td>
+      <td>primitive</td>
+      <td>value of type int, optional value, Linger on close if data is present</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>IP_TOS</td>
+      <td>primitive</td>
+      <td>value of type int, optional value, The ToS octet in the IP header</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>IP_MULTICAST_IF</td>
+      <td>primitive</td>
+      <td>value of type string, optional value, The network interface’s name for IP multicast datagrams</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>IP_MULTICAST_TTL</td>
+      <td>primitive</td>
+      <td>value of type int, optional value, The time-to-live for IP multicast datagrams</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>IP_MULTICAST_LOOP</td>
+      <td>primitive</td>
+      <td>value of type boolean, optional value, Loopback for IP multicast datagrams</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>TCP_NODELAY</td>
+      <td>primitive</td>
+      <td>value of type boolean, optional value, Disable the Nagle algorithm</td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+</section></div></div></div></div><script src="https://vigoo.github.io/zio-aws/highlight/highlight.pack.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/languages/sbt.min.js"></script><script src="https://vigoo.github.io/zio-aws/lunr/lunr.js"></script><script>
+// For all code blocks, copy the language from the containing div
+// to the inner code tag (where hljs expects it to be)
+const langPrefix = 'language-';
+document.querySelectorAll(`div[class^='${langPrefix}']`).forEach(function(div) {
+  div.classList.forEach(function(cssClass) {
+    if (cssClass.startsWith(langPrefix)) {
+      const lang = cssClass.substring(langPrefix.length);
+      div.querySelectorAll('pre code').forEach(function(code) {
+        code.classList.add(lang);
+      });
+    }
+  });
+});
+
+hljs.configure({languages:['scala','java','bash','scala','sbt']});
+hljs.initHighlightingOnLoad();
+      </script><script>console.info('\x57\x65\x62\x73\x69\x74\x65\x20\x62\x75\x69\x6c\x74\x20\x77\x69\x74\x68\x3a\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x5f\x5f\x20\x20\x20\x20\x5f\x5f\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x5f\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x5f\x20\x5f\x5f\x0a\x20\x20\x20\x5f\x5f\x5f\x5f\x5f\x2f\x20\x2f\x5f\x20\x20\x2f\x20\x2f\x5f\x20\x20\x20\x20\x20\x20\x5f\x5f\x5f\x5f\x20\x5f\x5f\x5f\x20\x20\x28\x5f\x29\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x20\x20\x5f\x5f\x5f\x5f\x5f\x28\x5f\x29\x20\x2f\x5f\x5f\x5f\x5f\x20\x20\x5f\x5f\x5f\x5f\x5f\x0a\x20\x20\x2f\x20\x5f\x5f\x5f\x2f\x20\x5f\x5f\x20\x5c\x2f\x20\x5f\x5f\x2f\x5f\x5f\x5f\x5f\x5f\x2f\x20\x5f\x5f\x20\x60\x5f\x5f\x20\x5c\x2f\x20\x2f\x20\x5f\x5f\x5f\x2f\x20\x5f\x5f\x5f\x2f\x20\x5f\x5f\x20\x5c\x2f\x20\x5f\x5f\x5f\x2f\x20\x2f\x20\x5f\x5f\x2f\x20\x5f\x20\x5c\x2f\x20\x5f\x5f\x5f\x2f\x0a\x20\x28\x5f\x5f\x20\x20\x29\x20\x2f\x5f\x2f\x20\x2f\x20\x2f\x5f\x2f\x5f\x5f\x5f\x5f\x5f\x2f\x20\x2f\x20\x2f\x20\x2f\x20\x2f\x20\x2f\x20\x2f\x20\x2f\x5f\x5f\x2f\x20\x2f\x20\x20\x2f\x20\x2f\x5f\x2f\x20\x28\x5f\x5f\x20\x20\x29\x20\x2f\x20\x2f\x5f\x2f\x20\x20\x5f\x5f\x28\x5f\x5f\x20\x20\x29\x0a\x2f\x5f\x5f\x5f\x5f\x2f\x5f\x2e\x5f\x5f\x5f\x2f\x5c\x5f\x5f\x2f\x20\x20\x20\x20\x20\x2f\x5f\x2f\x20\x2f\x5f\x2f\x20\x2f\x5f\x2f\x5f\x2f\x5c\x5f\x5f\x5f\x2f\x5f\x2f\x20\x20\x20\x5c\x5f\x5f\x5f\x5f\x2f\x5f\x5f\x5f\x5f\x2f\x5f\x2f\x5c\x5f\x5f\x2f\x5c\x5f\x5f\x5f\x2f\x5f\x5f\x5f\x5f\x2f\x0a\x0a\x68\x74\x74\x70\x73\x3a\x2f\x2f\x34\x37\x64\x65\x67\x2e\x67\x69\x74\x68\x75\x62\x2e\x69\x6f\x2f\x73\x62\x74\x2d\x6d\x69\x63\x72\x6f\x73\x69\x74\x65\x73')</script><script src="https://vigoo.github.io/zio-aws/js/search.js"></script><script src="/zio-aws/js/docs.js"></script></body></html>
