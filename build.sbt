@@ -114,7 +114,8 @@ lazy val integtests = Project("integtests", file("integtests"))
     netty,
     akkahttp,
     LocalProject("zio-aws-s3"),
-    LocalProject("zio-aws-dynamodb")
+    LocalProject("zio-aws-dynamodb"),
+    LocalProject("zio-aws-kinesis")
   )
 
 lazy val docs = project
