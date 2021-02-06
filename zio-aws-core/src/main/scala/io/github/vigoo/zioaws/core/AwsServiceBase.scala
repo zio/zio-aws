@@ -270,7 +270,7 @@ trait AwsServiceBase[R, Self[_]] {
           .map(Left.apply[AwsError, Unit])
           .absolve
         _ <-
-          (responsePromise.await *> publisherPromise.await) raceFirst failOnErrorSignal
+          (responsePromise.await raceFirst publisherPromise.await) raceFirst failOnErrorSignal
         publisher <- publisherPromise.await
 
         stream =
