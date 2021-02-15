@@ -85,9 +85,9 @@ package object httpclient {
               serviceCaps: ServiceHttpCapabilities
           ): Task[SdkAsyncHttpClient] =
             if (serviceCaps.supportsHttp2) {
-              Task.succeed(http11)
-            } else {
               Task.succeed(http2)
+            } else {
+              Task.succeed(http11)
             }
         }
     }
