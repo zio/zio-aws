@@ -70,7 +70,7 @@ lazy val netty = Project("zio-aws-netty", file("zio-aws-netty"))
 
 lazy val examples = Project("examples", file("examples")).settings(
   publishArtifact := false
-) aggregate (example1, example2)
+) aggregate (example1, example2, example3)
 
 lazy val example1 = Project("example1", file("examples") / "example1")
   .dependsOn(
@@ -93,6 +93,14 @@ lazy val example2 = Project("example2", file("examples") / "example2")
     core,
     netty,
     LocalProject("zio-aws-dynamodb")
+  )
+
+lazy val example3 = Project("example3", file("examples") / "example3")
+  .dependsOn(
+    core,
+    http4s,
+    netty,
+    LocalProject("zio-aws-kinesis")
   )
 
 lazy val integtests = Project("integtests", file("integtests"))

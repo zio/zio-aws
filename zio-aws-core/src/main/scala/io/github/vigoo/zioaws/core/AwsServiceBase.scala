@@ -269,8 +269,9 @@ trait AwsServiceBase[R, Self[_]] {
         failOnErrorSignal = signalQueue.take
           .map(Left.apply[AwsError, Unit])
           .absolve
-        _ <-
-          (responsePromise.await *> publisherPromise.await) raceFirst failOnErrorSignal
+        // NOTE: even though receiveResponse's documentation states it is called before the publisher is set,
+        // NOTE: this is not true with EventStreamAsyncResponseTransformer for example in case of Kinesis subscribeToShard
+        _ <- publisherPromise.await raceFirst failOnErrorSignal
         publisher <- publisherPromise.await
 
         stream =
@@ -360,8 +361,9 @@ trait AwsServiceBase[R, Self[_]] {
         failOnErrorSignal = signalQueue.take
           .map(Left.apply[AwsError, Unit])
           .absolve
-        _ <-
-          (responsePromise.await *> outPublisherPromise.await) raceFirst failOnErrorSignal
+        // NOTE: even though receiveResponse's documentation states it is called before the publisher is set,
+        // NOTE: this is not true with EventStreamAsyncResponseTransformer for example in case of Kinesis subscribeToShard
+        _ <- outPublisherPromise.await raceFirst failOnErrorSignal
         outPublisher <- outPublisherPromise.await
 
         stream =
