@@ -32,6 +32,12 @@ generator does not have to know all the implementation details and features of t
 That said in the future it is possible to replace the implementation to a fully generated native functional Scala solution
 without breaking the generated APIs.   
 
+### Higher level AWS libraries
+The following libraries are built on top of `zio-aws` providing higher level interfaces for specific AWS services:
+
+- [ZIO Kinesis](https://github.com/svroonland/zio-kinesis)
+- [ZIO SQS](https://github.com/zio/zio-sqs)
+
 ### Additional resources
 
 - There is a [blog post](https://vigoo.github.io/posts/2020-09-23-zioaws-code-generation.html) explaining how the code generator is implemented.
