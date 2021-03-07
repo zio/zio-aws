@@ -61,12 +61,11 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
             for {
               _ <- ZIO.effect(log.info(s"Generating sources for $id"))
               model <- loader.loadCodegenModel(id)
-              files <- generator.generateServiceCode(id, model)
+              files <- generator.generateServiceCode(id, model, log)
             } yield files.toSeq
-          task.provideCustomLayer(env).catchAll { generatorError =>
+          task.provideCustomLayer(env).tapError { generatorError =>
             ZIO
               .effect(log.error(s"Code generator failure: ${generatorError}"))
-              .as(Seq.empty)
           }
         }
       }
@@ -92,10 +91,9 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
         ids <- loader.findModels()
       } yield generateSbtSubprojects(ids)
 
-      task.provideCustomLayer(env).catchAll { generatorError =>
+      task.provideCustomLayer(env).tapError { generatorError =>
         zio.console
           .putStrLnErr(s"Code generator failure: ${generatorError}")
-          .as(Seq.empty)
       }
     }
   }

@@ -21,6 +21,8 @@ package object context {
       val namingStrategy: NamingStrategy
       val modelMap: ModelMap
       val models: C2jModels
+
+      val logger: sbt.Logger
     }
   }
 
@@ -40,6 +42,11 @@ package object context {
     ZIO.access(_.get.models)
   def get(name: String): ZIO[GeneratorContext, GeneratorFailure, Model] =
     ZIO.accessM(_.get.modelMap.get(name))
+  def getLogger: ZIO[GeneratorContext, Nothing, sbt.Logger] =
+    ZIO.access(_.get.logger)
+
+  def logWarn(message: => String): ZIO[GeneratorContext, Nothing, Unit] =
+    getLogger.flatMap { logger => ZIO.effectTotal(logger.warn(message)) }
 
   object awsModel {
     def getOperations
