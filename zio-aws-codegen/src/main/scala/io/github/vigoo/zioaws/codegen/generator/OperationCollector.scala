@@ -175,9 +175,12 @@ object OperationCollector {
               inputShape.getMembers.containsKey("NextToken")
             ) {
 
-              getPaginationDefinition(opName, op).map { paginationDefinition =>
-                RequestResponse(paginationDefinition)
-              }
+              getPaginationDefinition(opName, op).foldM(
+                failure =>
+                  logWarn(s"Failed to get pagination definition: $failure").as(RequestResponse(None)),
+                paginationDefinition =>
+                  ZIO.succeed(RequestResponse(paginationDefinition))
+              )
             } else {
               getJavaSdkPaginatorDefinition(opName, op, models) match {
                 case Some(createDef) =>

@@ -25,7 +25,8 @@ package object generator {
     trait Service {
       def generateServiceCode(
           id: ModelId,
-          model: C2jModels
+          model: C2jModels,
+          sbtLogger: sbt.Logger
       ): ZIO[Console with Blocking, GeneratorFailure, Set[File]]
       def generateCiYaml(
           ids: Set[ModelId]
@@ -73,7 +74,8 @@ package object generator {
 
         private def createGeneratorContext(
             id: ModelId,
-            model: C2jModels
+            model: C2jModels,
+            sbtLogger: sbt.Logger
         ): ZLayer[Any, Nothing, GeneratorContext] =
           ZLayer.succeed {
             val pkgName = Term.Name(id.moduleName)
@@ -91,12 +93,14 @@ package object generator {
               override val modelMap: ModelMap =
                 ModelCollector.collectUsedModels(namingStrategy, model)
               override val models: C2jModels = model
+              override val logger: sbt.Logger = sbtLogger
             }
           }
 
         override def generateServiceCode(
             id: ModelId,
-            model: C2jModels
+            model: C2jModels,
+            sbtLogger: sbt.Logger
         ): ZIO[Console with Blocking, GeneratorFailure, Set[File]] = {
           val generate = for {
             moduleFile <- generateServiceModule()
@@ -104,7 +108,7 @@ package object generator {
           } yield Set(moduleFile, modelFile)
 
           generate
-            .provideSomeLayer[Blocking](createGeneratorContext(id, model))
+            .provideSomeLayer[Blocking](createGeneratorContext(id, model, sbtLogger))
         }
 
         override def generateCiYaml(
@@ -131,9 +135,10 @@ package object generator {
 
   def generateServiceCode(
       id: ModelId,
-      model: C2jModels
+      model: C2jModels,
+      sbtLogger: sbt.Logger
   ): ZIO[Generator with Console with Blocking, GeneratorFailure, Set[File]] =
-    ZIO.accessM(_.get.generateServiceCode(id, model))
+    ZIO.accessM(_.get.generateServiceCode(id, model, sbtLogger))
 
   def generateCiYaml(
       ids: Set[ModelId]
