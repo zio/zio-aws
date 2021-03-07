@@ -63,10 +63,9 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
               model <- loader.loadCodegenModel(id)
               files <- generator.generateServiceCode(id, model)
             } yield files.toSeq
-          task.provideCustomLayer(env).catchAll { generatorError =>
+          task.provideCustomLayer(env).tapError { generatorError =>
             ZIO
               .effect(log.error(s"Code generator failure: ${generatorError}"))
-              .as(Seq.empty)
           }
         }
       }
