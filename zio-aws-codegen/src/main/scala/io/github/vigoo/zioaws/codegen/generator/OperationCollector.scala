@@ -35,7 +35,13 @@ object OperationCollector {
       loader.ModelId("budgets", None),
       "DescribeBudgetPerformanceHistory"
     ),
-    PaginationNotSupported(loader.ModelId("athena", None), "GetQueryResults"),
+    SelectNestedPaginatedListMember(
+      loader.ModelId("athena", None),
+      "GetQueryResults",
+      "ResultSet",
+      "ResultSetMetadata",
+      "Rows"
+    ),
     PaginationNotSupported(
       loader.ModelId("guardduty", None),
       "GetUsageStatistics"
@@ -224,6 +230,30 @@ object OperationCollector {
                 isSimple = false
               )
             )
+          case Some(SelectNestedPaginatedListMember(_, _, innerName, resultName, listName)) =>
+            val innerShapeName = outputShape.getMembers.get(innerName).getShape
+            for {
+              innerModel <- context.get(innerShapeName)
+              innerShape = innerModel.shape
+              listShapeName = innerShape.getMembers.get(listName).getShape
+              listModel <- context.get(listShapeName)
+              listShape = listModel.shape
+              itemShapeName = listShape.getListMember.getShape
+              itemModel <- context.get(itemShapeName)
+              resultShapeName = innerShape.getMembers.get(resultName).getShape
+              resultModel <- context.get(resultShapeName)
+            } yield Some(
+              NestedListPaginationDefinition(
+                innerName,
+                innerModel,
+                resultName,
+                resultModel,
+                listName,
+                listModel,
+                itemModel
+              )
+            )
+
           case Some(SelectPaginatedStringMember(_, _, memberName)) =>
             val stringShapeName =
               outputShape.getMembers.get(memberName).getShape
@@ -400,6 +430,16 @@ object OperationCollector {
       opName: String,
       memberName: String
   ) extends PaginationOverride {
+    override def toKey: OverrideKey = OverrideKey(id, opName)
+  }
+
+  case class SelectNestedPaginatedListMember(
+                                        id: loader.ModelId,
+                                        opName: String,
+                                        innerName: String,
+                                        resultName: String,
+                                        listName: String
+                                      ) extends PaginationOverride {
     override def toKey: OverrideKey = OverrideKey(id, opName)
   }
 
