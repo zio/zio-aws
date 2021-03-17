@@ -18,6 +18,16 @@ case class ListPaginationDefinition(
     isSimple: Boolean
 ) extends PaginationDefinition
 
+case class NestedListPaginationDefinition(
+    innerName: String,
+    innerModel: Model,
+    resultName: String,
+    resultModel: Model,
+    listName: String,
+    listModel: Model,
+    itemModel: Model
+) extends PaginationDefinition
+
 case class MapPaginationDefinition(
     memberName: String,
     mapModel: Model,
