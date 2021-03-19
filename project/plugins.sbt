@@ -8,7 +8,7 @@ addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.4.2")
 
 // Codegen project
 
-val zioVersion = "1.0.1"
+val zioVersion = "1.0.2"
 val awsVersion = "2.14.3"
 
 lazy val codegen = project
