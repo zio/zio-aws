@@ -71,7 +71,7 @@ object ScalaWorkflow {
     SingleStep(
       name,
       run = Some(
-        s"./sbt -J-XX:+UseG1GC -J-Xmx${heapGb}g -J-Xms${heapGb}g ${parameters.mkString(" ")}"
+        s"sbt -J-XX:+UseG1GC -J-Xmx${heapGb}g -J-Xms${heapGb}g ${parameters.mkString(" ")}"
       ),
       env = env
     )
