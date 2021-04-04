@@ -132,6 +132,14 @@ trait ServiceInterfaceGenerator {
                 responseTypeRo,
                 modelPkg
               )
+            case StreamedInputToUnit =>
+              generateStreamedInputToUnit(
+                serviceNameT,
+                methodName,
+                requestName,
+                responseName,
+                modelPkg
+              )
             case StreamedOutput =>
               generateStreamedOutput(
                 serviceNameT,
@@ -403,6 +411,32 @@ trait ServiceInterfaceGenerator {
               )}, api.$methodName)(request.buildAwsValue(), body).map($responseNameTerm.wrap).provide(r)""",
           accessor =
             q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Byte]): ZIO[$serviceNameT, AwsError, $responseTypeRo] =
+                ZIO.accessM(_.get.$methodName(request, body))"""
+        )
+      )
+    )
+  }
+
+  private def generateStreamedInputToUnit(
+      serviceNameT: Type.Name,
+      methodName: Term.Name,
+      requestName: Type.Name,
+      responseName: Type.Name,
+      modelPkg: Term.Ref
+  ) = {
+    ZIO.succeed(
+      ServiceMethods(
+        ServiceMethod(
+          interface =
+            q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Byte]): IO[AwsError, scala.Unit]""",
+          implementation =
+            q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Byte]): IO[AwsError, scala.Unit] =
+                asyncRequestInputStream[$modelPkg.$requestName, $modelPkg.$responseName](${Lit
+              .String(
+                methodName.value
+              )}, api.$methodName)(request.buildAwsValue(), body).unit.provide(r)""",
+          accessor =
+            q"""def $methodName(request: $requestName, body: zio.stream.ZStream[Any, AwsError, Byte]): ZIO[$serviceNameT, AwsError, scala.Unit] =
                 ZIO.accessM(_.get.$methodName(request, body))"""
         )
       )

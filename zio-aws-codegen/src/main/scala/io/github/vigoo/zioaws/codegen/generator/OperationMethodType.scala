@@ -13,6 +13,8 @@ case class RequestResponse(pagination: Option[PaginationDefinition])
 
 case object StreamedInput extends OperationMethodType
 
+case object StreamedInputToUnit extends OperationMethodType
+
 case object StreamedOutput extends OperationMethodType
 
 case object StreamedInputOutput extends OperationMethodType
