@@ -26,7 +26,7 @@ lazy val core = Project("zio-aws-core", file("zio-aws-core"))
       "dev.zio" %% "zio-streams" % zioVersion,
       "dev.zio" %% "zio-interop-reactivestreams" % zioReactiveStreamsInteropVersion,
       "dev.zio" %% "zio-config" % zioConfigVersion,
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.4.2",
+      "org.scala-lang.modules" %% "scala-collection-compat" % "2.4.3",
       "dev.zio" %% "zio-test" % zioVersion % "test",
       "dev.zio" %% "zio-test-sbt" % zioVersion % "test",
       "dev.zio" %% "zio-config-typesafe" % zioConfigVersion % "test"
@@ -53,7 +53,7 @@ lazy val http4s = Project("zio-aws-http4s", file("zio-aws-http4s"))
 lazy val akkahttp = Project("zio-aws-akka-http", file("zio-aws-akka-http"))
   .settings(
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-stream" % "2.6.13",
+      "com.typesafe.akka" %% "akka-stream" % "2.6.14",
       "com.typesafe.akka" %% "akka-http" % "10.2.4",
       "com.github.matsluni" %% "aws-spi-akka-http" % "0.0.11"
     )
