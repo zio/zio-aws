@@ -170,7 +170,7 @@ jobs:
 
         rm targets.tar
     - name: Build libraries
-      if: ${{ $github.ref != 'refs/heads/master' }}
+      if: ${{ github.ref != 'refs/heads/master' }}
       run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-accessanalyzer/compile
         zio-aws-acm/compile zio-aws-acmpca/compile zio-aws-alexaforbusiness/compile
         zio-aws-amp/compile zio-aws-amplify/compile zio-aws-amplifybackend/compile
@@ -264,7 +264,7 @@ jobs:
 
         rm targets.tar
     - name: Build libraries
-      if: ${{ $github.ref != 'refs/heads/master' }}
+      if: ${{ github.ref != 'refs/heads/master' }}
       run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-cloudhsmv2/compile
         zio-aws-cloudsearch/compile zio-aws-cloudsearchdomain/compile zio-aws-cloudtrail/compile
         zio-aws-cloudwatch/compile zio-aws-cloudwatchevents/compile zio-aws-cloudwatchlogs/compile
@@ -359,7 +359,7 @@ jobs:
 
         rm targets.tar
     - name: Build libraries
-      if: ${{ $github.ref != 'refs/heads/master' }}
+      if: ${{ github.ref != 'refs/heads/master' }}
       run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-datapipeline/compile
         zio-aws-datasync/compile zio-aws-dax/compile zio-aws-detective/compile zio-aws-devicefarm/compile
         zio-aws-devopsguru/compile zio-aws-directconnect/compile zio-aws-directory/compile
@@ -452,7 +452,7 @@ jobs:
 
         rm targets.tar
     - name: Build libraries
-      if: ${{ $github.ref != 'refs/heads/master' }}
+      if: ${{ github.ref != 'refs/heads/master' }}
       run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-forecast/compile
         zio-aws-forecastquery/compile zio-aws-frauddetector/compile zio-aws-fsx/compile
         zio-aws-gamelift/compile zio-aws-glacier/compile zio-aws-globalaccelerator/compile
@@ -545,7 +545,7 @@ jobs:
 
         rm targets.tar
     - name: Build libraries
-      if: ${{ $github.ref != 'refs/heads/master' }}
+      if: ${{ github.ref != 'refs/heads/master' }}
       run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-ivs/compile
         zio-aws-kafka/compile zio-aws-kendra/compile zio-aws-kinesis/compile zio-aws-kinesisanalytics/compile
         zio-aws-kinesisanalyticsv2/compile zio-aws-kinesisvideo/compile zio-aws-kinesisvideoarchivedmedia/compile
@@ -640,7 +640,7 @@ jobs:
 
         rm targets.tar
     - name: Build libraries
-      if: ${{ $github.ref != 'refs/heads/master' }}
+      if: ${{ github.ref != 'refs/heads/master' }}
       run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-mediapackagevod/compile
         zio-aws-mediastore/compile zio-aws-mediastoredata/compile zio-aws-mediatailor/compile
         zio-aws-migrationhub/compile zio-aws-migrationhubconfig/compile zio-aws-mobile/compile
@@ -733,7 +733,7 @@ jobs:
 
         rm targets.tar
     - name: Build libraries
-      if: ${{ $github.ref != 'refs/heads/master' }}
+      if: ${{ github.ref != 'refs/heads/master' }}
       run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-redshiftdata/compile
         zio-aws-rekognition/compile zio-aws-resourcegroups/compile zio-aws-resourcegroupstaggingapi/compile
         zio-aws-robomaker/compile zio-aws-route53/compile zio-aws-route53domains/compile
@@ -827,7 +827,7 @@ jobs:
 
         rm targets.tar
     - name: Build libraries
-      if: ${{ $github.ref != 'refs/heads/master' }}
+      if: ${{ github.ref != 'refs/heads/master' }}
       run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-sqs/compile
         zio-aws-ssm/compile zio-aws-sso/compile zio-aws-ssoadmin/compile zio-aws-ssooidc/compile
         zio-aws-storagegateway/compile zio-aws-sts/compile zio-aws-support/compile

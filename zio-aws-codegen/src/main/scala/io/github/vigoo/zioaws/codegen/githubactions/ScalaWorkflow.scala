@@ -191,7 +191,7 @@ object ScalaWorkflow {
     "github.ref == 'refs/heads/master'"
   )
   val isNotMaster: Condition = Condition(
-    "$github.ref != 'refs/heads/master'"
+    "github.ref != 'refs/heads/master'"
   )
   def isScalaVersion(version: ScalaVersion): Condition = Condition(
     s"matrix.scala == '${version.version}'"
