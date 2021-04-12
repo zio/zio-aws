@@ -13,8 +13,8 @@ object Common extends AutoPlugin {
   object autoImport {
     val zioVersion = "1.0.5"
     val zioCatsInteropVersion = "2.3.1.0"
-    val zioReactiveStreamsInteropVersion = "1.3.0.7-2"
-    val zioConfigVersion = "1.0.2"
+    val zioReactiveStreamsInteropVersion = "1.3.2"
+    val zioConfigVersion = "1.0.4"
     val catsEffectVersion = "2.4.1"
 
     val awsVersion = "2.16.20"
@@ -26,10 +26,12 @@ object Common extends AutoPlugin {
     val zioAwsVersionPrefix = s"$majorVersion.$awsSubVersion."
 
     val scala212Version = "2.12.12"
-    val scala213Version = "2.13.3"
+    val scala213Version = "2.13.5"
+    val scala3Version = "3.0.0-RC1"
 
     val scalacOptions212 = Seq("-Ypartial-unification", "-deprecation")
     val scalacOptions213 = Seq("-deprecation")
+    val scalacOptions3 = Seq("-deprecation")
   }
 
   import autoImport._
@@ -63,12 +65,13 @@ object Common extends AutoPlugin {
   override lazy val projectSettings =
     Seq(
       scalaVersion := scala213Version,
-      crossScalaVersions := List(scala212Version, scala213Version),
+      crossScalaVersions := List(scala212Version, scala213Version, scala3Version),
       organization := "io.github.vigoo",
       awsLibraryVersion := awsVersion,
       scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
         case Some((2, 12)) => scalacOptions212
         case Some((2, 13)) => scalacOptions213
+        case Some((3, _)) => scalacOptions3
         case _             => Nil
       }),
       // Publishing

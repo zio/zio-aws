@@ -219,10 +219,8 @@ package object netty {
         string("host") ?? "Hostname of the proxy" |@|
         int("port") ?? "Port of the proxy" |@|
         set("nonProxyHosts")(string)
-          .default(Set.empty) ?? "Hosts that should not be proxied")(
-        ProxyConfiguration.apply,
-        ProxyConfiguration.unapply
-      )
+          .default(Set.empty) ?? "Hosts that should not be proxied")
+        .to[ProxyConfiguration]
 
     val http2Configuration: ConfigDescriptor[Http2Config] =
       (long(
@@ -231,10 +229,8 @@ package object netty {
         int("initialWindowSize") ?? "Initial window size of a stream" |@|
         zioDuration("healthCheckPingPeriod").default(
           5.seconds
-        ) ?? "The period that the Netty client will send PING frames to the remote endpoint")(
-        Http2Config.apply,
-        Http2Config.unapply
-      )
+        ) ?? "The period that the Netty client will send PING frames to the remote endpoint")
+        .to[Http2Config]
 
     def channelOption[T, JT](
         opt: ChannelOption[JT],
@@ -364,10 +360,10 @@ package object netty {
       import SdkHttpConfigurationOption._
       (
         int("maxConcurrency").default(
-          globalDefault(MAX_CONNECTIONS)
+          globalDefault[Integer](MAX_CONNECTIONS)
         ) ?? "Maximum number of allowed concurrent requests" |@|
           int("maxPendingConnectionAcquires").default(
-            globalDefault(MAX_PENDING_CONNECTION_ACQUIRES)
+            globalDefault[Integer](MAX_PENDING_CONNECTION_ACQUIRES)
           ) ?? "The maximum number of pending acquires allowed" |@|
           zioDuration("readTimeout").default(
             globalDefault(READ_TIMEOUT)
@@ -388,7 +384,7 @@ package object netty {
             5.seconds
           ) ?? "Maximum amount of time that a connection should be allowed to remain open while idle" |@|
           boolean("useIdleConnectionReaper").default(
-            globalDefault(REAP_IDLE_CONNECTIONS)
+            globalDefault[java.lang.Boolean](REAP_IDLE_CONNECTIONS)
           ) ?? "If true, the idle connections in the pool should be closed" |@|
           nested("protocol")(protocol)
             .default(Protocol.Dual) ?? "HTTP/1.1 or HTTP/2 or Dual" |@|
@@ -404,7 +400,7 @@ package object netty {
           nested("http2")(
             http2Configuration
           ).optional ?? "HTTP/2 specific options"
-      )(NettyClientConfig.apply, NettyClientConfig.unapply)
+      ).to[NettyClientConfig]
     }
   }
 

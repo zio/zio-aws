@@ -36,6 +36,7 @@ lazy val core = Project("zio-aws-core", file("zio-aws-core"))
 
 lazy val http4s = Project("zio-aws-http4s", file("zio-aws-http4s"))
   .settings(
+    crossScalaVersions := List(scala212Version, scala213Version),
     libraryDependencies ++= Seq(
       "org.http4s" %% "http4s-dsl" % http4sVersion,
       "org.http4s" %% "http4s-blaze-client" % http4sVersion,
@@ -52,6 +53,7 @@ lazy val http4s = Project("zio-aws-http4s", file("zio-aws-http4s"))
 
 lazy val akkahttp = Project("zio-aws-akka-http", file("zio-aws-akka-http"))
   .settings(
+    crossScalaVersions := List(scala212Version, scala213Version),
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-stream" % "2.6.13",
       "com.typesafe.akka" %% "akka-http" % "10.2.4",

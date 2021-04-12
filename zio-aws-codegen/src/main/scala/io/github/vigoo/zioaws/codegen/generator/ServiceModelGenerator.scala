@@ -442,7 +442,7 @@ trait ServiceModelGenerator {
         val enumValueTerm = Term.Name(enumValue)
         val enumValueScreaming =
           Term.Name(namingStrategy.getEnumValueName(enumValue))
-        q"""final case object $enumValueTerm extends $shapeNameI {
+        q"""case object $enumValueTerm extends $shapeNameI {
               override def unwrap: $awsShapeNameT = ${Term
           .Select(modelPkg, m.asTerm)}.${enumValueScreaming}
             }

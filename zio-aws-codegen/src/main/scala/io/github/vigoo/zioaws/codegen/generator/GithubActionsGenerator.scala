@@ -32,10 +32,12 @@ trait GithubActionsGenerator {
       .toList ++ separateProjectNames.map(List(_))
 
     val scala212 = ScalaVersion("2.12.12")
-    val scala213 = ScalaVersion("2.13.3")
+    val scala213 = ScalaVersion("2.13.5")
+    val scala3 = ScalaVersion("3.0.0-RC1")
     val scalaVersions = Seq(
       scala212,
-      scala213
+      scala213,
+      scala3
     )
 
     val workflow =
@@ -88,7 +90,15 @@ trait GithubActionsGenerator {
                   "zio-aws-http4s/test",
                   "zio-aws-netty/test"
                 )
-              ),
+              ).when(isNotScalaVersion(scala3)),
+              runSBT(
+                "Build and test core",
+                parameters = List(
+                  "++${{ matrix.scala }}",
+                  "zio-aws-core/test",
+                  "zio-aws-netty/test"
+                )
+              ).when(isScalaVersion(scala3)),
               runSBT(
                 "Publish core",
                 parameters = List(
@@ -102,7 +112,19 @@ trait GithubActionsGenerator {
                   "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
                   "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}"
                 )
-              ).when(isMaster),
+              ).when(isMaster && isNotScalaVersion(scala3)),
+              runSBT(
+                "Publish core",
+                parameters = List(
+                  "++${{ matrix.scala }}",
+                  "zio-aws-core/publishSigned",
+                  "zio-aws-netty/publishSigned"
+                ),
+                env = Map(
+                  "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
+                  "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}"
+                )
+              ).when(isMaster && isScalaVersion(scala3)),
               storeTargets(
                 "core",
                 List(
