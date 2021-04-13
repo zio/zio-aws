@@ -110,10 +110,22 @@ jobs:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress core targets
+      if: ${{ matrix.scala != '3.0.0-RC1' }}
       run: tar cvf targets.tar target project/target zio-aws-codegen/target zio-aws-core/target
         zio-aws-akka-http/target zio-aws-http4s/target zio-aws-netty/target
     - name: Upload core targets
       uses: actions/upload-artifact@v2
+      if: ${{ matrix.scala != '3.0.0-RC1' }}
+      with:
+        name: target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
+        path: targets.tar
+    - name: Compress core targets
+      if: ${{ matrix.scala == '3.0.0-RC1' }}
+      run: tar cvf targets.tar target project/target zio-aws-codegen/target zio-aws-core/target
+        zio-aws-netty/target
+    - name: Upload core targets
+      uses: actions/upload-artifact@v2
+      if: ${{ matrix.scala == '3.0.0-RC1' }}
       with:
         name: target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
         path: targets.tar

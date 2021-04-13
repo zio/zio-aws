@@ -136,7 +136,17 @@ trait GithubActionsGenerator {
                   "zio-aws-http4s",
                   "zio-aws-netty"
                 )
-              )
+              ).when(isNotScalaVersion(scala3)),
+              storeTargets(
+                "core",
+                List(
+                  "",
+                  "project",
+                  "zio-aws-codegen",
+                  "zio-aws-core",
+                  "zio-aws-netty"
+                )
+              ).when(isScalaVersion(scala3))              
             )
         )
         .addJobs(
