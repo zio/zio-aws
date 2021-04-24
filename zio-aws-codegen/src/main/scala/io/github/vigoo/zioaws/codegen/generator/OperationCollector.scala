@@ -153,7 +153,10 @@ object OperationCollector {
         if (inputIsStreaming && outputIsStreaming) {
           ZIO.succeed(StreamedInputOutput)
         } else if (inputIsStreaming) {
-          ZIO.succeed(StreamedInput)
+          if (op.getOutput == null)
+            ZIO.succeed(StreamedInputToUnit)
+          else
+            ZIO.succeed(StreamedInput)
         } else if (outputIsStreaming) {
           ZIO.succeed(StreamedOutput)
         } else if (inputIsEventStream && outputIsEventStream) {
