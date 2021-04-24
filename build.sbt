@@ -131,7 +131,7 @@ lazy val docs = project
   .enablePlugins(GhpagesPlugin, MicrositesPlugin)
   .settings(
     publishArtifact := false,
-    skip in publish := true,
+    publish / skip := true,
     scalaVersion := scala213Version,
     name := "zio-aws",
     description := "Low-level AWS wrapper for ZIO for all AWS services",
@@ -160,7 +160,7 @@ lazy val docs = project
       )
     ),
     micrositeAnalyticsToken := "UA-56320875-3",
-    includeFilter in makeSite := "*.html" | "*.css" | "*.png" | "*.jpg" | "*.gif" | "*.js" | "*.swf" | "*.txt" | "*.xml" | "*.svg",
+    makeSite / includeFilter := "*.html" | "*.css" | "*.png" | "*.jpg" | "*.gif" | "*.js" | "*.swf" | "*.txt" | "*.xml" | "*.svg",
     micrositePushSiteWith := GitHub4s,
     micrositeGithubToken := sys.env.get("GITHUB_TOKEN"),
     // Temporary fix to avoid including mdoc in the published POM
