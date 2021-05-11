@@ -56,7 +56,7 @@ trait GeneratorBase {
           ZIO.succeed(q"""$term.unwrap""")
         }
       case ModelType.Blob =>
-        ZIO.succeed(q"""SdkBytes.fromByteArray($term.toArray[Byte])""")
+        ZIO.succeed(q"""SdkBytes.fromByteArrayUnsafe($term.toArray[Byte])""")
       case ModelType.Structure =>
         ZIO.succeed(q"""$term.buildAwsValue()""")
       case ModelType.Exception =>
