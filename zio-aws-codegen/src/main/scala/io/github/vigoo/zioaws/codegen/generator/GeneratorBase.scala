@@ -103,7 +103,7 @@ trait GeneratorBase {
         val nameTerm = Term.Name(model.name)
         ZIO.succeed(q"""$nameTerm.wrap($term)""")
       case ModelType.Blob =>
-        ZIO.succeed(q"""Chunk.fromByteBuffer($term.asByteBuffer())""")
+        ZIO.succeed(q"""Chunk.fromArray($term.asByteArrayUnsafe())""")
       case ModelType.Structure =>
         val nameTerm = Term.Name(model.name)
         ZIO.succeed(q"""$nameTerm.wrap($term)""")
