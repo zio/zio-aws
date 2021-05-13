@@ -376,7 +376,7 @@ trait ServiceModelGenerator {
       }
     } yield ModelWrapper(
       code = List(
-        q"""case class ${m.asType}(..${fields.map(_.paramDef)}) {
+        q"""final case class ${m.asType}(..${fields.map(_.paramDef)}) {
                         def buildAwsValue(): $awsShapeNameT = {
                           import ${m.asTerm}.zioAwsBuilderHelper.BuilderOps
                           $builderChain.build()
