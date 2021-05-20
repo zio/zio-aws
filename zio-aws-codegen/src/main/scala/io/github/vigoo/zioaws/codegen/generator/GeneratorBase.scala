@@ -56,7 +56,7 @@ trait GeneratorBase {
           ZIO.succeed(q"""$term.unwrap""")
         }
       case ModelType.Blob =>
-        ZIO.succeed(q"""SdkBytes.fromByteArray($term.toArray[Byte])""")
+        ZIO.succeed(q"""SdkBytes.fromByteArrayUnsafe($term.toArray[Byte])""")
       case ModelType.Structure =>
         ZIO.succeed(q"""$term.buildAwsValue()""")
       case ModelType.Exception =>
@@ -103,7 +103,7 @@ trait GeneratorBase {
         val nameTerm = Term.Name(model.name)
         ZIO.succeed(q"""$nameTerm.wrap($term)""")
       case ModelType.Blob =>
-        ZIO.succeed(q"""Chunk.fromByteBuffer($term.asByteBuffer())""")
+        ZIO.succeed(q"""Chunk.fromArray($term.asByteArrayUnsafe())""")
       case ModelType.Structure =>
         val nameTerm = Term.Name(model.name)
         ZIO.succeed(q"""$nameTerm.wrap($term)""")
