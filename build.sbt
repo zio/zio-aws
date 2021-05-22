@@ -45,7 +45,7 @@ lazy val http4s = Project("zio-aws-http4s", file("zio-aws-http4s"))
       "dev.zio" %% "zio-config" % zioConfigVersion,
       "co.fs2" %% "fs2-reactive-streams" % fs2Version,
       "org.typelevel" %% "cats-effect" % catsEffectVersion,
-      "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.1"
+      "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.0"
     )
   )
   .dependsOn(core)
@@ -129,7 +129,7 @@ lazy val docs = project
   .enablePlugins(GhpagesPlugin, MicrositesPlugin)
   .settings(
     publishArtifact := false,
-    skip in publish := true,
+    publish / skip := true,
     scalaVersion := scala213Version,
     name := "zio-aws",
     description := "Low-level AWS wrapper for ZIO for all AWS services",
@@ -158,7 +158,7 @@ lazy val docs = project
       )
     ),
     micrositeAnalyticsToken := "UA-56320875-3",
-    includeFilter in makeSite := "*.html" | "*.css" | "*.png" | "*.jpg" | "*.gif" | "*.js" | "*.swf" | "*.txt" | "*.xml" | "*.svg",
+    makeSite / includeFilter := "*.html" | "*.css" | "*.png" | "*.jpg" | "*.gif" | "*.js" | "*.swf" | "*.txt" | "*.xml" | "*.svg",
     micrositePushSiteWith := GitHub4s,
     micrositeGithubToken := sys.env.get("GITHUB_TOKEN"),
     // Temporary fix to avoid including mdoc in the published POM

@@ -11,22 +11,22 @@ import scala.collection.JavaConverters._
 object Common extends AutoPlugin {
 
   object autoImport {
-    val zioVersion = "1.0.7"
-    val zioCatsInteropVersion = "2.4.1.0"
-    val zioReactiveStreamsInteropVersion = "1.3.4"
+    val zioVersion = "1.0.8"
+    val zioCatsInteropVersion = "2.5.1.0"
+    val zioReactiveStreamsInteropVersion = "1.3.5"
     val zioConfigVersion = "1.0.5"
     val catsEffectVersion = "2.5.1"
 
     val awsVersion = "2.16.68"
     val awsSubVersion = awsVersion.drop(awsVersion.indexOf('.') + 1)
-    val http4sVersion = "0.21.22"
+    val http4sVersion = "0.21.23"
     val fs2Version = "2.5.6"
 
     val majorVersion = "3"
     val zioAwsVersionPrefix = s"$majorVersion.$awsSubVersion."
 
-    val scala212Version = "2.12.12"
-    val scala213Version = "2.13.3"
+    val scala212Version = "2.12.13"
+    val scala213Version = "2.13.6"
 
     val scalacOptions212 = Seq("-Ypartial-unification", "-deprecation")
     val scalacOptions213 = Seq("-deprecation")
