@@ -20,7 +20,7 @@ trait Logging {
               console
                 .putStrLn(
                   s"AWS call FAILED in $duration with $error"
-                ) *> ZIO.fail(error)
+                ).ignore *> ZIO.fail(error)
           }
       }
     }
