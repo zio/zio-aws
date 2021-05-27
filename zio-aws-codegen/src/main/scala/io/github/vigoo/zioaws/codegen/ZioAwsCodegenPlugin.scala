@@ -206,7 +206,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
         val project = Project(fullName, file("generated") / name)
           .settings(
             libraryDependencies += "software.amazon.awssdk" % id.name % awsLibraryVersion.value,
-            libraryDependencies += "dev.zio" %% "zio-test" % zioLibraryVersion.value % Provided,
+            libraryDependencies += "dev.zio" %% "zio-test" % zioLibraryVersion.value,
             awsLibraryId := id.toString,
             Compile / sourceGenerators += generateSources.taskValue,
             mappings in (Compile, packageSrc) ++= {
