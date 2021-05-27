@@ -19,16 +19,16 @@ object Main extends App {
   val program: ZIO[Console with Kinesis, AwsError, Unit] =
     for {
       streams <- kinesis.listStreams(ListStreamsRequest())
-      _ <- console.putStrLn("Streams:")
+      _ <- console.putStrLn("Streams:").ignore
       _ <- ZIO.foreach_(streams.streamNamesValue) { streamName =>
-        console.putStrLn(streamName)
+        console.putStrLn(streamName).ignore
       }
 
       streamName = "test-stream"
-      _ <- console.putStrLn("Shards:")
+      _ <- console.putStrLn("Shards:").ignore
       shard <- kinesis
         .listShards(ListShardsRequest(streamName = Some(streamName)))
-        .tap(shard => console.putStrLn(shard.shardIdValue))
+        .tap(shard => console.putStrLn(shard.shardIdValue).ignore)
         .runHead
         .map(_.get)
       streamDescription <- kinesis.describeStream(
@@ -63,7 +63,7 @@ object Main extends App {
 
       _ <- console.putStrLn(
         s"Consumer registered: ${consumer.consumerDescriptionValue.consumerARNValue}"
-      )
+      ).ignore
 
       shardStream = kinesis.subscribeToShard(
         SubscribeToShardRequest(
@@ -82,7 +82,7 @@ object Main extends App {
       )
 
       _ <- shardStream
-        .tap(event => console.putStrLn(event.recordsValue.map(_.partitionKeyValue).toString()))
+        .tap(event => console.putStrLn(event.recordsValue.map(_.partitionKeyValue).toString()).ignore)
         .runHead
 
     } yield ()
@@ -106,7 +106,7 @@ object Main extends App {
       .either
       .flatMap {
         case Left(error) =>
-          console.putStrErr(s"AWS error: $error").as(ExitCode.failure)
+          console.putStrErr(s"AWS error: $error").ignore.as(ExitCode.failure)
         case Right(_) =>
           ZIO.unit.as(ExitCode.success)
       }
