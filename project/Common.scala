@@ -14,10 +14,10 @@ object Common extends AutoPlugin {
     val zioVersion = "1.0.8"
     val zioCatsInteropVersion = "3.1.1.0"
     val zioReactiveStreamsInteropVersion = "1.3.5"
-    val zioConfigVersion = "1.0.5"
+    val zioConfigVersion = "1.0.6"
     val catsEffectVersion = "2.5.1"
 
-    val awsVersion = "2.16.69"
+    val awsVersion = "2.16.72"
     val awsSubVersion = awsVersion.drop(awsVersion.indexOf('.') + 1)
     val http4sVersion = "0.21.22"
     val fs2Version = "2.5.6"
@@ -68,6 +68,7 @@ object Common extends AutoPlugin {
       crossScalaVersions := List(scala212Version, scala213Version, scala3Version),
       organization := "io.github.vigoo",
       awsLibraryVersion := awsVersion,
+      zioLibraryVersion := zioVersion,
       scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
         case Some((2, 12)) => scalacOptions212
         case Some((2, 13)) => scalacOptions213

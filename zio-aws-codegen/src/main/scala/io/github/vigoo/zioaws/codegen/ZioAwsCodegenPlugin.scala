@@ -16,6 +16,9 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
     val awsLibraryVersion = settingKey[String](
       "Specifies the version of the  AWS Java SDK to depend on"
     )
+    val zioLibraryVersion = settingKey[String](
+      "Specifies the version of the ZIO library to depend on"
+    )
     val ciParallelJobs =
       settingKey[Int]("Number of parallel jobs in the generated circleCi file")
     val ciSeparateJobs = settingKey[Seq[String]]("List of subprojects to have their individual circleCi jobs")
@@ -203,6 +206,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
         val project = Project(fullName, file("generated") / name)
           .settings(
             libraryDependencies += "software.amazon.awssdk" % id.name % awsLibraryVersion.value,
+            libraryDependencies += "dev.zio" %% "zio-test" % zioLibraryVersion.value % Provided,
             awsLibraryId := id.toString,
             Compile / sourceGenerators += generateSources.taskValue,
             mappings in (Compile, packageSrc) ++= {

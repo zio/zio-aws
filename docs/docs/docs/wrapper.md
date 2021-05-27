@@ -112,3 +112,6 @@ object CreateMedicalVocabularyResponse {
 
 As a large part of the models in the AWS SDK are defined as _optional_, the generated wrapper also contains ZIO accessor functions,
 which lift the option value to make it more comfortable to chain the AWS operations.
+
+### Mocks
+Each module also contains generated _ZIO Test mocks_ for the given service.

@@ -45,7 +45,7 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
       tableName = s"${prefix}_$postfix"
     } yield ZManaged.make(
       for {
-        _ <- console.putStrLn(s"Creating table $tableName")
+        _ <- console.putStrLn(s"Creating table $tableName").ignore
         tableData <- dynamodb.createTable(
           CreateTableRequest(
             tableName = tableName,
@@ -69,7 +69,7 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
       tableDescription.tableName
         .flatMap { tableName =>
           for {
-            _ <- console.putStrLn(s"Deleting table $tableName")
+            _ <- console.putStrLn(s"Deleting table $tableName").ignore
             _ <- dynamodb.deleteTable(DeleteTableRequest(tableName))
           } yield ()
         }
