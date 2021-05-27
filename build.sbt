@@ -77,7 +77,7 @@ lazy val examples = Project("examples", file("examples")).settings(
 lazy val example1 = Project("example1", file("examples") / "example1")
   .dependsOn(
     core,
-    http4s,
+    // http4s,
     netty,
     LocalProject("zio-aws-elasticbeanstalk"),
     LocalProject("zio-aws-ec2")
@@ -100,13 +100,14 @@ lazy val example2 = Project("example2", file("examples") / "example2")
 lazy val example3 = Project("example3", file("examples") / "example3")
   .dependsOn(
     core,
-    http4s,
+    // http4s,
     netty,
     LocalProject("zio-aws-kinesis")
   )
 
 lazy val integtests = Project("integtests", file("integtests"))
   .settings(
+    crossScalaVersions := List(scala212Version, scala213Version),
     libraryDependencies ++= Seq(
       "dev.zio" %% "zio" % zioVersion,
       "dev.zio" %% "zio-test" % zioVersion,

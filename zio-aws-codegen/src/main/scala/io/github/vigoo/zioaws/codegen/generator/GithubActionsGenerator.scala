@@ -222,7 +222,15 @@ trait GithubActionsGenerator {
                   "integtests/test"
                 ),
                 heapGb = 5
-              )
+              ).when(isNotScalaVersion(scala3)),
+              runSBT(
+                "Build and run tests",
+                List(
+                  "++${{ matrix.scala }}",
+                  "examples/compile",
+                ),
+                heapGb = 5
+              ).when(isScalaVersion(scala3)),
             )
         )
         .addJob(
