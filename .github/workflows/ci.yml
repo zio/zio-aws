@@ -29,7 +29,7 @@ jobs:
           ~/.coursier/cache/v1
 
           ~/.cache/coursier/v1
-        key: ubuntu-latest-sbt-2.13.5-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties')
+        key: ubuntu-latest-sbt-2.13.6-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties')
           }}
     - name: Setup GIT user
       uses: fregante/setup-git-user@v1
@@ -50,8 +50,8 @@ jobs:
         - ubuntu-latest
         scala:
         - 2.12.12
-        - 2.13.5
-        - 3.0.0-RC1
+        - 2.13.6
+        - 3.0.0
         java:
         - adopt@1.8
     needs:
@@ -86,46 +86,44 @@ jobs:
         key: ${{ matrix.os }}-sbt-${{ matrix.scala }}-${{ hashFiles('**/*.sbt') }}-${{
           hashFiles('**/build.properties') }}
     - name: Build and test core
-      if: ${{ matrix.scala != '3.0.0-RC1' }}
+      if: ${{ matrix.scala != '3.0.0' }}
       run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-core/test
         zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
     - name: Build and test core
-      if: ${{ matrix.scala == '3.0.0-RC1' }}
+      if: ${{ matrix.scala == '3.0.0' }}
       run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-core/test
         zio-aws-netty/test
     - name: Publish core
-      if: ${{ (github.ref == 'refs/heads/master') && (matrix.scala != '3.0.0-RC1')
-        }}
+      if: ${{ (github.ref == 'refs/heads/master') && (matrix.scala != '3.0.0') }}
       run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-core/publishSigned
         zio-aws-akka-http/publishSigned zio-aws-http4s/publishSigned zio-aws-netty/publishSigned
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Publish core
-      if: ${{ (github.ref == 'refs/heads/master') && (matrix.scala == '3.0.0-RC1')
-        }}
+      if: ${{ (github.ref == 'refs/heads/master') && (matrix.scala == '3.0.0') }}
       run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g ++${{ matrix.scala }} zio-aws-core/publishSigned
         zio-aws-netty/publishSigned
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress core targets
-      if: ${{ matrix.scala != '3.0.0-RC1' }}
+      if: ${{ matrix.scala != '3.0.0' }}
       run: tar cvf targets.tar target project/target zio-aws-codegen/target zio-aws-core/target
         zio-aws-akka-http/target zio-aws-http4s/target zio-aws-netty/target
     - name: Upload core targets
       uses: actions/upload-artifact@v2
-      if: ${{ matrix.scala != '3.0.0-RC1' }}
+      if: ${{ matrix.scala != '3.0.0' }}
       with:
         name: target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
         path: targets.tar
     - name: Compress core targets
-      if: ${{ matrix.scala == '3.0.0-RC1' }}
+      if: ${{ matrix.scala == '3.0.0' }}
       run: tar cvf targets.tar target project/target zio-aws-codegen/target zio-aws-core/target
         zio-aws-netty/target
     - name: Upload core targets
       uses: actions/upload-artifact@v2
-      if: ${{ matrix.scala == '3.0.0-RC1' }}
+      if: ${{ matrix.scala == '3.0.0' }}
       with:
         name: target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
         path: targets.tar
@@ -138,8 +136,8 @@ jobs:
         - ubuntu-latest
         scala:
         - 2.12.12
-        - 2.13.5
-        - 3.0.0-RC1
+        - 2.13.6
+        - 3.0.0
         java:
         - adopt@1.8
     needs:
@@ -233,8 +231,8 @@ jobs:
         - ubuntu-latest
         scala:
         - 2.12.12
-        - 2.13.5
-        - 3.0.0-RC1
+        - 2.13.6
+        - 3.0.0
         java:
         - adopt@1.8
     needs:
@@ -329,8 +327,8 @@ jobs:
         - ubuntu-latest
         scala:
         - 2.12.12
-        - 2.13.5
-        - 3.0.0-RC1
+        - 2.13.6
+        - 3.0.0
         java:
         - adopt@1.8
     needs:
@@ -422,8 +420,8 @@ jobs:
         - ubuntu-latest
         scala:
         - 2.12.12
-        - 2.13.5
-        - 3.0.0-RC1
+        - 2.13.6
+        - 3.0.0
         java:
         - adopt@1.8
     needs:
@@ -516,8 +514,8 @@ jobs:
         - ubuntu-latest
         scala:
         - 2.12.12
-        - 2.13.5
-        - 3.0.0-RC1
+        - 2.13.6
+        - 3.0.0
         java:
         - adopt@1.8
     needs:
@@ -611,8 +609,8 @@ jobs:
         - ubuntu-latest
         scala:
         - 2.12.12
-        - 2.13.5
-        - 3.0.0-RC1
+        - 2.13.6
+        - 3.0.0
         java:
         - adopt@1.8
     needs:
@@ -705,8 +703,8 @@ jobs:
         - ubuntu-latest
         scala:
         - 2.12.12
-        - 2.13.5
-        - 3.0.0-RC1
+        - 2.13.6
+        - 3.0.0
         java:
         - adopt@1.8
     needs:
@@ -799,8 +797,8 @@ jobs:
         - ubuntu-latest
         scala:
         - 2.12.12
-        - 2.13.5
-        - 3.0.0-RC1
+        - 2.13.6
+        - 3.0.0
         java:
         - adopt@1.8
     needs:
@@ -890,8 +888,8 @@ jobs:
         - ubuntu-latest
         scala:
         - 2.12.12
-        - 2.13.5
-        - 3.0.0-RC1
+        - 2.13.6
+        - 3.0.0
         java:
         - adopt@1.8
     needs:
@@ -982,12 +980,12 @@ jobs:
           ~/.coursier/cache/v1
 
           ~/.cache/coursier/v1
-        key: ubuntu-latest-sbt-2.13.5-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties')
+        key: ubuntu-latest-sbt-2.13.6-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties')
           }}
     - name: Download stored core targets
       uses: actions/download-artifact@v2
       with:
-        name: target-core-ubuntu-latest-2.13.5-adopt@1.8
+        name: target-core-ubuntu-latest-2.13.6-adopt@1.8
     - name: Inflate core targets
       run: tar xvf targets.tar
 
@@ -995,7 +993,7 @@ jobs:
     - name: Download stored clients-0 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-0-ubuntu-latest-2.13.5-adopt@1.8
+        name: target-clients-0-ubuntu-latest-2.13.6-adopt@1.8
     - name: Inflate clients-0 targets
       run: tar xvf targets.tar
 
@@ -1003,7 +1001,7 @@ jobs:
     - name: Download stored clients-1 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-1-ubuntu-latest-2.13.5-adopt@1.8
+        name: target-clients-1-ubuntu-latest-2.13.6-adopt@1.8
     - name: Inflate clients-1 targets
       run: tar xvf targets.tar
 
@@ -1011,7 +1009,7 @@ jobs:
     - name: Download stored clients-2 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-2-ubuntu-latest-2.13.5-adopt@1.8
+        name: target-clients-2-ubuntu-latest-2.13.6-adopt@1.8
     - name: Inflate clients-2 targets
       run: tar xvf targets.tar
 
@@ -1019,7 +1017,7 @@ jobs:
     - name: Download stored clients-3 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-3-ubuntu-latest-2.13.5-adopt@1.8
+        name: target-clients-3-ubuntu-latest-2.13.6-adopt@1.8
     - name: Inflate clients-3 targets
       run: tar xvf targets.tar
 
@@ -1027,7 +1025,7 @@ jobs:
     - name: Download stored clients-4 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-4-ubuntu-latest-2.13.5-adopt@1.8
+        name: target-clients-4-ubuntu-latest-2.13.6-adopt@1.8
     - name: Inflate clients-4 targets
       run: tar xvf targets.tar
 
@@ -1035,7 +1033,7 @@ jobs:
     - name: Download stored clients-5 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-5-ubuntu-latest-2.13.5-adopt@1.8
+        name: target-clients-5-ubuntu-latest-2.13.6-adopt@1.8
     - name: Inflate clients-5 targets
       run: tar xvf targets.tar
 
@@ -1043,7 +1041,7 @@ jobs:
     - name: Download stored clients-6 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-6-ubuntu-latest-2.13.5-adopt@1.8
+        name: target-clients-6-ubuntu-latest-2.13.6-adopt@1.8
     - name: Inflate clients-6 targets
       run: tar xvf targets.tar
 
@@ -1051,7 +1049,7 @@ jobs:
     - name: Download stored clients-7 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-7-ubuntu-latest-2.13.5-adopt@1.8
+        name: target-clients-7-ubuntu-latest-2.13.6-adopt@1.8
     - name: Inflate clients-7 targets
       run: tar xvf targets.tar
 
@@ -1160,7 +1158,7 @@ jobs:
           ~/.coursier/cache/v1
 
           ~/.cache/coursier/v1
-        key: ubuntu-latest-sbt-2.13.5-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties')
+        key: ubuntu-latest-sbt-2.13.6-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties')
           }}
     - name: Setup GIT user
       uses: fregante/setup-git-user@v1
