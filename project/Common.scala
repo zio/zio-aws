@@ -12,7 +12,7 @@ object Common extends AutoPlugin {
 
   object autoImport {
     val zioVersion = "1.0.8"
-    val zioCatsInteropVersion = "2.5.1.0"
+    val zioCatsInteropVersion = "3.1.1.0"
     val zioReactiveStreamsInteropVersion = "1.3.4"
     val zioConfigVersion = "1.0.5"
     val catsEffectVersion = "2.5.1"
