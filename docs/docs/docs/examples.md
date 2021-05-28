@@ -83,7 +83,7 @@ object Main extends zio.App {
       .either
       .flatMap {
         case Left(error) =>
-          console.putStrErr(s"AWS error: $error").as(ExitCode.failure)
+          console.putStrErr(s"AWS error: $error").ignore.as(ExitCode.failure)
         case Right(_) =>
           ZIO.unit.as(ExitCode.success)
       }
