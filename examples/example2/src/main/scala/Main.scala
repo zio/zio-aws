@@ -42,9 +42,9 @@ object Main extends App {
 
   val program: ZIO[Console with DynamoDb, AwsError, Unit] =
     for {
-      _ <- console.putStrLn("Performing full table scan")
+      _ <- console.putStrLn("Performing full table scan").ignore
       scan = dynamodb.scan(ScanRequest(tableName = "test")) // full table scan
-      _ <- scan.foreach(item => putStrLn(item.toString))
+      _ <- scan.foreach(item => putStrLn(item.toString).ignore)
     } yield ()
 
   override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] = {
@@ -81,7 +81,7 @@ object Main extends App {
         .either
         .flatMap {
           case Left(error) =>
-            console.putStrErr(s"AWS error: $error").as(ExitCode.failure)
+            console.putStrErr(s"AWS error: $error").ignore.as(ExitCode.failure)
           case Right(_) =>
             ZIO.unit.as(ExitCode.success)
         }

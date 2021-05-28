@@ -21,7 +21,7 @@ object Main extends App {
             applicationName <- appDescription.applicationName
             _ <- console.putStrLn(
               s"Got application description for $applicationName"
-            )
+            ).ignore
 
             envStream = elasticbeanstalk.describeEnvironments(
               DescribeEnvironmentsRequest(applicationName =
@@ -35,7 +35,7 @@ object Main extends App {
                   environmentId <- env.environmentId
                   _ <- console.putStrLn(
                     s"Getting the EB resources of $environmentName"
-                  )
+                  ).ignore
 
                   resourcesResult <-
                     elasticbeanstalk.describeEnvironmentResources(
@@ -46,12 +46,12 @@ object Main extends App {
                   resources <- resourcesResult.environmentResources
                   _ <- console.putStrLn(
                     s"Getting the EC2 instances in $environmentName"
-                  )
+                  ).ignore
                   instances <- resources.instances
                   instanceIds <- ZIO.foreach(instances)(_.id)
                   _ <- console.putStrLn(
                     s"Instance IDs are ${instanceIds.mkString(", ")}"
-                  )
+                  ).ignore
 
                   reservationsStream = ec2.describeInstances(
                     DescribeInstancesRequest(instanceIds = Some(instanceIds))
@@ -64,11 +64,11 @@ object Main extends App {
                             id <- instance.instanceId
                             typ <- instance.instanceType
                             launchTime <- instance.launchTime
-                            _ <- console.putStrLn(s"  instance $id:")
-                            _ <- console.putStrLn(s"    type: $typ")
+                            _ <- console.putStrLn(s"  instance $id:").ignore
+                            _ <- console.putStrLn(s"    type: $typ").ignore
                             _ <- console.putStrLn(
                               s"    launched at: $launchTime"
-                            )
+                            ).ignore
                           } yield ()
                         }
                       }
@@ -76,7 +76,7 @@ object Main extends App {
                 } yield ()).catchAll { error =>
                   console.putStrLnErr(
                     s"Failed to get info for $environmentName: $error"
-                  )
+                  ).ignore
                 }
               }
             })
@@ -96,7 +96,7 @@ object Main extends App {
       .either
       .flatMap {
         case Left(error) =>
-          console.putStrErr(s"AWS error: $error").as(ExitCode.failure)
+          console.putStrErr(s"AWS error: $error").ignore.as(ExitCode.failure)
         case Right(_) =>
           ZIO.unit.as(ExitCode.success)
       }

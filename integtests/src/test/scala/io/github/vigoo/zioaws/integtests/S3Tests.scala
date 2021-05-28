@@ -46,7 +46,7 @@ object S3Tests extends DefaultRunnableSpec with Logging {
       bucketName = s"${prefix}-$postfix"
     } yield ZManaged.make(
       for {
-        _ <- console.putStrLn(s"Creating bucket $bucketName")
+        _ <- console.putStrLn(s"Creating bucket $bucketName").ignore
         _ <- s3.createBucket(
           CreateBucketRequest(
             bucket = bucketName
@@ -55,7 +55,7 @@ object S3Tests extends DefaultRunnableSpec with Logging {
       } yield bucketName
     )(bucketName =>
       (for {
-        _ <- console.putStrLn(s"Deleting bucket $bucketName")
+        _ <- console.putStrLn(s"Deleting bucket $bucketName").ignore
         _ <- s3.deleteBucket(DeleteBucketRequest(bucketName))
       } yield ())
         .provide(env)
@@ -87,7 +87,7 @@ object S3Tests extends DefaultRunnableSpec with Logging {
           key = "testdata"
           receivedData <- bucket.use { bucketName =>
             for {
-              _ <- console.putStrLn(s"Uploading $key to $bucketName")
+              _ <- console.putStrLn(s"Uploading $key to $bucketName").ignore
               _ <- s3.putObject(
                 PutObjectRequest(
                   bucket = bucketName,
@@ -100,7 +100,7 @@ object S3Tests extends DefaultRunnableSpec with Logging {
                   .fromIterable(testData)
                   .chunkN(1024)
               )
-              _ <- console.putStrLn("Downloading")
+              _ <- console.putStrLn("Downloading").ignore
               getResponse <- s3.getObject(
                 GetObjectRequest(
                   bucket = bucketName,
@@ -110,7 +110,7 @@ object S3Tests extends DefaultRunnableSpec with Logging {
               getStream = getResponse.output
               result <- getStream.runCollect
 
-              _ <- console.putStrLn("Deleting")
+              _ <- console.putStrLn("Deleting").ignore
               _ <- s3.deleteObject(
                 DeleteObjectRequest(
                   bucket = bucketName,
