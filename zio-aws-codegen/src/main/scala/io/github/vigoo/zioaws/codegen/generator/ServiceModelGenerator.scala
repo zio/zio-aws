@@ -456,7 +456,7 @@ trait ServiceModelGenerator {
             Term.Name(namingStrategy.getEnumValueName(enumValue))
           val term =
             Term.Select(Term.Select(modelPkg, m.asTerm), enumValueScreaming)
-          p"""case $term => $enumValueTerm"""
+          p"""case $term => { val r = $enumValueTerm; r }"""
         }
       )
     } yield ModelWrapper(
