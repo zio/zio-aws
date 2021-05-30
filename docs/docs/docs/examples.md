@@ -29,7 +29,7 @@ object Main extends zio.App {
         case Some(appDescription) =>
           for {
             applicationName <- appDescription.applicationName
-            _ <- console.putStrLn(s"Got application description for $applicationName")
+            _ <- console.putStrLn(s"Got application description for $applicationName").ignore
 
             envStream = elasticbeanstalk.describeEnvironments(DescribeEnvironmentsRequest(applicationName = Some(applicationName)))
 
@@ -37,14 +37,14 @@ object Main extends zio.App {
               env.environmentName.flatMap { environmentName =>
                 (for {
                   environmentId <- env.environmentId
-                  _ <- console.putStrLn(s"Getting the EB resources of $environmentName")
+                  _ <- console.putStrLn(s"Getting the EB resources of $environmentName").ignore
 
                   resourcesResult <- elasticbeanstalk.describeEnvironmentResources(DescribeEnvironmentResourcesRequest(environmentId = Some(environmentId)))
                   resources <- resourcesResult.environmentResources
-                  _ <- console.putStrLn(s"Getting the EC2 instances in $environmentName")
+                  _ <- console.putStrLn(s"Getting the EC2 instances in $environmentName").ignore
                   instances <- resources.instances
                   instanceIds <- ZIO.foreach(instances)(_.id)
-                  _ <- console.putStrLn(s"Instance IDs are ${instanceIds.mkString(", ")}")
+                  _ <- console.putStrLn(s"Instance IDs are ${instanceIds.mkString(", ")}").ignore
 
                   reservationsStream = ec2.describeInstances(DescribeInstancesRequest(instanceIds = Some(instanceIds)))
                   _ <- reservationsStream.run(Sink.foreach {
@@ -55,15 +55,15 @@ object Main extends zio.App {
                             id <- instance.instanceId
                             typ <- instance.instanceType
                             launchTime <- instance.launchTime
-                            _ <- console.putStrLn(s"  instance $id:")
-                            _ <- console.putStrLn(s"    type: $typ")
-                            _ <- console.putStrLn(s"    launched at: $launchTime")
+                            _ <- console.putStrLn(s"  instance $id:").ignore
+                            _ <- console.putStrLn(s"    type: $typ").ignore
+                            _ <- console.putStrLn(s"    launched at: $launchTime").ignore
                           } yield ()
                         }
                       }
                   })
                 } yield ()).catchAll { error =>
-                  console.putStrLnErr(s"Failed to get info for $environmentName: $error")
+                  console.putStrLnErr(s"Failed to get info for $environmentName: $error").ignore
                 }
               }
             })
