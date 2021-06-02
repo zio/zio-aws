@@ -1034,7 +1034,7 @@ trait ServiceInterfaceGenerator {
               $module
             }
           """
-    } yield pkg.toString
+    } yield prettyPrint(pkg)
 
   protected def generateServiceModule()
       : ZIO[GeneratorContext with Blocking, GeneratorFailure, File] =

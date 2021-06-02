@@ -12,6 +12,7 @@ import zio.nio.core.file.Path
 
 import scala.jdk.CollectionConverters._
 import scala.meta._
+import scala.meta.internal.prettyprinters.TreeSyntax
 
 trait GeneratorBase {
 
@@ -189,4 +190,15 @@ trait GeneratorBase {
           }
       } yield ()
     }
+
+  protected def scalaVersion: String
+
+  protected def prettyPrint(tree: Tree): String = {
+    val dialect = 
+      if (scalaVersion.startsWith("3.")) scala.meta.dialects.Scala3
+      else if (scalaVersion.startsWith("2.13.")) scala.meta.dialects.Scala213
+      else scala.meta.dialects.Scala212
+    val prettyprinter = TreeSyntax[Tree](dialect)
+    prettyprinter(tree).toString
+  }
 }

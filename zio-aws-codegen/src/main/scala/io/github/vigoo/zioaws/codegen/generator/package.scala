@@ -130,6 +130,8 @@ package object generator {
               generateArtifactList(ids, config.version)
             )
           } yield ()
+
+        override protected val scalaVersion: String = cfg.scalaVersion
       }
   }
 

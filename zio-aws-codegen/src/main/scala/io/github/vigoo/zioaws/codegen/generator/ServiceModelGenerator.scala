@@ -513,22 +513,23 @@ trait ServiceModelGenerator {
       primitiveModels <-
         ZIO.foreach(primitiveModels.toList.sortBy(_.name))(generateModel)
       models <- ZIO.foreach(complexModels.toList.sortBy(_.name))(generateModel)
-    } yield q"""package $fullPkgName {
+    } yield prettyPrint(
+      q"""package $fullPkgName {
 
-                  import scala.jdk.CollectionConverters._
-                  import java.time.Instant
-                  import zio.{Chunk, ZIO}
-                  import software.amazon.awssdk.core.SdkBytes
+          import scala.jdk.CollectionConverters._
+          import java.time.Instant
+          import zio.{Chunk, ZIO}
+          import software.amazon.awssdk.core.SdkBytes
 
-                  ..$parentModuleImport
+          ..$parentModuleImport
 
-                  package object model {
-                    object primitives {
-                      ..${primitiveModels.flatMap(_.code)}
-                    }
+          package object model {
+            object primitives {
+              ..${primitiveModels.flatMap(_.code)}
+            }
 
-                  ..${models.flatMap(_.code)}
-                  }}""".toString
+          ..${models.flatMap(_.code)}
+          }}""")
 
   protected def generateServiceModels()
       : ZIO[GeneratorContext with Blocking, GeneratorFailure, File] =
