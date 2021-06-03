@@ -72,7 +72,8 @@ trait GeneratorBase {
 
   protected def wrapSdkValue(
       model: Model,
-      term: Term
+      term: Term,
+      prefix: Term.Name => Term = identity
   ): ZIO[GeneratorContext, GeneratorFailure, Term] =
     model.typ match {
       case ModelType.Map =>
@@ -101,12 +102,12 @@ trait GeneratorBase {
             q"""$term.asScala.map { item => $wrapItem }.toList"""
           }
       case ModelType.Enum =>
-        val nameTerm = Term.Name(model.name)
+        val nameTerm = prefix(Term.Name(model.name))
         ZIO.succeed(q"""$nameTerm.wrap($term)""")
       case ModelType.Blob =>
         ZIO.succeed(q"""Chunk.fromArray($term.asByteArrayUnsafe())""")
       case ModelType.Structure =>
-        val nameTerm = Term.Name(model.name)
+        val nameTerm = prefix(Term.Name(model.name))
         ZIO.succeed(q"""$nameTerm.wrap($term)""")
       case ModelType.Exception =>
         ZIO.succeed(term)
