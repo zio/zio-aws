@@ -69,6 +69,8 @@ trait ServiceInterfaceGenerator {
     t match {
       case name@Type.Name(_) => Type.Select(Term.Name("model"), name)
       case Type.Select(Term.Name(name1), name2) => Type.Select(Term.Select(Term.Name("model"), Term.Name(name1)), name2)
+      case t"List[$item]" => t"List[${inModel(item)}]"
+      case t"Map[$key, $value]" => t"Map[${inModel(key)}, ${inModel(value)}]"
       case _ => throw new RuntimeException(s"Cannot inModel() $t")
     }
 

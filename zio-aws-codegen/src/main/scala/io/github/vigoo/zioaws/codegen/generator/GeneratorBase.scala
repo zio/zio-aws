@@ -73,7 +73,7 @@ trait GeneratorBase {
   protected def wrapSdkValue(
       model: Model,
       term: Term,
-      prefix: Term.Name => Term = identity
+      prefix: Term.Name => Term.Ref = identity
   ): ZIO[GeneratorContext, GeneratorFailure, Term] =
     model.typ match {
       case ModelType.Map =>
@@ -82,8 +82,8 @@ trait GeneratorBase {
           valueModel <- get(model.shape.getMapValueType.getShape)
           key = Term.Name("key")
           value = Term.Name("value")
-          wrapKey <- wrapSdkValue(keyModel, key)
-          wrapValue <- wrapSdkValue(valueModel, value)
+          wrapKey <- wrapSdkValue(keyModel, key, prefix)
+          wrapValue <- wrapSdkValue(valueModel, value, prefix)
         } yield
           if (wrapKey == key && wrapValue == value) {
             q"""$term.asScala.toMap"""
@@ -94,7 +94,7 @@ trait GeneratorBase {
         for {
           valueModel <- get(model.shape.getListMember.getShape)
           item = Term.Name("item")
-          wrapItem <- wrapSdkValue(valueModel, item)
+          wrapItem <- wrapSdkValue(valueModel, item, prefix)
         } yield
           if (wrapItem == item) {
             q"""$term.asScala.toList"""
@@ -115,7 +115,8 @@ trait GeneratorBase {
           if TypeMapping.isPrimitiveType(model.shape) && !TypeMapping.isBuiltIn(
             model.shapeName
           ) =>
-        ZIO.succeed(q"""$term : primitives.${Type.Name(model.name)}""")
+          val typ = Type.Select(prefix(Term.Name("primitives")), Type.Name(model.name))
+        ZIO.succeed(q"""$term : $typ""")
       case _ =>
         ZIO.succeed(q"""$term : ${Type.Name(model.name)}""")
     }
