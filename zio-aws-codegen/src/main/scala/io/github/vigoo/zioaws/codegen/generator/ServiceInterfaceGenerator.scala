@@ -931,6 +931,7 @@ trait ServiceInterfaceGenerator {
         Some(
           q"""import io.github.vigoo.zioaws.core.httpclient.ServiceHttpCapabilities"""
         ),
+        Some(q"""import software.amazon.awssdk.core.client.config.{ ClientAsyncConfiguration, SdkAdvancedAsyncClientOption } """),
         if (usesJavaSdkPaginators)
           Some(
             Import(List(Importer(paginatorPackage, List(Importee.Wildcard()))))
@@ -1011,7 +1012,18 @@ trait ServiceInterfaceGenerator {
           def managed(customization: $clientInterfaceBuilder => $clientInterfaceBuilder): ZManaged[AwsConfig, Throwable, $serviceTrait] =
             for {
               awsConfig <- ZManaged.service[AwsConfig.Service]
-              b0 <- awsConfig.configure[$clientInterface, $clientInterfaceBuilder]($clientInterfaceSingleton.builder()).toManaged_
+              executor <- ZIO.executor.toManaged_
+              builder = $clientInterfaceSingleton.builder()
+                  .asyncConfiguration(
+                    ClientAsyncConfiguration
+                      .builder()
+                      .advancedOption(
+                        SdkAdvancedAsyncClientOption.FUTURE_COMPLETION_EXECUTOR,
+                        executor.asJava
+                      )
+                      .build()
+                  )
+              b0 <- awsConfig.configure[$clientInterface, $clientInterfaceBuilder](builder).toManaged_
               b1 <- awsConfig.configureHttpClient[$clientInterface, $clientInterfaceBuilder](b0, ServiceHttpCapabilities(supportsHttp2 = $supportsHttp2Lit)).toManaged_
               client <- ZIO(customization(b1).build()).toManaged_
             } yield new $serviceImplT(client, AwsCallAspect.identity, ().asInstanceOf[Any])
