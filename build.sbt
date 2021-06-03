@@ -5,7 +5,7 @@ import scala.xml.transform.{RewriteRule, RuleTransformer}
 
 enablePlugins(Common, ZioAwsCodegenPlugin, GitVersioning)
 
-ThisBuild / ciParallelJobs := 8
+ThisBuild / ciParallelJobs := 10
 ThisBuild / ciSeparateJobs := Seq("")
 ThisBuild / ciTarget := file(".github/workflows/ci.yml")
 ThisBuild / artifactListTarget := file("docs/docs/docs/artifacts.md")
