@@ -67,6 +67,7 @@ trait ServiceInterfaceGenerator {
 
   private def inModel(t: Type): Type = 
     t match {
+      case Type.Name(name) if TypeMapping.isBuiltIn(name) => t
       case name@Type.Name(_) => Type.Select(Term.Name("model"), name)
       case Type.Select(Term.Name(name1), name2) => Type.Select(Term.Select(Term.Name("model"), Term.Name(name1)), name2)
       case t"List[$item]" => t"List[${inModel(item)}]"
