@@ -213,32 +213,34 @@ trait ServiceModelGenerator {
         case ModelType.Enum =>
           generateEnum(m, awsShapeNameT)
         case ModelType.String =>
-          generateSimple(q"""type ${m.asType} = String""")
+          generateSimple(m.name + ".scala", q"""type ${m.asType} = String""")
         case ModelType.Integer =>
-          generateSimple(q"""type ${m.asType} = Int""")
+          generateSimple(m.name + ".scala" , q"""type ${m.asType} = Int""")
         case ModelType.Long =>
-          generateSimple(q"""type ${m.asType} = Long""")
+          generateSimple(m.name + ".scala", q"""type ${m.asType} = Long""")
         case ModelType.Float =>
-          generateSimple(q"""type ${m.asType} = Float""")
+          generateSimple(m.name + ".scala", q"""type ${m.asType} = Float""")
         case ModelType.Double =>
-          generateSimple(q"""type ${m.asType} = Double""")
+          generateSimple(m.name + ".scala", q"""type ${m.asType} = Double""")
         case ModelType.Boolean =>
-          generateSimple(q"""type ${m.asType} = Boolean""")
+          generateSimple(m.name + ".scala", q"""type ${m.asType} = Boolean""")
         case ModelType.Timestamp =>
-          generateSimple(q"""type ${m.asType} = Instant""")
+          generateSimple(m.name + ".scala", q"""type ${m.asType} = Instant""")
         case ModelType.Blob =>
-          generateSimple(q"""type ${m.asType} = Chunk[Byte]""")
+          generateSimple(m.name + ".scala", q"""type ${m.asType} = Chunk[Byte]""")
         case _ =>
-          generateSimple(q"""type ${m.asType} = Unit""")
+          generateSimple(m.name + ".scala", q"""type ${m.asType} = Unit""")
       }
     } yield wrapper
   }
 
   private def generateSimple(
+      fileName: String,
       defn: Defn
   ): ZIO[GeneratorContext, GeneratorFailure, ModelWrapper] =
     ZIO.succeed(
       ModelWrapper(
+        None,
         code = List(defn)
       )
     )
@@ -375,6 +377,7 @@ trait ServiceModelGenerator {
           fieldFragments.applyToBuilder(term)
       }
     } yield ModelWrapper(
+      fileName = Some(m.name + ".scala"),
       code = List(
         q"""final case class ${m.asType}(..${fields.map(_.paramDef)}) {
                         def buildAwsValue(): $awsShapeNameT = {
@@ -411,6 +414,7 @@ trait ServiceModelGenerator {
       itemModel <- get(m.shape.getListMember.getShape)
       elemT <- TypeMapping.toWrappedType(itemModel)
     } yield ModelWrapper(
+      fileName = None,
       code = List(q"""type ${m.asType} = List[$elemT]""")
     )
   }
@@ -424,6 +428,7 @@ trait ServiceModelGenerator {
       keyT <- TypeMapping.toWrappedType(keyModel)
       valueT <- TypeMapping.toWrappedType(valueModel)
     } yield ModelWrapper(
+      fileName = None,
       code = List(q"""type ${m.asType} = Map[$keyT, $valueT]""")
     )
   }
@@ -460,6 +465,7 @@ trait ServiceModelGenerator {
         }
       )
     } yield ModelWrapper(
+      fileName = Some(m.name + ".scala"),
       code = List(
         q"""sealed trait ${m.asType} {
               def unwrap: $awsShapeNameT
@@ -477,7 +483,7 @@ trait ServiceModelGenerator {
   }
 
   private def generateServiceModelsCode()
-      : ZIO[GeneratorContext, GeneratorFailure, String] =
+      : ZIO[GeneratorContext, GeneratorFailure, Map[String, String]] =
     for {
       id <- getService
       pkgName = Term.Name(id.moduleName)
@@ -513,37 +519,55 @@ trait ServiceModelGenerator {
       primitiveModels <-
         ZIO.foreach(primitiveModels.toList.sortBy(_.name))(generateModel)
       models <- ZIO.foreach(complexModels.toList.sortBy(_.name))(generateModel)
-    } yield prettyPrint(
-      q"""package $fullPkgName {
+      modelsForPackage = models.filter(_.fileName.isEmpty)
+      separateModels = models.collect { case ModelWrapper(Some(fileName), code) => (fileName, code) }
+      packageCode = 
+        q"""package $fullPkgName {
 
-          import scala.jdk.CollectionConverters._
-          import java.time.Instant
-          import zio.{Chunk, ZIO}
-          import software.amazon.awssdk.core.SdkBytes
+            import scala.jdk.CollectionConverters._
+            import java.time.Instant
+            import zio.{Chunk, ZIO}
+            import software.amazon.awssdk.core.SdkBytes
 
-          ..$parentModuleImport
+            ..$parentModuleImport
 
-          package object model {
-            object primitives {
-              ..${primitiveModels.flatMap(_.code)}
+            package object model {
+              object primitives {
+                ..${primitiveModels.flatMap(_.code)}
+              }
+
+              ..${modelsForPackage.flatMap(_.code)}
+            }}"""
+          modelCodes = separateModels.map { case (fileName, code) =>
+            fileName ->
+            q"""package $fullPkgName.model {
+
+              import scala.jdk.CollectionConverters._
+              import java.time.Instant
+              import zio.{Chunk, ZIO}
+              import software.amazon.awssdk.core.SdkBytes
+
+              ..$parentModuleImport
+
+              ..${code}
+            }"""
             }
-
-          ..${models.flatMap(_.code)}
-          }}""")
+    } yield ("package.scala" -> packageCode.toString :: modelCodes.map { case (k, v) => (k, v.toString()) }).toMap
 
   protected def generateServiceModels()
-      : ZIO[GeneratorContext with Blocking, GeneratorFailure, File] =
+      : ZIO[GeneratorContext with Blocking, GeneratorFailure, Set[File]] =
     for {
-      code <- generateServiceModelsCode()
+      codes <- generateServiceModelsCode()
       id <- getService
       moduleName = id.moduleName
       targetRoot = config.targetRoot
       packageParent = targetRoot / "io/github/vigoo/zioaws"
       packageRoot = packageParent / moduleName
       modelsRoot = packageRoot / "model"
-      modelFile = modelsRoot / "package.scala"
-      _ <-
-        Files.createDirectories(modelsRoot).mapError(FailedToCreateDirectories)
-      _ <- writeIfDifferent(modelFile, code)
-    } yield modelFile.toFile
+      _ <-Files.createDirectories(modelsRoot).mapError(FailedToCreateDirectories)
+      paths <- ZIO.foreach(codes.toSet) { case (name, code) => 
+        val modelFile = modelsRoot / name
+        writeIfDifferent(modelFile, code).as(modelFile)
+      }
+    } yield paths.map(_.toFile)
 }
