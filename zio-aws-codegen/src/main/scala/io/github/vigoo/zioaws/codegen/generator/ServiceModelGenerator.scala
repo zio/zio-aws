@@ -529,8 +529,6 @@ trait ServiceModelGenerator {
             import zio.{Chunk, ZIO}
             import software.amazon.awssdk.core.SdkBytes
 
-            ..$parentModuleImport
-
             package object model {
               object primitives {
                 ..${primitiveModels.flatMap(_.code)}
@@ -552,7 +550,7 @@ trait ServiceModelGenerator {
               ..${code}
             }"""
             }
-    } yield ("package.scala" -> packageCode.toString :: modelCodes.map { case (k, v) => (k, v.toString()) }).toMap
+    } yield ("package.scala" -> prettyPrint(packageCode) :: modelCodes.map { case (k, v) => (k, prettyPrint(v)) }).toMap
 
   protected def generateServiceModels()
       : ZIO[GeneratorContext with Blocking, GeneratorFailure, Set[File]] =
