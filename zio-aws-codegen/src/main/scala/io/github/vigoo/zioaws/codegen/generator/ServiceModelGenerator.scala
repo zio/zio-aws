@@ -498,24 +498,6 @@ trait ServiceModelGenerator {
       primitiveModels = removeDuplicates(primitives)
       complexModels = removeDuplicates(complexes)
 
-      parentModuleImport =
-        if (id.subModule.isDefined) {
-          val parentModelPackage = Import(
-            List(
-              Importer(
-                Term.Select(
-                  Term.Select(q"io.github.vigoo.zioaws", Term.Name(id.name)),
-                  Term.Name("model")
-                ),
-                List(Importee.Wildcard())
-              )
-            )
-          )
-          List(parentModelPackage)
-        } else {
-          List.empty
-        }
-
       primitiveModels <-
         ZIO.foreach(primitiveModels.toList.sortBy(_.name))(generateModel)
       models <- ZIO.foreach(complexModels.toList.sortBy(_.name))(generateModel)
@@ -544,8 +526,6 @@ trait ServiceModelGenerator {
               import java.time.Instant
               import zio.{Chunk, ZIO}
               import software.amazon.awssdk.core.SdkBytes
-
-              ..$parentModuleImport
 
               ..${code}
             }"""
