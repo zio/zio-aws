@@ -8,5 +8,6 @@ case class Parameters(
     parallelCiJobs: Int,
     separateCiJobs: Set[String],
     artifactListTarget: Path,
-    version: String
+    version: String,
+    scalaVersion: String
 )

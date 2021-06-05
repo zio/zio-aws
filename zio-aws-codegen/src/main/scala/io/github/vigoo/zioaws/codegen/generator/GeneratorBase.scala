@@ -12,6 +12,7 @@ import zio.nio.core.file.Path
 
 import scala.jdk.CollectionConverters._
 import scala.meta._
+import scala.meta.internal.prettyprinters.TreeSyntax
 
 trait GeneratorBase {
 
@@ -71,7 +72,8 @@ trait GeneratorBase {
 
   protected def wrapSdkValue(
       model: Model,
-      term: Term
+      term: Term,
+      prefix: Term.Name => Term.Ref = identity
   ): ZIO[GeneratorContext, GeneratorFailure, Term] =
     model.typ match {
       case ModelType.Map =>
@@ -80,8 +82,8 @@ trait GeneratorBase {
           valueModel <- get(model.shape.getMapValueType.getShape)
           key = Term.Name("key")
           value = Term.Name("value")
-          wrapKey <- wrapSdkValue(keyModel, key)
-          wrapValue <- wrapSdkValue(valueModel, value)
+          wrapKey <- wrapSdkValue(keyModel, key, prefix)
+          wrapValue <- wrapSdkValue(valueModel, value, prefix)
         } yield
           if (wrapKey == key && wrapValue == value) {
             q"""$term.asScala.toMap"""
@@ -92,7 +94,7 @@ trait GeneratorBase {
         for {
           valueModel <- get(model.shape.getListMember.getShape)
           item = Term.Name("item")
-          wrapItem <- wrapSdkValue(valueModel, item)
+          wrapItem <- wrapSdkValue(valueModel, item, prefix)
         } yield
           if (wrapItem == item) {
             q"""$term.asScala.toList"""
@@ -100,12 +102,12 @@ trait GeneratorBase {
             q"""$term.asScala.map { item => $wrapItem }.toList"""
           }
       case ModelType.Enum =>
-        val nameTerm = Term.Name(model.name)
+        val nameTerm = prefix(Term.Name(model.name))
         ZIO.succeed(q"""$nameTerm.wrap($term)""")
       case ModelType.Blob =>
         ZIO.succeed(q"""Chunk.fromArray($term.asByteArrayUnsafe())""")
       case ModelType.Structure =>
-        val nameTerm = Term.Name(model.name)
+        val nameTerm = prefix(Term.Name(model.name))
         ZIO.succeed(q"""$nameTerm.wrap($term)""")
       case ModelType.Exception =>
         ZIO.succeed(term)
@@ -113,7 +115,8 @@ trait GeneratorBase {
           if TypeMapping.isPrimitiveType(model.shape) && !TypeMapping.isBuiltIn(
             model.shapeName
           ) =>
-        ZIO.succeed(q"""$term : primitives.${Type.Name(model.name)}""")
+          val typ = Type.Select(prefix(Term.Name("primitives")), Type.Name(model.name))
+        ZIO.succeed(q"""$term : $typ""")
       case _ =>
         ZIO.succeed(q"""$term : ${Type.Name(model.name)}""")
     }
@@ -189,4 +192,15 @@ trait GeneratorBase {
           }
       } yield ()
     }
+
+  protected def scalaVersion: String
+
+  protected def prettyPrint(tree: Tree): String = {
+    val dialect = 
+      if (scalaVersion.startsWith("3.")) scala.meta.dialects.Scala3
+      else if (scalaVersion.startsWith("2.13.")) scala.meta.dialects.Scala213
+      else scala.meta.dialects.Scala212
+    val prettyprinter = TreeSyntax[Tree](dialect)
+    prettyprinter(tree).toString
+  }
 }

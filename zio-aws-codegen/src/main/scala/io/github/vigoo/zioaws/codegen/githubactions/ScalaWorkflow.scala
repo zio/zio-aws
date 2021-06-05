@@ -188,12 +188,17 @@ object ScalaWorkflow {
     )
 
   val isMaster: Condition = Condition(
-    "${{ github.ref == 'refs/heads/master' }}"
+    "github.ref == 'refs/heads/master'"
   )
   val isNotMaster: Condition = Condition(
-    "${{ github.ref != 'refs/heads/master' }}"
+    "github.ref != 'refs/heads/master'"
   )
-
+  def isScalaVersion(version: ScalaVersion): Condition = Condition(
+    s"matrix.scala == '${version.version}'"
+  )
+  def isNotScalaVersion(version: ScalaVersion): Condition = Condition(
+    s"matrix.scala != '${version.version}'"
+  )  
   case class ScalaVersion(version: String)
 
   sealed trait JavaVersion {
