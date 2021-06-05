@@ -264,7 +264,6 @@ trait GithubActionsGenerator {
             runSBT(
               "Publish artifacts",
               parameters = List(
-                "+publishSigned",
                 "sonatypeBundleRelease"
               ),
               heapGb = 5,

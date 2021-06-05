@@ -1396,7 +1396,7 @@ jobs:
 
         rm targets.tar
     - name: Publish artifacts
-      run: sbt -J-XX:+UseG1GC -J-Xmx5g -J-Xms5g +publishSigned sonatypeBundleRelease
+      run: sbt -J-XX:+UseG1GC -J-Xmx5g -J-Xms5g sonatypeBundleRelease
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
