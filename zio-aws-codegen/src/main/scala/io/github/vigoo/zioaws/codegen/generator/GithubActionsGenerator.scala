@@ -261,6 +261,12 @@ trait GithubActionsGenerator {
               scalaVersion = Some(scala212),
               javaVersion = Some(JavaVersion.AdoptJDK18)
             ),
+            loadStoredTargets(
+              "core" :: grouped.indices.map(idx => s"clients-$idx").toList,
+              os = Some(OS.UbuntuLatest),
+              scalaVersion = Some(scala3),
+              javaVersion = Some(JavaVersion.AdoptJDK18)
+            ),
             runSBT(
               "Publish artifacts",
               parameters = List(

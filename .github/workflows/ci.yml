@@ -1395,6 +1395,102 @@ jobs:
       run: tar xvf targets.tar
 
         rm targets.tar
+    - name: Download stored core targets
+      uses: actions/download-artifact@v2
+      with:
+        name: target-core-ubuntu-latest-3.0.0-adopt@1.8
+    - name: Inflate core targets
+      run: tar xvf targets.tar
+
+        rm targets.tar
+    - name: Download stored clients-0 targets
+      uses: actions/download-artifact@v2
+      with:
+        name: target-clients-0-ubuntu-latest-3.0.0-adopt@1.8
+    - name: Inflate clients-0 targets
+      run: tar xvf targets.tar
+
+        rm targets.tar
+    - name: Download stored clients-1 targets
+      uses: actions/download-artifact@v2
+      with:
+        name: target-clients-1-ubuntu-latest-3.0.0-adopt@1.8
+    - name: Inflate clients-1 targets
+      run: tar xvf targets.tar
+
+        rm targets.tar
+    - name: Download stored clients-2 targets
+      uses: actions/download-artifact@v2
+      with:
+        name: target-clients-2-ubuntu-latest-3.0.0-adopt@1.8
+    - name: Inflate clients-2 targets
+      run: tar xvf targets.tar
+
+        rm targets.tar
+    - name: Download stored clients-3 targets
+      uses: actions/download-artifact@v2
+      with:
+        name: target-clients-3-ubuntu-latest-3.0.0-adopt@1.8
+    - name: Inflate clients-3 targets
+      run: tar xvf targets.tar
+
+        rm targets.tar
+    - name: Download stored clients-4 targets
+      uses: actions/download-artifact@v2
+      with:
+        name: target-clients-4-ubuntu-latest-3.0.0-adopt@1.8
+    - name: Inflate clients-4 targets
+      run: tar xvf targets.tar
+
+        rm targets.tar
+    - name: Download stored clients-5 targets
+      uses: actions/download-artifact@v2
+      with:
+        name: target-clients-5-ubuntu-latest-3.0.0-adopt@1.8
+    - name: Inflate clients-5 targets
+      run: tar xvf targets.tar
+
+        rm targets.tar
+    - name: Download stored clients-6 targets
+      uses: actions/download-artifact@v2
+      with:
+        name: target-clients-6-ubuntu-latest-3.0.0-adopt@1.8
+    - name: Inflate clients-6 targets
+      run: tar xvf targets.tar
+
+        rm targets.tar
+    - name: Download stored clients-7 targets
+      uses: actions/download-artifact@v2
+      with:
+        name: target-clients-7-ubuntu-latest-3.0.0-adopt@1.8
+    - name: Inflate clients-7 targets
+      run: tar xvf targets.tar
+
+        rm targets.tar
+    - name: Download stored clients-8 targets
+      uses: actions/download-artifact@v2
+      with:
+        name: target-clients-8-ubuntu-latest-3.0.0-adopt@1.8
+    - name: Inflate clients-8 targets
+      run: tar xvf targets.tar
+
+        rm targets.tar
+    - name: Download stored clients-9 targets
+      uses: actions/download-artifact@v2
+      with:
+        name: target-clients-9-ubuntu-latest-3.0.0-adopt@1.8
+    - name: Inflate clients-9 targets
+      run: tar xvf targets.tar
+
+        rm targets.tar
+    - name: Download stored clients-10 targets
+      uses: actions/download-artifact@v2
+      with:
+        name: target-clients-10-ubuntu-latest-3.0.0-adopt@1.8
+    - name: Inflate clients-10 targets
+      run: tar xvf targets.tar
+
+        rm targets.tar
     - name: Publish artifacts
       run: sbt -J-XX:+UseG1GC -J-Xmx5g -J-Xms5g sonatypeBundleRelease
       env:
