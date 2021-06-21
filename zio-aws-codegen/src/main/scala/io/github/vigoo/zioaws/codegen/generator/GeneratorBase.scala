@@ -159,7 +159,7 @@ trait GeneratorBase {
             )
 
             val stripped = 
-              if (Utils.isOrContainsEnumShape(model.shape, models.serviceModel().getShapes())) {
+              if (Utils.isOrContainsEnumShape(fieldModel.shape, models.serviceModel().getShapes())) {
                 getterMethod
                   .stripSuffix("AsString")
                   .stripSuffix("AsStrings")
