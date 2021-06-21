@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets
 
 import io.github.vigoo.zioaws.codegen.generator.context._
 import io.github.vigoo.zioaws.codegen.generator.syntax._
+import software.amazon.awssdk.codegen.internal.Utils
 import software.amazon.awssdk.codegen.model.config.customization.ShapeModifier
 import zio.blocking
 import zio.{Chunk, ZIO}
@@ -157,9 +158,14 @@ trait GeneratorBase {
               fieldModel.shape
             )
 
-            val stripped = getterMethod
-              .stripSuffix("AsString")
-              .stripSuffix("AsStrings")
+            val stripped = 
+              if (Utils.isOrContainsEnumShape(fieldModel.shape, models.serviceModel().getShapes())) {
+                getterMethod
+                  .stripSuffix("AsString")
+                  .stripSuffix("AsStrings")
+              } else {
+                getterMethod
+              }
             if (fieldModel.typ == ModelType.String) {
               PropertyNames(getterMethod, stripped)
             } else {
