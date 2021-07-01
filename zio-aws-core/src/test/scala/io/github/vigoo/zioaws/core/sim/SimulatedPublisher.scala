@@ -34,7 +34,6 @@ object SimulatedPublisher {
       private val steps = mutable.Queue.empty[Action]
       simulation.foreach(step => steps.enqueue(step))
 
-      @tailrec
       override def onSubscribe(s: Subscription): Unit = {
         if (steps.nonEmpty) {
           steps.dequeue() match {
@@ -54,7 +53,6 @@ object SimulatedPublisher {
         }
       }
 
-      @tailrec
       override def onNext(t: T): Unit = {
         if (steps.nonEmpty) {
           steps.dequeue() match {
@@ -75,7 +73,6 @@ object SimulatedPublisher {
         }
       }
 
-      @tailrec
       override def onError(t: Throwable): Unit = {
         if (steps.nonEmpty) {
           steps.dequeue() match {
@@ -100,7 +97,6 @@ object SimulatedPublisher {
         }
       }
 
-      @tailrec
       override def onComplete(): Unit = {
         if (steps.nonEmpty) {
           steps.dequeue() match {

@@ -29,6 +29,7 @@ val callLogging: AwsCallAspect[Clock with Console] =
           .putStrLn(
             s"[${description.service}/${description.operation}] ran for $duration"
           )
+		  .ignore
           .as(r)
       }
     }

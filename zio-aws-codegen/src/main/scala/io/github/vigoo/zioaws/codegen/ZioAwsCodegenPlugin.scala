@@ -16,6 +16,9 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
     val awsLibraryVersion = settingKey[String](
       "Specifies the version of the  AWS Java SDK to depend on"
     )
+    val zioLibraryVersion = settingKey[String](
+      "Specifies the version of the ZIO library to depend on"
+    )
     val ciParallelJobs =
       settingKey[Int]("Number of parallel jobs in the generated circleCi file")
     val ciSeparateJobs = settingKey[Seq[String]]("List of subprojects to have their individual circleCi jobs")
@@ -44,6 +47,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
         val separateJobs = ciSeparateJobs.value
         val artifactLstTarget = artifactListTarget.value
         val ver = version.value
+        val scalaVer  = scalaVersion.value
 
         val params = Parameters(
           targetRoot = Path.fromJava(targetRoot.toPath),
@@ -51,7 +55,8 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
           parallelCiJobs = parallelJobs,
           separateCiJobs = separateJobs.toSet,
           artifactListTarget = Path.fromJava(artifactLstTarget.toPath),
-          version = ver
+          version = ver,
+          scalaVersion = scalaVer
         )
 
         zio.Runtime.default.unsafeRun {
@@ -106,6 +111,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
     val separateJobs = ciSeparateJobs.value
     val artifactLstTarget = artifactListTarget.value
     val ver = version.value
+    val scalaVer  = scalaVersion.value
 
     val params = Parameters(
       targetRoot = Path.fromJava(targetRoot.toPath),
@@ -113,7 +119,8 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
       parallelCiJobs = parallelJobs,
       separateCiJobs = separateJobs.toSet,
       artifactListTarget = Path.fromJava(artifactLstTarget.toPath),
-      version = ver
+      version = ver,
+      scalaVersion = scalaVer
     )
 
     zio.Runtime.default.unsafeRun {
@@ -141,6 +148,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
     val separateJobs = ciSeparateJobs.value
     val artifactLstTarget = artifactListTarget.value
     val ver = version.value
+    val scalaVer  = scalaVersion.value
 
     val params = Parameters(
       targetRoot = Path.fromJava(targetRoot.toPath),
@@ -148,7 +156,8 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
       parallelCiJobs = parallelJobs,
       separateCiJobs = separateJobs.toSet,
       artifactListTarget = Path.fromJava(artifactLstTarget.toPath),
-      version = ver
+      version = ver,
+      scalaVersion = scalaVer
     )
 
     zio.Runtime.default.unsafeRun {
@@ -203,6 +212,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
         val project = Project(fullName, file("generated") / name)
           .settings(
             libraryDependencies += "software.amazon.awssdk" % id.name % awsLibraryVersion.value,
+            libraryDependencies += "dev.zio" %% "zio-test" % zioLibraryVersion.value,
             awsLibraryId := id.toString,
             Compile / sourceGenerators += generateSources.taskValue,
             mappings in (Compile, packageSrc) ++= {
