@@ -69,10 +69,13 @@ object ActionRef {
     (action: ActionRef) => Json.fromString(action.ref)
 }
 
-case class Condition(expression: String)
+case class Condition(expression: String) {
+  def &&(other: Condition): Condition =
+    Condition(s"($expression) && (${other.expression})")
+}
 object Condition {
   implicit val encoder: Encoder[Condition] =
-    (c: Condition) => Json.fromString(c.expression)
+    (c: Condition) => Json.fromString(s"$${{ ${c.expression} }}")
 }
 
 sealed trait Step {

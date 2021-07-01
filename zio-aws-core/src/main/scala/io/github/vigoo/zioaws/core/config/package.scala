@@ -226,10 +226,7 @@ package object config {
         duration(
           "apiCallAttemptTimeout"
         ).optional ?? "Amount of time to wait for the HTTP request to complete before giving up" |@|
-        string("defaultProfileName").optional ?? "Default profile name")(
-        CommonClientConfig.apply,
-        CommonClientConfig.unapply
-      )
+        string("defaultProfileName").optional ?? "Default profile name").to[CommonClientConfig]
 
     val commonAwsConfig: ConfigDescriptor[CommonAwsConfig] =
       (nested("region")(region).optional ?? "AWS region to connect to" |@|
@@ -241,10 +238,7 @@ package object config {
         ).optional ?? "Overrides the AWS service endpoint" |@|
         nested("client")(
           commonClientConfig
-        ).optional ?? "Common settings for AWS service clients")(
-        CommonAwsConfig.apply,
-        CommonAwsConfig.unapply
-      )
+        ).optional ?? "Common settings for AWS service clients").to[CommonAwsConfig]
   }
 
 }

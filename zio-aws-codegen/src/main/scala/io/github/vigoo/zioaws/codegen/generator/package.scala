@@ -104,8 +104,8 @@ package object generator {
         ): ZIO[Console with Blocking, GeneratorFailure, Set[File]] = {
           val generate = for {
             moduleFile <- generateServiceModule()
-            modelFile <- generateServiceModels()
-          } yield Set(moduleFile, modelFile)
+            modelFiles <- generateServiceModels()
+          } yield Set(moduleFile) union modelFiles
 
           generate
             .provideSomeLayer[Blocking](createGeneratorContext(id, model, sbtLogger))
@@ -130,6 +130,8 @@ package object generator {
               generateArtifactList(ids, config.version)
             )
           } yield ()
+
+        override protected val scalaVersion: String = cfg.scalaVersion
       }
   }
 

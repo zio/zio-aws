@@ -1,5 +1,5 @@
-val zioVersion = "1.0.8"
-val awsVersion = "2.16.70"
+val zioVersion = "1.0.9"
+val awsVersion = "2.16.92"
 
 sbtPlugin := true
 organization := "io.github.vigoo"
@@ -10,6 +10,6 @@ libraryDependencies ++= Seq(
   "io.circe" %% "circe-yaml" % "0.13.1",
   "software.amazon.awssdk" % "codegen" % awsVersion,
   "software.amazon.awssdk" % "aws-sdk-java" % awsVersion,
-  "org.scalameta" %% "scalameta" % "4.3.21",
+  "org.scalameta" %% "scalameta" % "4.4.21",
   "com.lihaoyi" %% "os-lib" % "0.7.1"
 )

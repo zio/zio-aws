@@ -47,6 +47,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
         val separateJobs = ciSeparateJobs.value
         val artifactLstTarget = artifactListTarget.value
         val ver = version.value
+        val scalaVer  = scalaVersion.value
 
         val params = Parameters(
           targetRoot = Path.fromJava(targetRoot.toPath),
@@ -54,7 +55,8 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
           parallelCiJobs = parallelJobs,
           separateCiJobs = separateJobs.toSet,
           artifactListTarget = Path.fromJava(artifactLstTarget.toPath),
-          version = ver
+          version = ver,
+          scalaVersion = scalaVer
         )
 
         zio.Runtime.default.unsafeRun {
@@ -109,6 +111,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
     val separateJobs = ciSeparateJobs.value
     val artifactLstTarget = artifactListTarget.value
     val ver = version.value
+    val scalaVer  = scalaVersion.value
 
     val params = Parameters(
       targetRoot = Path.fromJava(targetRoot.toPath),
@@ -116,7 +119,8 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
       parallelCiJobs = parallelJobs,
       separateCiJobs = separateJobs.toSet,
       artifactListTarget = Path.fromJava(artifactLstTarget.toPath),
-      version = ver
+      version = ver,
+      scalaVersion = scalaVer
     )
 
     zio.Runtime.default.unsafeRun {
@@ -144,6 +148,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
     val separateJobs = ciSeparateJobs.value
     val artifactLstTarget = artifactListTarget.value
     val ver = version.value
+    val scalaVer  = scalaVersion.value
 
     val params = Parameters(
       targetRoot = Path.fromJava(targetRoot.toPath),
@@ -151,7 +156,8 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
       parallelCiJobs = parallelJobs,
       separateCiJobs = separateJobs.toSet,
       artifactListTarget = Path.fromJava(artifactLstTarget.toPath),
-      version = ver
+      version = ver,
+      scalaVersion = scalaVer
     )
 
     zio.Runtime.default.unsafeRun {
@@ -206,7 +212,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
         val project = Project(fullName, file("generated") / name)
           .settings(
             libraryDependencies += "software.amazon.awssdk" % id.name % awsLibraryVersion.value,
-            libraryDependencies += "dev.zio" %% "zio-test" % zioLibraryVersion.value % Provided,
+            libraryDependencies += "dev.zio" %% "zio-test" % zioLibraryVersion.value,
             awsLibraryId := id.toString,
             Compile / sourceGenerators += generateSources.taskValue,
             mappings in (Compile, packageSrc) ++= {

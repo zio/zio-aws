@@ -213,32 +213,34 @@ trait ServiceModelGenerator {
         case ModelType.Enum =>
           generateEnum(m, awsShapeNameT)
         case ModelType.String =>
-          generateSimple(q"""type ${m.asType} = String""")
+          generateSimple(m.name + ".scala", q"""type ${m.asType} = String""")
         case ModelType.Integer =>
-          generateSimple(q"""type ${m.asType} = Int""")
+          generateSimple(m.name + ".scala" , q"""type ${m.asType} = Int""")
         case ModelType.Long =>
-          generateSimple(q"""type ${m.asType} = Long""")
+          generateSimple(m.name + ".scala", q"""type ${m.asType} = Long""")
         case ModelType.Float =>
-          generateSimple(q"""type ${m.asType} = Float""")
+          generateSimple(m.name + ".scala", q"""type ${m.asType} = Float""")
         case ModelType.Double =>
-          generateSimple(q"""type ${m.asType} = Double""")
+          generateSimple(m.name + ".scala", q"""type ${m.asType} = Double""")
         case ModelType.Boolean =>
-          generateSimple(q"""type ${m.asType} = Boolean""")
+          generateSimple(m.name + ".scala", q"""type ${m.asType} = Boolean""")
         case ModelType.Timestamp =>
-          generateSimple(q"""type ${m.asType} = Instant""")
+          generateSimple(m.name + ".scala", q"""type ${m.asType} = Instant""")
         case ModelType.Blob =>
-          generateSimple(q"""type ${m.asType} = Chunk[Byte]""")
+          generateSimple(m.name + ".scala", q"""type ${m.asType} = Chunk[Byte]""")
         case _ =>
-          generateSimple(q"""type ${m.asType} = Unit""")
+          generateSimple(m.name + ".scala", q"""type ${m.asType} = Unit""")
       }
     } yield wrapper
   }
 
   private def generateSimple(
+      fileName: String,
       defn: Defn
   ): ZIO[GeneratorContext, GeneratorFailure, ModelWrapper] =
     ZIO.succeed(
       ModelWrapper(
+        None,
         code = List(defn)
       )
     )
@@ -375,6 +377,7 @@ trait ServiceModelGenerator {
           fieldFragments.applyToBuilder(term)
       }
     } yield ModelWrapper(
+      fileName = Some(m.name + ".scala"),
       code = List(
         q"""final case class ${m.asType}(..${fields.map(_.paramDef)}) {
                         def buildAwsValue(): $awsShapeNameT = {
@@ -411,6 +414,7 @@ trait ServiceModelGenerator {
       itemModel <- get(m.shape.getListMember.getShape)
       elemT <- TypeMapping.toWrappedType(itemModel)
     } yield ModelWrapper(
+      fileName = None,
       code = List(q"""type ${m.asType} = List[$elemT]""")
     )
   }
@@ -424,6 +428,7 @@ trait ServiceModelGenerator {
       keyT <- TypeMapping.toWrappedType(keyModel)
       valueT <- TypeMapping.toWrappedType(valueModel)
     } yield ModelWrapper(
+      fileName = None,
       code = List(q"""type ${m.asType} = Map[$keyT, $valueT]""")
     )
   }
@@ -442,7 +447,7 @@ trait ServiceModelGenerator {
         val enumValueTerm = Term.Name(enumValue)
         val enumValueScreaming =
           Term.Name(namingStrategy.getEnumValueName(enumValue))
-        q"""final case object $enumValueTerm extends $shapeNameI {
+        q"""case object $enumValueTerm extends $shapeNameI {
               override def unwrap: $awsShapeNameT = ${Term
           .Select(modelPkg, m.asTerm)}.${enumValueScreaming}
             }
@@ -456,10 +461,11 @@ trait ServiceModelGenerator {
             Term.Name(namingStrategy.getEnumValueName(enumValue))
           val term =
             Term.Select(Term.Select(modelPkg, m.asTerm), enumValueScreaming)
-          p"""case $term => $enumValueTerm"""
+          p"""case $term => { val r = $enumValueTerm; r }"""
         }
       )
     } yield ModelWrapper(
+      fileName = Some(m.name + ".scala"),
       code = List(
         q"""sealed trait ${m.asType} {
               def unwrap: $awsShapeNameT
@@ -477,7 +483,7 @@ trait ServiceModelGenerator {
   }
 
   private def generateServiceModelsCode()
-      : ZIO[GeneratorContext, GeneratorFailure, String] =
+      : ZIO[GeneratorContext, GeneratorFailure, Map[String, String]] =
     for {
       id <- getService
       pkgName = Term.Name(id.moduleName)
@@ -492,57 +498,54 @@ trait ServiceModelGenerator {
       primitiveModels = removeDuplicates(primitives)
       complexModels = removeDuplicates(complexes)
 
-      parentModuleImport =
-        if (id.subModule.isDefined) {
-          val parentModelPackage = Import(
-            List(
-              Importer(
-                Term.Select(
-                  Term.Select(q"io.github.vigoo.zioaws", Term.Name(id.name)),
-                  Term.Name("model")
-                ),
-                List(Importee.Wildcard())
-              )
-            )
-          )
-          List(parentModelPackage)
-        } else {
-          List.empty
-        }
-
       primitiveModels <-
         ZIO.foreach(primitiveModels.toList.sortBy(_.name))(generateModel)
       models <- ZIO.foreach(complexModels.toList.sortBy(_.name))(generateModel)
-    } yield q"""package $fullPkgName {
+      modelsForPackage = models.filter(_.fileName.isEmpty)
+      separateModels = models.collect { case ModelWrapper(Some(fileName), code) => (fileName, code) }
+      packageCode = 
+        q"""package $fullPkgName {
 
-                  import scala.jdk.CollectionConverters._
-                  import java.time.Instant
-                  import zio.{Chunk, ZIO}
-                  import software.amazon.awssdk.core.SdkBytes
+            import scala.jdk.CollectionConverters._
+            import java.time.Instant
+            import zio.{Chunk, ZIO}
+            import software.amazon.awssdk.core.SdkBytes
 
-                  ..$parentModuleImport
+            package object model {
+              object primitives {
+                ..${primitiveModels.flatMap(_.code)}
+              }
 
-                  package object model {
-                    object primitives {
-                      ..${primitiveModels.flatMap(_.code)}
-                    }
+              ..${modelsForPackage.flatMap(_.code)}
+            }}"""
+          modelCodes = separateModels.map { case (fileName, code) =>
+            fileName ->
+            q"""package $fullPkgName.model {
 
-                  ..${models.flatMap(_.code)}
-                  }}""".toString
+              import scala.jdk.CollectionConverters._
+              import java.time.Instant
+              import zio.{Chunk, ZIO}
+              import software.amazon.awssdk.core.SdkBytes
+
+              ..${code}
+            }"""
+            }
+    } yield ("package.scala" -> prettyPrint(packageCode) :: modelCodes.map { case (k, v) => (k, prettyPrint(v)) }).toMap
 
   protected def generateServiceModels()
-      : ZIO[GeneratorContext with Blocking, GeneratorFailure, File] =
+      : ZIO[GeneratorContext with Blocking, GeneratorFailure, Set[File]] =
     for {
-      code <- generateServiceModelsCode()
+      codes <- generateServiceModelsCode()
       id <- getService
       moduleName = id.moduleName
       targetRoot = config.targetRoot
       packageParent = targetRoot / "io/github/vigoo/zioaws"
       packageRoot = packageParent / moduleName
       modelsRoot = packageRoot / "model"
-      modelFile = modelsRoot / "package.scala"
-      _ <-
-        Files.createDirectories(modelsRoot).mapError(FailedToCreateDirectories)
-      _ <- writeIfDifferent(modelFile, code)
-    } yield modelFile.toFile
+      _ <-Files.createDirectories(modelsRoot).mapError(FailedToCreateDirectories)
+      paths <- ZIO.foreach(codes.toSet) { case (name, code) => 
+        val modelFile = modelsRoot / name
+        writeIfDifferent(modelFile, code).as(modelFile)
+      }
+    } yield paths.map(_.toFile)
 }
