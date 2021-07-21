@@ -8,7 +8,7 @@ import fs2.interop.reactivestreams._
 import org.http4s.Method.{NoBody, PermitsBody}
 import org.http4s._
 import org.http4s.client._
-import org.http4s.client.blaze._
+import org.http4s.blaze.client._
 import software.amazon.awssdk.http.async.{
   AsyncExecuteRequest,
   SdkAsyncHttpClient,

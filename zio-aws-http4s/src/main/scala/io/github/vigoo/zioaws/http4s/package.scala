@@ -11,7 +11,7 @@ import io.github.vigoo.zioaws.core.httpclient.{
 import io.github.vigoo.zioaws.core.httpclient.descriptors.channelOptions
 import javax.net.ssl.SSLContext
 import org.http4s.blaze.channel.{ChannelOptions, OptionValue}
-import org.http4s.client.blaze.{BlazeClientBuilder, ParserMode}
+import org.http4s.blaze.client.{BlazeClientBuilder, ParserMode}
 import org.http4s.client.{RequestKey, defaults}
 import org.http4s.headers.{AgentProduct, `User-Agent`}
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient
