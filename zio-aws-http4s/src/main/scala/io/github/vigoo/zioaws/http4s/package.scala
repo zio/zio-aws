@@ -21,6 +21,7 @@ import zio.{Has, Runtime, Task, ZIO, ZLayer}
 
 import scala.concurrent.duration._
 import scala.util.control.NonFatal
+import org.http4s.ProductId
 
 package object http4s {
   val default: ZLayer[Any, Throwable, HttpClient] = customized(identity)
@@ -166,7 +167,7 @@ package object http4s {
           defaults.ConnectTimeout
         ) ?? "Timeout for connecting to the server" |@|
         nested("userAgent")(userAgent).default(
-          `User-Agent`(AgentProduct("http4s-blaze", Some(BuildInfo.version)))
+          `User-Agent`(ProductId("http4s-blaze", Some(BuildInfo.version)))
         ) ?? "User-Agent header sent by the client" |@|
         int("maxTotalConnections").default(
           10
@@ -200,7 +201,7 @@ package object http4s {
             )
           )
         ) ?? "Collection of socket options"
-    )(BlazeClientConfig.apply, BlazeClientConfig.unapply)
+    ).to[BlazeClientConfig]
   }
 
 }
