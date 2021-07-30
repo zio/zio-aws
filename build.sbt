@@ -36,7 +36,6 @@ lazy val core = Project("zio-aws-core", file("zio-aws-core"))
 
 lazy val http4s = Project("zio-aws-http4s", file("zio-aws-http4s"))
   .settings(
-    crossScalaVersions := List(scala212Version, scala213Version),
     libraryDependencies ++= Seq(
       "org.http4s" %% "http4s-dsl" % http4sVersion,
       "org.http4s" %% "http4s-blaze-client" % http4sVersion,
@@ -46,7 +45,7 @@ lazy val http4s = Project("zio-aws-http4s", file("zio-aws-http4s"))
       "dev.zio" %% "zio-config" % zioConfigVersion,
       "co.fs2" %% "fs2-reactive-streams" % fs2Version,
       "org.typelevel" %% "cats-effect" % catsEffectVersion,
-      "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.1"
+      "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.0"
     )
   )
   .dependsOn(core)
@@ -117,7 +116,8 @@ lazy val integtests = Project("integtests", file("integtests"))
       "org.apache.logging.log4j" % "log4j-api" % "2.13.3",
       "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.13.3"
     ),
-    testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
+    testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
+    evictionErrorLevel := Level.Info
   )
   .dependsOn(
     core,
@@ -178,7 +178,8 @@ lazy val docs = project
           case _ => node
         }
       }).transform(node).head
-    }
+    },
+    evictionErrorLevel := Level.Info
   )
   .dependsOn(
     core,
