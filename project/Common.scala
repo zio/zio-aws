@@ -17,17 +17,17 @@ object Common extends AutoPlugin {
     val zioConfigVersion = "1.0.6"
     val catsEffectVersion = "2.5.1"
 
-    val awsVersion = "2.16.97"
+    val awsVersion = "2.17.8"
     val awsSubVersion = awsVersion.drop(awsVersion.indexOf('.') + 1)
-    val http4sVersion = "0.21.22"
-    val fs2Version = "2.5.8"
+    val http4sVersion = "0.22.0"
+    val fs2Version = "2.5.9"
 
     val majorVersion = "3"
     val zioAwsVersionPrefix = s"$majorVersion.$awsSubVersion."
 
     val scala212Version = "2.12.12"
     val scala213Version = "2.13.6"
-    val scala3Version = "3.0.0"
+    val scala3Version = "3.0.1"
 
     val scalacOptions212 = Seq("-Ypartial-unification", "-deprecation")
     val scalacOptions213 = Seq("-deprecation")

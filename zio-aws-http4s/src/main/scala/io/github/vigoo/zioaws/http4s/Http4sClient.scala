@@ -5,10 +5,9 @@ import java.util.concurrent.CompletableFuture
 import cats.effect.{ExitCase, Resource}
 import fs2._
 import fs2.interop.reactivestreams._
-import org.http4s.Method.{NoBody, PermitsBody}
 import org.http4s._
 import org.http4s.client._
-import org.http4s.client.blaze._
+import org.http4s.blaze.client._
 import software.amazon.awssdk.http.async.{
   AsyncExecuteRequest,
   SdkAsyncHttpClient,
@@ -26,6 +25,7 @@ import zio.interop.catz._
 
 import scala.jdk.CollectionConverters._
 import scala.compat.java8.FutureConverters._
+import org.typelevel.ci.CIString
 
 class Http4sClient(client: Client[Task], closeFn: () => Unit)(implicit
     runtime: Runtime[Any]
@@ -55,30 +55,25 @@ class Http4sClient(client: Client[Task], closeFn: () => Unit)(implicit
     closeFn()
   }
 
-  private def captureCanHaveBody[M <: Method](
-      m: M
-  )(implicit capture: CaptureCanHaveBody[M]): ExtendedMethod =
-    ExtendedMethod(m, capture.canHaveBody)
-
   private def toMethod(method: SdkHttpMethod): ExtendedMethod =
     method match {
-      case SdkHttpMethod.GET     => captureCanHaveBody(Method.GET)
-      case SdkHttpMethod.POST    => captureCanHaveBody(Method.POST)
-      case SdkHttpMethod.PUT     => captureCanHaveBody(Method.PUT)
-      case SdkHttpMethod.DELETE  => captureCanHaveBody(Method.DELETE)
-      case SdkHttpMethod.HEAD    => captureCanHaveBody(Method.HEAD)
-      case SdkHttpMethod.PATCH   => captureCanHaveBody(Method.PATCH)
-      case SdkHttpMethod.OPTIONS => captureCanHaveBody(Method.OPTIONS)
+      case SdkHttpMethod.GET     => ExtendedMethod(Method.GET, true)
+      case SdkHttpMethod.POST    => ExtendedMethod(Method.POST, true)
+      case SdkHttpMethod.PUT     => ExtendedMethod(Method.PUT, true)
+      case SdkHttpMethod.DELETE  => ExtendedMethod(Method.DELETE, true)
+      case SdkHttpMethod.HEAD    => ExtendedMethod(Method.HEAD, true)
+      case SdkHttpMethod.PATCH   => ExtendedMethod(Method.PATCH, true)
+      case SdkHttpMethod.OPTIONS => ExtendedMethod(Method.OPTIONS, true)
     }
 
   private def toHeaders(
       name: String,
       values: Iterable[String]
-  ): List[Header] = {
+  ): List[Header.ToRaw] = {
     if (name == "Expect" && values.toSet == Set("100-continue")) {
       List.empty // skipping
     } else {
-      values.map(Header(name, _)).toList
+      values.map(value => Header.ToRaw.rawToRaw(Header.Raw(CIString(name), value))).toList
     }
   }
 
@@ -108,7 +103,7 @@ class Http4sClient(client: Client[Task], closeFn: () => Unit)(implicit
           .headers()
           .asScala
           .toList
-          .flatMap { case (name, hdrs) => toHeaders(name, hdrs.asScala) }
+          .flatMap { case (name, hdrs) => toHeaders(name, hdrs.asScala) } : _*
       ),
       body = toEntity(method, contentPublisher)
     )
@@ -124,10 +119,10 @@ class Http4sClient(client: Client[Task], closeFn: () => Unit)(implicit
           SdkHttpResponse
             .builder()
             .headers(
-              response.headers.toList
+              response.headers.headers.toList
                 .groupBy(_.name)
                 .map { case (name, values) =>
-                  (name.value, values.map(_.value).asJava)
+                  (name.toString, values.map(_.value).asJava)
                 }
                 .asJava
             )
@@ -157,24 +152,6 @@ class Http4sClient(client: Client[Task], closeFn: () => Unit)(implicit
 
 object Http4sClient {
   case class ExtendedMethod(value: Method, canHaveBody: Boolean)
-
-  trait CaptureCanHaveBody[M] {
-    val canHaveBody: Boolean
-  }
-
-  object CaptureCanHaveBody {
-    implicit def canHaveBody[M <: Method with PermitsBody]
-        : CaptureCanHaveBody[M] =
-      new CaptureCanHaveBody[M] {
-        override val canHaveBody: Boolean = true
-      }
-
-    implicit def cannotHaveBody[M <: Method with NoBody]
-        : CaptureCanHaveBody[M] =
-      new CaptureCanHaveBody[M] {
-        override val canHaveBody: Boolean = false
-      }
-  }
 
   case class Http4sClientBuilder(
       customization: BlazeClientBuilder[Task] => BlazeClientBuilder[Task] =
