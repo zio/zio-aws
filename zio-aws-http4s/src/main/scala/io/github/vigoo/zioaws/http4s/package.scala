@@ -15,6 +15,8 @@ import org.http4s.blaze.client.{BlazeClientBuilder, ParserMode}
 import org.http4s.client.{RequestKey, defaults}
 import org.http4s.headers.{AgentProduct, `User-Agent`}
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient
+import zio.blocking.Blocking
+import zio.clock.Clock
 import zio.config.ConfigDescriptor._
 import zio.config._
 import zio.{Has, Runtime, Task, ZIO, ZLayer}
@@ -24,12 +26,12 @@ import scala.util.control.NonFatal
 import org.http4s.ProductId
 
 package object http4s {
-  val default: ZLayer[Any, Throwable, HttpClient] = customized(identity)
+  val default: ZLayer[Clock with Blocking, Throwable, HttpClient] = customized(identity)
 
   def customized(
       f: BlazeClientBuilder[Task] => BlazeClientBuilder[Task]
-  ): ZLayer[Any, Throwable, HttpClient] =
-    ZIO.runtime.toManaged_.flatMap { implicit runtime: Runtime[Any] =>
+  ): ZLayer[Clock with Blocking, Throwable, HttpClient] =
+    ZIO.runtime.toManaged_.flatMap { implicit runtime: Runtime[Clock with Blocking] =>
       Http4sClient
         .Http4sClientBuilder(f)
         .toManaged
@@ -72,9 +74,9 @@ package object http4s {
       maxConnectionsPerRequestKey: Option[RequestKey => Int] = None,
       asynchronousChannelGroup: Option[AsynchronousChannelGroup] = None,
       additionalSocketOptions: Seq[OptionValue[_]] = Seq.empty
-  ): ZLayer[Has[BlazeClientConfig], Throwable, HttpClient] =
+  ): ZLayer[Has[BlazeClientConfig] with Clock with Blocking, Throwable, HttpClient] =
     ZLayer.fromServiceManaged { config =>
-      ZIO.runtime.toManaged_.flatMap { implicit runtime: Runtime[Any] =>
+      ZIO.runtime.toManaged_.flatMap { implicit runtime: Runtime[Clock with Blocking] =>
         Http4sClient
           .Http4sClientBuilder(
             _.withResponseHeaderTimeout(config.responseHeaderTimeout)

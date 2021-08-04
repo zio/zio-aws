@@ -2,7 +2,8 @@ package io.github.vigoo.zioaws.http4s
 
 import java.util.concurrent.CompletableFuture
 
-import cats.effect.{ExitCase, Resource}
+import cats.effect._
+import cats.effect.Resource.ExitCase
 import fs2._
 import fs2.interop.reactivestreams._
 import org.http4s._
@@ -21,6 +22,8 @@ import software.amazon.awssdk.http.{
 }
 import software.amazon.awssdk.utils.AttributeMap
 import zio._
+import zio.blocking.Blocking
+import zio.clock.Clock
 import zio.interop.catz._
 
 import scala.jdk.CollectionConverters._
@@ -28,7 +31,7 @@ import scala.compat.java8.FutureConverters._
 import org.typelevel.ci.CIString
 
 class Http4sClient(client: Client[Task], closeFn: () => Unit)(implicit
-    runtime: Runtime[Any]
+    runtime: Runtime[Clock with Blocking]
 ) extends SdkAsyncHttpClient {
 
   import Http4sClient._
@@ -73,7 +76,9 @@ class Http4sClient(client: Client[Task], closeFn: () => Unit)(implicit
     if (name == "Expect" && values.toSet == Set("100-continue")) {
       List.empty // skipping
     } else {
-      values.map(value => Header.ToRaw.rawToRaw(Header.Raw(CIString(name), value))).toList
+      values
+        .map(value => Header.ToRaw.rawToRaw(Header.Raw(CIString(name), value)))
+        .toList
     }
   }
 
@@ -82,9 +87,10 @@ class Http4sClient(client: Client[Task], closeFn: () => Unit)(implicit
       publisher: SdkHttpContentPublisher
   ): EntityBody[Task] =
     if (method.canHaveBody) {
-      publisher.toStream
+      publisher
+        .toStream[Task]
         .map(fs2.Chunk.byteBuffer)
-        .flatMap(Stream.chunk)
+        .flatMap(Stream.chunk(_))
     } else {
       EmptyBody
     }
@@ -103,7 +109,7 @@ class Http4sClient(client: Client[Task], closeFn: () => Unit)(implicit
           .headers()
           .asScala
           .toList
-          .flatMap { case (name, hdrs) => toHeaders(name, hdrs.asScala) } : _*
+          .flatMap { case (name, hdrs) => toHeaders(name, hdrs.asScala) }: _*
       ),
       body = toEntity(method, contentPublisher)
     )
@@ -132,20 +138,18 @@ class Http4sClient(client: Client[Task], closeFn: () => Unit)(implicit
         )
       )
       streamFinished <- Promise.make[Throwable, Unit]
-      _ <- Task(
-        handler.onStream(
-          response.body.chunks
-            .map(_.toByteBuffer)
-            .onFinalizeCase {
-              case ExitCase.Completed => streamFinished.succeed(()).unit
-              case ExitCase.Canceled  => streamFinished.succeed(()).unit
-              case ExitCase.Error(throwable) =>
-                streamFinished.fail(throwable).unit
-            }
-            .toUnicastPublisher
-        )
-      )
-      _ <- streamFinished.await
+      _ <- response.body.chunks
+        .map(_.toByteBuffer)
+        .onFinalizeCase {
+          case ExitCase.Succeeded => streamFinished.succeed(()).unit
+          case ExitCase.Canceled  => streamFinished.succeed(()).unit
+          case ExitCase.Errored(throwable) =>
+            streamFinished.fail(throwable).unit
+        }
+        .toUnicastPublisher
+        .use { publisher =>
+          Task(handler.onStream(publisher)) *> streamFinished.await
+        }
     } yield null.asInstanceOf[Void]
   }
 }
@@ -156,10 +160,12 @@ object Http4sClient {
   case class Http4sClientBuilder(
       customization: BlazeClientBuilder[Task] => BlazeClientBuilder[Task] =
         identity
-  )(implicit runtime: Runtime[Any])
+  )(implicit runtime: Runtime[Clock with Blocking])
       extends SdkAsyncHttpClient.Builder[Http4sClientBuilder] {
 
-    def withRuntime(runtime: Runtime[Any]): Http4sClientBuilder =
+    def withRuntime(
+        runtime: Runtime[Clock with Blocking]
+    ): Http4sClientBuilder =
       copy()(runtime)
 
     private def createClient(): Resource[Task, Client[Task]] = {
@@ -175,11 +181,10 @@ object Http4sClient {
       new Http4sClient(client, () => runtime.unsafeRun(closeFn))
     }
 
-    def toManaged: ZManaged[Any, Throwable, Http4sClient] = {
-      createClient().toManaged.map { client =>
+    def toManaged: ZManaged[Clock with Blocking, Throwable, Http4sClient] =
+      createClient().toManagedZIO.map { client =>
         new Http4sClient(client, () => ())
       }
-    }
   }
 
   def builder(): Http4sClientBuilder = Http4sClientBuilder()(Runtime.default)
