@@ -1,0 +1,309 @@
+<!DOCTYPE html><html><head><title>zio-aws: Artifacts</title><meta charset="utf-8" /><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Daniel Vigovszky" /><meta name="description" content="Low-level AWS wrapper for ZIO for all AWS services" /><meta name="og:image" content="https://vigoo.github.io/zio-aws/img/poster.png" /><meta name="image" property="og:image" content="https://vigoo.github.io/zio-aws/img/poster.png" /><meta name="og:title" content="zio-aws: Artifacts" /><meta name="title" property="og:title" content="zio-aws: Artifacts" /><meta name="og:site_name" content="zio-aws" /><meta name="og:url" content="https://vigoo.github.io/zio-aws/" /><meta name="og:type" content="website" /><meta name="og:description" content="Low-level AWS wrapper for ZIO for all AWS services" /><link rel="icon" type="image/png" href="https://vigoo.github.io/zio-aws/img/favicon.png" /><meta name="twitter:title" content="zio-aws: Artifacts" /><meta name="twitter:image" content="https://vigoo.github.io/zio-aws/img/poster.png" /><meta name="twitter:description" content="Low-level AWS wrapper for ZIO for all AWS services" /><meta name="twitter:card" content="summary_large_image" /><meta name="twitter:creator" content="@dvigovszky" /><link rel="icon" type="image/png" sizes="16x16" href="https://vigoo.github.io/zio-aws/img/favicon16x16.png" /><link rel="icon" type="image/png" sizes="24x24" href="https://vigoo.github.io/zio-aws/img/favicon24x24.png" /><link rel="icon" type="image/png" sizes="32x32" href="https://vigoo.github.io/zio-aws/img/favicon32x32.png" /><link rel="icon" type="image/png" sizes="48x48" href="https://vigoo.github.io/zio-aws/img/favicon48x48.png" /><link rel="icon" type="image/png" sizes="57x57" href="https://vigoo.github.io/zio-aws/img/favicon57x57.png" /><link rel="icon" type="image/png" sizes="60x60" href="https://vigoo.github.io/zio-aws/img/favicon60x60.png" /><link rel="icon" type="image/png" sizes="64x64" href="https://vigoo.github.io/zio-aws/img/favicon64x64.png" /><link rel="icon" type="image/png" sizes="70x70" href="https://vigoo.github.io/zio-aws/img/favicon70x70.png" /><link rel="icon" type="image/png" sizes="72x72" href="https://vigoo.github.io/zio-aws/img/favicon72x72.png" /><link rel="icon" type="image/png" sizes="76x76" href="https://vigoo.github.io/zio-aws/img/favicon76x76.png" /><link rel="icon" type="image/png" sizes="96x96" href="https://vigoo.github.io/zio-aws/img/favicon96x96.png" /><link rel="icon" type="image/png" sizes="114x114" href="https://vigoo.github.io/zio-aws/img/favicon114x114.png" /><link rel="icon" type="image/png" sizes="120x120" href="https://vigoo.github.io/zio-aws/img/favicon120x120.png" /><link rel="icon" type="image/png" sizes="128x128" href="https://vigoo.github.io/zio-aws/img/favicon128x128.png" /><link rel="icon" type="image/png" sizes="144x144" href="https://vigoo.github.io/zio-aws/img/favicon144x144.png" /><link rel="icon" type="image/png" sizes="150x150" href="https://vigoo.github.io/zio-aws/img/favicon150x150.png" /><link rel="icon" type="image/png" sizes="152x152" href="https://vigoo.github.io/zio-aws/img/favicon152x152.png" /><link rel="icon" type="image/png" sizes="196x196" href="https://vigoo.github.io/zio-aws/img/favicon196x196.png" /><link rel="icon" type="image/png" sizes="310x310" href="https://vigoo.github.io/zio-aws/img/favicon310x310.png" /><link rel="icon" type="image/png" sizes="310x150" href="https://vigoo.github.io/zio-aws/img/favicon310x150.png" /><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" /><link rel="stylesheet" href="https://vigoo.github.io/zio-aws/highlight/styles/vs.css" /><link rel="stylesheet" href="/zio-aws/css/light-style.css" /><script async="async">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-56320875-3' , 'auto');
+ga('send', 'pageview');
+      </script></head><body class="docs"><div id="wrapper"><div id="sidebar-wrapper"><div id="sidebar-brand"><a href="/zio-aws/" class="brand"><div class="brand-wrapper"></div><span>zio-aws</span></a><button id="main-toggle" class="sidebar-toggle"><span class="close"></span></button></div><div class="sidebar-nav"> <div class="sidebar-nav-item  "><a href="/zio-aws/index" title="Home" class="">Home</a></div> <div class="sidebar-nav-item  "><a href="/zio-aws/docs/index.html" title="Getting started" class="">Getting started</a></div> <div class="sidebar-nav-item active "><a href="/zio-aws/docs/artifacts.html" title="Artifacts" class="active">Artifacts</a></div> <div class="sidebar-nav-item  "><a href="/zio-aws/docs/wrapper.html" title="Wrappers" class="">Wrappers</a></div> <div class="sidebar-nav-item  "><a href="/zio-aws/docs/http.html" title="HTTP" class="">HTTP</a></div> <div class="sidebar-nav-item  "><a href="/zio-aws/docs/aspects.html" title="Aspects" class="">Aspects</a></div> <div class="sidebar-nav-item  "><a href="/zio-aws/docs/config.html" title="Configuration" class="">Configuration</a></div> <div class="sidebar-nav-item  "><a href="/zio-aws/docs/examples.html" title="Examples" class="">Examples</a></div> <div class="sidebar-nav-item  "><a href="/zio-aws/docs/changelog.html" title="Version history" class="">Version history</a></div></div></div><div id="page-content-wrapper"><div class="nav"><div class="container-fluid"><div class="row"><div class="col-lg-12"><div class="action-menu pull-left clearfix"><a href="#menu-toggle" id="menu-toggle"><i class="fa fa-bars" aria-hidden="true"></i></a></div><ul class="pull-right"><li class="search-nav"><div id="search-dropdown"><label><i class="fa fa-search"></i>Search</label><input id="search-bar" type="text" placeholder="Enter keywords here..." onclick="displayToggleSearch(event)" /><ul id="search-dropdown-content" class="dropdown dropdown-content"></ul></div></li><li id="gh-eyes-item" class="hidden-xs to-uppercase"><a href="https://github.com/vigoo/zio-aws" target="_blank" rel="noopener noreferrer"><i class="fa fa-eye"></i><span>Watchers<span id="eyes" class="label label-default">--</span></span></a></li><li id="gh-stars-item" class="hidden-xs to-uppercase"><a href="https://github.com/vigoo/zio-aws" target="_blank" rel="noopener noreferrer"><i class="fa fa-star-o"></i><span>Stars<span id="stars" class="label label-default">--</span></span></a></li></ul></div></div></div></div><div id="content" data-github-owner="vigoo" data-github-repo="zio-aws"><div class="content-wrapper"><section><h1 id="published-artifacts">Published artifacts</h1>
+
+<h3 id="http-client-modules">HTTP client modules:</h3>
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-akka-http"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-http4s"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-netty"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+</code></pre></div></div>
+
+<h3 id="list-of-all-the-generated-libraries">List of all the generated libraries:</h3>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-accessanalyzer"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-acm"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-acmpca"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-alexaforbusiness"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-amp"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-amplify"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-amplifybackend"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-apigateway"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-apigatewaymanagementapi"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-apigatewayv2"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-appconfig"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-appflow"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-appintegrations"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-applicationautoscaling"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-applicationcostprofiler"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-applicationdiscovery"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-applicationinsights"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-appmesh"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-apprunner"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-appstream"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-appsync"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-athena"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-auditmanager"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-autoscaling"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-autoscalingplans"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-backup"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-batch"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-braket"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-budgets"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-chime"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-cloud9"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-clouddirectory"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-cloudformation"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-cloudfront"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-cloudhsm"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-cloudhsmv2"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-cloudsearch"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-cloudsearchdomain"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-cloudtrail"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-cloudwatch"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-cloudwatchevents"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-cloudwatchlogs"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-codeartifact"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-codebuild"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-codecommit"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-codedeploy"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-codeguruprofiler"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-codegurureviewer"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-codepipeline"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-codestar"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-codestarconnections"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-codestarnotifications"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-cognitoidentity"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-cognitoidentityprovider"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-cognitosync"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-comprehend"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-comprehendmedical"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-computeoptimizer"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-config"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-connect"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-connectcontactlens"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-connectparticipant"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-costandusagereport"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-costexplorer"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-customerprofiles"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-databasemigration"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-databrew"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-dataexchange"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-datapipeline"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-datasync"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-dax"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-detective"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-devicefarm"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-devopsguru"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-directconnect"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-directory"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-dlm"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-docdb"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-dynamodb"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-dynamodbstreams"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-ebs"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-ec2"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-ec2instanceconnect"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-ecr"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-ecrpublic"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-ecs"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-efs"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-eks"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-elasticache"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-elasticbeanstalk"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-elasticinference"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-elasticloadbalancing"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-elasticloadbalancingv2"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-elasticsearch"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-elastictranscoder"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-emr"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-emrcontainers"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-eventbridge"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-finspace"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-finspacedata"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-firehose"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-fis"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-fms"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-forecast"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-forecastquery"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-frauddetector"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-fsx"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-gamelift"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-glacier"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-globalaccelerator"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-glue"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-greengrass"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-greengrassv2"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-groundstation"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-guardduty"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-health"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-healthlake"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-honeycode"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-iam"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-identitystore"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-imagebuilder"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-inspector"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-iot"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-iot1clickdevices"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-iot1clickprojects"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-iotanalytics"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-iotdataplane"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-iotdeviceadvisor"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-iotevents"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-ioteventsdata"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-iotfleethub"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-iotjobsdataplane"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-iotsecuretunneling"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-iotsitewise"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-iotthingsgraph"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-iotwireless"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-ivs"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-kafka"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-kendra"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-kinesis"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-kinesisanalytics"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-kinesisanalyticsv2"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-kinesisvideo"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-kinesisvideoarchivedmedia"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-kinesisvideomedia"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-kinesisvideosignaling"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-kms"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-lakeformation"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-lambda"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-lexmodelbuilding"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-lexmodelsv2"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-lexruntime"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-lexruntimev2"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-licensemanager"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-lightsail"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-location"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-lookoutequipment"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-lookoutmetrics"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-lookoutvision"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-machinelearning"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-macie"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-macie2"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-managedblockchain"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-marketplacecatalog"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-marketplacecommerceanalytics"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-marketplaceentitlement"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-marketplacemetering"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-mediaconnect"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-mediaconvert"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-medialive"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-mediapackage"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-mediapackagevod"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-mediastore"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-mediastoredata"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-mediatailor"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-mgn"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-migrationhub"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-migrationhubconfig"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-mobile"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-mq"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-mturk"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-mwaa"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-neptune"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-networkfirewall"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-networkmanager"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-nimble"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-opsworks"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-opsworkscm"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-organizations"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-outposts"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-personalize"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-personalizeevents"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-personalizeruntime"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-pi"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-pinpoint"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-pinpointemail"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-pinpointsmsvoice"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-polly"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-pricing"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-proton"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-qldb"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-qldbsession"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-quicksight"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-ram"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-rds"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-rdsdata"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-redshift"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-redshiftdata"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-rekognition"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-resourcegroups"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-resourcegroupstaggingapi"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-robomaker"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-route53"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-route53domains"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-route53recoverycluster"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-route53recoverycontrolconfig"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-route53recoveryreadiness"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-route53resolver"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-s3"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-s3control"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-s3outposts"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-sagemaker"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-sagemakera2iruntime"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-sagemakeredge"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-sagemakerfeaturestoreruntime"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-sagemakerruntime"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-savingsplans"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-schemas"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-secretsmanager"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-securityhub"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-serverlessapplicationrepository"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-servicecatalog"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-servicecatalogappregistry"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-servicediscovery"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-servicequotas"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-ses"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-sesv2"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-sfn"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-shield"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-signer"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-sms"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-snowball"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-sns"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-sqs"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-ssm"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-ssmcontacts"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-ssmincidents"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-sso"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-ssoadmin"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-ssooidc"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-storagegateway"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-sts"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-support"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-swf"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-synthetics"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-textract"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-timestreamquery"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-timestreamwrite"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-transcribe"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-transcribestreaming"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-transfer"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-translate"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-waf"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-wafregional"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-wafv2"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-wellarchitected"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-workdocs"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-worklink"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-workmail"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-workmailmessageflow"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-workspaces"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+<span class="s">"io.github.vigoo"</span> <span class="o">%%</span> <span class="s">"zio-aws-xray"</span> <span class="o">%</span> <span class="s">"3.17.12.1"</span>
+</code></pre></div></div>
+</section></div></div></div></div><script src="https://vigoo.github.io/zio-aws/highlight/highlight.pack.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/languages/sbt.min.js"></script><script src="https://vigoo.github.io/zio-aws/lunr/lunr.js"></script><script>
+// For all code blocks, copy the language from the containing div
+// to the inner code tag (where hljs expects it to be)
+const langPrefix = 'language-';
+document.querySelectorAll(`div[class^='${langPrefix}']`).forEach(function(div) {
+  div.classList.forEach(function(cssClass) {
+    if (cssClass.startsWith(langPrefix)) {
+      const lang = cssClass.substring(langPrefix.length);
+      div.querySelectorAll('pre code').forEach(function(code) {
+        code.classList.add(lang);
+      });
+    }
+  });
+});
+
+hljs.configure({languages:['scala','java','bash','scala','sbt']});
+hljs.initHighlightingOnLoad();
+      </script><script>console.info('\x57\x65\x62\x73\x69\x74\x65\x20\x62\x75\x69\x6c\x74\x20\x77\x69\x74\x68\x3a\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x5f\x5f\x20\x20\x20\x20\x5f\x5f\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x5f\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x5f\x20\x5f\x5f\x0a\x20\x20\x20\x5f\x5f\x5f\x5f\x5f\x2f\x20\x2f\x5f\x20\x20\x2f\x20\x2f\x5f\x20\x20\x20\x20\x20\x20\x5f\x5f\x5f\x5f\x20\x5f\x5f\x5f\x20\x20\x28\x5f\x29\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x5f\x20\x20\x5f\x5f\x5f\x5f\x5f\x28\x5f\x29\x20\x2f\x5f\x5f\x5f\x5f\x20\x20\x5f\x5f\x5f\x5f\x5f\x0a\x20\x20\x2f\x20\x5f\x5f\x5f\x2f\x20\x5f\x5f\x20\x5c\x2f\x20\x5f\x5f\x2f\x5f\x5f\x5f\x5f\x5f\x2f\x20\x5f\x5f\x20\x60\x5f\x5f\x20\x5c\x2f\x20\x2f\x20\x5f\x5f\x5f\x2f\x20\x5f\x5f\x5f\x2f\x20\x5f\x5f\x20\x5c\x2f\x20\x5f\x5f\x5f\x2f\x20\x2f\x20\x5f\x5f\x2f\x20\x5f\x20\x5c\x2f\x20\x5f\x5f\x5f\x2f\x0a\x20\x28\x5f\x5f\x20\x20\x29\x20\x2f\x5f\x2f\x20\x2f\x20\x2f\x5f\x2f\x5f\x5f\x5f\x5f\x5f\x2f\x20\x2f\x20\x2f\x20\x2f\x20\x2f\x20\x2f\x20\x2f\x20\x2f\x5f\x5f\x2f\x20\x2f\x20\x20\x2f\x20\x2f\x5f\x2f\x20\x28\x5f\x5f\x20\x20\x29\x20\x2f\x20\x2f\x5f\x2f\x20\x20\x5f\x5f\x28\x5f\x5f\x20\x20\x29\x0a\x2f\x5f\x5f\x5f\x5f\x2f\x5f\x2e\x5f\x5f\x5f\x2f\x5c\x5f\x5f\x2f\x20\x20\x20\x20\x20\x2f\x5f\x2f\x20\x2f\x5f\x2f\x20\x2f\x5f\x2f\x5f\x2f\x5c\x5f\x5f\x5f\x2f\x5f\x2f\x20\x20\x20\x5c\x5f\x5f\x5f\x5f\x2f\x5f\x5f\x5f\x5f\x2f\x5f\x2f\x5c\x5f\x5f\x2f\x5c\x5f\x5f\x5f\x2f\x5f\x5f\x5f\x5f\x2f\x0a\x0a\x68\x74\x74\x70\x73\x3a\x2f\x2f\x34\x37\x64\x65\x67\x2e\x67\x69\x74\x68\x75\x62\x2e\x69\x6f\x2f\x73\x62\x74\x2d\x6d\x69\x63\x72\x6f\x73\x69\x74\x65\x73')</script><script src="https://vigoo.github.io/zio-aws/js/search.js"></script><script src="/zio-aws/js/docs.js"></script></body></html>
