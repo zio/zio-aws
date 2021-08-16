@@ -1,4 +1,4 @@
-addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.9.7")
+addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.9.9")
 addSbtPlugin("com.jsuereth" % "sbt-pgp" % "2.1.1")
 addSbtPlugin("io.shiftleft" % "sbt-ci-release-early" % "2.0.17")
 addSbtPlugin("com.47deg" % "sbt-microsites" % "1.3.4")
