@@ -19,9 +19,11 @@ object Main extends App {
         case Some(appDescription) =>
           for {
             applicationName <- appDescription.applicationName
-            _ <- console.putStrLn(
-              s"Got application description for $applicationName"
-            ).ignore
+            _ <- console
+              .putStrLn(
+                s"Got application description for $applicationName"
+              )
+              .ignore
 
             envStream = elasticbeanstalk.describeEnvironments(
               DescribeEnvironmentsRequest(applicationName =
@@ -33,9 +35,11 @@ object Main extends App {
               env.environmentName.flatMap { environmentName =>
                 (for {
                   environmentId <- env.environmentId
-                  _ <- console.putStrLn(
-                    s"Getting the EB resources of $environmentName"
-                  ).ignore
+                  _ <- console
+                    .putStrLn(
+                      s"Getting the EB resources of $environmentName"
+                    )
+                    .ignore
 
                   resourcesResult <-
                     elasticbeanstalk.describeEnvironmentResources(
@@ -44,14 +48,18 @@ object Main extends App {
                       )
                     )
                   resources <- resourcesResult.environmentResources
-                  _ <- console.putStrLn(
-                    s"Getting the EC2 instances in $environmentName"
-                  ).ignore
+                  _ <- console
+                    .putStrLn(
+                      s"Getting the EC2 instances in $environmentName"
+                    )
+                    .ignore
                   instances <- resources.instances
                   instanceIds <- ZIO.foreach(instances)(_.id)
-                  _ <- console.putStrLn(
-                    s"Instance IDs are ${instanceIds.mkString(", ")}"
-                  ).ignore
+                  _ <- console
+                    .putStrLn(
+                      s"Instance IDs are ${instanceIds.mkString(", ")}"
+                    )
+                    .ignore
 
                   reservationsStream = ec2.describeInstances(
                     DescribeInstancesRequest(instanceIds = Some(instanceIds))
@@ -66,17 +74,21 @@ object Main extends App {
                             launchTime <- instance.launchTime
                             _ <- console.putStrLn(s"  instance $id:").ignore
                             _ <- console.putStrLn(s"    type: $typ").ignore
-                            _ <- console.putStrLn(
-                              s"    launched at: $launchTime"
-                            ).ignore
+                            _ <- console
+                              .putStrLn(
+                                s"    launched at: $launchTime"
+                              )
+                              .ignore
                           } yield ()
                         }
                       }
                   })
                 } yield ()).catchAll { error =>
-                  console.putStrLnErr(
-                    s"Failed to get info for $environmentName: $error"
-                  ).ignore
+                  console
+                    .putStrLnErr(
+                      s"Failed to get info for $environmentName: $error"
+                    )
+                    .ignore
                 }
               }
             })

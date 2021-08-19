@@ -116,7 +116,8 @@ trait GeneratorBase {
           if TypeMapping.isPrimitiveType(model.shape) && !TypeMapping.isBuiltIn(
             model.shapeName
           ) =>
-          val typ = Type.Select(prefix(Term.Name("primitives")), Type.Name(model.name))
+        val typ =
+          Type.Select(prefix(Term.Name("primitives")), Type.Name(model.name))
         ZIO.succeed(q"""$term : $typ""")
       case _ =>
         ZIO.succeed(q"""$term : ${Type.Name(model.name)}""")
@@ -158,8 +159,13 @@ trait GeneratorBase {
               fieldModel.shape
             )
 
-            val stripped = 
-              if (Utils.isOrContainsEnumShape(fieldModel.shape, models.serviceModel().getShapes())) {
+            val stripped =
+              if (
+                Utils.isOrContainsEnumShape(
+                  fieldModel.shape,
+                  models.serviceModel().getShapes()
+                )
+              ) {
                 getterMethod
                   .stripSuffix("AsString")
                   .stripSuffix("AsStrings")
@@ -202,7 +208,7 @@ trait GeneratorBase {
   protected def scalaVersion: String
 
   protected def prettyPrint(tree: Tree): String = {
-    val dialect = 
+    val dialect =
       if (scalaVersion.startsWith("3.")) scala.meta.dialects.Scala3
       else if (scalaVersion.startsWith("2.13.")) scala.meta.dialects.Scala213
       else scala.meta.dialects.Scala212

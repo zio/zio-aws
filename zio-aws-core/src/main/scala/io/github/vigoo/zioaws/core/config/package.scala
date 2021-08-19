@@ -184,7 +184,7 @@ package object config {
             else Left("Not 'default'"),
           {
             case _: DefaultCredentialsProvider => Right("default")
-            case _                             => Left("Unsupported credentials provider")
+            case _ => Left("Unsupported credentials provider")
           }
         )
       val anonymousCredentialsProvider
@@ -194,7 +194,7 @@ package object config {
           else Left("Not 'anonymous'"),
         {
           case _: AnonymousCredentialsProvider => Right("anonymous")
-          case _                               => Left("Unsupported credentials provider")
+          case _ => Left("Unsupported credentials provider")
         }
       )
       val staticCredentialsProvider: ConfigDescriptor[AwsCredentialsProvider] =
@@ -226,7 +226,8 @@ package object config {
         duration(
           "apiCallAttemptTimeout"
         ).optional ?? "Amount of time to wait for the HTTP request to complete before giving up" |@|
-        string("defaultProfileName").optional ?? "Default profile name").to[CommonClientConfig]
+        string("defaultProfileName").optional ?? "Default profile name")
+        .to[CommonClientConfig]
 
     val commonAwsConfig: ConfigDescriptor[CommonAwsConfig] =
       (nested("region")(region).optional ?? "AWS region to connect to" |@|
@@ -238,7 +239,8 @@ package object config {
         ).optional ?? "Overrides the AWS service endpoint" |@|
         nested("client")(
           commonClientConfig
-        ).optional ?? "Common settings for AWS service clients").to[CommonAwsConfig]
+        ).optional ?? "Common settings for AWS service clients")
+        .to[CommonAwsConfig]
   }
 
 }

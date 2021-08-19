@@ -186,7 +186,8 @@ object OperationCollector {
 
               getPaginationDefinition(opName, op).foldM(
                 failure =>
-                  logWarn(s"Failed to get pagination definition: $failure").as(RequestResponse(None)),
+                  logWarn(s"Failed to get pagination definition: $failure")
+                    .as(RequestResponse(None)),
                 paginationDefinition =>
                   ZIO.succeed(RequestResponse(paginationDefinition))
               )
@@ -233,7 +234,15 @@ object OperationCollector {
                 isSimple = false
               )
             )
-          case Some(SelectNestedPaginatedListMember(_, _, innerName, resultName, listName)) =>
+          case Some(
+                SelectNestedPaginatedListMember(
+                  _,
+                  _,
+                  innerName,
+                  resultName,
+                  listName
+                )
+              ) =>
             val innerShapeName = outputShape.getMembers.get(innerName).getShape
             for {
               innerModel <- context.get(innerShapeName)
@@ -437,12 +446,12 @@ object OperationCollector {
   }
 
   case class SelectNestedPaginatedListMember(
-                                        id: loader.ModelId,
-                                        opName: String,
-                                        innerName: String,
-                                        resultName: String,
-                                        listName: String
-                                      ) extends PaginationOverride {
+      id: loader.ModelId,
+      opName: String,
+      innerName: String,
+      resultName: String,
+      listName: String
+  ) extends PaginationOverride {
     override def toKey: OverrideKey = OverrideKey(id, opName)
   }
 

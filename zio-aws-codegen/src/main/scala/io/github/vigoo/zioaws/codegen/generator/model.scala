@@ -43,7 +43,7 @@ object ModelType {
     shape.getType match {
       case "string" if Option(shape.getEnumValues).isDefined => Enum
       case "structure" if shape.isException                  => Exception
-      case _                                                 => fromString(shape.getType)
+      case _ => fromString(shape.getType)
     }
 }
 

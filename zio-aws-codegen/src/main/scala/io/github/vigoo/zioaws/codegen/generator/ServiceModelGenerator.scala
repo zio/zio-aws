@@ -215,7 +215,7 @@ trait ServiceModelGenerator {
         case ModelType.String =>
           generateSimple(m.name + ".scala", q"""type ${m.asType} = String""")
         case ModelType.Integer =>
-          generateSimple(m.name + ".scala" , q"""type ${m.asType} = Int""")
+          generateSimple(m.name + ".scala", q"""type ${m.asType} = Int""")
         case ModelType.Long =>
           generateSimple(m.name + ".scala", q"""type ${m.asType} = Long""")
         case ModelType.Float =>
@@ -227,7 +227,10 @@ trait ServiceModelGenerator {
         case ModelType.Timestamp =>
           generateSimple(m.name + ".scala", q"""type ${m.asType} = Instant""")
         case ModelType.Blob =>
-          generateSimple(m.name + ".scala", q"""type ${m.asType} = Chunk[Byte]""")
+          generateSimple(
+            m.name + ".scala",
+            q"""type ${m.asType} = Chunk[Byte]"""
+          )
         case _ =>
           generateSimple(m.name + ".scala", q"""type ${m.asType} = Unit""")
       }
@@ -502,8 +505,10 @@ trait ServiceModelGenerator {
         ZIO.foreach(primitiveModels.toList.sortBy(_.name))(generateModel)
       models <- ZIO.foreach(complexModels.toList.sortBy(_.name))(generateModel)
       modelsForPackage = models.filter(_.fileName.isEmpty)
-      separateModels = models.collect { case ModelWrapper(Some(fileName), code) => (fileName, code) }
-      packageCode = 
+      separateModels = models.collect {
+        case ModelWrapper(Some(fileName), code) => (fileName, code)
+      }
+      packageCode =
         q"""package $fullPkgName {
 
             import scala.jdk.CollectionConverters._
@@ -518,9 +523,9 @@ trait ServiceModelGenerator {
 
               ..${modelsForPackage.flatMap(_.code)}
             }}"""
-          modelCodes = separateModels.map { case (fileName, code) =>
-            fileName ->
-            q"""package $fullPkgName.model {
+      modelCodes = separateModels.map { case (fileName, code) =>
+        fileName ->
+          q"""package $fullPkgName.model {
 
               import scala.jdk.CollectionConverters._
               import java.time.Instant
@@ -529,8 +534,10 @@ trait ServiceModelGenerator {
 
               ..${code}
             }"""
-            }
-    } yield ("package.scala" -> prettyPrint(packageCode) :: modelCodes.map { case (k, v) => (k, prettyPrint(v)) }).toMap
+      }
+    } yield ("package.scala" -> prettyPrint(packageCode) :: modelCodes.map {
+      case (k, v) => (k, prettyPrint(v))
+    }).toMap
 
   protected def generateServiceModels()
       : ZIO[GeneratorContext with Blocking, GeneratorFailure, Set[File]] =
@@ -542,8 +549,10 @@ trait ServiceModelGenerator {
       packageParent = targetRoot / "io/github/vigoo/zioaws"
       packageRoot = packageParent / moduleName
       modelsRoot = packageRoot / "model"
-      _ <-Files.createDirectories(modelsRoot).mapError(FailedToCreateDirectories)
-      paths <- ZIO.foreach(codes.toSet) { case (name, code) => 
+      _ <- Files
+        .createDirectories(modelsRoot)
+        .mapError(FailedToCreateDirectories)
+      paths <- ZIO.foreach(codes.toSet) { case (name, code) =>
         val modelFile = modelsRoot / name
         writeIfDifferent(modelFile, code).as(modelFile)
       }

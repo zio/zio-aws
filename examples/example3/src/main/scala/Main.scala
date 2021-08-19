@@ -61,9 +61,11 @@ object Main extends App {
           _.consumerDescriptionValue.consumerStatusValue == ConsumerStatus.ACTIVE
         )
 
-      _ <- console.putStrLn(
-        s"Consumer registered: ${consumer.consumerDescriptionValue.consumerARNValue}"
-      ).ignore
+      _ <- console
+        .putStrLn(
+          s"Consumer registered: ${consumer.consumerDescriptionValue.consumerARNValue}"
+        )
+        .ignore
 
       shardStream = kinesis.subscribeToShard(
         SubscribeToShardRequest(
@@ -82,7 +84,11 @@ object Main extends App {
       )
 
       _ <- shardStream
-        .tap(event => console.putStrLn(event.recordsValue.map(_.partitionKeyValue).toString()).ignore)
+        .tap(event =>
+          console
+            .putStrLn(event.recordsValue.map(_.partitionKeyValue).toString())
+            .ignore
+        )
         .runHead
 
     } yield ()
