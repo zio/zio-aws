@@ -198,7 +198,7 @@ object ScalaWorkflow {
   )
   def isNotScalaVersion(version: ScalaVersion): Condition = Condition(
     s"matrix.scala != '${version.version}'"
-  )  
+  )
   case class ScalaVersion(version: String)
 
   sealed trait JavaVersion {

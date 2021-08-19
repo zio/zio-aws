@@ -21,7 +21,9 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
     )
     val ciParallelJobs =
       settingKey[Int]("Number of parallel jobs in the generated circleCi file")
-    val ciSeparateJobs = settingKey[Seq[String]]("List of subprojects to have their individual circleCi jobs")
+    val ciSeparateJobs = settingKey[Seq[String]](
+      "List of subprojects to have their individual circleCi jobs"
+    )
     val ciTarget = settingKey[File]("circleCi target file")
     val artifactListTarget =
       settingKey[File]("artifact list markdown target file")
@@ -47,7 +49,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
         val separateJobs = ciSeparateJobs.value
         val artifactLstTarget = artifactListTarget.value
         val ver = version.value
-        val scalaVer  = scalaVersion.value
+        val scalaVer = scalaVersion.value
 
         val params = Parameters(
           targetRoot = Path.fromJava(targetRoot.toPath),
@@ -111,7 +113,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
     val separateJobs = ciSeparateJobs.value
     val artifactLstTarget = artifactListTarget.value
     val ver = version.value
-    val scalaVer  = scalaVersion.value
+    val scalaVer = scalaVersion.value
 
     val params = Parameters(
       targetRoot = Path.fromJava(targetRoot.toPath),
@@ -148,7 +150,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
     val separateJobs = ciSeparateJobs.value
     val artifactLstTarget = artifactListTarget.value
     val ver = version.value
-    val scalaVer  = scalaVersion.value
+    val scalaVer = scalaVersion.value
 
     val params = Parameters(
       targetRoot = Path.fromJava(targetRoot.toPath),

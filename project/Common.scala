@@ -65,14 +65,18 @@ object Common extends AutoPlugin {
   override lazy val projectSettings =
     Seq(
       scalaVersion := scala213Version,
-      crossScalaVersions := List(scala212Version, scala213Version, scala3Version),
+      crossScalaVersions := List(
+        scala212Version,
+        scala213Version,
+        scala3Version
+      ),
       organization := "io.github.vigoo",
       awsLibraryVersion := awsVersion,
       zioLibraryVersion := zioVersion,
       scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
         case Some((2, 12)) => scalacOptions212
         case Some((2, 13)) => scalacOptions213
-        case Some((3, _)) => scalacOptions3
+        case Some((3, _))  => scalacOptions3
         case _             => Nil
       }),
       // Publishing

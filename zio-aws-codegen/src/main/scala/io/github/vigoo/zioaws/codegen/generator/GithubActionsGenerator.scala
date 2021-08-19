@@ -146,7 +146,7 @@ trait GithubActionsGenerator {
                   "zio-aws-core",
                   "zio-aws-netty"
                 )
-              ).when(isScalaVersion(scala3))              
+              ).when(isScalaVersion(scala3))
             )
         )
         .addJobs(
@@ -227,10 +227,10 @@ trait GithubActionsGenerator {
                 "Build and run tests",
                 List(
                   "++${{ matrix.scala }}",
-                  "examples/compile",
+                  "examples/compile"
                 ),
                 heapGb = 5
-              ).when(isScalaVersion(scala3)),
+              ).when(isScalaVersion(scala3))
             )
         )
         .addJob(

@@ -108,7 +108,9 @@ package object generator {
           } yield Set(moduleFile) union modelFiles
 
           generate
-            .provideSomeLayer[Blocking](createGeneratorContext(id, model, sbtLogger))
+            .provideSomeLayer[Blocking](
+              createGeneratorContext(id, model, sbtLogger)
+            )
         }
 
         override def generateCiYaml(

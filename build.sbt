@@ -87,7 +87,7 @@ lazy val example2 = Project("example2", file("examples") / "example2")
     resolvers += Resolver.jcenterRepo,
     libraryDependencies ++= Seq(
       "nl.vroste" %% "rezilience" % "0.6.2",
-      "dev.zio" %% "zio-logging" % "0.5.10",
+      "dev.zio" %% "zio-logging" % "0.5.10"
     )
   )
   .dependsOn(
@@ -170,11 +170,19 @@ lazy val docs = project
     pomPostProcess := { (node: XmlNode) =>
       new RuleTransformer(new RewriteRule {
         override def transform(node: XmlNode): XmlNodeSeq = node match {
-          case e: Elem if e.label == "dependency" && e.child.exists(child => child.label == "artifactId" && child.text.startsWith("mdoc_")) =>
-            val organization = e.child.filter(_.label == "groupId").flatMap(_.text).mkString
-            val artifact = e.child.filter(_.label == "artifactId").flatMap(_.text).mkString
-            val version = e.child.filter(_.label == "version").flatMap(_.text).mkString
-            Comment(s"dependency $organization#$artifact;$version has been omitted")
+          case e: Elem
+              if e.label == "dependency" && e.child.exists(child =>
+                child.label == "artifactId" && child.text.startsWith("mdoc_")
+              ) =>
+            val organization =
+              e.child.filter(_.label == "groupId").flatMap(_.text).mkString
+            val artifact =
+              e.child.filter(_.label == "artifactId").flatMap(_.text).mkString
+            val version =
+              e.child.filter(_.label == "version").flatMap(_.text).mkString
+            Comment(
+              s"dependency $organization#$artifact;$version has been omitted"
+            )
           case _ => node
         }
       }).transform(node).head

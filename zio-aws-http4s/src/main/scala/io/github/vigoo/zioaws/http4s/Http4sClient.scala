@@ -73,7 +73,9 @@ class Http4sClient(client: Client[Task], closeFn: () => Unit)(implicit
     if (name == "Expect" && values.toSet == Set("100-continue")) {
       List.empty // skipping
     } else {
-      values.map(value => Header.ToRaw.rawToRaw(Header.Raw(CIString(name), value))).toList
+      values
+        .map(value => Header.ToRaw.rawToRaw(Header.Raw(CIString(name), value)))
+        .toList
     }
   }
 
@@ -103,7 +105,7 @@ class Http4sClient(client: Client[Task], closeFn: () => Unit)(implicit
           .headers()
           .asScala
           .toList
-          .flatMap { case (name, hdrs) => toHeaders(name, hdrs.asScala) } : _*
+          .flatMap { case (name, hdrs) => toHeaders(name, hdrs.asScala) }: _*
       ),
       body = toEntity(method, contentPublisher)
     )
