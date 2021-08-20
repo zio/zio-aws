@@ -1,5 +1,5 @@
 val zioVersion = "1.0.10"
-val awsVersion = "2.17.22"
+val awsVersion = "2.17.23"
 
 sbtPlugin := true
 organization := "io.github.vigoo"
