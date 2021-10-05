@@ -3,8 +3,8 @@ package io.github.vigoo.zioaws.codegen.generator
 import software.amazon.awssdk.codegen.model.service.Shape
 import zio.ZIO
 
-import scala.meta._
 import _root_.io.github.vigoo.zioaws.codegen.generator.context._
+import _root_.io.github.vigoo.metagen.core._
 
 object TypeMapping {
   def isPrimitiveType(shape: Shape): Boolean =
@@ -37,7 +37,7 @@ object TypeMapping {
 
   def toJavaType(
       model: Model
-  ): ZIO[GeneratorContext, GeneratorFailure, Type] = {
+  ): ZIO[AwsGeneratorContext, AwsGeneratorFailure, ScalaType] = {
     getModelPkg.flatMap { modelPkg =>
       val shape = model.shape
       model.typ match {
@@ -47,36 +47,36 @@ object TypeMapping {
             keyType <- toJavaType(keyModel)
             valueModel <- get(shape.getMapValueType.getShape)
             valueType <- toJavaType(valueModel)
-          } yield t"""java.util.Map[$keyType, $valueType]"""
+          } yield ScalaType(Package.javaUtil, "Map", keyType, valueType)
         case ModelType.List =>
           for {
             itemModel <- get(shape.getListMember.getShape)
             itemType <- toJavaType(itemModel)
-          } yield t"""java.util.List[$itemType]"""
+          } yield ScalaType(Package.javaUtil, "List", itemType)
         case ModelType.Enum =>
-          ZIO.succeed(Type.Select(modelPkg, Type.Name(model.name)))
+          ZIO.succeed(model.sdkType)
         case ModelType.String =>
-          ZIO.succeed(t"""java.lang.String""")
+          ZIO.succeed(ScalaType(Package.javaLang, "String"))
         case ModelType.Integer =>
-          ZIO.succeed(t"""java.lang.Integer""")
+          ZIO.succeed(ScalaType(Package.javaLang, "Integer"))
         case ModelType.Long =>
-          ZIO.succeed(t"""java.lang.Long""")
+          ZIO.succeed(ScalaType(Package.javaLang, "Long"))
         case ModelType.Float =>
-          ZIO.succeed(t"""java.lang.Float""")
+          ZIO.succeed(ScalaType(Package.javaLang, "Float"))
         case ModelType.Double =>
-          ZIO.succeed(t"""java.lang.Double""")
+          ZIO.succeed(ScalaType(Package.javaLang, "Double"))
         case ModelType.Boolean =>
-          ZIO.succeed(t"""java.lang.Boolean""")
+          ZIO.succeed(ScalaType(Package.javaLang, "Boolean"))
         case ModelType.Timestamp =>
-          ZIO.succeed(t"""java.time.Instant""")
+          ZIO.succeed(ScalaType(Package.javaTime, "Instant"))
         case ModelType.BigDecimal =>
-          ZIO.succeed(t"""java.math.BigDecimal""")
+          ZIO.succeed(ScalaType(Package.javaMath, "BigDecimal"))
         case ModelType.Blob =>
-          ZIO.succeed(t"""SdkBytes""")
+          ZIO.succeed(Types.sdkBytes)
         case ModelType.Exception =>
-          ZIO.succeed(Type.Select(modelPkg, Type.Name(model.name)))
+          ZIO.succeed(model.sdkType)
         case ModelType.Structure =>
-          ZIO.succeed(Type.Select(modelPkg, Type.Name(model.name)))
+          ZIO.succeed(model.sdkType)
         case ModelType.Unknown(typ) =>
           getServiceName.flatMap(svc => ZIO.fail(UnknownType(svc, typ)))
       }
@@ -85,7 +85,7 @@ object TypeMapping {
 
   def toWrappedType(
       model: Model
-  ): ZIO[GeneratorContext, GeneratorFailure, Type] = {
+  ): ZIO[AwsGeneratorContext, AwsGeneratorFailure, ScalaType] = {
     model.typ match {
       case ModelType.Map =>
         for {
@@ -93,22 +93,20 @@ object TypeMapping {
           keyType <- toWrappedType(keyModel)
           valueModel <- get(model.shape.getMapValueType.getShape)
           valueType <- toWrappedType(valueModel)
-        } yield t"""Map[$keyType, $valueType]"""
+        } yield ScalaType.map(keyType, valueType)
       case ModelType.List =>
         for {
           itemModel <- get(model.shape.getListMember.getShape)
           itemType <- toWrappedType(itemModel)
-        } yield t"""Iterable[$itemType]"""
-      case _ if isPrimitiveType(model.shape) && !isBuiltIn(model.shapeName) =>
-        ZIO.succeed(Type.Select(Term.Name("primitives"), Type.Name(model.name)))
+        } yield ScalaType(Package.scala, "Iterable", itemType)
       case _ =>
-        ZIO.succeed(Type.Name(model.name))
+        ZIO.succeed(model.generatedType)
     }
   }
 
   def toWrappedTypeReadOnly(
       model: Model
-  ): ZIO[GeneratorContext, GeneratorFailure, Type] = {
+  ): ZIO[AwsGeneratorContext, AwsGeneratorFailure, ScalaType] = {
     model.typ match {
       case ModelType.Map =>
         for {
@@ -116,20 +114,18 @@ object TypeMapping {
           keyType <- toWrappedTypeReadOnly(keyModel)
           valueModel <- get(model.shape.getMapValueType.getShape)
           valueType <- toWrappedTypeReadOnly(valueModel)
-        } yield t"""Map[$keyType, $valueType]"""
+        } yield ScalaType.map(keyType, valueType)
       case ModelType.List =>
         for {
           itemModel <- get(model.shape.getListMember.getShape)
           itemType <- toWrappedTypeReadOnly(itemModel)
-        } yield t"""List[$itemType]"""
+        } yield ScalaType.list(itemType)
       case ModelType.Exception =>
         toJavaType(model)
       case ModelType.Structure =>
-        ZIO.succeed(Type.Select(Term.Name(model.name), Type.Name("ReadOnly")))
-      case _ if isPrimitiveType(model.shape) && !isBuiltIn(model.shapeName) =>
-        ZIO.succeed(Type.Select(Term.Name("primitives"), Type.Name(model.name)))
+        ZIO.succeed(model.generatedType / "ReadOnly")
       case _ =>
-        ZIO.succeed(Type.Name(model.name))
+        ZIO.succeed(model.generatedType)
     }
   }
 }

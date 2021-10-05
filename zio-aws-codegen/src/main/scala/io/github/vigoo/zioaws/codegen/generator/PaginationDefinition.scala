@@ -1,14 +1,14 @@
 package io.github.vigoo.zioaws.codegen.generator
 
-import scala.meta.Type
+import io.github.vigoo.metagen.core.ScalaType
 
 sealed trait PaginationDefinition
 
 case class JavaSdkPaginationDefinition(
     name: String,
     model: Model,
-    itemType: Type,
-    wrappedTypeRo: Type
+    itemType: ScalaType,
+    wrappedTypeRo: ScalaType
 ) extends PaginationDefinition
 
 case class ListPaginationDefinition(

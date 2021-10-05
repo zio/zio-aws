@@ -21,11 +21,10 @@ trait GeneratorBase {
       model: Model,
       term: Term,
       forceToString: Boolean = false
-  ): ZIO[GeneratorContext, GeneratorFailure, Term] =
+  ): ZIO[AwsGeneratorContext, AwsGeneratorFailure, Term] =
     model.typ match {
       case ModelType.Map =>
         for {
-          modelMap <- getModelMap
           keyModel <- get(model.shape.getMapKeyType.getShape)
           valueModel <- get(model.shape.getMapValueType.getShape)
           key = Term.Name("key")
@@ -40,7 +39,6 @@ trait GeneratorBase {
           }
       case ModelType.List =>
         for {
-          modelMap <- getModelMap
           valueModel <- get(model.shape.getListMember.getShape)
           item = Term.Name("item")
           unwrapItem <- unwrapSdkValue(valueModel, item, forceToString = true)
@@ -51,14 +49,13 @@ trait GeneratorBase {
             q"""$term.map { item => $unwrapItem }.asJavaCollection"""
           }
       case ModelType.Enum =>
-        val nameTerm = Term.Name(model.name)
         if (forceToString) {
           ZIO.succeed(q"""$term.unwrap.toString""")
         } else {
           ZIO.succeed(q"""$term.unwrap""")
         }
       case ModelType.Blob =>
-        ZIO.succeed(q"""SdkBytes.fromByteArrayUnsafe($term.toArray[Byte])""")
+        ZIO.succeed(q"""${Types.sdkBytes.term}.fromByteArrayUnsafe($term.toArray[Byte])""")
       case ModelType.Structure =>
         ZIO.succeed(q"""$term.buildAwsValue()""")
       case ModelType.Exception =>
@@ -66,16 +63,15 @@ trait GeneratorBase {
       case ModelType.BigDecimal =>
         ZIO.succeed(q"""$term.bigDecimal""")
       case _ =>
-        TypeMapping.toJavaType(model).map { typ =>
-          q"""$term : $typ"""
+        TypeMapping.toJavaType(model).map { javaType =>
+          q"""$term : ${javaType.typ}"""
         }
     }
 
   protected def wrapSdkValue(
       model: Model,
-      term: Term,
-      prefix: Term.Name => Term.Ref = identity
-  ): ZIO[GeneratorContext, GeneratorFailure, Term] =
+      term: Term
+  ): ZIO[AwsGeneratorContext, AwsGeneratorFailure, Term] =
     model.typ match {
       case ModelType.Map =>
         for {
@@ -83,8 +79,8 @@ trait GeneratorBase {
           valueModel <- get(model.shape.getMapValueType.getShape)
           key = Term.Name("key")
           value = Term.Name("value")
-          wrapKey <- wrapSdkValue(keyModel, key, prefix)
-          wrapValue <- wrapSdkValue(valueModel, value, prefix)
+          wrapKey <- wrapSdkValue(keyModel, key)
+          wrapValue <- wrapSdkValue(valueModel, value)
         } yield
           if (wrapKey == key && wrapValue == value) {
             q"""$term.asScala.toMap"""
@@ -95,7 +91,7 @@ trait GeneratorBase {
         for {
           valueModel <- get(model.shape.getListMember.getShape)
           item = Term.Name("item")
-          wrapItem <- wrapSdkValue(valueModel, item, prefix)
+          wrapItem <- wrapSdkValue(valueModel, item)
         } yield
           if (wrapItem == item) {
             q"""$term.asScala.toList"""
@@ -103,31 +99,26 @@ trait GeneratorBase {
             q"""$term.asScala.map { item => $wrapItem }.toList"""
           }
       case ModelType.Enum =>
-        val nameTerm = prefix(Term.Name(model.name))
-        ZIO.succeed(q"""$nameTerm.wrap($term)""")
+        ZIO.succeed(
+          q"""${model.generatedType.term}.wrap($term)"""
+        )
       case ModelType.Blob =>
-        ZIO.succeed(q"""Chunk.fromArray($term.asByteArrayUnsafe())""")
+        ZIO.succeed(q"""${Types.chunk_.term}.fromArray($term.asByteArrayUnsafe())""")
       case ModelType.Structure =>
-        val nameTerm = prefix(Term.Name(model.name))
-        ZIO.succeed(q"""$nameTerm.wrap($term)""")
+        ZIO.succeed(
+          q"""${model.generatedType.term}.wrap($term)"""
+        )
       case ModelType.Exception =>
         ZIO.succeed(term)
-      case _
-          if TypeMapping.isPrimitiveType(model.shape) && !TypeMapping.isBuiltIn(
-            model.shapeName
-          ) =>
-        val typ =
-          Type.Select(prefix(Term.Name("primitives")), Type.Name(model.name))
-        ZIO.succeed(q"""$term : $typ""")
       case _ =>
-        ZIO.succeed(q"""$term : ${Type.Name(model.name)}""")
+        ZIO.succeed(q"""$term : ${model.generatedType.typ}""")
     }
 
   protected def propertyName(
       model: Model,
       fieldModel: Model,
       name: String
-  ): ZIO[GeneratorContext, Nothing, PropertyNames] = {
+  ): ZIO[AwsGeneratorContext, Nothing, PropertyNames] = {
     getNamingStrategy.flatMap { namingStrategy =>
       getModels.map { models =>
         val shapeModifiers = Option(
@@ -182,37 +173,5 @@ trait GeneratorBase {
     }
   }
 
-  protected def writeIfDifferent(
-      path: Path,
-      contents: String
-  ): ZIO[blocking.Blocking, GeneratorFailure, Unit] =
-    Files.exists(path).flatMap { exists =>
-      for {
-        existingBytes <-
-          if (exists) {
-            Files.readAllBytes(path).mapError(FailedToReadFile)
-          } else {
-            ZIO.succeed(Chunk.empty[Byte])
-          }
-        contentsBytes =
-          Chunk.fromArray(contents.getBytes(StandardCharsets.UTF_8))
-        _ <-
-          if (existingBytes == contentsBytes) {
-            ZIO.unit
-          } else {
-            Files.writeBytes(path, contentsBytes).mapError(FailedToWriteFile)
-          }
-      } yield ()
-    }
-
   protected def scalaVersion: String
-
-  protected def prettyPrint(tree: Tree): String = {
-    val dialect =
-      if (scalaVersion.startsWith("3.")) scala.meta.dialects.Scala3
-      else if (scalaVersion.startsWith("2.13.")) scala.meta.dialects.Scala213
-      else scala.meta.dialects.Scala212
-    val prettyprinter = TreeSyntax[Tree](dialect)
-    prettyprinter(tree).toString
-  }
 }
