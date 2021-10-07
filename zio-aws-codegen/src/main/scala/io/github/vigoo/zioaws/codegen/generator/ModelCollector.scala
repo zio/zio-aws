@@ -370,27 +370,29 @@ object ModelCollector {
 
     val (sdkType, generatedType) =
       typ match {
-        case ModelType.String if isBuiltIn(shapeName) =>
+        case ModelType.String if isBuiltIn(className) =>
           (ScalaType.string, ScalaType.string)
-        case ModelType.Integer if isBuiltIn(shapeName) =>
+        case ModelType.Integer if isBuiltIn(className) =>
           (ScalaType.int, ScalaType.int)
-        case ModelType.Long if isBuiltIn(shapeName) =>
+        case ModelType.Long if isBuiltIn(className) =>
           (ScalaType.long, ScalaType.long)
-        case ModelType.Float if isBuiltIn(shapeName) =>
+        case ModelType.Float if isBuiltIn(className) =>
           (ScalaType.float, ScalaType.float)
-        case ModelType.Double if isBuiltIn(shapeName) =>
+        case ModelType.Double if isBuiltIn(className) =>
           (ScalaType.double, ScalaType.double)
-        case ModelType.Boolean if isBuiltIn(shapeName) =>
+        case ModelType.Boolean if isBuiltIn(className) =>
           (ScalaType.boolean, ScalaType.boolean)
-        case ModelType.Timestamp if isBuiltIn(shapeName) =>
+        case ModelType.Timestamp if isBuiltIn(className) =>
           (Types.instant, Types.instant)
-        case ModelType.BigDecimal if isBuiltIn(shapeName) =>
+        case ModelType.BigDecimal if isBuiltIn(className) =>
           (Types.bigDecimal, Types.bigDecimal)
-        case ModelType.Blob if isBuiltIn(shapeName) =>
+        case ModelType.Blob if isBuiltIn(className) =>
           (Types.chunk(ScalaType.byte), Types.chunk(ScalaType.byte))
         case _ =>
           (ScalaType(sourcePkg, className), ScalaType(targetPkg, className))
       }
+
+//    println(s"Found model ${className} ${sdkType} <-> ${generatedType} with shape name ${shapeName} and type $typ (built-in: ${isBuiltIn(shapeName)}, primitive: $isPrimitive)")
 
     Model(
       sdkType,

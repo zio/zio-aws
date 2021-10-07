@@ -368,7 +368,7 @@ trait ServiceModelGenerator {
           fieldFragments.applyToBuilder(term)
       }
     } yield ModelWrapper(
-      fileName = Some(m.shapeName),
+      fileName = Some(m.generatedType.name),
       code = List(
         q"""final case class ${m.generatedType.typName}(..${fields.map(_.paramDef)}) {
                         def buildAwsValue(): ${javaType.typ} = {
@@ -453,7 +453,7 @@ trait ServiceModelGenerator {
         }
       )
     } yield ModelWrapper(
-      fileName = Some(m.shapeName),
+      fileName = Some(m.generatedType.name),
       code = List(
         q"""sealed trait ${m.generatedType.typName} {
               def unwrap: ${javaType.typ}
@@ -476,7 +476,6 @@ trait ServiceModelGenerator {
     AwsGeneratorFailure
   ], Set[Path]] =
     for {
-      modelPkg <- getModelPkg
       pkg <- getPkg
 
       filteredModels <- filterModels()

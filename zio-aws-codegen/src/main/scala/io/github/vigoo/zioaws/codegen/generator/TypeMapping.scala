@@ -38,48 +38,46 @@ object TypeMapping {
   def toJavaType(
       model: Model
   ): ZIO[AwsGeneratorContext, AwsGeneratorFailure, ScalaType] = {
-    getModelPkg.flatMap { modelPkg =>
-      val shape = model.shape
-      model.typ match {
-        case ModelType.Map =>
-          for {
-            keyModel <- get(shape.getMapKeyType.getShape)
-            keyType <- toJavaType(keyModel)
-            valueModel <- get(shape.getMapValueType.getShape)
-            valueType <- toJavaType(valueModel)
-          } yield ScalaType(Package.javaUtil, "Map", keyType, valueType)
-        case ModelType.List =>
-          for {
-            itemModel <- get(shape.getListMember.getShape)
-            itemType <- toJavaType(itemModel)
-          } yield ScalaType(Package.javaUtil, "List", itemType)
-        case ModelType.Enum =>
-          ZIO.succeed(model.sdkType)
-        case ModelType.String =>
-          ZIO.succeed(ScalaType(Package.javaLang, "String"))
-        case ModelType.Integer =>
-          ZIO.succeed(ScalaType(Package.javaLang, "Integer"))
-        case ModelType.Long =>
-          ZIO.succeed(ScalaType(Package.javaLang, "Long"))
-        case ModelType.Float =>
-          ZIO.succeed(ScalaType(Package.javaLang, "Float"))
-        case ModelType.Double =>
-          ZIO.succeed(ScalaType(Package.javaLang, "Double"))
-        case ModelType.Boolean =>
-          ZIO.succeed(ScalaType(Package.javaLang, "Boolean"))
-        case ModelType.Timestamp =>
-          ZIO.succeed(ScalaType(Package.javaTime, "Instant"))
-        case ModelType.BigDecimal =>
-          ZIO.succeed(ScalaType(Package.javaMath, "BigDecimal"))
-        case ModelType.Blob =>
-          ZIO.succeed(Types.sdkBytes)
-        case ModelType.Exception =>
-          ZIO.succeed(model.sdkType)
-        case ModelType.Structure =>
-          ZIO.succeed(model.sdkType)
-        case ModelType.Unknown(typ) =>
-          getServiceName.flatMap(svc => ZIO.fail(UnknownType(svc, typ)))
-      }
+    val shape = model.shape
+    model.typ match {
+      case ModelType.Map =>
+        for {
+          keyModel <- get(shape.getMapKeyType.getShape)
+          keyType <- toJavaType(keyModel)
+          valueModel <- get(shape.getMapValueType.getShape)
+          valueType <- toJavaType(valueModel)
+        } yield ScalaType(Package.javaUtil, "Map", keyType, valueType)
+      case ModelType.List =>
+        for {
+          itemModel <- get(shape.getListMember.getShape)
+          itemType <- toJavaType(itemModel)
+        } yield ScalaType(Package.javaUtil, "List", itemType)
+      case ModelType.Enum =>
+        ZIO.succeed(model.sdkType)
+      case ModelType.String =>
+        ZIO.succeed(ScalaType(Package.javaLang, "String"))
+      case ModelType.Integer =>
+        ZIO.succeed(ScalaType(Package.javaLang, "Integer"))
+      case ModelType.Long =>
+        ZIO.succeed(ScalaType(Package.javaLang, "Long"))
+      case ModelType.Float =>
+        ZIO.succeed(ScalaType(Package.javaLang, "Float"))
+      case ModelType.Double =>
+        ZIO.succeed(ScalaType(Package.javaLang, "Double"))
+      case ModelType.Boolean =>
+        ZIO.succeed(ScalaType(Package.javaLang, "Boolean"))
+      case ModelType.Timestamp =>
+        ZIO.succeed(ScalaType(Package.javaTime, "Instant"))
+      case ModelType.BigDecimal =>
+        ZIO.succeed(ScalaType(Package.javaMath, "BigDecimal"))
+      case ModelType.Blob =>
+        ZIO.succeed(Types.sdkBytes)
+      case ModelType.Exception =>
+        ZIO.succeed(model.sdkType)
+      case ModelType.Structure =>
+        ZIO.succeed(model.sdkType)
+      case ModelType.Unknown(typ) =>
+        getServiceName.flatMap(svc => ZIO.fail(UnknownType(svc, typ)))
     }
   }
 

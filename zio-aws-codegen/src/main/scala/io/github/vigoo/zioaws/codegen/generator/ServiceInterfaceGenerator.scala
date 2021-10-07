@@ -88,7 +88,6 @@ trait ServiceInterfaceGenerator {
               generateUnitToResponse(
                 serviceNameT,
                 methodName,
-                requestType,
                 responseType,
                 responseTypeRo,
                 javaRequestType,
@@ -99,7 +98,6 @@ trait ServiceInterfaceGenerator {
                 serviceNameT,
                 methodName,
                 requestType,
-                responseType,
                 javaRequestType,
                 javaResponseType
               )
@@ -408,7 +406,7 @@ trait ServiceInterfaceGenerator {
                   $methodNameLit,
                   api.$methodName[zio.Task[StreamingOutputResult[R, ${responseType.typ}, Byte]]]
                 )(request.buildAwsValue())
-                  .map(_.mapResponse(${responseType.termName}.wrap).provide(r))
+                  .map(_.mapResponse(${responseType.term}.wrap).provide(r))
                   .provide(r)""",  // TODO: needs type param support to ScalaType
           accessor =
             q"""def $methodName(request: ${requestType.typ}): ${Types.zioAwsError(serviceType, Types.streamingOutputResult(ScalaType.any, responseTypeRo, ScalaType.byte)).typ} =
@@ -583,7 +581,7 @@ trait ServiceInterfaceGenerator {
                     )(request.buildAwsValue())
                       .map(result =>
                          result
-                           .mapResponse(${responseType.termName}.wrap)
+                           .mapResponse(${responseType.term}.wrap)
                            .mapOutput(_.map(item => $wrappedItem))
                            .provide(r))
                       .provide(r)
@@ -595,7 +593,7 @@ trait ServiceInterfaceGenerator {
                 mockObject =
                   q"""object $objectName extends Effect[${requestType.typ}, ${Types.awsError.typ}, ${Types.streamingOutputResult(ScalaType.any, responseTypeRo, itemTypeRo).typ}]""",
                 mockCompose =
-                  q"""def $methodName(request: ${requestType.typ}): ${Types.zioAwsError(serviceType, Types.streamingOutputResult(ScalaType.any, responseTypeRo, itemTypeRo)).typ} = proxy($objectName, request)"""
+                  q"""def $methodName(request: ${requestType.typ}): ${Types.zioAwsError(ScalaType.any, Types.streamingOutputResult(ScalaType.any, responseTypeRo, itemTypeRo)).typ} = proxy($objectName, request)"""
               )
             }
         } yield ServiceMethods(streamedPaginator)
@@ -642,7 +640,7 @@ trait ServiceInterfaceGenerator {
                     )(request.buildAwsValue())
                       .map(result =>
                          result
-                           .mapResponse(r => ${responseType.termName}.wrap(r.$innerPropertyNameTerm().$resultPropertyNameTerm()))
+                           .mapResponse(r => ${responseType.term}.wrap(r.$innerPropertyNameTerm().$resultPropertyNameTerm()))
                            .mapOutput(_.map(item => $wrappedItem))
                            .provide(r))
                       .provide(r)
@@ -654,7 +652,7 @@ trait ServiceInterfaceGenerator {
             mockObject =
               q"""object $objectName extends Effect[${requestType.typ}, ${Types.awsError.typ}, ${Types.streamingOutputResult(ScalaType.any, resultTypeRo, itemTypeRo).typ}]""",
             mockCompose =
-              q"""def  $methodName(request: ${requestType.typ}): ${Types.zioAwsError(serviceType, Types.streamingOutputResult(ScalaType.any, resultTypeRo, itemTypeRo)).typ} = proxy($objectName, request)"""
+              q"""def  $methodName(request: ${requestType.typ}): ${Types.zioAwsError(ScalaType.any, Types.streamingOutputResult(ScalaType.any, resultTypeRo, itemTypeRo)).typ} = proxy($objectName, request)"""
           )
         } yield ServiceMethods(paginator)
 
@@ -724,7 +722,7 @@ trait ServiceInterfaceGenerator {
                     )(request.buildAwsValue())
                       .map { result =>
                         result
-                          .mapResponse(${responseType.termName}.wrap)
+                          .mapResponse(${responseType.term}.wrap)
                           .mapOutput(_.map { case (key, value) => $wrappedKey -> $wrappedValue })
                           .provide(r)
                       }.provide(r)
@@ -793,7 +791,7 @@ trait ServiceInterfaceGenerator {
                     )(request.buildAwsValue())
                       .map(result =>
                         result
-                          .mapResponse(${responseType.termName}.wrap)
+                          .mapResponse(${responseType.term}.wrap)
                           .mapOutput(_.map(item => $wrappedItem))
                           .provide(r))
                       .provide(r)
@@ -835,7 +833,6 @@ trait ServiceInterfaceGenerator {
     serviceType: ScalaType,
     methodName: Term.Name,
     requestType: ScalaType,
-    responseType: ScalaType,
     javaRequestType: ScalaType,
     javaResponseType: ScalaType
   ): UIO[ServiceMethods] = {
@@ -864,7 +861,6 @@ trait ServiceInterfaceGenerator {
   private def generateUnitToResponse(
       serviceType: ScalaType,
       methodName: Term.Name,
-      requestType: ScalaType,
       responseType: ScalaType,
       responseTypeRo: ScalaType,
       javaRequestType: ScalaType,
@@ -875,9 +871,9 @@ trait ServiceInterfaceGenerator {
     ZIO.succeed(
       ServiceMethods(
         ServiceMethod(
-          interface = q"""def $methodName(): ${Types.ioAwsError(responseType).typ}""",
+          interface = q"""def $methodName(): ${Types.ioAwsError(responseTypeRo).typ}""",
           implementation =
-            q"""def $methodName(): ${Types.ioAwsError(responseType).typ} =
+            q"""def $methodName(): ${Types.ioAwsError(responseTypeRo).typ} =
                   asyncRequestResponse[${javaRequestType.typ}, ${javaResponseType.typ}]($methodNameLit, api.$methodName)(${javaRequestType.term}.builder().build()).map(${responseType.term}.wrap).provide(r)""",
           accessor =
             q"""def $methodName(): ${Types.zioAwsError(serviceType, responseTypeRo).typ} =
@@ -885,7 +881,7 @@ trait ServiceInterfaceGenerator {
           mockObject =
             q"""object $objectName extends Effect[${ScalaType.unit.typ}, ${Types.awsError.typ}, ${responseTypeRo.typ}]""",
           mockCompose =
-            q"""def $methodName(): ${Types.ioAwsError(responseType).typ} = proxy($objectName)"""
+            q"""def $methodName(): ${Types.ioAwsError(responseTypeRo).typ} = proxy($objectName)"""
         )
       )
     )

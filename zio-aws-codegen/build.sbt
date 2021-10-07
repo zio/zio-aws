@@ -13,5 +13,5 @@ libraryDependencies ++= Seq(
   "software.amazon.awssdk" % "aws-sdk-java" % awsVersion,
   "org.scalameta" %% "scalameta" % "4.4.21",
   "com.lihaoyi" %% "os-lib" % "0.7.1",
-  "io.github.vigoo" %% "metagen-core" % "0.0.0+1-53904822+20210920-1832-SNAPSHOT"
+  "io.github.vigoo" %% "metagen-core" % "0.0.3"
 )
