@@ -2,7 +2,12 @@ package io.github.vigoo.zioaws.codegen.generator
 
 import io.github.vigoo.zioaws.codegen.generator.context._
 import io.github.vigoo.zioaws.codegen.generator.syntax._
-import io.github.vigoo.metagen.core.{Generator, GeneratorFailure, Package, ScalaType}
+import io.github.vigoo.metagen.core.{
+  Generator,
+  GeneratorFailure,
+  Package,
+  ScalaType
+}
 
 import scala.jdk.CollectionConverters._
 import software.amazon.awssdk.codegen.model.config.customization.ShapeModifier
@@ -140,8 +145,10 @@ trait ServiceModelGenerator {
                 case ModelType.Double  => (ScalaType.double, ScalaType.double)
                 case ModelType.Boolean => (ScalaType.boolean, ScalaType.boolean)
                 case ModelType.Timestamp => (Types.instant, Types.instant)
-                case ModelType.BigDecimal => (Types.bigDecimal, Types.bigDecimal)
-                case ModelType.Blob => (Types.chunk(ScalaType.byte), Types.chunk(ScalaType.byte))
+                case ModelType.BigDecimal =>
+                  (Types.bigDecimal, Types.bigDecimal)
+                case ModelType.Blob =>
+                  (Types.chunk(ScalaType.byte), Types.chunk(ScalaType.byte))
                 case _ => (fieldModel.sdkType, fieldModel.generatedType)
               }
               fieldModel.copy(
@@ -207,30 +214,50 @@ trait ServiceModelGenerator {
         case ModelType.Enum =>
           generateEnum(m, javaType)
         case ModelType.String =>
-          generateSimple(q"""type ${m.generatedType.typName} = ${ScalaType.string.typ}""")
+          generateSimple(
+            q"""type ${m.generatedType.typName} = ${ScalaType.string.typ}"""
+          )
         case ModelType.Integer =>
-          generateSimple(q"""type ${m.generatedType.typName} = ${ScalaType.int.typ}""")
+          generateSimple(
+            q"""type ${m.generatedType.typName} = ${ScalaType.int.typ}"""
+          )
         case ModelType.Long =>
-          generateSimple(q"""type ${m.generatedType.typName} = ${ScalaType.long.typ}""")
+          generateSimple(
+            q"""type ${m.generatedType.typName} = ${ScalaType.long.typ}"""
+          )
         case ModelType.Float =>
-          generateSimple(q"""type ${m.generatedType.typName} = ${ScalaType.float.typ}""")
+          generateSimple(
+            q"""type ${m.generatedType.typName} = ${ScalaType.float.typ}"""
+          )
         case ModelType.Double =>
-          generateSimple(q"""type ${m.generatedType.typName} = ${ScalaType.double.typ}""")
+          generateSimple(
+            q"""type ${m.generatedType.typName} = ${ScalaType.double.typ}"""
+          )
         case ModelType.Boolean =>
-          generateSimple(q"""type ${m.generatedType.typName} = ${ScalaType.boolean.typ}""")
+          generateSimple(
+            q"""type ${m.generatedType.typName} = ${ScalaType.boolean.typ}"""
+          )
         case ModelType.Timestamp =>
-          generateSimple(q"""type ${m.generatedType.typName} = ${Types.instant.typ}""")
+          generateSimple(
+            q"""type ${m.generatedType.typName} = ${Types.instant.typ}"""
+          )
         case ModelType.Blob =>
           generateSimple(
-            q"""type ${m.generatedType.typName} = ${Types.chunk(ScalaType.byte).typ}"""
+            q"""type ${m.generatedType.typName} = ${Types
+              .chunk(ScalaType.byte)
+              .typ}"""
           )
         case _ =>
-          generateSimple(q"""type ${m.generatedType.typName} = ${ScalaType.unit.typ}""")
+          generateSimple(
+            q"""type ${m.generatedType.typName} = ${ScalaType.unit.typ}"""
+          )
       }
     } yield wrapper
   }
 
-  private def generateSimple(defn: Defn): ZIO[AwsGeneratorContext, AwsGeneratorFailure, ModelWrapper] =
+  private def generateSimple(
+      defn: Defn
+  ): ZIO[AwsGeneratorContext, AwsGeneratorFailure, ModelWrapper] =
     ZIO.succeed(
       ModelWrapper(
         None,
@@ -309,14 +336,21 @@ trait ServiceModelGenerator {
                       roToEditable(finalFieldModel, propertyValueNameTerm)
                         .map { toEditable =>
                           ModelFieldFragments(
-                            paramDef = param"""$propertyNameTerm: ${memberType.typ}""",
+                            paramDef =
+                              param"""$propertyNameTerm: ${memberType.typ}""",
                             getterCall = toEditable,
                             getterInterface =
                               q"""def $propertyValueNameTerm: ${memberRoType.typ}""",
                             getterImplementation =
                               q"""override def $propertyValueNameTerm: ${memberRoType.typ} = $wrappedGet""",
                             zioGetterImplementation =
-                              q"""def $propertyNameTerm: ${Types.zio(ScalaType.any, ScalaType.nothing, memberRoType).typ} = ZIO.succeed($propertyValueNameTerm)""",
+                              q"""def $propertyNameTerm: ${Types
+                                .zio(
+                                  ScalaType.any,
+                                  ScalaType.nothing,
+                                  memberRoType
+                                )
+                                .typ} = ZIO.succeed($propertyValueNameTerm)""",
                             applyToBuilder = builder =>
                               q"""$builder.$fluentSetter($unwrappedGet)"""
                           )
@@ -335,20 +369,37 @@ trait ServiceModelGenerator {
                       roToEditable(finalFieldModel, valueTerm).map {
                         toEditable =>
                           ModelFieldFragments(
-                            paramDef =
-                              param"""$propertyNameTerm: ${ScalaType.option(memberType).typ} = None""",
+                            paramDef = param"""$propertyNameTerm: ${ScalaType
+                              .option(memberType)
+                              .typ} = None""",
                             getterCall =
                               q"""$propertyValueNameTerm.map(value => $toEditable)""",
                             getterInterface =
-                              q"""def ${propertyValueNameTerm}: ${ScalaType.option(memberRoType).typ}""",
+                              q"""def ${propertyValueNameTerm}: ${ScalaType
+                                .option(memberRoType)
+                                .typ}""",
                             getterImplementation =
                               if (wrappedGet == valueTerm) {
-                                q"""override def $propertyValueNameTerm: ${ScalaType.option(memberRoType).typ} = ${ScalaType.option(memberRoType).term}($get)"""
+                                q"""override def $propertyValueNameTerm: ${ScalaType
+                                  .option(memberRoType)
+                                  .typ} = ${ScalaType
+                                  .option(memberRoType)
+                                  .term}($get)"""
                               } else {
-                                q"""override def $propertyValueNameTerm: ${ScalaType.option(memberRoType).typ} = ${ScalaType.option(memberRoType).term}($get).map(value => $wrappedGet)"""
+                                q"""override def $propertyValueNameTerm: ${ScalaType
+                                  .option(memberRoType)
+                                  .typ} = ${ScalaType
+                                  .option(memberRoType)
+                                  .term}($get).map(value => $wrappedGet)"""
                               },
                             zioGetterImplementation =
-                              q"""def $propertyNameTerm: ${Types.zio(ScalaType.any, Types.awsError, memberRoType).typ} = ${Types.awsError.term}.unwrapOptionField($propertyNameLit, $propertyValueNameTerm)""",
+                              q"""def $propertyNameTerm: ${Types
+                                .zio(
+                                  ScalaType.any,
+                                  Types.awsError,
+                                  memberRoType
+                                )
+                                .typ} = ${Types.awsError.term}.unwrapOptionField($propertyNameLit, $propertyValueNameTerm)""",
                             applyToBuilder = builder =>
                               q"""$builder.optionallyWith($propertyNameTerm.map(value => $unwrappedGet))(_.$fluentSetter)"""
                           )
@@ -370,7 +421,9 @@ trait ServiceModelGenerator {
     } yield ModelWrapper(
       fileName = Some(m.generatedType.name),
       code = List(
-        q"""final case class ${m.generatedType.typName}(..${fields.map(_.paramDef)}) {
+        q"""final case class ${m.generatedType.typName}(..${fields.map(
+          _.paramDef
+        )}) {
                         def buildAwsValue(): ${javaType.typ} = {
                           import ${m.generatedType.termName}.zioAwsBuilderHelper.BuilderOps
                           $builderChain.build()
@@ -379,7 +432,9 @@ trait ServiceModelGenerator {
                         def asReadOnly: ${readOnlyType.typ} = ${m.generatedType.term}.wrap(buildAwsValue())
                       }""",
         q"""object ${m.generatedType.termName} {
-                            private lazy val zioAwsBuilderHelper: ${Types.builderHelper(javaType).typ} = ${Types.builderHelper_.term}.apply
+                            private lazy val zioAwsBuilderHelper: ${Types
+          .builderHelper(javaType)
+          .typ} = ${Types.builderHelper_.term}.apply
                             trait ${readOnlyType.typName} {
                               def editable: ${m.generatedType.typ} = ${m.generatedType.term}(..${fields
           .map(_.getterCall)})
@@ -406,7 +461,9 @@ trait ServiceModelGenerator {
       elemType <- TypeMapping.toWrappedType(itemModel)
     } yield ModelWrapper(
       fileName = None,
-      code = List(q"""type ${m.generatedType.typName} = ${ScalaType.list(elemType).typ}""")
+      code = List(
+        q"""type ${m.generatedType.typName} = ${ScalaType.list(elemType).typ}"""
+      )
     )
   }
 
@@ -420,7 +477,9 @@ trait ServiceModelGenerator {
       valueType <- TypeMapping.toWrappedType(valueModel)
     } yield ModelWrapper(
       fileName = None,
-      code = List(q"""type ${m.generatedType.typName} = ${ScalaType.map(keyType, valueType).typ}""")
+      code = List(q"""type ${m.generatedType.typName} = ${ScalaType
+        .map(keyType, valueType)
+        .typ}""")
     )
   }
 
@@ -488,12 +547,16 @@ trait ServiceModelGenerator {
       complexModels = removeDuplicates(complexes)
 
       primitiveModels <-
-        ZIO.foreach(primitiveModels.toList.sortBy(_.sdkType.name))(
+        ZIO
+          .foreach(primitiveModels.toList.sortBy(_.sdkType.name))(
+            generateModel
+          )
+          .mapError(GeneratorFailure.CustomFailure.apply)
+      models <- ZIO
+        .foreach(complexModels.toList.sortBy(_.sdkType.name))(
           generateModel
-        ).mapError(GeneratorFailure.CustomFailure.apply)
-      models <- ZIO.foreach(complexModels.toList.sortBy(_.sdkType.name))(
-        generateModel
-      ).mapError(GeneratorFailure.CustomFailure.apply)
+        )
+        .mapError(GeneratorFailure.CustomFailure.apply)
       modelsForPackage = models.filter(_.fileName.isEmpty)
       separateModels = models.collect {
         case ModelWrapper(Some(fileName), code) => (fileName, code)
@@ -525,8 +588,11 @@ trait ServiceModelGenerator {
 
   protected def generateServiceModels(): ZIO[Has[
     Generator
-  ] with AwsGeneratorContext with Blocking, GeneratorFailure[AwsGeneratorFailure], Set[Path]] =
+  ] with AwsGeneratorContext with Blocking, GeneratorFailure[
+    AwsGeneratorFailure
+  ], Set[Path]] =
     for {
+      _ <- Generator.setScalaVersion(scalaVersion)
       _ <- Generator.setRoot(config.targetRoot)
       paths <- generateServiceModelsCode()
     } yield paths

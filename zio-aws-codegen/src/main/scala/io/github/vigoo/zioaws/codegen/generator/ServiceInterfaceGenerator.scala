@@ -640,7 +640,7 @@ trait ServiceInterfaceGenerator {
                     )(request.buildAwsValue())
                       .map(result =>
                          result
-                           .mapResponse(r => ${responseType.term}.wrap(r.$innerPropertyNameTerm().$resultPropertyNameTerm()))
+                           .mapResponse(r => ${resultModel.generatedType.term}.wrap(r.$innerPropertyNameTerm().$resultPropertyNameTerm()))
                            .mapOutput(_.map(item => $wrappedItem))
                            .provide(r))
                       .provide(r)
@@ -1039,6 +1039,7 @@ trait ServiceInterfaceGenerator {
     AwsGeneratorFailure
   ], Path] =
     for {
+      _ <- Generator.setScalaVersion(scalaVersion)
       _ <- Generator.setRoot(config.targetRoot)
       path <- generateServiceModuleCode()
     } yield path
