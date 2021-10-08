@@ -3,6 +3,7 @@ package io.github.vigoo.zioaws.codegen.generator
 import io.github.vigoo.zioaws.codegen.generator.context._
 import io.github.vigoo.zioaws.codegen.generator.syntax._
 import io.github.vigoo.metagen.core.{
+  CodeFileGenerator,
   Generator,
   GeneratorFailure,
   Package,
@@ -215,40 +216,49 @@ trait ServiceModelGenerator {
           generateEnum(m, javaType)
         case ModelType.String =>
           generateSimple(
+            m.generatedType.name,
             q"""type ${m.generatedType.typName} = ${ScalaType.string.typ}"""
           )
         case ModelType.Integer =>
           generateSimple(
+            m.generatedType.name,
             q"""type ${m.generatedType.typName} = ${ScalaType.int.typ}"""
           )
         case ModelType.Long =>
           generateSimple(
+            m.generatedType.name,
             q"""type ${m.generatedType.typName} = ${ScalaType.long.typ}"""
           )
         case ModelType.Float =>
           generateSimple(
+            m.generatedType.name,
             q"""type ${m.generatedType.typName} = ${ScalaType.float.typ}"""
           )
         case ModelType.Double =>
           generateSimple(
+            m.generatedType.name,
             q"""type ${m.generatedType.typName} = ${ScalaType.double.typ}"""
           )
         case ModelType.Boolean =>
           generateSimple(
+            m.generatedType.name,
             q"""type ${m.generatedType.typName} = ${ScalaType.boolean.typ}"""
           )
         case ModelType.Timestamp =>
           generateSimple(
+            m.generatedType.name,
             q"""type ${m.generatedType.typName} = ${Types.instant.typ}"""
           )
         case ModelType.Blob =>
           generateSimple(
+            m.generatedType.name,
             q"""type ${m.generatedType.typName} = ${Types
               .chunk(ScalaType.byte)
               .typ}"""
           )
         case _ =>
           generateSimple(
+            m.generatedType.name,
             q"""type ${m.generatedType.typName} = ${ScalaType.unit.typ}"""
           )
       }
@@ -256,12 +266,14 @@ trait ServiceModelGenerator {
   }
 
   private def generateSimple(
+      name: String,
       defn: Defn
   ): ZIO[AwsGeneratorContext, AwsGeneratorFailure, ModelWrapper] =
     ZIO.succeed(
       ModelWrapper(
         None,
-        code = List(defn)
+        code = List(defn),
+        name
       )
     )
 
@@ -449,7 +461,8 @@ trait ServiceModelGenerator {
                             def wrap(impl: ${javaType.typ}): ${readOnlyType.typ} = new Wrapper(impl)
                           }
                          """
-      )
+      ),
+      name = m.generatedType.name
     )
   }
 
@@ -463,7 +476,8 @@ trait ServiceModelGenerator {
       fileName = None,
       code = List(
         q"""type ${m.generatedType.typName} = ${ScalaType.list(elemType).typ}"""
-      )
+      ),
+      name = m.generatedType.name
     )
   }
 
@@ -479,7 +493,8 @@ trait ServiceModelGenerator {
       fileName = None,
       code = List(q"""type ${m.generatedType.typName} = ${ScalaType
         .map(keyType, valueType)
-        .typ}""")
+        .typ}"""),
+      name = m.generatedType.name
     )
   }
 
@@ -525,7 +540,8 @@ trait ServiceModelGenerator {
               ..$enumValues
             }
          """
-      )
+      ),
+      name = m.generatedType.name
     )
   }
 
@@ -559,11 +575,14 @@ trait ServiceModelGenerator {
         .mapError(GeneratorFailure.CustomFailure.apply)
       modelsForPackage = models.filter(_.fileName.isEmpty)
       separateModels = models.collect {
-        case ModelWrapper(Some(fileName), code) => (fileName, code)
+        case ModelWrapper(Some(fileName), code, _) => (fileName, code)
       }
-      modelPkgObject <- Generator.generateScalaPackageObject(pkg, "model") {
-        ZIO.succeed {
-          q"""import scala.jdk.CollectionConverters._
+      namesInModel = models.map(_.name)
+      modelPkgObject <- Generator.generateScalaPackageObject[Any, Nothing](pkg, "model") {
+        ZIO
+          .foreach_(namesInModel)(CodeFileGenerator.knownLocalName(_))
+          .as(
+            q"""import scala.jdk.CollectionConverters._
 
               object primitives {
                 ..${primitiveModels.flatMap(_.code)}
@@ -571,17 +590,19 @@ trait ServiceModelGenerator {
 
               ..${modelsForPackage.flatMap(_.code)}
            """
-        }
+          )
       }
       models <- ZIO.foreach(separateModels) { case (fileName, code) =>
-        Generator.generateScalaPackage(pkg / "model", fileName) {
-          ZIO.succeed {
-            q"""
+        Generator.generateScalaPackage[Any, Nothing](pkg / "model", fileName) {
+          ZIO
+            .foreach_(namesInModel)(CodeFileGenerator.knownLocalName(_))
+            .as(
+              q"""
               import scala.jdk.CollectionConverters._
 
               ..${code}
              """
-          }
+            )
         }
       }
     } yield (modelPkgObject :: models).toSet
