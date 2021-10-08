@@ -291,10 +291,10 @@ trait ServiceInterfaceGenerator {
           q"""def $methodName(request: ${requestType.typ}): ${Types.zioStreamAwsError(ScalaType.any, eventRoT).typ} =
                   asyncRequestEventOutputStream[${javaRequestType.typ}, ${javaResponseType.typ}, ${responseHandlerT.typ}, ${awsEventStreamT.typ}, ${awsEventT.typ}](
                     $opNameLit,
-                    (request: ${requestType.typ}, handler: ${responseHandlerT.typ}) => api.$methodName(request, handler),
-                    (impl: ${Types.eventStreamResponseHandler(responseType, awsEventStreamT).typ}) =>
+                    (request: ${javaRequestType.typ}, handler: ${responseHandlerT.typ}) => api.$methodName(request, handler),
+                    (impl: ${Types.eventStreamResponseHandler(javaResponseType, awsEventStreamT).typ}) =>
                       new ${responseHandlerT.init} {
-                        override def responseReceived(response: ${responseType.typ}): ${ScalaType.unit.typ} = impl.responseReceived(response)
+                        override def responseReceived(response: ${javaResponseType.typ}): ${ScalaType.unit.typ} = impl.responseReceived(response)
                         override def onEventStream(publisher: ${Types.sdkPublisher(awsEventStreamT).typ}): ${ScalaType.unit.typ} = impl.onEventStream(publisher)
                         override def exceptionOccurred(throwable: ${Types.throwable.typ}): ${ScalaType.unit.typ} = impl.exceptionOccurred(throwable)
                         override def complete(): ${ScalaType.unit.typ} = impl.complete()
@@ -404,7 +404,7 @@ trait ServiceInterfaceGenerator {
             q"""def $methodName(request: ${requestType.typ}): ${Types.ioAwsError(Types.streamingOutputResult(ScalaType.any, responseTypeRo, ScalaType.byte)).typ} =
                 asyncRequestOutputStream[${javaRequestType.typ}, ${javaResponseType.typ}](
                   $methodNameLit,
-                  api.$methodName[zio.Task[StreamingOutputResult[R, ${responseType.typ}, Byte]]]
+                  api.$methodName[zio.Task[StreamingOutputResult[R, ${javaResponseType.typ}, Byte]]]
                 )(request.buildAwsValue())
                   .map(_.mapResponse(${responseType.term}.wrap).provide(r))
                   .provide(r)""",  // TODO: needs type param support to ScalaType
@@ -1013,7 +1013,7 @@ trait ServiceInterfaceGenerator {
                   )
               b0 <- awsConfig.configure[${clientInterface.typ}, ${clientInterfaceBuilder.typ}](builder).toManaged_
               b1 <- awsConfig.configureHttpClient[${clientInterface.typ}, ${clientInterfaceBuilder.typ}](b0, ${Types.serviceHttpCapabilities.term}(supportsHttp2 = $supportsHttp2Lit)).toManaged_
-              client <- ZIO(customization(b1).build()).toManaged_
+              client <- ${Types.zio_.term}(customization(b1).build()).toManaged_
             } yield new $serviceImplT(client, io.github.vigoo.zioaws.core.aspects.AwsCallAspect.identity, ().asInstanceOf[Any])
 
           private class $serviceImplT[R](override val api: ${clientInterface.typ}, override val aspect: io.github.vigoo.zioaws.core.aspects.AwsCallAspect[R], r: R)

@@ -43,7 +43,7 @@ object Types {
 
   def eventStreamResponseHandler(a: ScalaType, b: ScalaType): ScalaType =
     ScalaType(
-      Packages.awsCore / "eventstream",
+      Packages.awsAwsCore / "eventstream",
       "EventStreamResponseHandler",
       a,
       b
