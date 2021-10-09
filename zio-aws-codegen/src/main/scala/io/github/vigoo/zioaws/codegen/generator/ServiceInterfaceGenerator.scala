@@ -241,14 +241,14 @@ trait ServiceInterfaceGenerator {
             .typ}): ${Types.zioStreamAwsError(ScalaType.any, outEventRoT).typ} =
                 asyncRequestEventInputOutputStream[${javaRequestType.typ}, ${javaResponseType.typ}, ${awsInEventStreamT.typ}, ${responseHandlerT.typ}, ${awsOutEventStreamT.typ}, ${awsOutEventT.typ}](
                     $opNameLit,
-                    (request: ${requestType.typ}, input: ${Types
+                    (request: ${javaRequestType.typ}, input: ${Types
             .rsPublisher(awsInEventStreamT)
             .typ}, handler: ${responseHandlerT.typ}) => api.$methodName(request, input, handler),
                     (impl: ${Types
-            .eventStreamResponseHandler(responseType, awsOutEventStreamT)
+            .eventStreamResponseHandler(javaResponseType, awsOutEventStreamT)
             .typ}) =>
                       new ${responseHandlerT.init} {
-                        override def responseReceived(response: ${responseType.typ}): ${ScalaType.unit.typ} = impl.responseReceived(response)
+                        override def responseReceived(response: ${javaResponseType.typ}): ${ScalaType.unit.typ} = impl.responseReceived(response)
                         override def onEventStream(publisher: ${Types
             .sdkPublisher(awsOutEventStreamT)
             .typ}): ${ScalaType.unit.typ} = impl.onEventStream(publisher)

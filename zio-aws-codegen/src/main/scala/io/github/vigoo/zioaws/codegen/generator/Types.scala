@@ -51,7 +51,7 @@ object Types {
   def sdkPublisher(a: ScalaType): ScalaType =
     ScalaType(Packages.awsCore / "async", "SdkPublisher", a)
   def rsPublisher(a: ScalaType): ScalaType =
-    ScalaType(Package("org", "reactivestreams"), "Publisher")
+    ScalaType(Package("org", "reactivestreams"), "Publisher", a)
   val sdkBytes: ScalaType = ScalaType(Packages.awsCore, "SdkBytes")
 
   val throwable: ScalaType = ScalaType(Package.javaLang, "Throwable")
