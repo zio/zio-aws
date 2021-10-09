@@ -26,7 +26,7 @@ import zio.test.environment.TestEnvironment
 
 import scala.collection.mutable.ArrayBuffer
 
-trait Service[R] extends AwsServiceBase[R, Service]
+trait Service[R] extends AwsServiceBase[R]
 
 object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
   override val aspect: AwsCallAspect[Any] = AwsCallAspect.identity

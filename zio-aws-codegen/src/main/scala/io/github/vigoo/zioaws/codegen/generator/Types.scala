@@ -32,6 +32,7 @@ object Types {
   def ioAwsError(a: ScalaType): ScalaType = io(awsError, a)
   def zioAwsError(r: ScalaType, a: ScalaType): ScalaType = zio(r, awsError, a)
   def task(a: ScalaType): ScalaType = ScalaType(Packages.zio, "Task", a)
+  def has(a: ScalaType): ScalaType = ScalaType(Packages.zio, "Has", a)
 
   def zioStream(r: ScalaType, e: ScalaType, a: ScalaType): ScalaType =
     ScalaType(Packages.zio / "stream", "ZStream", r, e, a)
