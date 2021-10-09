@@ -66,12 +66,13 @@ object ScalaWorkflow {
       name: String,
       parameters: List[String],
       heapGb: Int = 6,
+      stackMb: Int = 16,
       env: Map[String, String] = Map.empty
   ): Step =
     SingleStep(
       name,
       run = Some(
-        s"sbt -J-XX:+UseG1GC -J-Xmx${heapGb}g -J-Xms${heapGb}g ${parameters.mkString(" ")}"
+        s"sbt -J-XX:+UseG1GC -J-Xmx${heapGb}g -J-Xms${heapGb}g -J-Xss${stackMb}m ${parameters.mkString(" ")}"
       ),
       env = env
     )

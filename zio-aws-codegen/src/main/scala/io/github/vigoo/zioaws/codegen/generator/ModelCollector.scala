@@ -1,22 +1,26 @@
 package io.github.vigoo.zioaws.codegen.generator
 
+import io.github.vigoo.metagen.core.{Package, ScalaType}
+import io.github.vigoo.zioaws.codegen.generator.TypeMapping.{
+  isBuiltIn,
+  isPrimitiveType
+}
 import io.github.vigoo.zioaws.codegen.generator.context.{
-  GeneratorContext,
-  getModels,
+  AwsGeneratorContext,
   getServiceName
 }
-
-import scala.jdk.CollectionConverters._
 import software.amazon.awssdk.codegen.C2jModels
 import software.amazon.awssdk.codegen.model.config.customization.ShapeSubstitution
 import software.amazon.awssdk.codegen.model.service.{Member, Operation, Shape}
 import software.amazon.awssdk.codegen.naming.NamingStrategy
 import zio.ZIO
 
+import scala.jdk.CollectionConverters._
+
 trait ModelMap {
   def get(
       serviceModelName: String
-  ): ZIO[GeneratorContext, GeneratorFailure, Model]
+  ): ZIO[AwsGeneratorContext, AwsGeneratorFailure, Model]
 
   val all: Set[Model]
 }
@@ -49,6 +53,8 @@ object ModelCollector {
   }
 
   private def collectRequestResponseTypes(
+      modelPkg: Package,
+      targetModelPkg: Package,
       namingStrategy: NamingStrategy,
       models: C2jModels,
       ops: Map[String, Operation]
@@ -71,9 +77,10 @@ object ModelCollector {
           Option(models.serviceModel().getShape(requestShapeName)).map {
             requestShape =>
               Model(
-                requestName,
+                ScalaType(modelPkg, requestName),
+                ScalaType(targetModelPkg, requestName),
                 requestShapeName.capitalize,
-                finalType(models, requestShape),
+                finalType(requestShape),
                 requestShape,
                 requestName
               )
@@ -82,9 +89,10 @@ object ModelCollector {
           Option(models.serviceModel().getShape(responseShapeName)).map {
             responseShape =>
               Model(
-                responseName,
+                ScalaType(modelPkg, responseName),
+                ScalaType(targetModelPkg, responseName),
                 responseShapeName.capitalize,
-                finalType(models, responseShape),
+                finalType(responseShape),
                 responseShape,
                 responseName
               )
@@ -97,17 +105,19 @@ object ModelCollector {
 
           requestShapeOpt.map { requestShape =>
             Model(
-              requestName,
+              ScalaType(modelPkg, requestName),
+              ScalaType(targetModelPkg, requestName),
               requestShapeName.capitalize,
-              finalType(models, requestShape),
+              finalType(requestShape),
               requestShape,
               requestName
             )
           }.toList ::: responseShapeOpt.map { responseShape =>
             Model(
-              responseName,
+              ScalaType(modelPkg, responseName),
+              ScalaType(targetModelPkg, responseName),
               responseShapeName.capitalize,
-              finalType(models, responseShape),
+              finalType(responseShape),
               responseShape,
               responseName
             )
@@ -116,6 +126,8 @@ object ModelCollector {
     }.toSet
 
   private def collectInputEvents(
+      modelPkg: Package,
+      targetModelPkg: Package,
       namingStrategy: NamingStrategy,
       models: C2jModels,
       ops: Map[String, Operation]
@@ -124,7 +136,13 @@ object ModelCollector {
       if (OperationCollector.inputIsEventStreamOf(models, op)) {
         tryFindEventStreamShape(models, op.getInput.getShape).flatMap {
           eventStream =>
-            modelFromShapeName(namingStrategy, models, eventStream.name)
+            modelFromShapeName(
+              modelPkg,
+              targetModelPkg,
+              namingStrategy,
+              models,
+              eventStream.name
+            )
         }
       } else {
         None
@@ -132,6 +150,8 @@ object ModelCollector {
     }.toSet
 
   private def collectOutputEvents(
+      modelPkg: Package,
+      targetModelPkg: Package,
       namingStrategy: NamingStrategy,
       models: C2jModels,
       ops: Map[String, Operation]
@@ -141,7 +161,13 @@ object ModelCollector {
         tryFindEventStreamShape(models, op.getOutput.getShape).flatMap {
           eventStream =>
             val name = eventStream.shape.getMembers.asScala.keys.head
-            modelFromShapeName(namingStrategy, models, name)
+            modelFromShapeName(
+              modelPkg,
+              targetModelPkg,
+              namingStrategy,
+              models,
+              name
+            )
         }
       } else {
         None
@@ -149,6 +175,8 @@ object ModelCollector {
     }.toSet
 
   private def collectPaginations(
+      modelPkg: Package,
+      targetModelPkg: Package,
       namingStrategy: NamingStrategy,
       models: C2jModels
   ): Set[Model] =
@@ -176,6 +204,8 @@ object ModelCollector {
                     Option(models.serviceModel().getShape(itemShapeName))
                       .map { itemShape =>
                         modelFromShape(
+                          modelPkg,
+                          targetModelPkg,
                           namingStrategy,
                           models,
                           itemShape,
@@ -192,18 +222,46 @@ object ModelCollector {
       .toSet
 
   def collectUsedModels(
+      modelPkg: Package,
+      targetModelPkg: Package,
       namingStrategy: NamingStrategy,
       models: C2jModels
   ): ModelMap = {
     val ops = OperationCollector.getFilteredOperations(models)
     val rootShapes =
-      collectRequestResponseTypes(namingStrategy, models, ops) union
-        collectInputEvents(namingStrategy, models, ops) union
-        collectOutputEvents(namingStrategy, models, ops) union
-        collectPaginations(namingStrategy, models)
+      collectRequestResponseTypes(
+        modelPkg,
+        targetModelPkg,
+        namingStrategy,
+        models,
+        ops
+      ) union
+        collectInputEvents(
+          modelPkg,
+          targetModelPkg,
+          namingStrategy,
+          models,
+          ops
+        ) union
+        collectOutputEvents(
+          modelPkg,
+          targetModelPkg,
+          namingStrategy,
+          models,
+          ops
+        ) union
+        collectPaginations(modelPkg, targetModelPkg, namingStrategy, models)
 
     val all = rootShapes.foldLeft(rootShapes) { case (result, m) =>
-      collectShapes(namingStrategy, models, result, Set.empty, m.shape)
+      collectShapes(
+        modelPkg,
+        targetModelPkg: Package,
+        namingStrategy,
+        models,
+        result,
+        Set.empty,
+        m.shape
+      )
     }
     val map = all.map { m => (m.serviceModelName, m) }.toMap
     val substitutedMap = applySubstitutions(models, map)
@@ -211,7 +269,7 @@ object ModelCollector {
     new ModelMap {
       override def get(
           serviceModelName: String
-      ): ZIO[GeneratorContext, GeneratorFailure, Model] =
+      ): ZIO[AwsGeneratorContext, AwsGeneratorFailure, Model] =
         substitutedMap.get(serviceModelName) match {
           case Some(value) => ZIO.succeed(value)
           case None =>
@@ -225,6 +283,8 @@ object ModelCollector {
   }
 
   private def collectShapes(
+      modelPkg: Package,
+      targetModelPkg: Package,
       namingStrategy: NamingStrategy,
       models: C2jModels,
       found: Set[Model],
@@ -246,26 +306,47 @@ object ModelCollector {
       names - model.serviceModelName
     } diff invalid
     val newModels =
-      newShapes.flatMap(modelFromShapeName(namingStrategy, models, _))
+      newShapes.flatMap(
+        modelFromShapeName(modelPkg, targetModelPkg, namingStrategy, models, _)
+      )
     val newInvalids =
       invalid union (newShapes diff newModels.map(_.serviceModelName))
 
     newModels.foldLeft(found) { case (result, m) =>
-      collectShapes(namingStrategy, models, result + m, newInvalids, m.shape)
+      collectShapes(
+        modelPkg,
+        targetModelPkg,
+        namingStrategy,
+        models,
+        result + m,
+        newInvalids,
+        m.shape
+      )
     }
   }
 
   private def modelFromShapeName(
+      modelPkg: Package,
+      targetModelPkg: Package,
       namingStrategy: NamingStrategy,
       models: C2jModels,
       shapeName: String
   ): Option[Model] = {
     Option(models.serviceModel().getShape(shapeName)).map { shape =>
-      modelFromShape(namingStrategy, models, shape, shapeName)
+      modelFromShape(
+        modelPkg,
+        targetModelPkg,
+        namingStrategy,
+        models,
+        shape,
+        shapeName
+      )
     }
   }
 
   private def modelFromShape(
+      modelPkg: Package,
+      targetModelPkg: Package,
       namingStrategy: NamingStrategy,
       models: C2jModels,
       shape: Shape,
@@ -280,10 +361,50 @@ object ModelCollector {
     }
 
     val className = namingStrategy.getShapeClassName(finalName)
-    Model(className, className, finalType(models, shape), shape, shapeName)
+    val isPrimitive = isPrimitiveType(shape) && !isBuiltIn(shapeName)
+
+    val typ = finalType(shape)
+    val sourcePkg = modelPkg
+    val targetPkg =
+      if (isPrimitive) targetModelPkg / "primitives" else targetModelPkg
+
+    val (sdkType, generatedType) =
+      typ match {
+        case ModelType.String if isBuiltIn(className) =>
+          (ScalaType.string, ScalaType.string)
+        case ModelType.Integer if isBuiltIn(className) =>
+          (ScalaType.int, ScalaType.int)
+        case ModelType.Long if isBuiltIn(className) =>
+          (ScalaType.long, ScalaType.long)
+        case ModelType.Float if isBuiltIn(className) =>
+          (ScalaType.float, ScalaType.float)
+        case ModelType.Double if isBuiltIn(className) =>
+          (ScalaType.double, ScalaType.double)
+        case ModelType.Boolean if isBuiltIn(className) =>
+          (ScalaType.boolean, ScalaType.boolean)
+        case ModelType.Timestamp if isBuiltIn(className) =>
+          (Types.instant, Types.instant)
+        case ModelType.BigDecimal if isBuiltIn(className) =>
+          (Types.bigDecimal, Types.bigDecimal)
+        case ModelType.Blob if isBuiltIn(className) =>
+          (Types.chunk(ScalaType.byte), Types.chunk(ScalaType.byte))
+        case _ =>
+          (ScalaType(sourcePkg, className), ScalaType(targetPkg, className))
+      }
+
+//    println(s"Found model ${className} ${sdkType} <-> ${generatedType} with shape name ${shapeName} and type $typ (built-in: ${isBuiltIn(shapeName)}, primitive: $isPrimitive)")
+
+    Model(
+      sdkType,
+      generatedType,
+      shapeName = className,
+      typ,
+      shape = shape,
+      serviceModelName = shapeName
+    )
   }
 
-  private def finalType(models: C2jModels, shape: Shape): ModelType = {
+  private def finalType(shape: Shape): ModelType = {
     ModelType.fromShape(shape)
   }
 
@@ -305,7 +426,8 @@ object ModelCollector {
               case Some(newShape) =>
                 val otherModel = map(newShape)
                 name -> model.copy(
-                  name = otherModel.name,
+                  sdkType = otherModel.sdkType,
+                  generatedType = otherModel.generatedType,
                   shapeName = otherModel.shapeName,
                   typ = otherModel.typ,
                   shape = otherModel.shape
