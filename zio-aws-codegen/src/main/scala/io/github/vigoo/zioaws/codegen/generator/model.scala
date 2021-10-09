@@ -1,8 +1,7 @@
 package io.github.vigoo.zioaws.codegen.generator
 
+import io.github.vigoo.metagen.core.ScalaType
 import software.amazon.awssdk.codegen.model.service.Shape
-
-import scala.meta.{Term, Type}
 
 sealed trait ModelType
 object ModelType {
@@ -48,16 +47,13 @@ object ModelType {
 }
 
 case class Model(
-    name: String,
+    sdkType: ScalaType,
+    generatedType: ScalaType,
     shapeName: String,
     typ: ModelType,
     shape: Shape,
     serviceModelName: String
-) {
-
-  val asTerm: Term.Name = Term.Name(name)
-  val asType: Type.Name = Type.Name(name)
-}
+)
 
 case class NamedShape(name: String, shape: Shape)
 

@@ -63,12 +63,12 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
 
         zio.Runtime.default.unsafeRun {
           val cfg = ZLayer.succeed(params)
-          val env = loader.live ++ (cfg >+> generator.live)
+          val env = loader.live ++ (cfg >+> AwsGenerator.live)
           val task =
             for {
               _ <- ZIO.effect(log.info(s"Generating sources for $id"))
               model <- loader.loadCodegenModel(id)
-              files <- generator.generateServiceCode(id, model, log)
+              files <- AwsGenerator.generateServiceCode(id, model, log)
             } yield files.toSeq
           task.provideCustomLayer(env).tapError { generatorError =>
             ZIO
@@ -84,7 +84,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
 
   case class ReflectionError(reason: Throwable) extends Error
 
-  case class GeneratorError(error: GeneratorFailure) extends Error
+  case class GeneratorError(error: AwsGeneratorFailure) extends Error
 
   override lazy val projectSettings = Seq(
     generateCiYaml := generateCiYamlTask.value,
@@ -127,12 +127,12 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
 
     zio.Runtime.default.unsafeRun {
       val cfg = ZLayer.succeed(params)
-      val env = loader.live ++ (cfg >+> generator.live)
+      val env = loader.live ++ (cfg >+> AwsGenerator.live)
       val task =
         for {
           _ <- ZIO.effect(log.info(s"Regenerating ${params.ciTarget}"))
           ids <- loader.findModels()
-          _ <- generator.generateCiYaml(ids)
+          _ <- AwsGenerator.generateCiYaml(ids)
         } yield ()
       task.provideCustomLayer(env).catchAll { generatorError =>
         ZIO
@@ -164,14 +164,14 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
 
     zio.Runtime.default.unsafeRun {
       val cfg = ZLayer.succeed(params)
-      val env = loader.live ++ (cfg >+> generator.live)
+      val env = loader.live ++ (cfg >+> AwsGenerator.live)
       val task =
         for {
           _ <- ZIO.effect(
             log.info(s"Regenerating ${params.artifactListTarget}")
           )
           ids <- loader.findModels()
-          _ <- generator.generateArtifactList(ids)
+          _ <- AwsGenerator.generateArtifactList(ids)
         } yield ()
       task.provideCustomLayer(env).catchAll { generatorError =>
         ZIO
