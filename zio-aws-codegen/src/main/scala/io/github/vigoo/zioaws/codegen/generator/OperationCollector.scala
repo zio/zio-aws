@@ -5,6 +5,7 @@ import io.github.vigoo.zioaws.codegen.generator.TypeMapping.{
   toWrappedTypeReadOnly
 }
 import io.github.vigoo.zioaws.codegen.generator.context._
+import io.github.vigoo.zioaws.codegen.generator.OperationMethodType._
 import io.github.vigoo.zioaws.codegen.loader
 import software.amazon.awssdk.codegen.C2jModels
 import software.amazon.awssdk.codegen.model.config.customization.CustomizationConfig
@@ -141,7 +142,7 @@ object OperationCollector {
   def get(
       opName: String,
       op: Operation
-  ): ZIO[GeneratorContext, GeneratorFailure, OperationMethodType] = {
+  ): ZIO[AwsGeneratorContext, AwsGeneratorFailure, OperationMethodType] = {
     getService.flatMap { id =>
       getModels.flatMap { models =>
         val inputIsStreaming = inputIsStreamingOf(models, op)
@@ -211,7 +212,7 @@ object OperationCollector {
   private def getPaginationDefinition(
       opName: String,
       op: Operation
-  ): ZIO[GeneratorContext, GeneratorFailure, Option[PaginationDefinition]] = {
+  ): ZIO[AwsGeneratorContext, AwsGeneratorFailure, Option[PaginationDefinition]] = {
     getService.flatMap { id =>
       getModels.flatMap { models =>
         val outputShape = models.serviceModel().getShape(op.getOutput.getShape)

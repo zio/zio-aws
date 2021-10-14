@@ -7,16 +7,18 @@ import software.amazon.awssdk.codegen.naming.NamingStrategy
 import zio.{Has, ZIO}
 
 import scala.jdk.CollectionConverters._
-import scala.meta.Term
+
+import io.github.vigoo.metagen.core.Package
 
 package object context {
-  type GeneratorContext = Has[GeneratorContext.Service]
+  type AwsGeneratorContext = Has[AwsGeneratorContext.Service]
 
-  object GeneratorContext {
+  object AwsGeneratorContext {
     trait Service {
       val service: ModelId
-      val modelPkg: Term.Ref
-      val paginatorPkg: Term.Ref
+      val pkg: Package
+      val modelPkg: Package
+      val paginatorPkg: Package
 
       val namingStrategy: NamingStrategy
       val modelMap: ModelMap
@@ -26,34 +28,36 @@ package object context {
     }
   }
 
-  def getService: ZIO[GeneratorContext, Nothing, ModelId] =
+  def getService: ZIO[AwsGeneratorContext, Nothing, ModelId] =
     ZIO.access(_.get.service)
-  def getServiceName: ZIO[GeneratorContext, Nothing, String] =
+  def getServiceName: ZIO[AwsGeneratorContext, Nothing, String] =
     ZIO.access(_.get.service.name)
-  def getModelPkg: ZIO[GeneratorContext, Nothing, Term.Ref] =
+  def getPkg: ZIO[AwsGeneratorContext, Nothing, Package] =
+    ZIO.access(_.get.pkg)
+  def getModelPkg: ZIO[AwsGeneratorContext, Nothing, Package] =
     ZIO.access(_.get.modelPkg)
-  def getPaginatorPkg: ZIO[GeneratorContext, Nothing, Term.Ref] =
+  def getPaginatorPkg: ZIO[AwsGeneratorContext, Nothing, Package] =
     ZIO.access(_.get.paginatorPkg)
-  def getNamingStrategy: ZIO[GeneratorContext, Nothing, NamingStrategy] =
+  def getNamingStrategy: ZIO[AwsGeneratorContext, Nothing, NamingStrategy] =
     ZIO.access(_.get.namingStrategy)
-  def getModelMap: ZIO[GeneratorContext, Nothing, ModelMap] =
+  def getModelMap: ZIO[AwsGeneratorContext, Nothing, ModelMap] =
     ZIO.access(_.get.modelMap)
-  def getModels: ZIO[GeneratorContext, Nothing, C2jModels] =
+  def getModels: ZIO[AwsGeneratorContext, Nothing, C2jModels] =
     ZIO.access(_.get.models)
-  def get(name: String): ZIO[GeneratorContext, GeneratorFailure, Model] =
+  def get(name: String): ZIO[AwsGeneratorContext, AwsGeneratorFailure, Model] =
     ZIO.accessM(_.get.modelMap.get(name))
-  def getLogger: ZIO[GeneratorContext, Nothing, sbt.Logger] =
+  def getLogger: ZIO[AwsGeneratorContext, Nothing, sbt.Logger] =
     ZIO.access(_.get.logger)
 
-  def logWarn(message: => String): ZIO[GeneratorContext, Nothing, Unit] =
+  def logWarn(message: => String): ZIO[AwsGeneratorContext, Nothing, Unit] =
     getLogger.flatMap { logger => ZIO.effectTotal(logger.warn(message)) }
 
   object awsModel {
     def getOperations
-        : ZIO[GeneratorContext, Nothing, List[(String, Operation)]] =
+        : ZIO[AwsGeneratorContext, Nothing, List[(String, Operation)]] =
       ZIO.access(_.get.models.serviceModel().getOperations.asScala.toList)
 
-    def getShape(name: String): ZIO[GeneratorContext, Nothing, Option[Shape]] =
+    def getShape(name: String): ZIO[AwsGeneratorContext, Nothing, Option[Shape]] =
       ZIO.access(r => Option(r.get.models.serviceModel().getShape(name)))
   }
 }
