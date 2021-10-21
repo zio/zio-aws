@@ -57,7 +57,9 @@ package object context {
         : ZIO[AwsGeneratorContext, Nothing, List[(String, Operation)]] =
       ZIO.access(_.get.models.serviceModel().getOperations.asScala.toList)
 
-    def getShape(name: String): ZIO[AwsGeneratorContext, Nothing, Option[Shape]] =
+    def getShape(
+        name: String
+    ): ZIO[AwsGeneratorContext, Nothing, Option[Shape]] =
       ZIO.access(r => Option(r.get.models.serviceModel().getShape(name)))
   }
 }

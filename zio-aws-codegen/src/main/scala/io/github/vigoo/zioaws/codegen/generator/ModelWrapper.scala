@@ -4,4 +4,8 @@ import scala.meta.Defn
 import scala.meta.Term.Block
 
 // TODO: remove fileName?
-case class ModelWrapper(fileName: Option[String], code: List[Defn], name: String)
+case class ModelWrapper(
+    fileName: Option[String],
+    code: List[Defn],
+    name: String
+)
