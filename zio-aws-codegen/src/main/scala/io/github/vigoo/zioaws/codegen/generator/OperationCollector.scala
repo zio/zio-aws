@@ -212,7 +212,9 @@ object OperationCollector {
   private def getPaginationDefinition(
       opName: String,
       op: Operation
-  ): ZIO[AwsGeneratorContext, AwsGeneratorFailure, Option[PaginationDefinition]] = {
+  ): ZIO[AwsGeneratorContext, AwsGeneratorFailure, Option[
+    PaginationDefinition
+  ]] = {
     getService.flatMap { id =>
       getModels.flatMap { models =>
         val outputShape = models.serviceModel().getShape(op.getOutput.getShape)

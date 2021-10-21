@@ -221,7 +221,7 @@ trait GithubActionsGenerator {
                   "examples/compile",
                   "integtests/test"
                 ),
-                heapGb = 5,
+                heapGb = 5
               ).when(isNotScalaVersion(scala3)),
               runSBT(
                 "Build and run tests",
@@ -229,7 +229,7 @@ trait GithubActionsGenerator {
                   "++${{ matrix.scala }}",
                   "examples/compile"
                 ),
-                heapGb = 5,
+                heapGb = 5
               ).when(isScalaVersion(scala3))
             )
         )
