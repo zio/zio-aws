@@ -26,7 +26,7 @@ package object httpclient {
   def clientFor(
       serviceCaps: ServiceHttpCapabilities
   ): ZIO[HttpClient.Service, Throwable, SdkAsyncHttpClient] =
-    ZIO.accessM(_.clientFor(serviceCaps))
+    ZIO.accessZIO(_.clientFor(serviceCaps))
 
   sealed trait Protocol
   object Protocol {

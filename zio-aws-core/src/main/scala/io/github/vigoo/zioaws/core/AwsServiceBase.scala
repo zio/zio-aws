@@ -60,7 +60,7 @@ trait AwsServiceBase[R, Self[_]] {
             val stream = ZStream {
               for {
                 nextTokenRef <-
-                  Ref.make[Option[String]](Some(nextToken)).toManaged_
+                  Ref.make[Option[String]](Some(nextToken)).toManaged
                 pull = for {
                   token <- nextTokenRef.get
                   chunk <- token match {
@@ -68,7 +68,7 @@ trait AwsServiceBase[R, Self[_]] {
                       for {
                         nextRequest <-
                           ZIO
-                            .effect(setNextToken(request, t))
+                            .attempt(setNextToken(request, t))
                             .mapError(t => Some(GenericAwsError(t)))
                         rsp <- aspect(
                           ZIO
@@ -112,7 +112,7 @@ trait AwsServiceBase[R, Self[_]] {
           val stream = ZStream {
             for {
               nextTokenRef <-
-                Ref.make[Option[String]](Some(nextToken)).toManaged_
+                Ref.make[Option[String]](Some(nextToken)).toManaged
               pull = for {
                 token <- nextTokenRef.get
                 chunk <- token match {
@@ -120,7 +120,7 @@ trait AwsServiceBase[R, Self[_]] {
                     for {
                       nextRequest <-
                         ZIO
-                          .effect(setNextToken(request, t))
+                          .attempt(setNextToken(request, t))
                           .mapError(t => Some(GenericAwsError(t)))
                       rsp <- aspect(
                         ZIO

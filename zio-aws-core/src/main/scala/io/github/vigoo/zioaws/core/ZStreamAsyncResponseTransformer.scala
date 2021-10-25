@@ -36,14 +36,14 @@ class ZStreamAsyncResponseTransformer[R, Response](
   override def onStream(publisher: SdkPublisher[ByteBuffer]): Unit = {
     runtime.unsafeRun(resultStreamPromise.complete(errorPromise.poll.flatMap {
       opt =>
-        opt.getOrElse(ZIO.unit) *> ZIO.effect(
+        opt.getOrElse(ZIO.unit) *> ZIO.attempt(
           publisher
             .toStream()
             .interruptWhen(errorPromise)
             .map(Chunk.fromByteBuffer)
             .flattenChunks
             .concat(
-              ZStream.fromEffectOption[Any, Throwable, Byte](
+              ZStream.fromZIOOption[Any, Throwable, Byte](
                 errorPromise.poll.flatMap {
                   case None    => ZIO.fail(None)
                   case Some(p) => p.mapError(Some.apply) *> ZIO.fail(None)

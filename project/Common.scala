@@ -13,8 +13,8 @@ object Common extends AutoPlugin {
   object autoImport {
     val zioVersion = "2.0.0-M4"
     val zioCatsInteropVersion = "3.1.1.0+27-67652048-SNAPSHOT"
-    val zioReactiveStreamsInteropVersion = "1.3.7" // TODO
-    val zioConfigVersion = "1.0.10" // TODO
+    val zioReactiveStreamsInteropVersion = "1.3.8+2-0dffb691-SNAPSHOT"
+    val zioConfigVersion = "1.0.10+8-61a9e4bf-SNAPSHOT"
     val catsEffectVersion = "3.2.9"
 
     val awsVersion = "2.17.42"
@@ -107,7 +107,9 @@ object Common extends AutoPlugin {
           "oss.sonatype.org",
           username,
           password
-        )).toSeq
+        )).toSeq,
+      resolvers +=
+        "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
     )
 
   private def adjustTagForAwsVersion(

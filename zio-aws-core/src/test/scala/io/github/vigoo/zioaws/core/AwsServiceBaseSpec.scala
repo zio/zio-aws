@@ -19,7 +19,6 @@ import software.amazon.awssdk.core.async.{
   AsyncResponseTransformer
 }
 import zio._
-import zio.duration._
 import zio.stream.ZStream
 import zio.test.Assertion._
 import zio.test.TestAspect.{nonFlaky, timeout}
@@ -42,7 +41,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
   override def spec: ZSpec[TestEnvironment, AwsError] =
     suite("AwsServiceBaseSpec")(
       suite("asyncRequestResponse")(
-        testM("success") {
+        test("success") {
           val fakeAwsCall: String => CompletableFuture[Int] = { in =>
             val cf = new CompletableFuture[Int]()
             threadPool.submit(new Runnable {
@@ -56,7 +55,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
               asyncRequestResponse[String, Int]("test", fakeAwsCall)("hello")
           } yield assert(result)(equalTo(5))
         },
-        testM("failure") {
+        test("failure") {
           val fakeAwsCall: String => CompletableFuture[Int] = { in =>
             val cf = new CompletableFuture[Int]()
             threadPool.submit(new Runnable {
@@ -68,107 +67,109 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
 
           val call =
             asyncRequestResponse[String, Int]("test", fakeAwsCall)("hello")
-          assertM(call.run)(fails(equalTo(GenericAwsError(SimulatedException))))
+          assertM(call.exit)(
+            fails(equalTo(GenericAwsError(SimulatedException)))
+          )
         }
       ),
       suite("asyncJavaPaginatedRequest")(
-        testM("success")(
+        test("success")(
           assertM(
             runAsyncJavaPaginatedRequest(SimulatedPublisher.correctSequence)
           )(equalTo(Chunk('h', 'e', 'l', 'l', 'o')))
         ),
-        testM("fail before subscribe")(
+        test("fail before subscribe")(
           assertM(
             runAsyncJavaPaginatedRequest(in =>
               SimulatedPublisher.Error(SimulatedException) :: SimulatedPublisher
                 .correctSequence(in)
-            ).run
+            ).exit
           )(isAwsFailure)
         ),
-        testM("fail during emit")(
+        test("fail during emit")(
           assertM(
             runAsyncJavaPaginatedRequest(in =>
               SimulatedPublisher.correctSequence(in).splitAt(3) match {
                 case (a, b) =>
                   a ::: List(SimulatedPublisher.Error(SimulatedException)) ::: b
               }
-            ).run
+            ).exit
           )(isAwsFailure)
         ),
-        testM("fail before complete")(
+        test("fail before complete")(
           assertM(
             runAsyncJavaPaginatedRequest(in =>
               SimulatedPublisher.correctSequence(in).init ::: List(
                 SimulatedPublisher.Error(SimulatedException),
                 SimulatedPublisher.Complete
               )
-            ).run
+            ).exit
           )(isAwsFailure)
         ),
-        testM("fail with no complete after")(
+        test("fail with no complete after")(
           assertM(
             runAsyncJavaPaginatedRequest(in =>
               SimulatedPublisher.correctSequence(in).init ::: List(
                 SimulatedPublisher.Error(SimulatedException)
               )
-            ).run
+            ).exit
           )(isAwsFailure)
         ),
-        testM("complete before subscribe is empty result")(
+        test("complete before subscribe is empty result")(
           assertM(
             runAsyncJavaPaginatedRequest(in =>
               SimulatedPublisher.Complete :: SimulatedPublisher
                 .correctSequence(in)
-            ).run
+            ).exit
           )(equalTo(Exit.Success(Chunk.empty)))
         )
       ),
       suite("asyncSimplePaginatedRequest")(
-        testM("success")(
+        test("success")(
           assertM(
             runAsyncSimplePaginatedRequest("hello")
           )(equalTo(Chunk('h', 'e', 'l', 'l', 'o')))
         ),
-        testM("success in single-page case")(
+        test("success in single-page case")(
           assertM(
             runAsyncSimplePaginatedRequest("x")
           )(equalTo(Chunk('x')))
         ),
-        testM("fail on first page")(
+        test("fail on first page")(
           assertM(
-            runAsyncSimplePaginatedRequest("hello", failAfter = Some(0)).run
+            runAsyncSimplePaginatedRequest("hello", failAfter = Some(0)).exit
           )(isAwsFailure)
         ),
-        testM("fail on other page")(
+        test("fail on other page")(
           assertM(
-            runAsyncSimplePaginatedRequest("hello", failAfter = Some(3)).run
+            runAsyncSimplePaginatedRequest("hello", failAfter = Some(3)).exit
           )(isAwsFailure)
         )
       ),
       suite("asyncPaginatedRequest")(
-        testM("success")(
+        test("success")(
           assertM(
             runAsyncPaginatedRequest("hello")
           )(equalTo(Chunk('h', 'e', 'l', 'l', 'o')))
         ),
-        testM("success in single-page case")(
+        test("success in single-page case")(
           assertM(
             runAsyncPaginatedRequest("x")
           )(equalTo(Chunk('x')))
         ),
-        testM("fail on first page")(
+        test("fail on first page")(
           assertM(
-            runAsyncPaginatedRequest("hello", failAfter = Some(0)).run
+            runAsyncPaginatedRequest("hello", failAfter = Some(0)).exit
           )(isAwsFailure)
         ),
-        testM("fail on other page")(
+        test("fail on other page")(
           assertM(
-            runAsyncPaginatedRequest("hello", failAfter = Some(3)).run
+            runAsyncPaginatedRequest("hello", failAfter = Some(3)).exit
           )(isAwsFailure)
         )
       ),
       suite("asyncRequestOutputStream")(
-        testM("success")(
+        test("success")(
           assertM(runAsyncRequestOutput())(
             isCase(
               "Success",
@@ -189,7 +190,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
             )
           )
         ),
-        testM("future fails before prepare")(
+        test("future fails before prepare")(
           assertM(
             runAsyncRequestOutput(
               SimulatedAsyncResponseTransformer
@@ -199,7 +200,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
             isAwsFailure
           )
         ),
-        testM("report exception on transformer before stream")(
+        test("report exception on transformer before stream")(
           assertM(
             runAsyncRequestOutput(
               SimulatedAsyncResponseTransformer
@@ -211,7 +212,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
             isAwsFailure
           )
         ),
-        testM("report exception on transformer after stream")(
+        test("report exception on transformer after stream")(
           assertM(
             runAsyncRequestOutput(
               SimulatedAsyncResponseTransformer
@@ -223,14 +224,14 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
             isAwsFailure
           )
         ),
-        testM("report exception on stream")(
+        test("report exception on stream")(
           assertM(
             runAsyncRequestOutput(failOnStream = Some(SimulatedException))
           )(
             isAwsFailure
           )
         ),
-        testM("fail future after stream")(
+        test("fail future after stream")(
           assertM(
             runAsyncRequestOutput(
               SimulatedAsyncResponseTransformer
@@ -242,7 +243,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
         )
       ),
       suite("asyncRequestInputStream")(
-        testM("success") {
+        test("success") {
           val fakeAwsCall =
             SimulatedAsyncBodyReceiver.useAsyncBody[Int]((in, cf, buffer) =>
               cf.complete(in * buffer.length)
@@ -253,7 +254,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
               asyncRequestInputStream("test", fakeAwsCall)(2, testByteStream)
           } yield assert(result)(equalTo(10))
         },
-        testM("failure on input stream") {
+        test("failure on input stream") {
           val fakeAwsCall =
             SimulatedAsyncBodyReceiver.useAsyncBody[Int]((in, cf, buffer) =>
               cf.complete(in * buffer.length)
@@ -263,12 +264,12 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
             result <- asyncRequestInputStream("test", fakeAwsCall)(
               2,
               testByteStreamWithFailure
-            ).run
+            ).exit
           } yield assert(result)(isAwsFailure)
         }
       ),
       suite("asyncRequestInputOutputStream")(
-        testM("success")(
+        test("success")(
           assertM(runAsyncRequestInputOutputRequest())(
             hasField[
               (StreamingOutputResult[Any, Int, Byte], Vector[Byte]),
@@ -286,70 +287,70 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
               )
           )
         ),
-        testM("failure on input stream")(
-          assertM(runAsyncRequestInputOutputRequest(failOnInput = true).run)(
+        test("failure on input stream")(
+          assertM(runAsyncRequestInputOutputRequest(failOnInput = true).exit)(
             isAwsFailure
           )
         ),
-        testM("future fails before prepare")(
+        test("future fails before prepare")(
           assertM(
             runAsyncRequestInputOutputRequest(
               SimulatedAsyncResponseTransformer
                 .FailureSpec(failBeforePrepare = Some(SimulatedException))
-            ).run
+            ).exit
           )(
             isAwsFailure
           )
         ),
-        testM("report exception on transformer before stream")(
+        test("report exception on transformer before stream")(
           assertM(
             runAsyncRequestInputOutputRequest(
               SimulatedAsyncResponseTransformer
                 .FailureSpec(failTransformerBeforeStream =
                   Some(SimulatedException)
                 )
-            ).run
+            ).exit
           )(
             isAwsFailure
           )
         ),
-        testM("report exception on transformer after stream")(
+        test("report exception on transformer after stream")(
           assertM(
             runAsyncRequestInputOutputRequest(
               SimulatedAsyncResponseTransformer
                 .FailureSpec(failTransformerAfterStream =
                   Some(SimulatedException)
                 )
-            ).run
+            ).exit
           )(
             isAwsFailure
           )
         ),
-        testM("report exception on stream")(
+        test("report exception on stream")(
           assertM(
             runAsyncRequestInputOutputRequest(failOnStream =
               Some(SimulatedException)
-            ).run
+            ).exit
           )(
             isAwsFailure
           )
         ),
-        testM("fail future after stream")(
+        test("fail future after stream")(
           assertM(
             runAsyncRequestInputOutputRequest(
               SimulatedAsyncResponseTransformer
                 .FailureSpec(failFutureAfterStream = Some(SimulatedException))
-            ).run
+            ).exit
           )(
             isAwsFailure
           )
         )
       ),
       suite("asyncRequestEventOutputStream")(
-        testM("success") {
+        test("success") {
           assertM(runAsyncRequestEventOutputStream())(equalTo("hello"))
         },
-        testM("response can go later than stream starts") {
+        test("response can go later than stream starts") {
           import SimulatedEventStreamResponseHandlerReceiver._
           assertM(
             runAsyncRequestEventOutputStream(
@@ -361,7 +362,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
             ).map(_.mkString)
           )(equalTo("hello"))
         },
-        testM("future can be completed later") {
+        test("future can be completed later") {
           import SimulatedEventStreamResponseHandlerReceiver._
           assertM(
             runAsyncRequestEventOutputStream(
@@ -373,7 +374,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
             ).map(_.mkString)
           )(equalTo("hello"))
         },
-        testM("future may not be completed at all") {
+        test("future may not be completed at all") {
           /*
             Not all SDK methods complete on success via the completion stage, for example kinesis subscribeToShard, for
             which the publisherPromise completes first.
@@ -390,7 +391,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
             ).map(_.mkString)
           )(equalTo("hello"))
         },
-        testM("exception before stream") {
+        test("exception before stream") {
           import SimulatedEventStreamResponseHandlerReceiver._
           assertM(
             runAsyncRequestEventOutputStream(
@@ -400,10 +401,10 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
                 EventStream,
                 CompleteFuture
               )
-            ).run
+            ).exit
           )(isAwsFailure)
         },
-        testM("exception after stream") {
+        test("exception after stream") {
           import SimulatedEventStreamResponseHandlerReceiver._
           assertM(
             runAsyncRequestEventOutputStream(
@@ -413,10 +414,10 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
                 ReportException(SimulatedException),
                 CompleteFuture
               )
-            ).run
+            ).exit
           )(isAwsFailure)
         },
-        testM("failed future before stream") {
+        test("failed future before stream") {
           import SimulatedEventStreamResponseHandlerReceiver._
           assertM(
             runAsyncRequestEventOutputStream(
@@ -425,10 +426,10 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
                 ResponseReceived,
                 EventStream
               )
-            ).run
+            ).exit
           )(isAwsFailure)
         },
-        testM("failed future after stream") {
+        test("failed future after stream") {
           import SimulatedEventStreamResponseHandlerReceiver._
           assertM(
             runAsyncRequestEventOutputStream(
@@ -437,20 +438,20 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
                 EventStream,
                 FailFuture(SimulatedException)
               )
-            ).run
+            ).exit
           )(isAwsFailure)
         },
-        testM("publisher fail before subscribe")(
+        test("publisher fail before subscribe")(
           assertM(
             runAsyncRequestEventOutputStream(
               publisherSteps = in =>
                 SimulatedPublisher.Error(
                   SimulatedException
                 ) :: SimulatedPublisher.correctSequence(in)
-            ).run
+            ).exit
           )(isAwsFailure)
         ),
-        testM("publisher fail during emit")(
+        test("publisher fail during emit")(
           assertM(
             runAsyncRequestEventOutputStream(
               publisherSteps = in =>
@@ -460,10 +461,10 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
                       SimulatedPublisher.Error(SimulatedException)
                     ) ::: b
                 }
-            ).run
+            ).exit
           )(isAwsFailure)
         ),
-        testM("publisher fail before complete")(
+        test("publisher fail before complete")(
           assertM(
             runAsyncRequestEventOutputStream(
               publisherSteps = in =>
@@ -471,20 +472,20 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
                   SimulatedPublisher.Error(SimulatedException),
                   SimulatedPublisher.Complete
                 )
-            ).run
+            ).exit
           )(isAwsFailure)
         ),
-        testM("publisher fail with no complete after")(
+        test("publisher fail with no complete after")(
           assertM(
             runAsyncRequestEventOutputStream(
               publisherSteps = in =>
                 SimulatedPublisher.correctSequence(in).init ::: List(
                   SimulatedPublisher.Error(SimulatedException)
                 )
-            ).run
+            ).exit
           )(isAwsFailure)
         ),
-        testM("publisher complete before subscribe is empty result")(
+        test("publisher complete before subscribe is empty result")(
           assertM(
             runAsyncRequestEventOutputStream(
               publisherSteps = in =>
@@ -495,27 +496,27 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
         )
       ),
       suite("asyncRequestEventInputStream")(
-        testM("success") {
+        test("success") {
           assertM(runAsyncRequestEventInputStream())(equalTo("helloworld"))
         },
-        testM("failure on input stream") {
-          assertM(runAsyncRequestEventInputStream(failInput = true).run)(
+        test("failure on input stream") {
+          assertM(runAsyncRequestEventInputStream(failInput = true).exit)(
             isAwsFailure
           )
         }
       ),
       suite("asyncRequestEventInputOutputStream")(
-        testM("success") {
+        test("success") {
           assertM(runAsyncRequestEventInputOutputStream())(
             equalTo("helloworld")
           )
         },
-        testM("failure on input stream") {
-          assertM(runAsyncRequestEventInputOutputStream(failInput = true).run)(
+        test("failure on input stream") {
+          assertM(runAsyncRequestEventInputOutputStream(failInput = true).exit)(
             isAwsFailure
           )
         },
-        testM("response can go later than stream starts") {
+        test("response can go later than stream starts") {
           import SimulatedEventStreamResponseHandlerReceiver._
           assertM(
             runAsyncRequestEventInputOutputStream(
@@ -527,7 +528,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
             ).map(_.mkString)
           )(equalTo("helloworld"))
         },
-        testM("future can be completed later") {
+        test("future can be completed later") {
           import SimulatedEventStreamResponseHandlerReceiver._
           assertM(
             runAsyncRequestEventInputOutputStream(
@@ -539,7 +540,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
             ).map(_.mkString)
           )(equalTo("helloworld"))
         },
-        testM("future may not be completed at all") {
+        test("future may not be completed at all") {
           /*
             Not all SDK methods complete on success via the completion stage, for example kinesis subscribeToShard, for
             which the publisherPromise completes first.
@@ -555,7 +556,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
             ).map(_.mkString)
           )(equalTo("helloworld"))
         },
-        testM("exception before stream") {
+        test("exception before stream") {
           import SimulatedEventStreamResponseHandlerReceiver._
           assertM(
             runAsyncRequestEventInputOutputStream(
@@ -565,10 +566,10 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
                 EventStream,
                 CompleteFuture
               )
-            ).run
+            ).exit
           )(isAwsFailure)
         },
-        testM("exception after stream") {
+        test("exception after stream") {
           import SimulatedEventStreamResponseHandlerReceiver._
           assertM(
             runAsyncRequestEventInputOutputStream(
@@ -578,10 +579,10 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
                 ReportException(SimulatedException),
                 CompleteFuture
               )
-            ).run
+            ).exit
           )(isAwsFailure)
         },
-        testM("failed future before stream") {
+        test("failed future before stream") {
           import SimulatedEventStreamResponseHandlerReceiver._
           assertM(
             runAsyncRequestEventInputOutputStream(
@@ -590,10 +591,10 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
                 ResponseReceived,
                 EventStream
               )
-            ).run
+            ).exit
           )(isAwsFailure)
         },
-        testM("failed future after stream") {
+        test("failed future after stream") {
           import SimulatedEventStreamResponseHandlerReceiver._
           assertM(
             runAsyncRequestEventInputOutputStream(
@@ -602,20 +603,20 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
                 EventStream,
                 FailFuture(SimulatedException)
               )
-            ).run
+            ).exit
           )(isAwsFailure)
         },
-        testM("publisher fail before subscribe")(
+        test("publisher fail before subscribe")(
           assertM(
             runAsyncRequestEventInputOutputStream(
               publisherSteps = in =>
                 SimulatedPublisher.Error(
                   SimulatedException
                 ) :: SimulatedPublisher.correctSequence(in)
-            ).run
+            ).exit
           )(isAwsFailure)
         ),
-        testM("publisher fail during emit")(
+        test("publisher fail during emit")(
           assertM(
             runAsyncRequestEventInputOutputStream(
               publisherSteps = in =>
@@ -625,10 +626,10 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
                       SimulatedPublisher.Error(SimulatedException)
                     ) ::: b
                 }
-            ).run
+            ).exit
           )(isAwsFailure)
         ),
-        testM("publisher fail before complete")(
+        test("publisher fail before complete")(
           assertM(
             runAsyncRequestEventInputOutputStream(
               publisherSteps = in =>
@@ -636,20 +637,20 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
                   SimulatedPublisher.Error(SimulatedException),
                   SimulatedPublisher.Complete
                 )
-            ).run
+            ).exit
           )(isAwsFailure)
         ),
-        testM("publisher fail with no complete after")(
+        test("publisher fail with no complete after")(
           assertM(
             runAsyncRequestEventInputOutputStream(
               publisherSteps = in =>
                 SimulatedPublisher.correctSequence(in).init ::: List(
                   SimulatedPublisher.Error(SimulatedException)
                 )
-            ).run
+            ).exit
           )(isAwsFailure)
         ),
-        testM("publisher complete before subscribe is empty result")(
+        test("publisher complete before subscribe is empty result")(
           assertM(
             runAsyncRequestEventInputOutputStream(
               publisherSteps = in =>
@@ -817,7 +818,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
       result <- asyncRequestOutputStream("test", fakeAwsCall)("hello")
       streamResult <- result.output.runCollect.map(_.toVector)
     } yield (result, streamResult)
-    req.run
+    req.exit
   }
 
   private def runAsyncRequestEventOutputStream(
@@ -886,12 +887,12 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
     if (failInput) {
       ZStream
         .fromIterable("world")
-        .chunkN(2)
+        .rechunk(2)
         .concat(ZStream.fail(GenericAwsError(SimulatedException)))
     } else {
       ZStream
         .fromIterable("world")
-        .chunkN(2)
+        .rechunk(2)
     }
   }
 
@@ -963,11 +964,11 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
   private val testByteStream =
     ZStream
       .fromIterable("hello".getBytes(StandardCharsets.US_ASCII))
-      .chunkN(2)
+      .rechunk(2)
 
   private val testByteStreamWithFailure =
     ZStream
       .fromIterable("hello".getBytes(StandardCharsets.US_ASCII))
-      .chunkN(2)
+      .rechunk(2)
       .concat(ZStream.fail(GenericAwsError(SimulatedException)))
 }
