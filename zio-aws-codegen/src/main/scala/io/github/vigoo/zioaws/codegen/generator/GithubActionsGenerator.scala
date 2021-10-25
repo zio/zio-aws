@@ -33,7 +33,7 @@ trait GithubActionsGenerator {
 
     val scala212 = ScalaVersion("2.12.15")
     val scala213 = ScalaVersion("2.13.6")
-    val scala3 = ScalaVersion("3.0.2")
+    val scala3 = ScalaVersion("3.1.0")
     val scalaVersions = Seq(
       scala212,
       scala213,
@@ -221,7 +221,7 @@ trait GithubActionsGenerator {
                   "examples/compile",
                   "integtests/test"
                 ),
-                heapGb = 5,
+                heapGb = 5
               ).when(isNotScalaVersion(scala3)),
               runSBT(
                 "Build and run tests",
@@ -229,7 +229,7 @@ trait GithubActionsGenerator {
                   "++${{ matrix.scala }}",
                   "examples/compile"
                 ),
-                heapGb = 5,
+                heapGb = 5
               ).when(isScalaVersion(scala3))
             )
         )

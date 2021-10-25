@@ -17,7 +17,7 @@ object Common extends AutoPlugin {
     val zioConfigVersion = "1.0.10+8-61a9e4bf-SNAPSHOT"
     val catsEffectVersion = "3.2.9"
 
-    val awsVersion = "2.17.42"
+    val awsVersion = "2.17.66"
     val awsSubVersion = awsVersion.drop(awsVersion.indexOf('.') + 1)
     val http4sVersion = "0.23.5"
     val fs2Version = "3.1.5"
@@ -27,7 +27,7 @@ object Common extends AutoPlugin {
 
     val scala212Version = "2.12.15"
     val scala213Version = "2.13.6"
-    val scala3Version = "3.0.2"
+    val scala3Version = "3.1.0"
 
     val scalacOptions212 = Seq("-Ypartial-unification", "-deprecation")
     val scalacOptions213 = Seq("-deprecation")

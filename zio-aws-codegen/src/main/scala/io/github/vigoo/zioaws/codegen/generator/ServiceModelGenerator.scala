@@ -578,7 +578,10 @@ trait ServiceModelGenerator {
         case ModelWrapper(Some(fileName), code, _) => (fileName, code)
       }
       namesInModel = models.map(_.name)
-      modelPkgObject <- Generator.generateScalaPackageObject[Any, Nothing](pkg, "model") {
+      modelPkgObject <- Generator.generateScalaPackageObject[Any, Nothing](
+        pkg,
+        "model"
+      ) {
         ZIO
           .foreach_(namesInModel)(CodeFileGenerator.knownLocalName(_))
           .as(

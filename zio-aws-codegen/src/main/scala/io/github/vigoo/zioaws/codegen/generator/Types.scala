@@ -11,7 +11,8 @@ object Types {
 
   val awsConfig: ScalaType = ScalaType(zioawsCore / "config", "AwsConfig")
 
-  val serviceHttpCapabilities: ScalaType = ScalaType(Packages.zioawsHttpClient, "ServiceHttpCapabilities")
+  val serviceHttpCapabilities: ScalaType =
+    ScalaType(Packages.zioawsHttpClient, "ServiceHttpCapabilities")
 
   def streamingOutputResult(
       r: ScalaType,
