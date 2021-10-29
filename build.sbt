@@ -45,7 +45,7 @@ lazy val http4s = Project("zio-aws-http4s", file("zio-aws-http4s"))
       "dev.zio" %% "zio-config" % zioConfigVersion,
       "co.fs2" %% "fs2-reactive-streams" % fs2Version,
       "org.typelevel" %% "cats-effect" % catsEffectVersion,
-      "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.1"
+      "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2"
     )
   )
   .dependsOn(core)
