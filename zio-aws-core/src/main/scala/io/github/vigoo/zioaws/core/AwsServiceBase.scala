@@ -244,6 +244,7 @@ trait AwsServiceBase[R, Self[_]] {
         runtime <- ZIO.runtime[Any]
         publisherPromise <- Promise.make[AwsError, Publisher[EventI]]
         responsePromise <- Promise.make[AwsError, Response]
+        finishedPromise <- Promise.make[AwsError, Unit]
         signalQueue <- ZQueue.bounded[AwsError](16)
 
         _ <- aspect(
@@ -256,6 +257,7 @@ trait AwsServiceBase[R, Self[_]] {
                     runtime,
                     signalQueue,
                     responsePromise,
+                    finishedPromise,
                     publisherPromise
                   )
                 )
@@ -263,7 +265,7 @@ trait AwsServiceBase[R, Self[_]] {
             )
             .mapError(AwsError.fromThrowable) ? (serviceName / opName)
         ).forkWithErrorHandler(error =>
-          signalQueue.offerAll(Seq(error, error)).unit
+          signalQueue.offerAll(Seq(error, error)) *> finishedPromise.fail(error)
         )
 
         failOnErrorSignal = signalQueue.take
@@ -279,7 +281,7 @@ trait AwsServiceBase[R, Self[_]] {
             .toStream()
             .mapError(AwsError.fromThrowable)
             .mergeWith(
-              ZStream.fromQueueWithShutdown(signalQueue),
+              ZStream.fromQueue(signalQueue),
               TerminationStrategy.Either
             )(Left.apply, Right.apply)
             .map(_.swap)
@@ -288,7 +290,12 @@ trait AwsServiceBase[R, Self[_]] {
               case Left(error)        => ZStream.fail(error)
               case Right(item: Event) => ZStream.succeed(item)
               case Right(_)           => ZStream.empty
+            } ++ ZStream.unwrap {
+            finishedPromise.await *> signalQueue.poll.map {
+              case None          => ZStream.empty
+              case Some(failure) => ZStream.fail(failure)
             }
+          }
       } yield stream
     }
   }
@@ -335,6 +342,7 @@ trait AwsServiceBase[R, Self[_]] {
         runtime <- ZIO.runtime[Any]
         outPublisherPromise <- Promise.make[AwsError, Publisher[OutEventI]]
         responsePromise <- Promise.make[AwsError, Response]
+        finishedPromise <- Promise.make[AwsError, Unit]
         signalQueue <- ZQueue.bounded[AwsError](16)
 
         _ <- aspect(
@@ -348,6 +356,7 @@ trait AwsServiceBase[R, Self[_]] {
                     runtime,
                     signalQueue,
                     responsePromise,
+                    finishedPromise,
                     outPublisherPromise
                   )
                 )
@@ -355,7 +364,7 @@ trait AwsServiceBase[R, Self[_]] {
             )
             .mapError(AwsError.fromThrowable) ? (serviceName / opName)
         ).forkWithErrorHandler(error =>
-          signalQueue.offerAll(Seq(error, error)).unit
+          signalQueue.offerAll(Seq(error, error)).unit *> finishedPromise.fail(error)
         )
 
         failOnErrorSignal = signalQueue.take
@@ -371,7 +380,7 @@ trait AwsServiceBase[R, Self[_]] {
             .toStream()
             .mapError(AwsError.fromThrowable)
             .mergeWith(
-              ZStream.fromQueueWithShutdown(signalQueue),
+              ZStream.fromQueue(signalQueue),
               TerminationStrategy.Either
             )(Left.apply, Right.apply)
             .map(_.swap)
@@ -380,7 +389,12 @@ trait AwsServiceBase[R, Self[_]] {
               case Left(error)           => ZStream.fail(error)
               case Right(item: OutEvent) => ZStream.succeed(item)
               case Right(_)              => ZStream.empty
+            } ++ ZStream.unwrap {
+            finishedPromise.await *> signalQueue.poll.map {
+              case None          => ZStream.empty
+              case Some(failure) => ZStream.fail(failure)
             }
+          }
       } yield stream
     }
   }

@@ -11,6 +11,7 @@ object ZEventStreamResponseHandler {
       runtime: Runtime[Any],
       signalQueue: Queue[AwsError],
       responsePromise: Promise[AwsError, ResponseT],
+      finishedPromise: Promise[AwsError, Unit],
       promise: Promise[AwsError, Publisher[EventT]]
   ): EventStreamResponseHandler[ResponseT, EventT] =
     new EventStreamResponseHandler[ResponseT, EventT] {
@@ -20,15 +21,19 @@ object ZEventStreamResponseHandler {
       override def onEventStream(publisher: SdkPublisher[EventT]): Unit =
         runtime.unsafeRun(promise.succeed(publisher))
 
-      override def exceptionOccurred(throwable: Throwable): Unit =
+      override def exceptionOccurred(throwable: Throwable): Unit = {
         runtime.unsafeRun {
           val error = AwsError.fromThrowable(throwable)
-          signalQueue.offerAll(Seq(error, error))
+          signalQueue.offerAll(Seq(error, error)) *> finishedPromise.fail(error)
         }
+      }
 
       override def complete(): Unit = {
-        // We cannot signal termination here because the publisher stream may still have buffered items.
-        // Completion is marked by the publisher
+        runtime.unsafeRun {
+          finishedPromise.succeed(())
+          // We cannot signal termination here because the publisher stream may still have buffered items.
+          // Completion is marked by the publisher
+        }
       }
     }
 }
