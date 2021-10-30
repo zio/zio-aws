@@ -1,9 +1,9 @@
 import io.github.vigoo.zioaws.core.aspects._
 import io.github.vigoo.zioaws.core.AwsError
 import io.github.vigoo.zioaws.core.config.{AwsConfig, CommonAwsConfig}
-import io.github.vigoo.zioaws.{core, dynamodb, netty}
 import io.github.vigoo.zioaws.dynamodb.model.ScanRequest
 import io.github.vigoo.zioaws.dynamodb.{DynamoDb, model}
+import io.github.vigoo.zioaws.netty.NettyHttpClient
 import nl.vroste.rezilience.{CircuitBreaker, Retry, TrippingStrategy}
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
 import software.amazon.awssdk.regions.Region
@@ -35,15 +35,15 @@ object Main extends ZIOAppDefault {
         )
     }
 
-  val program: ZIO[Has[Console] with DynamoDb, AwsError, Unit] =
+  val program: ZIO[Has[Console] with Has[DynamoDb], AwsError, Unit] =
     for {
       _ <- Console.printLine("Performing full table scan").ignore
-      scan = dynamodb.scan(ScanRequest(tableName = "test")) // full table scan
+      scan = Dynamodb.scan(ScanRequest(tableName = "test")) // full table scan
       _ <- scan.foreach(item => Console.printLine(item.toString).ignore)
     } yield ()
 
   override def run: URIO[ZEnv with Has[ZIOAppArgs], ExitCode] = {
-    val httpClient = netty.default
+    val httpClient = NettyHttpClient.default
     val config = ZLayer.succeed(
       CommonAwsConfig(
         region = Some(Region.US_EAST_1),
@@ -52,7 +52,7 @@ object Main extends ZIOAppDefault {
         commonClientConfig = None
       )
     )
-    val awsConfig = (httpClient ++ config) >>> core.config.configured()
+    val awsConfig = (httpClient ++ config) >>> AwsConfig.configured()
 
     val circuitBreaker = CircuitBreaker.make[AwsError](
       trippingStrategy = TrippingStrategy.failureCount(maxFailures = 3),
@@ -67,7 +67,7 @@ object Main extends ZIOAppDefault {
       // DynamoDB with circuit breaker
       // val dynamoDb: ZLayer[AwsConfig, Throwable, DynamoDb] = dynamodb.live @@ circuitBreaking(cb)
 
-      val dynamoDb = (dynamodb.live @@ (callLogging >>> circuitBreaking(cb)))
+      val dynamoDb = (DynamoDb.live @@ (callLogging >>> circuitBreaking(cb)))
       val finalLayer = (Clock.any ++ awsConfig) >>> dynamoDb
 
       program

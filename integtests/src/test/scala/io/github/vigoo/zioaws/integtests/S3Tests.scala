@@ -2,10 +2,14 @@ package io.github.vigoo.zioaws.integtests
 
 import java.net.URI
 import akka.actor.ActorSystem
-import io.github.vigoo.zioaws.core.{AwsError, config}
+import io.github.vigoo.zioaws.core.AwsError
 import io.github.vigoo.zioaws.core.aspects._
 import io.github.vigoo.zioaws.s3.model._
-import io.github.vigoo.zioaws.{akkahttp, http4s, netty, s3}
+import io.github.vigoo.zioaws.s3._
+import io.github.vigoo.zioaws.core.config._
+import io.github.vigoo.zioaws.netty._
+import io.github.vigoo.zioaws.http4s._
+import io.github.vigoo.zioaws.akkahttp._
 import software.amazon.awssdk.auth.credentials.{
   AwsBasicCredentials,
   StaticCredentialsProvider
@@ -18,17 +22,17 @@ import zio.test.TestAspect._
 import zio.test._
 
 object S3Tests extends DefaultRunnableSpec with Logging {
-  val nettyClient = netty.default
-  val http4sClient = http4s.default
+  val nettyClient = NettyHttpClient.default
+  val http4sClient = Http4sClient.default
 
   val actorSystem =
     ZLayer.fromAcquireRelease(ZIO.effect(ActorSystem("test")))(sys =>
       ZIO.fromFuture(_ => sys.terminate()).orDie
     )
-  val akkaHttpClient = akkahttp.client()
+  val akkaHttpClient = AkkaHttpClient.client()
 
-  val awsConfig = config.default
-  val s3Client = s3.customized(
+  val awsConfig = AwsConfig.default
+  val s3Client = S3.customized(
     _.credentialsProvider(
       StaticCredentialsProvider
         .create(AwsBasicCredentials.create("dummy", "key"))
@@ -38,13 +42,13 @@ object S3Tests extends DefaultRunnableSpec with Logging {
 
   private def testBucket(prefix: String) = {
     for {
-      env <- ZIO.environment[s3.S3 with Has[Console]]
+      env <- ZIO.environment[Has[S3] with Has[Console]]
       postfix <- Random.nextInt.map(Math.abs)
       bucketName = s"${prefix}-$postfix"
     } yield ZManaged.make(
       for {
         _ <- Console.printLine(s"Creating bucket $bucketName").ignore
-        _ <- s3.createBucket(
+        _ <- S3.createBucket(
           CreateBucketRequest(
             bucket = bucketName
           )
@@ -53,7 +57,7 @@ object S3Tests extends DefaultRunnableSpec with Logging {
     )(bucketName =>
       (for {
         _ <- Console.printLine(s"Deleting bucket $bucketName").ignore
-        _ <- s3.deleteBucket(DeleteBucketRequest(bucketName))
+        _ <- S3.deleteBucket(DeleteBucketRequest(bucketName))
       } yield ())
         .provide(env)
         .catchAll(error => ZIO.die(error.toThrowable))
@@ -85,7 +89,7 @@ object S3Tests extends DefaultRunnableSpec with Logging {
           receivedData <- bucket.use { bucketName =>
             for {
               _ <- Console.printLine(s"Uploading $key to $bucketName").ignore
-              _ <- s3.putObject(
+              _ <- S3.putObject(
                 PutObjectRequest(
                   bucket = bucketName,
                   key = key,
@@ -98,7 +102,7 @@ object S3Tests extends DefaultRunnableSpec with Logging {
                   .chunkN(1024)
               )
               _ <- Console.printLine("Downloading").ignore
-              getResponse <- s3.getObject(
+              getResponse <- S3.getObject(
                 GetObjectRequest(
                   bucket = bucketName,
                   key = key
@@ -108,7 +112,7 @@ object S3Tests extends DefaultRunnableSpec with Logging {
               result <- getStream.runCollect
 
               _ <- Console.printLine("Deleting").ignore
-              _ <- s3.deleteObject(
+              _ <- S3.deleteObject(
                 DeleteObjectRequest(
                   bucket = bucketName,
                   key = key
