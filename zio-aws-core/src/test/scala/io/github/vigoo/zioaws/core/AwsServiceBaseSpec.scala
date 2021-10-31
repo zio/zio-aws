@@ -426,7 +426,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
               )
             ).exit
           )(isAwsFailure)
-        },
+        } @@ ignore, // NOTE: we could only guarantee this by waiting for the future to complete but it seems like there are cases (like kinesis subscribeToShard) where it never happens
         test("failed future after stream") {
           import SimulatedEventStreamResponseHandlerReceiver._
           assertM(
@@ -591,7 +591,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
               )
             ).exit
           )(isAwsFailure)
-        },
+        } @@ ignore, // NOTE: we could only guarantee this by waiting for the future to complete but it seems like there are cases (like kinesis subscribeToShard) where it never happens,
         test("failed future after stream") {
           import SimulatedEventStreamResponseHandlerReceiver._
           assertM(
