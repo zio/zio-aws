@@ -68,132 +68,132 @@ lazy val netty = Project("zio-aws-netty", file("zio-aws-netty"))
     )
   )
   .dependsOn(core)
-
-lazy val examples = Project("examples", file("examples")).settings(
-  publishArtifact := false
-) aggregate (example1, example2, example3)
-
-lazy val example1 = Project("example1", file("examples") / "example1")
-  .dependsOn(
-    core,
-    // http4s,
-    netty,
-    LocalProject("zio-aws-elasticbeanstalk"),
-    LocalProject("zio-aws-ec2")
-  )
-
-lazy val example2 = Project("example2", file("examples") / "example2")
-  .settings(
-    resolvers += Resolver.jcenterRepo,
-    libraryDependencies ++= Seq(
-      "nl.vroste" %% "rezilience" % "0.6.2",
-      "dev.zio" %% "zio-logging" % "0.5.10"
-    )
-  )
-  .dependsOn(
-    core,
-    netty,
-    LocalProject("zio-aws-dynamodb")
-  )
-
-lazy val example3 = Project("example3", file("examples") / "example3")
-  .dependsOn(
-    core,
-    // http4s,
-    netty,
-    LocalProject("zio-aws-kinesis")
-  )
-
-lazy val integtests = Project("integtests", file("integtests"))
-  .settings(
-    crossScalaVersions := List(scala212Version, scala213Version),
-    libraryDependencies ++= Seq(
-      "dev.zio" %% "zio" % zioVersion,
-      "dev.zio" %% "zio-test" % zioVersion,
-      "dev.zio" %% "zio-test-sbt" % zioVersion,
-      "org.apache.logging.log4j" % "log4j-1.2-api" % "2.13.3",
-      "org.apache.logging.log4j" % "log4j-core" % "2.13.3",
-      "org.apache.logging.log4j" % "log4j-api" % "2.13.3",
-      "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.13.3"
-    ),
-    testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
-    evictionErrorLevel := Level.Info
-  )
-  .dependsOn(
-    core,
-    http4s,
-    netty,
-    akkahttp,
-    LocalProject("zio-aws-s3"),
-    LocalProject("zio-aws-dynamodb")
-  )
-
-lazy val docs = project
-  .enablePlugins(GhpagesPlugin, MicrositesPlugin)
-  .settings(
-    publishArtifact := false,
-    publish / skip := true,
-    scalaVersion := scala213Version,
-    name := "zio-aws",
-    description := "Low-level AWS wrapper for ZIO for all AWS services",
-    git.remoteRepo := "git@github.com:vigoo/zio-aws.git",
-    micrositeUrl := "https://vigoo.github.io",
-    micrositeBaseUrl := "/zio-aws",
-    micrositeHomepage := "https://vigoo.github.io/zio-aws/",
-    micrositeDocumentationUrl := "/zio-aws/docs",
-    micrositeAuthor := "Daniel Vigovszky",
-    micrositeTwitterCreator := "@dvigovszky",
-    micrositeGithubOwner := "vigoo",
-    micrositeGithubRepo := "zio-aws",
-    micrositeGitterChannel := false,
-    micrositeDataDirectory := baseDirectory.value / "src/microsite/data",
-    micrositeStaticDirectory := baseDirectory.value / "src/microsite/static",
-    micrositeImgDirectory := baseDirectory.value / "src/microsite/img",
-    micrositeCssDirectory := baseDirectory.value / "src/microsite/styles",
-    micrositeSassDirectory := baseDirectory.value / "src/microsite/partials",
-    micrositeJsDirectory := baseDirectory.value / "src/microsite/scripts",
-    micrositeTheme := "light",
-    micrositeHighlightLanguages ++= Seq("scala", "sbt"),
-    micrositeConfigYaml := ConfigYml(
-      yamlCustomProperties = Map(
-        "url" -> "https://vigoo.github.io",
-        "plugins" -> List("jemoji", "jekyll-sitemap")
-      )
-    ),
-    micrositeAnalyticsToken := "UA-56320875-3",
-    makeSite / includeFilter := "*.html" | "*.css" | "*.png" | "*.jpg" | "*.gif" | "*.js" | "*.swf" | "*.txt" | "*.xml" | "*.svg",
-    micrositePushSiteWith := GitHub4s,
-    micrositeGithubToken := sys.env.get("GITHUB_TOKEN"),
-    // Temporary fix to avoid including mdoc in the published POM
-
-    // skip dependency elements with a scope
-    pomPostProcess := { (node: XmlNode) =>
-      new RuleTransformer(new RewriteRule {
-        override def transform(node: XmlNode): XmlNodeSeq = node match {
-          case e: Elem
-              if e.label == "dependency" && e.child.exists(child =>
-                child.label == "artifactId" && child.text.startsWith("mdoc_")
-              ) =>
-            val organization =
-              e.child.filter(_.label == "groupId").flatMap(_.text).mkString
-            val artifact =
-              e.child.filter(_.label == "artifactId").flatMap(_.text).mkString
-            val version =
-              e.child.filter(_.label == "version").flatMap(_.text).mkString
-            Comment(
-              s"dependency $organization#$artifact;$version has been omitted"
-            )
-          case _ => node
-        }
-      }).transform(node).head
-    },
-    evictionErrorLevel := Level.Info
-  )
-  .dependsOn(
-    core,
-    http4s,
-    netty,
-    akkahttp,
-    LocalProject("zio-aws-elasticbeanstalk"),
-    LocalProject("zio-aws-ec2")
-  )
+//
+//lazy val examples = Project("examples", file("examples")).settings(
+//  publishArtifact := false
+//) aggregate (example1, example2, example3)
+//
+//lazy val example1 = Project("example1", file("examples") / "example1")
+//  .dependsOn(
+//    core,
+//    // http4s,
+//    netty,
+//    LocalProject("zio-aws-elasticbeanstalk"),
+//    LocalProject("zio-aws-ec2")
+//  )
+//
+//lazy val example2 = Project("example2", file("examples") / "example2")
+//  .settings(
+//    resolvers += Resolver.jcenterRepo,
+//    libraryDependencies ++= Seq(
+//      "nl.vroste" %% "rezilience" % "0.6.2",
+//      "dev.zio" %% "zio-logging" % "0.5.10"
+//    )
+//  )
+//  .dependsOn(
+//    core,
+//    netty,
+//    LocalProject("zio-aws-dynamodb")
+//  )
+//
+//lazy val example3 = Project("example3", file("examples") / "example3")
+//  .dependsOn(
+//    core,
+//    // http4s,
+//    netty,
+//    LocalProject("zio-aws-kinesis")
+//  )
+//
+//lazy val integtests = Project("integtests", file("integtests"))
+//  .settings(
+//    crossScalaVersions := List(scala212Version, scala213Version),
+//    libraryDependencies ++= Seq(
+//      "dev.zio" %% "zio" % zioVersion,
+//      "dev.zio" %% "zio-test" % zioVersion,
+//      "dev.zio" %% "zio-test-sbt" % zioVersion,
+//      "org.apache.logging.log4j" % "log4j-1.2-api" % "2.13.3",
+//      "org.apache.logging.log4j" % "log4j-core" % "2.13.3",
+//      "org.apache.logging.log4j" % "log4j-api" % "2.13.3",
+//      "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.13.3"
+//    ),
+//    testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
+//    evictionErrorLevel := Level.Info
+//  )
+//  .dependsOn(
+//    core,
+//    http4s,
+//    netty,
+//    akkahttp,
+//    LocalProject("zio-aws-s3"),
+//    LocalProject("zio-aws-dynamodb")
+//  )
+//
+//lazy val docs = project
+//  .enablePlugins(GhpagesPlugin, MicrositesPlugin)
+//  .settings(
+//    publishArtifact := false,
+//    publish / skip := true,
+//    scalaVersion := scala213Version,
+//    name := "zio-aws",
+//    description := "Low-level AWS wrapper for ZIO for all AWS services",
+//    git.remoteRepo := "git@github.com:vigoo/zio-aws.git",
+//    micrositeUrl := "https://vigoo.github.io",
+//    micrositeBaseUrl := "/zio-aws",
+//    micrositeHomepage := "https://vigoo.github.io/zio-aws/",
+//    micrositeDocumentationUrl := "/zio-aws/docs",
+//    micrositeAuthor := "Daniel Vigovszky",
+//    micrositeTwitterCreator := "@dvigovszky",
+//    micrositeGithubOwner := "vigoo",
+//    micrositeGithubRepo := "zio-aws",
+//    micrositeGitterChannel := false,
+//    micrositeDataDirectory := baseDirectory.value / "src/microsite/data",
+//    micrositeStaticDirectory := baseDirectory.value / "src/microsite/static",
+//    micrositeImgDirectory := baseDirectory.value / "src/microsite/img",
+//    micrositeCssDirectory := baseDirectory.value / "src/microsite/styles",
+//    micrositeSassDirectory := baseDirectory.value / "src/microsite/partials",
+//    micrositeJsDirectory := baseDirectory.value / "src/microsite/scripts",
+//    micrositeTheme := "light",
+//    micrositeHighlightLanguages ++= Seq("scala", "sbt"),
+//    micrositeConfigYaml := ConfigYml(
+//      yamlCustomProperties = Map(
+//        "url" -> "https://vigoo.github.io",
+//        "plugins" -> List("jemoji", "jekyll-sitemap")
+//      )
+//    ),
+//    micrositeAnalyticsToken := "UA-56320875-3",
+//    makeSite / includeFilter := "*.html" | "*.css" | "*.png" | "*.jpg" | "*.gif" | "*.js" | "*.swf" | "*.txt" | "*.xml" | "*.svg",
+//    micrositePushSiteWith := GitHub4s,
+//    micrositeGithubToken := sys.env.get("GITHUB_TOKEN"),
+//    // Temporary fix to avoid including mdoc in the published POM
+//
+//    // skip dependency elements with a scope
+//    pomPostProcess := { (node: XmlNode) =>
+//      new RuleTransformer(new RewriteRule {
+//        override def transform(node: XmlNode): XmlNodeSeq = node match {
+//          case e: Elem
+//              if e.label == "dependency" && e.child.exists(child =>
+//                child.label == "artifactId" && child.text.startsWith("mdoc_")
+//              ) =>
+//            val organization =
+//              e.child.filter(_.label == "groupId").flatMap(_.text).mkString
+//            val artifact =
+//              e.child.filter(_.label == "artifactId").flatMap(_.text).mkString
+//            val version =
+//              e.child.filter(_.label == "version").flatMap(_.text).mkString
+//            Comment(
+//              s"dependency $organization#$artifact;$version has been omitted"
+//            )
+//          case _ => node
+//        }
+//      }).transform(node).head
+//    },
+//    evictionErrorLevel := Level.Info
+//  )
+//  .dependsOn(
+//    core,
+//    http4s,
+//    netty,
+//    akkahttp,
+//    LocalProject("zio-aws-elasticbeanstalk"),
+//    LocalProject("zio-aws-ec2")
+//  )

@@ -24,8 +24,7 @@ import software.amazon.awssdk.http.nio.netty.{
 }
 import zio.config._
 import zio.config.ConfigDescriptor._
-import zio.duration._
-import zio.{Has, ZIO, ZLayer, ZManaged}
+import zio._
 
 import scala.jdk.CollectionConverters._
 

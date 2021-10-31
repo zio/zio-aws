@@ -2,13 +2,13 @@ package io.github.vigoo.zioaws
 
 import java.net.SocketOption
 import java.nio.channels.AsynchronousChannelGroup
-
 import io.github.vigoo.zioaws.core.httpclient
 import io.github.vigoo.zioaws.core.httpclient.{
   HttpClient,
   ServiceHttpCapabilities
 }
 import io.github.vigoo.zioaws.core.httpclient.descriptors.channelOptions
+
 import javax.net.ssl.SSLContext
 import org.http4s.blaze.channel.{ChannelOptions, OptionValue}
 import org.http4s.blaze.client.{BlazeClientBuilder, ParserMode}
@@ -17,19 +17,19 @@ import org.http4s.headers.{AgentProduct, `User-Agent`}
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient
 import zio.config.ConfigDescriptor._
 import zio.config._
-import zio.{Has, Runtime, Task, ZIO, ZLayer}
+import zio.{Clock, Has, Runtime, Task, ZIO, ZLayer, ZManaged}
 
 import scala.concurrent.duration._
 import scala.util.control.NonFatal
 import org.http4s.ProductId
 
 package object http4s {
-  val default: ZLayer[Any, Throwable, HttpClient] = customized(identity)
+  val default: ZLayer[Has[Clock], Throwable, HttpClient] = customized(identity)
 
   def customized(
       f: BlazeClientBuilder[Task] => BlazeClientBuilder[Task]
-  ): ZLayer[Any, Throwable, HttpClient] =
-    ZIO.runtime.toManaged_.flatMap { implicit runtime: Runtime[Any] =>
+  ): ZLayer[Has[Clock], Throwable, HttpClient] =
+    ZIO.runtime.toManaged.flatMap { implicit runtime: Runtime[Has[Clock]] =>
       Http4sClient
         .Http4sClientBuilder(f)
         .toManaged
@@ -72,49 +72,55 @@ package object http4s {
       maxConnectionsPerRequestKey: Option[RequestKey => Int] = None,
       asynchronousChannelGroup: Option[AsynchronousChannelGroup] = None,
       additionalSocketOptions: Seq[OptionValue[_]] = Seq.empty
-  ): ZLayer[Has[BlazeClientConfig], Throwable, HttpClient] =
-    ZLayer.fromServiceManaged { config =>
-      ZIO.runtime.toManaged_.flatMap { implicit runtime: Runtime[Any] =>
-        Http4sClient
-          .Http4sClientBuilder(
-            _.withResponseHeaderTimeout(config.responseHeaderTimeout)
-              .withIdleTimeout(config.idleTimeout)
-              .withRequestTimeout(config.requestTimeout)
-              .withConnectTimeout(config.connectTimeout)
-              .withUserAgent(config.userAgent)
-              .withMaxTotalConnections(config.maxTotalConnections)
-              .withMaxWaitQueueLimit(config.maxWaitQueueLimit)
-              .withCheckEndpointAuthentication(
-                config.checkEndpointIdentification
+  ): ZLayer[Has[BlazeClientConfig] with Has[Clock], Throwable, HttpClient] =
+    ZManaged
+      .service[BlazeClientConfig]
+      .flatMap { config =>
+        ZManaged
+          .runtime[Has[Clock]]
+          .flatMap { implicit runtime =>
+            Http4sClient
+              .Http4sClientBuilder(
+                _.withResponseHeaderTimeout(config.responseHeaderTimeout)
+                  .withIdleTimeout(config.idleTimeout)
+                  .withRequestTimeout(config.requestTimeout)
+                  .withConnectTimeout(config.connectTimeout)
+                  .withUserAgent(config.userAgent)
+                  .withMaxTotalConnections(config.maxTotalConnections)
+                  .withMaxWaitQueueLimit(config.maxWaitQueueLimit)
+                  .withCheckEndpointAuthentication(
+                    config.checkEndpointIdentification
+                  )
+                  .withMaxResponseLineSize(config.maxResponseLineSize)
+                  .withMaxHeaderLength(config.maxHeaderLength)
+                  .withMaxChunkSize(config.maxChunkSize)
+                  .withChunkBufferMaxSize(config.chunkBufferMaxSize)
+                  .withParserMode(config.parserMode)
+                  .withBufferSize(config.bufferSize)
+                  .withChannelOptions(
+                    ChannelOptions(
+                      config.channelOptions.options ++ additionalSocketOptions
+                    )
+                  )
+                  .withSslContextOption(sslContext)
+                  .withAsynchronousChannelGroupOption(asynchronousChannelGroup)
+                  .withMaxConnectionsPerRequestKey(
+                    maxConnectionsPerRequestKey
+                      .getOrElse(Function.const(config.maxWaitQueueLimit))
+                  )
               )
-              .withMaxResponseLineSize(config.maxResponseLineSize)
-              .withMaxHeaderLength(config.maxHeaderLength)
-              .withMaxChunkSize(config.maxChunkSize)
-              .withChunkBufferMaxSize(config.chunkBufferMaxSize)
-              .withParserMode(config.parserMode)
-              .withBufferSize(config.bufferSize)
-              .withChannelOptions(
-                ChannelOptions(
-                  config.channelOptions.options ++ additionalSocketOptions
-                )
-              )
-              .withSslContextOption(sslContext)
-              .withAsynchronousChannelGroupOption(asynchronousChannelGroup)
-              .withMaxConnectionsPerRequestKey(
-                maxConnectionsPerRequestKey
-                  .getOrElse(Function.const(config.maxWaitQueueLimit))
-              )
-          )
-          .toManaged
-          .map { c =>
-            new HttpClient.Service {
-              override def clientFor(
-                  serviceCaps: ServiceHttpCapabilities
-              ): Task[SdkAsyncHttpClient] = Task.succeed(c)
-            }
+              .toManaged
+              .map { c =>
+                new HttpClient.Service {
+                  override def clientFor(
+                      serviceCaps: ServiceHttpCapabilities
+                  ): Task[SdkAsyncHttpClient] = Task.succeed(c)
+                }
+              }
+              .map(client => client)
           }
       }
-    }
+      .toLayer
 
   object descriptors {
     val userAgent: ConfigDescriptor[`User-Agent`] =

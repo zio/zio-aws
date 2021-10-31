@@ -91,19 +91,19 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
     generateArtifactList := generateArtifactListTask.value
   )
 
-  override lazy val extraProjects: Seq[Project] = {
-    zio.Runtime.default.unsafeRun {
-      val env = loader.live
-      val task = for {
-        ids <- loader.findModels()
-      } yield generateSbtSubprojects(ids)
-
-      task.provideCustomLayer(env).tapError { generatorError =>
-        zio.console
-          .putStrLnErr(s"Code generator failure: ${generatorError}")
-      }
-    }
-  }
+//  override lazy val extraProjects: Seq[Project] = {
+//    zio.Runtime.default.unsafeRun {
+//      val env = loader.live
+//      val task = for {
+//        ids <- loader.findModels()
+//      } yield generateSbtSubprojects(ids)
+//
+//      task.provideCustomLayer(env).tapError { generatorError =>
+//        zio.console
+//          .putStrLnErr(s"Code generator failure: ${generatorError}")
+//      }
+//    }
+//  }
 
   private lazy val generateCiYamlTask = Def.task {
     val log = streams.value.log
