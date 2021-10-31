@@ -241,7 +241,6 @@ trait AwsServiceBase[R, Self[_]] {
   )(implicit outEventTag: ClassTag[Event]): ZStream[R, AwsError, Event] = {
     ZStream.unwrap {
       for {
-        _ <- ZIO.debug("asyncRequestEventOutputStream start")
         runtime <- ZIO.runtime[Any]
         publisherPromise <- Promise.make[AwsError, Publisher[EventI]]
         responsePromise <- Promise.make[AwsError, Response]
@@ -264,26 +263,19 @@ trait AwsServiceBase[R, Self[_]] {
                 )
               )
             )
-            .tapBoth(
-              t => ZIO.debug(s"fromCompletionStage failed with $t"),
-              _ => ZIO.debug(s"fromCompletionStage succeeded")
-            )
             .mapError(AwsError.fromThrowable) ? (serviceName / opName)
         ).forkWithErrorHandler(error =>
-          ZIO.debug(s"forkWithErrorHandler start") *>
-            signalQueue.offerAll(Seq(error, error)) *>
-            finishedPromise.fail(error) *>
-            ZIO.debug(s"forkWithErrorHandler end")
+          signalQueue.offerAll(Seq(error, error)) *>
+            finishedPromise.fail(error)
         )
 
         failOnErrorSignal = signalQueue.take
           .map(Left.apply[AwsError, Unit])
-          .tap(e => ZIO.debug(s"failOnErrorSignal took error $e"))
           .absolve
         // NOTE: even though receiveResponse's documentation states it is called before the publisher is set,
         // NOTE: this is not true with EventStreamAsyncResponseTransformer for example in case of Kinesis subscribeToShard
         _ <- publisherPromise.await raceFirst failOnErrorSignal
-        publisher <- publisherPromise.await <* ZIO.debug(s"Got publisher")
+        publisher <- publisherPromise.await
 
         stream =
           publisher
@@ -294,21 +286,18 @@ trait AwsServiceBase[R, Self[_]] {
               TerminationStrategy.Either
             )(Left.apply, Right.apply)
             .map(_.swap)
-            .tap(e => ZIO.debug(s"=> $e"))
-            .tapError(e => ZIO.debug(s"!!! $e"))
             .takeUntil(_.isLeft)
             .flatMap {
               case Left(error)        => ZStream.fail(error)
               case Right(item: Event) => ZStream.succeed(item)
               case Right(_)           => ZStream.empty
             } ++ ZStream.unwrap {
-            ZIO.debug(s"++ start") *>
+              // NOTE: we should wait the CompletableFuture's fiber here BUT it seems like there are cases when it never gets completed
               finishedPromise.await *>
-              ZIO.debug(s"++ finishedPromise") *>
-              signalQueue.poll.flatMap {
-                case None => ZIO.debug(s"polled None").as(ZStream.empty)
+              signalQueue.poll.map {
+                case None => ZStream.empty
                 case Some(failure) =>
-                  ZIO.debug(s"polled Some").as(ZStream.fail(failure))
+                  ZStream.fail(failure)
               }
           }
       } yield stream
@@ -407,6 +396,7 @@ trait AwsServiceBase[R, Self[_]] {
               case Right(item: OutEvent) => ZStream.succeed(item)
               case Right(_)              => ZStream.empty
             } ++ ZStream.unwrap {
+            // NOTE: we should wait the CompletableFuture's fiber here BUT it seems like there are cases when it never gets completed
             finishedPromise.await *> signalQueue.poll.map {
               case None          => ZStream.empty
               case Some(failure) => ZStream.fail(failure)

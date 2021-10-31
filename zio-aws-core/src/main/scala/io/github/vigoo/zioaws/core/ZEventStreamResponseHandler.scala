@@ -17,30 +17,25 @@ object ZEventStreamResponseHandler {
     new EventStreamResponseHandler[ResponseT, EventT] {
       override def responseReceived(response: ResponseT): Unit =
         runtime.unsafeRun(
-          ZIO.debug(s"responseReceived") *>
-            responsePromise.succeed(response)
+          responsePromise.succeed(response)
         )
 
       override def onEventStream(publisher: SdkPublisher[EventT]): Unit =
         runtime.unsafeRun(
-          ZIO.debug(s"onEventStream") *>
-            promise.succeed(publisher)
+          promise.succeed(publisher)
         )
 
       override def exceptionOccurred(throwable: Throwable): Unit = {
         runtime.unsafeRun {
           val error = AwsError.fromThrowable(throwable)
-          ZIO.debug(s"exceptionOccurred") *>
-            signalQueue.offerAll(Seq(error, error)) *>
-            finishedPromise.fail(error) *>
-            ZIO.debug(s"exceptionOccurred DONE")
+          signalQueue.offerAll(Seq(error, error)) *>
+            finishedPromise.fail(error)
         }
       }
 
       override def complete(): Unit = {
         runtime.unsafeRun {
-          ZIO.debug(s"complete") *>
-            finishedPromise.succeed(())
+          finishedPromise.succeed(())
           // We cannot signal termination here because the publisher stream may still have buffered items.
           // Completion is marked by the publisher
         }
