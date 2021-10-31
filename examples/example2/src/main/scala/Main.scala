@@ -8,21 +8,16 @@ import nl.vroste.rezilience.{CircuitBreaker, Retry, TrippingStrategy}
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import zio._
-import zio.clock.Clock
 import zio.config._
-import zio.console.{Console, putStrLn}
-import zio.duration.durationInt
-import zio.logging._
 
-object Main extends App {
-  val callLogging: AwsCallAspect[Clock with Logging] =
-    new AwsCallAspect[Clock with Logging] {
-      override final def apply[R1 <: Clock with Logging, A](
+object Main extends ZIOAppDefault {
+  val callLogging: AwsCallAspect[Has[Clock]] =
+    new AwsCallAspect[Has[Clock]] {
+      override final def apply[R1 <: Has[Clock], A](
           f: ZIO[R1, AwsError, Described[A]]
       ): ZIO[R1, AwsError, Described[A]] = {
         f.timed.flatMap { case (duration, r @ Described(result, description)) =>
-          log
-            .info(
+          ZIO.logInfo(
               s"[${description.service}/${description.operation}] ran for $duration"
             )
             .as(r)
@@ -40,14 +35,14 @@ object Main extends App {
         )
     }
 
-  val program: ZIO[Console with DynamoDb, AwsError, Unit] =
+  val program: ZIO[Has[Console] with DynamoDb, AwsError, Unit] =
     for {
-      _ <- console.putStrLn("Performing full table scan").ignore
+      _ <- Console.printLine("Performing full table scan").ignore
       scan = dynamodb.scan(ScanRequest(tableName = "test")) // full table scan
-      _ <- scan.foreach(item => putStrLn(item.toString).ignore)
+      _ <- scan.foreach(item => Console.printLine(item.toString).ignore)
     } yield ()
 
-  override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] = {
+  override def run: URIO[ZEnv with Has[ZIOAppArgs], ExitCode] = {
     val httpClient = netty.default
     val config = ZLayer.succeed(
       CommonAwsConfig(
@@ -58,7 +53,6 @@ object Main extends App {
       )
     )
     val awsConfig = (httpClient ++ config) >>> core.config.configured()
-    val logging = Logging.consoleErr()
 
     val circuitBreaker = CircuitBreaker.make[AwsError](
       trippingStrategy = TrippingStrategy.failureCount(maxFailures = 3),
@@ -74,14 +68,14 @@ object Main extends App {
       // val dynamoDb: ZLayer[AwsConfig, Throwable, DynamoDb] = dynamodb.live @@ circuitBreaking(cb)
 
       val dynamoDb = (dynamodb.live @@ (callLogging >>> circuitBreaking(cb)))
-      val finalLayer = (Clock.any ++ awsConfig ++ logging) >>> dynamoDb
+      val finalLayer = (Clock.any ++ awsConfig) >>> dynamoDb
 
       program
         .provideCustomLayer(finalLayer)
         .either
         .flatMap {
           case Left(error) =>
-            console.putStrErr(s"AWS error: $error").ignore.as(ExitCode.failure)
+            Console.printLineError(s"AWS error: $error").ignore.as(ExitCode.failure)
           case Right(_) =>
             ZIO.unit.as(ExitCode.success)
         }

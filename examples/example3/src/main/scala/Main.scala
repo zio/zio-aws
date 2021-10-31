@@ -8,27 +8,26 @@ import software.amazon.awssdk.auth.credentials.{
   StaticCredentialsProvider
 }
 import software.amazon.awssdk.regions.Region
-import zio.{console, _}
-import zio.console._
+import zio._
 import zio.stream._
 
-object Main extends App {
+object Main extends ZIOAppDefault {
   val accessKey = "TODO"
   val secretKey = "TODO"
 
-  val program: ZIO[Console with Kinesis, AwsError, Unit] =
+  val program: ZIO[Has[Console] with Kinesis, AwsError, Unit] =
     for {
       streams <- kinesis.listStreams(ListStreamsRequest())
-      _ <- console.putStrLn("Streams:").ignore
-      _ <- ZIO.foreach_(streams.streamNamesValue) { streamName =>
-        console.putStrLn(streamName).ignore
+      _ <- Console.printLine("Streams:").ignore
+      _ <- ZIO.foreachDiscard(streams.streamNamesValue) { streamName =>
+        Console.printLine(streamName).ignore
       }
 
       streamName = "test-stream"
-      _ <- console.putStrLn("Shards:").ignore
+      _ <- Console.printLine("Shards:").ignore
       shard <- kinesis
         .listShards(ListShardsRequest(streamName = Some(streamName)))
-        .tap(shard => console.putStrLn(shard.shardIdValue).ignore)
+        .tap(shard => Console.printLine(shard.shardIdValue).ignore)
         .runHead
         .map(_.get)
       streamDescription <- kinesis.describeStream(
@@ -61,8 +60,8 @@ object Main extends App {
           _.consumerDescriptionValue.consumerStatusValue == ConsumerStatus.ACTIVE
         )
 
-      _ <- console
-        .putStrLn(
+      _ <- Console
+        .printLine(
           s"Consumer registered: ${consumer.consumerDescriptionValue.consumerARNValue}"
         )
         .ignore
@@ -85,15 +84,15 @@ object Main extends App {
 
       _ <- shardStream
         .tap(event =>
-          console
-            .putStrLn(event.recordsValue.map(_.partitionKeyValue).toString())
+          Console
+            .printLine(event.recordsValue.map(_.partitionKeyValue).toString())
             .ignore
         )
         .runHead
 
     } yield ()
 
-  override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] = {
+  override def run: URIO[ZEnv with Has[ZIOAppArgs], ExitCode] = {
     val httpClient = netty.dual
     val cfg = ZLayer.succeed(
       CommonAwsConfig(
@@ -112,7 +111,7 @@ object Main extends App {
       .either
       .flatMap {
         case Left(error) =>
-          console.putStrErr(s"AWS error: $error").ignore.as(ExitCode.failure)
+          Console.printLineError(s"AWS error: $error").ignore.as(ExitCode.failure)
         case Right(_) =>
           ZIO.unit.as(ExitCode.success)
       }

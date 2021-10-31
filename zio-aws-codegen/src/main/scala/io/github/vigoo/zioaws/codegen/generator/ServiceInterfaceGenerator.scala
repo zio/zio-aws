@@ -1351,8 +1351,8 @@ trait ServiceInterfaceGenerator {
 
       mockCompose = q"""
         val compose: zio.URLayer[zio.Has[zio.test.mock.Proxy], $serviceNameT] =
-          zio.ZLayer.fromServiceM { proxy =>
-            withRuntime.map { rts => 
+          zio.ZIO.service[zio.test.mock.Proxy].flatMap { proxy =>
+            withRuntime[zio.Has[zio.test.mock.Proxy]].map { rts => 
               new ${Init(serviceTrait, Name.Anonymous(), List.empty)} {
                 val api: ${clientInterface.typ} = null
                 def withAspect[R1](newAspect: io.github.vigoo.zioaws.core.aspects.AwsCallAspect[R1], r: R1): $serviceTrait = this
@@ -1360,7 +1360,7 @@ trait ServiceInterfaceGenerator {
                 ..$serviceMethodMockComposeMethods
               }
             }
-          }
+          }.toLayer
         """
 
       module = q"""
@@ -1390,7 +1390,7 @@ trait ServiceInterfaceGenerator {
           def managed(customization: ${clientInterfaceBuilder.typ} => ${clientInterfaceBuilder.typ}): zio.ZManaged[${Types.awsConfig.typ}, ${Types.throwable.typ}, $serviceTrait] =
             for {
               awsConfig <- zio.ZManaged.service[AwsConfig.Service]
-              executor <- ${Types.zio_.term}.executor.toManaged_
+              executor <- ${Types.zio_.term}.executor.toManaged
               builder = ${clientInterface.term}.builder()
                   .asyncConfiguration(
                     software.amazon.awssdk.core.client.config.ClientAsyncConfiguration
@@ -1401,9 +1401,9 @@ trait ServiceInterfaceGenerator {
                       )
                       .build()
                   )
-              b0 <- awsConfig.configure[${clientInterface.typ}, ${clientInterfaceBuilder.typ}](builder).toManaged_
-              b1 <- awsConfig.configureHttpClient[${clientInterface.typ}, ${clientInterfaceBuilder.typ}](b0, ${Types.serviceHttpCapabilities.term}(supportsHttp2 = $supportsHttp2Lit)).toManaged_
-              client <- ${Types.zio_.term}(customization(b1).build()).toManaged_
+              b0 <- awsConfig.configure[${clientInterface.typ}, ${clientInterfaceBuilder.typ}](builder).toManaged
+              b1 <- awsConfig.configureHttpClient[${clientInterface.typ}, ${clientInterfaceBuilder.typ}](b0, ${Types.serviceHttpCapabilities.term}(supportsHttp2 = $supportsHttp2Lit)).toManaged
+              client <- ${Types.zio_.term}(customization(b1).build()).toManaged
             } yield new $serviceImplT(client, io.github.vigoo.zioaws.core.aspects.AwsCallAspect.identity, ().asInstanceOf[Any])
 
           private class $serviceImplT[R](override val api: ${clientInterface.typ}, override val aspect: io.github.vigoo.zioaws.core.aspects.AwsCallAspect[R], r: R)

@@ -86,8 +86,7 @@ lazy val example2 = Project("example2", file("examples") / "example2")
   .settings(
     resolvers += Resolver.jcenterRepo,
     libraryDependencies ++= Seq(
-      "nl.vroste" %% "rezilience" % "0.6.2",
-      "dev.zio" %% "zio-logging" % "0.5.10"
+      "nl.vroste" %% "rezilience" % "0.7.0+9-2c6b9a3a-SNAPSHOT",
     )
   )
   .dependsOn(
