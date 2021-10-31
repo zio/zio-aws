@@ -21,7 +21,7 @@ import software.amazon.awssdk.core.async.{
 import zio._
 import zio.stream.ZStream
 import zio.test.Assertion._
-import zio.test.TestAspect.{nonFlaky, timeout}
+import zio.test.TestAspect.{nonFlaky, sequential, timeout}
 import zio.test._
 import zio.test.environment.TestEnvironment
 
@@ -429,16 +429,17 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
             ).exit
           )(isAwsFailure)
         },
-        test("failed future after stream") {
+        test("failed future after stream TEST") {
           import SimulatedEventStreamResponseHandlerReceiver._
           assertM(
+            ZIO.debug(s"------ FLAKY TEST START") *>
             runAsyncRequestEventOutputStream(
               handlerSteps = List(
                 ResponseReceived,
                 EventStream,
                 FailFuture(SimulatedException)
               )
-            ).exit
+            ).exit <* ZIO.debug(s"------ FLAKY TEST END")
           )(isAwsFailure)
         },
         test("publisher fail before subscribe")(
@@ -660,7 +661,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
           )(equalTo(""))
         )
       )
-    ) @@ nonFlaky(25)
+    ) @@ nonFlaky(25) @@ sequential
 
   private def runAsyncRequestInputOutputRequest(
       failureSpec: SimulatedAsyncResponseTransformer.FailureSpec =
