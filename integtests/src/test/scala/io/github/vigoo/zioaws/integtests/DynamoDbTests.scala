@@ -13,9 +13,6 @@ import software.amazon.awssdk.auth.credentials.{
 }
 import software.amazon.awssdk.regions.Region
 import zio._
-import zio.clock.Clock
-import zio.console.Console
-import zio.duration._
 import zio.test.Assertion._
 import zio.test.TestAspect._
 import zio.test._
@@ -40,12 +37,12 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
 
   private def testTable(prefix: String) = {
     for {
-      env <- ZIO.environment[dynamodb.DynamoDb with zio.console.Console]
-      postfix <- random.nextInt.map(Math.abs)
+      env <- ZIO.environment[dynamodb.DynamoDb with Has[Console]]
+      postfix <- Random.nextInt.map(Math.abs)
       tableName = s"${prefix}_$postfix"
     } yield ZManaged.make(
       for {
-        _ <- console.putStrLn(s"Creating table $tableName").ignore
+        _ <- Console.printLine(s"Creating table $tableName").ignore
         tableData <- dynamodb.createTable(
           CreateTableRequest(
             tableName = tableName,
@@ -69,7 +66,7 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
       tableDescription.tableName
         .flatMap { tableName =>
           for {
-            _ <- console.putStrLn(s"Deleting table $tableName").ignore
+            _ <- Console.printLine(s"Deleting table $tableName").ignore
             _ <- dynamodb.deleteTable(DeleteTableRequest(tableName))
           } yield ()
         }
@@ -102,8 +99,8 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
             val put =
               for {
                 tableName <- tableDescription.tableName
-                randomKey <- random.nextString(10)
-                randomValue <- random.nextInt
+                randomKey <- Random.nextString(10)
+                randomValue <- Random.nextInt
                 _ <- dynamodb.putItem(
                   PutItemRequest(
                     tableName = tableName,

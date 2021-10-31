@@ -12,9 +12,6 @@ import software.amazon.awssdk.auth.credentials.{
 }
 import software.amazon.awssdk.regions.Region
 import zio._
-import zio.clock._
-import zio.console._
-import zio.duration._
 import zio.stream.ZStream
 import zio.test.Assertion._
 import zio.test.TestAspect._
@@ -41,12 +38,12 @@ object S3Tests extends DefaultRunnableSpec with Logging {
 
   private def testBucket(prefix: String) = {
     for {
-      env <- ZIO.environment[s3.S3 with zio.console.Console]
-      postfix <- random.nextInt.map(Math.abs)
+      env <- ZIO.environment[s3.S3 with Has[Console]]
+      postfix <- Random.nextInt.map(Math.abs)
       bucketName = s"${prefix}-$postfix"
     } yield ZManaged.make(
       for {
-        _ <- console.putStrLn(s"Creating bucket $bucketName").ignore
+        _ <- Console.printLine(s"Creating bucket $bucketName").ignore
         _ <- s3.createBucket(
           CreateBucketRequest(
             bucket = bucketName
@@ -55,7 +52,7 @@ object S3Tests extends DefaultRunnableSpec with Logging {
       } yield bucketName
     )(bucketName =>
       (for {
-        _ <- console.putStrLn(s"Deleting bucket $bucketName").ignore
+        _ <- Console.printLine(s"Deleting bucket $bucketName").ignore
         _ <- s3.deleteBucket(DeleteBucketRequest(bucketName))
       } yield ())
         .provide(env)
@@ -82,12 +79,12 @@ object S3Tests extends DefaultRunnableSpec with Logging {
       ) {
         // streaming input and streaming output calls
         val steps = for {
-          testData <- random.nextBytes(65536)
+          testData <- Random.nextBytes(65536)
           bucket <- testBucket(s"${prefix}-ud")
           key = "testdata"
           receivedData <- bucket.use { bucketName =>
             for {
-              _ <- console.putStrLn(s"Uploading $key to $bucketName").ignore
+              _ <- Console.printLine(s"Uploading $key to $bucketName").ignore
               _ <- s3.putObject(
                 PutObjectRequest(
                   bucket = bucketName,
@@ -100,7 +97,7 @@ object S3Tests extends DefaultRunnableSpec with Logging {
                   .fromIterable(testData)
                   .chunkN(1024)
               )
-              _ <- console.putStrLn("Downloading").ignore
+              _ <- Console.printLine("Downloading").ignore
               getResponse <- s3.getObject(
                 GetObjectRequest(
                   bucket = bucketName,
@@ -110,7 +107,7 @@ object S3Tests extends DefaultRunnableSpec with Logging {
               getStream = getResponse.output
               result <- getStream.runCollect
 
-              _ <- console.putStrLn("Deleting").ignore
+              _ <- Console.printLine("Deleting").ignore
               _ <- s3.deleteObject(
                 DeleteObjectRequest(
                   bucket = bucketName,
