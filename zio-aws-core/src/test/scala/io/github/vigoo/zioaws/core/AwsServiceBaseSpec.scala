@@ -347,154 +347,157 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
         )
       ),
       suite("asyncRequestEventOutputStream")(
-        test("success") {
-          assertM(runAsyncRequestEventOutputStream())(equalTo("hello"))
-        },
-        test("response can go later than stream starts") {
-          import SimulatedEventStreamResponseHandlerReceiver._
-          assertM(
-            runAsyncRequestEventOutputStream(
-              handlerSteps = List(
-                CompleteFuture,
-                EventStream,
-                ResponseReceived
-              )
-            ).map(_.mkString)
-          )(equalTo("hello"))
-        },
-        test("future can be completed later") {
-          import SimulatedEventStreamResponseHandlerReceiver._
-          assertM(
-            runAsyncRequestEventOutputStream(
-              handlerSteps = List(
-                EventStream,
-                ResponseReceived,
-                CompleteFuture
-              )
-            ).map(_.mkString)
-          )(equalTo("hello"))
-        },
-        test("future may not be completed at all") {
-          /*
-            Not all SDK methods complete on success via the completion stage, for example kinesis subscribeToShard, for
-            which the publisherPromise completes first.
-           */
-
-          import SimulatedEventStreamResponseHandlerReceiver._
-          assertM(
-            runAsyncRequestEventOutputStream(
-              handlerSteps = List(
-                EventStream,
-                ResponseReceived,
-                CompleteFuture
-              )
-            ).map(_.mkString)
-          )(equalTo("hello"))
-        },
-        test("exception before stream") {
-          import SimulatedEventStreamResponseHandlerReceiver._
-          assertM(
-            runAsyncRequestEventOutputStream(
-              handlerSteps = List(
-                ResponseReceived,
-                ReportException(SimulatedException),
-                EventStream,
-                CompleteFuture
-              )
-            ).exit
-          )(isAwsFailure)
-        },
-        test("exception after stream") {
-          import SimulatedEventStreamResponseHandlerReceiver._
-          assertM(
-            runAsyncRequestEventOutputStream(
-              handlerSteps = List(
-                ResponseReceived,
-                EventStream,
-                ReportException(SimulatedException),
-                CompleteFuture
-              )
-            ).exit
-          )(isAwsFailure)
-        },
-        test("failed future before stream") {
-          import SimulatedEventStreamResponseHandlerReceiver._
-          assertM(
-            runAsyncRequestEventOutputStream(
-              handlerSteps = List(
-                FailFuture(SimulatedException),
-                ResponseReceived,
-                EventStream
-              )
-            ).exit
-          )(isAwsFailure)
-        },
+//        test("success") {
+//          assertM(runAsyncRequestEventOutputStream())(equalTo("hello"))
+//        },
+//        test("response can go later than stream starts") {
+//          import SimulatedEventStreamResponseHandlerReceiver._
+//          assertM(
+//            runAsyncRequestEventOutputStream(
+//              handlerSteps = List(
+//                CompleteFuture,
+//                EventStream,
+//                ResponseReceived
+//              )
+//            ).map(_.mkString)
+//          )(equalTo("hello"))
+//        },
+//        test("future can be completed later") {
+//          import SimulatedEventStreamResponseHandlerReceiver._
+//          assertM(
+//            runAsyncRequestEventOutputStream(
+//              handlerSteps = List(
+//                EventStream,
+//                ResponseReceived,
+//                CompleteFuture
+//              )
+//            ).map(_.mkString)
+//          )(equalTo("hello"))
+//        },
+//        test("future may not be completed at all") {
+//          /*
+//            Not all SDK methods complete on success via the completion stage, for example kinesis subscribeToShard, for
+//            which the publisherPromise completes first.
+//           */
+//
+//          import SimulatedEventStreamResponseHandlerReceiver._
+//          assertM(
+//            runAsyncRequestEventOutputStream(
+//              handlerSteps = List(
+//                EventStream,
+//                ResponseReceived,
+//                CompleteFuture
+//              )
+//            ).map(_.mkString)
+//          )(equalTo("hello"))
+//        },
+//        test("exception before stream") {
+//          import SimulatedEventStreamResponseHandlerReceiver._
+//          assertM(
+//            runAsyncRequestEventOutputStream(
+//              handlerSteps = List(
+//                ResponseReceived,
+//                ReportException(SimulatedException),
+//                EventStream,
+//                CompleteFuture
+//              )
+//            ).exit
+//          )(isAwsFailure)
+//        },
+//        test("exception after stream") {
+//          import SimulatedEventStreamResponseHandlerReceiver._
+//          assertM(
+//            runAsyncRequestEventOutputStream(
+//              handlerSteps = List(
+//                ResponseReceived,
+//                EventStream,
+//                ReportException(SimulatedException),
+//                CompleteFuture
+//              )
+//            ).exit
+//          )(isAwsFailure)
+//        },
+//        test("failed future before stream") {
+//          import SimulatedEventStreamResponseHandlerReceiver._
+//          assertM(
+//            runAsyncRequestEventOutputStream(
+//              handlerSteps = List(
+//                FailFuture(SimulatedException),
+//                ResponseReceived,
+//                EventStream
+//              )
+//            ).exit
+//          )(isAwsFailure)
+//        },
         test("failed future after stream TEST") {
           import SimulatedEventStreamResponseHandlerReceiver._
           assertM(
-            ZIO.debug(s"------ FLAKY TEST START") *>
-            runAsyncRequestEventOutputStream(
-              handlerSteps = List(
-                ResponseReceived,
-                EventStream,
-                FailFuture(SimulatedException)
-              )
-            ).exit <* ZIO.debug(s"------ FLAKY TEST END")
+            for {
+              _ <- ZIO.debug(s"------ FLAKY TEST START")
+              result <- runAsyncRequestEventOutputStream(
+                handlerSteps = List(
+                  ResponseReceived,
+                  EventStream,
+                  FailFuture(SimulatedException)
+                )
+              ).exit
+              _ <- ZIO.debug(s"------ FLAKY TEST END")
+            } yield result
           )(isAwsFailure)
         },
-        test("publisher fail before subscribe")(
-          assertM(
-            runAsyncRequestEventOutputStream(
-              publisherSteps = in =>
-                SimulatedPublisher.Error(
-                  SimulatedException
-                ) :: SimulatedPublisher.correctSequence(in)
-            ).exit
-          )(isAwsFailure)
-        ),
-        test("publisher fail during emit")(
-          assertM(
-            runAsyncRequestEventOutputStream(
-              publisherSteps = in =>
-                SimulatedPublisher.correctSequence(in).splitAt(3) match {
-                  case (a, b) =>
-                    a ::: List(
-                      SimulatedPublisher.Error(SimulatedException)
-                    ) ::: b
-                }
-            ).exit
-          )(isAwsFailure)
-        ),
-        test("publisher fail before complete")(
-          assertM(
-            runAsyncRequestEventOutputStream(
-              publisherSteps = in =>
-                SimulatedPublisher.correctSequence(in).init ::: List(
-                  SimulatedPublisher.Error(SimulatedException),
-                  SimulatedPublisher.Complete
-                )
-            ).exit
-          )(isAwsFailure)
-        ),
-        test("publisher fail with no complete after")(
-          assertM(
-            runAsyncRequestEventOutputStream(
-              publisherSteps = in =>
-                SimulatedPublisher.correctSequence(in).init ::: List(
-                  SimulatedPublisher.Error(SimulatedException)
-                )
-            ).exit
-          )(isAwsFailure)
-        ),
-        test("publisher complete before subscribe is empty result")(
-          assertM(
-            runAsyncRequestEventOutputStream(
-              publisherSteps = in =>
-                SimulatedPublisher.Complete :: SimulatedPublisher
-                  .correctSequence(in)
-            )
-          )(equalTo(""))
-        )
+//        test("publisher fail before subscribe")(
+//          assertM(
+//            runAsyncRequestEventOutputStream(
+//              publisherSteps = in =>
+//                SimulatedPublisher.Error(
+//                  SimulatedException
+//                ) :: SimulatedPublisher.correctSequence(in)
+//            ).exit
+//          )(isAwsFailure)
+//        ),
+//        test("publisher fail during emit")(
+//          assertM(
+//            runAsyncRequestEventOutputStream(
+//              publisherSteps = in =>
+//                SimulatedPublisher.correctSequence(in).splitAt(3) match {
+//                  case (a, b) =>
+//                    a ::: List(
+//                      SimulatedPublisher.Error(SimulatedException)
+//                    ) ::: b
+//                }
+//            ).exit
+//          )(isAwsFailure)
+//        ),
+//        test("publisher fail before complete")(
+//          assertM(
+//            runAsyncRequestEventOutputStream(
+//              publisherSteps = in =>
+//                SimulatedPublisher.correctSequence(in).init ::: List(
+//                  SimulatedPublisher.Error(SimulatedException),
+//                  SimulatedPublisher.Complete
+//                )
+//            ).exit
+//          )(isAwsFailure)
+//        ),
+//        test("publisher fail with no complete after")(
+//          assertM(
+//            runAsyncRequestEventOutputStream(
+//              publisherSteps = in =>
+//                SimulatedPublisher.correctSequence(in).init ::: List(
+//                  SimulatedPublisher.Error(SimulatedException)
+//                )
+//            ).exit
+//          )(isAwsFailure)
+//        ),
+//        test("publisher complete before subscribe is empty result")(
+//          assertM(
+//            runAsyncRequestEventOutputStream(
+//              publisherSteps = in =>
+//                SimulatedPublisher.Complete :: SimulatedPublisher
+//                  .correctSequence(in)
+//            )
+//          )(equalTo(""))
+//        )
       ),
       suite("asyncRequestEventInputStream")(
         test("success") {
@@ -506,162 +509,162 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
           )
         }
       ),
-      suite("asyncRequestEventInputOutputStream")(
-        test("success") {
-          assertM(runAsyncRequestEventInputOutputStream())(
-            equalTo("helloworld")
-          )
-        },
-        test("failure on input stream") {
-          assertM(runAsyncRequestEventInputOutputStream(failInput = true).exit)(
-            isAwsFailure
-          )
-        },
-        test("response can go later than stream starts") {
-          import SimulatedEventStreamResponseHandlerReceiver._
-          assertM(
-            runAsyncRequestEventInputOutputStream(
-              handlerSteps = List(
-                CompleteFuture,
-                EventStream,
-                ResponseReceived
-              )
-            ).map(_.mkString)
-          )(equalTo("helloworld"))
-        },
-        test("future can be completed later") {
-          import SimulatedEventStreamResponseHandlerReceiver._
-          assertM(
-            runAsyncRequestEventInputOutputStream(
-              handlerSteps = List(
-                EventStream,
-                ResponseReceived,
-                CompleteFuture
-              )
-            ).map(_.mkString)
-          )(equalTo("helloworld"))
-        },
-        test("future may not be completed at all") {
-          /*
-            Not all SDK methods complete on success via the completion stage, for example kinesis subscribeToShard, for
-            which the publisherPromise completes first.
-           */
-
-          import SimulatedEventStreamResponseHandlerReceiver._
-          assertM(
-            runAsyncRequestEventInputOutputStream(
-              handlerSteps = List(
-                EventStream,
-                ResponseReceived
-              )
-            ).map(_.mkString)
-          )(equalTo("helloworld"))
-        },
-        test("exception before stream") {
-          import SimulatedEventStreamResponseHandlerReceiver._
-          assertM(
-            runAsyncRequestEventInputOutputStream(
-              handlerSteps = List(
-                ResponseReceived,
-                ReportException(SimulatedException),
-                EventStream,
-                CompleteFuture
-              )
-            ).exit
-          )(isAwsFailure)
-        },
-        test("exception after stream") {
-          import SimulatedEventStreamResponseHandlerReceiver._
-          assertM(
-            runAsyncRequestEventInputOutputStream(
-              handlerSteps = List(
-                ResponseReceived,
-                EventStream,
-                ReportException(SimulatedException),
-                CompleteFuture
-              )
-            ).exit
-          )(isAwsFailure)
-        },
-        test("failed future before stream") {
-          import SimulatedEventStreamResponseHandlerReceiver._
-          assertM(
-            runAsyncRequestEventInputOutputStream(
-              handlerSteps = List(
-                FailFuture(SimulatedException),
-                ResponseReceived,
-                EventStream
-              )
-            ).exit
-          )(isAwsFailure)
-        },
-        test("failed future after stream") {
-          import SimulatedEventStreamResponseHandlerReceiver._
-          assertM(
-            runAsyncRequestEventInputOutputStream(
-              handlerSteps = List(
-                ResponseReceived,
-                EventStream,
-                FailFuture(SimulatedException)
-              )
-            ).exit
-          )(isAwsFailure)
-        },
-        test("publisher fail before subscribe")(
-          assertM(
-            runAsyncRequestEventInputOutputStream(
-              publisherSteps = in =>
-                SimulatedPublisher.Error(
-                  SimulatedException
-                ) :: SimulatedPublisher.correctSequence(in)
-            ).exit
-          )(isAwsFailure)
-        ),
-        test("publisher fail during emit")(
-          assertM(
-            runAsyncRequestEventInputOutputStream(
-              publisherSteps = in =>
-                SimulatedPublisher.correctSequence(in).splitAt(3) match {
-                  case (a, b) =>
-                    a ::: List(
-                      SimulatedPublisher.Error(SimulatedException)
-                    ) ::: b
-                }
-            ).exit
-          )(isAwsFailure)
-        ),
-        test("publisher fail before complete")(
-          assertM(
-            runAsyncRequestEventInputOutputStream(
-              publisherSteps = in =>
-                SimulatedPublisher.correctSequence(in).init ::: List(
-                  SimulatedPublisher.Error(SimulatedException),
-                  SimulatedPublisher.Complete
-                )
-            ).exit
-          )(isAwsFailure)
-        ),
-        test("publisher fail with no complete after")(
-          assertM(
-            runAsyncRequestEventInputOutputStream(
-              publisherSteps = in =>
-                SimulatedPublisher.correctSequence(in).init ::: List(
-                  SimulatedPublisher.Error(SimulatedException)
-                )
-            ).exit
-          )(isAwsFailure)
-        ),
-        test("publisher complete before subscribe is empty result")(
-          assertM(
-            runAsyncRequestEventInputOutputStream(
-              publisherSteps = in =>
-                SimulatedPublisher.Complete :: SimulatedPublisher
-                  .correctSequence(in)
-            )
-          )(equalTo(""))
-        )
-      )
-    ) @@ nonFlaky(25) @@ sequential
+//      suite("asyncRequestEventInputOutputStream")(
+//        test("success") {
+//          assertM(runAsyncRequestEventInputOutputStream())(
+//            equalTo("helloworld")
+//          )
+//        },
+//        test("failure on input stream") {
+//          assertM(runAsyncRequestEventInputOutputStream(failInput = true).exit)(
+//            isAwsFailure
+//          )
+//        },
+//        test("response can go later than stream starts") {
+//          import SimulatedEventStreamResponseHandlerReceiver._
+//          assertM(
+//            runAsyncRequestEventInputOutputStream(
+//              handlerSteps = List(
+//                CompleteFuture,
+//                EventStream,
+//                ResponseReceived
+//              )
+//            ).map(_.mkString)
+//          )(equalTo("helloworld"))
+//        },
+//        test("future can be completed later") {
+//          import SimulatedEventStreamResponseHandlerReceiver._
+//          assertM(
+//            runAsyncRequestEventInputOutputStream(
+//              handlerSteps = List(
+//                EventStream,
+//                ResponseReceived,
+//                CompleteFuture
+//              )
+//            ).map(_.mkString)
+//          )(equalTo("helloworld"))
+//        },
+//        test("future may not be completed at all") {
+//          /*
+//            Not all SDK methods complete on success via the completion stage, for example kinesis subscribeToShard, for
+//            which the publisherPromise completes first.
+//           */
+//
+//          import SimulatedEventStreamResponseHandlerReceiver._
+//          assertM(
+//            runAsyncRequestEventInputOutputStream(
+//              handlerSteps = List(
+//                EventStream,
+//                ResponseReceived
+//              )
+//            ).map(_.mkString)
+//          )(equalTo("helloworld"))
+//        },
+//        test("exception before stream") {
+//          import SimulatedEventStreamResponseHandlerReceiver._
+//          assertM(
+//            runAsyncRequestEventInputOutputStream(
+//              handlerSteps = List(
+//                ResponseReceived,
+//                ReportException(SimulatedException),
+//                EventStream,
+//                CompleteFuture
+//              )
+//            ).exit
+//          )(isAwsFailure)
+//        },
+//        test("exception after stream") {
+//          import SimulatedEventStreamResponseHandlerReceiver._
+//          assertM(
+//            runAsyncRequestEventInputOutputStream(
+//              handlerSteps = List(
+//                ResponseReceived,
+//                EventStream,
+//                ReportException(SimulatedException),
+//                CompleteFuture
+//              )
+//            ).exit
+//          )(isAwsFailure)
+//        },
+//        test("failed future before stream") {
+//          import SimulatedEventStreamResponseHandlerReceiver._
+//          assertM(
+//            runAsyncRequestEventInputOutputStream(
+//              handlerSteps = List(
+//                FailFuture(SimulatedException),
+//                ResponseReceived,
+//                EventStream
+//              )
+//            ).exit
+//          )(isAwsFailure)
+//        },
+//        test("failed future after stream") {
+//          import SimulatedEventStreamResponseHandlerReceiver._
+//          assertM(
+//            runAsyncRequestEventInputOutputStream(
+//              handlerSteps = List(
+//                ResponseReceived,
+//                EventStream,
+//                FailFuture(SimulatedException)
+//              )
+//            ).exit
+//          )(isAwsFailure)
+//        },
+//        test("publisher fail before subscribe")(
+//          assertM(
+//            runAsyncRequestEventInputOutputStream(
+//              publisherSteps = in =>
+//                SimulatedPublisher.Error(
+//                  SimulatedException
+//                ) :: SimulatedPublisher.correctSequence(in)
+//            ).exit
+//          )(isAwsFailure)
+//        ),
+//        test("publisher fail during emit")(
+//          assertM(
+//            runAsyncRequestEventInputOutputStream(
+//              publisherSteps = in =>
+//                SimulatedPublisher.correctSequence(in).splitAt(3) match {
+//                  case (a, b) =>
+//                    a ::: List(
+//                      SimulatedPublisher.Error(SimulatedException)
+//                    ) ::: b
+//                }
+//            ).exit
+//          )(isAwsFailure)
+//        ),
+//        test("publisher fail before complete")(
+//          assertM(
+//            runAsyncRequestEventInputOutputStream(
+//              publisherSteps = in =>
+//                SimulatedPublisher.correctSequence(in).init ::: List(
+//                  SimulatedPublisher.Error(SimulatedException),
+//                  SimulatedPublisher.Complete
+//                )
+//            ).exit
+//          )(isAwsFailure)
+//        ),
+//        test("publisher fail with no complete after")(
+//          assertM(
+//            runAsyncRequestEventInputOutputStream(
+//              publisherSteps = in =>
+//                SimulatedPublisher.correctSequence(in).init ::: List(
+//                  SimulatedPublisher.Error(SimulatedException)
+//                )
+//            ).exit
+//          )(isAwsFailure)
+//        ),
+//        test("publisher complete before subscribe is empty result")(
+//          assertM(
+//            runAsyncRequestEventInputOutputStream(
+//              publisherSteps = in =>
+//                SimulatedPublisher.Complete :: SimulatedPublisher
+//                  .correctSequence(in)
+//            )
+//          )(equalTo(""))
+//        )
+//      )
+    ) @@ nonFlaky(50)
 
   private def runAsyncRequestInputOutputRequest(
       failureSpec: SimulatedAsyncResponseTransformer.FailureSpec =
