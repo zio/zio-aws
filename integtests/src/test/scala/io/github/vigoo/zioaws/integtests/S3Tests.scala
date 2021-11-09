@@ -137,7 +137,7 @@ object S3Tests extends DefaultRunnableSpec with Logging {
       ).provideCustomLayer(
         ((Clock.any ++ Console.any ++ (http4sClient >>> awsConfig)) >>> s3Client)
           .mapError(TestFailure.die)
-      ) @@ sequential,
+      ) @@ ignore @@ sequential,
       suite("with akka-http")(
         tests("akkahttp", ignoreUpload = true): _*
       ).provideCustomLayer(

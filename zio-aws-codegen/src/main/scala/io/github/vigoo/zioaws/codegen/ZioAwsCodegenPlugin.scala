@@ -195,6 +195,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
 
         bIsDependent || (!aIsDependent && a.toString < b.toString)
       }
+      //.filter(name => Set("elasticbeanstalk", "kinesis", "dynamodb", "s3", "ec2").contains(name.moduleName))
       .foldLeft(Map.empty[ModelId, Project]) { (mapping, id) =>
         val name = id.moduleName
         val fullName = s"zio-aws-$name"
