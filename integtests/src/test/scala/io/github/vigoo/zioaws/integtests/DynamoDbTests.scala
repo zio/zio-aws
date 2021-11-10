@@ -4,9 +4,12 @@ import java.net.URI
 import akka.actor.ActorSystem
 import io.github.vigoo.zioaws.core._
 import io.github.vigoo.zioaws.core.aspects._
-import io.github.vigoo.zioaws.core.config
+import io.github.vigoo.zioaws.core.config._
 import io.github.vigoo.zioaws.dynamodb.model._
-import io.github.vigoo.zioaws.{dynamodb, _}
+import io.github.vigoo.zioaws.dynamodb._
+import io.github.vigoo.zioaws.netty._
+import io.github.vigoo.zioaws.http4s._
+import io.github.vigoo.zioaws.akkahttp._
 import software.amazon.awssdk.auth.credentials.{
   AwsBasicCredentials,
   StaticCredentialsProvider
@@ -19,15 +22,15 @@ import zio.test._
 
 object DynamoDbTests extends DefaultRunnableSpec with Logging {
 
-  val nettyClient = netty.default
-  val http4sClient = http4s.default
+  val nettyClient = NettyHttpClient.default
+  val http4sClient = Http4sClient.default
   val actorSystem =
-    ZLayer.fromAcquireRelease(ZIO.effect(ActorSystem("test")))(sys =>
+    ZLayer.fromAcquireRelease(ZIO.attempt(ActorSystem("test")))(sys =>
       ZIO.fromFuture(_ => sys.terminate()).orDie
     )
-  val akkaHttpClient = akkahttp.client()
-  val awsConfig = config.default
-  val dynamoDb = dynamodb.customized(
+  val akkaHttpClient = AkkaHttpClient.client()
+  val awsConfig = AwsConfig.default
+  val dynamoDb = DynamoDb.customized(
     _.credentialsProvider(
       StaticCredentialsProvider
         .create(AwsBasicCredentials.create("dummy", "key"))
@@ -37,13 +40,13 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
 
   private def testTable(prefix: String) = {
     for {
-      env <- ZIO.environment[dynamodb.DynamoDb with Has[Console]]
+      env <- ZIO.environment[Has[DynamoDb] with Has[Console]]
       postfix <- Random.nextInt.map(Math.abs)
       tableName = s"${prefix}_$postfix"
-    } yield ZManaged.make(
+    } yield ZManaged.acquireReleaseWith(
       for {
         _ <- Console.printLine(s"Creating table $tableName").ignore
-        tableData <- dynamodb.createTable(
+        tableData <- DynamoDb.createTable(
           CreateTableRequest(
             tableName = tableName,
             attributeDefinitions = List(
@@ -67,7 +70,7 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
         .flatMap { tableName =>
           for {
             _ <- Console.printLine(s"Deleting table $tableName").ignore
-            _ <- dynamodb.deleteTable(DeleteTableRequest(tableName))
+            _ <- DynamoDb.deleteTable(DeleteTableRequest(tableName))
           } yield ()
         }
         .provide(env)
@@ -78,7 +81,7 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
 
   def tests(prefix: String) =
     Seq(
-      testM("can create and delete a table") {
+      test("can create and delete a table") {
         // simple request/response calls
         val steps = for {
           table <- testTable(s"${prefix}_cd")
@@ -87,9 +90,9 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
           }
         } yield ()
 
-        assertM(steps.run)(succeeds(isUnit))
+        assertM(steps.exit)(succeeds(isUnit))
       } @@ nondeterministic @@ flaky @@ timeout(1.minute),
-      testM("scan") {
+      test("scan") {
         // java paginator based streaming
 
         val N = 100
@@ -101,7 +104,7 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
                 tableName <- tableDescription.tableName
                 randomKey <- Random.nextString(10)
                 randomValue <- Random.nextInt
-                _ <- dynamodb.putItem(
+                _ <- DynamoDb.putItem(
                   PutItemRequest(
                     tableName = tableName,
                     item = Map(
@@ -115,7 +118,7 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
             for {
               tableName <- tableDescription.tableName
               _ <- put.repeatN(N - 1)
-              stream = dynamodb.scan(
+              stream = DynamoDb.scan(
                 ScanRequest(
                   tableName = tableName,
                   limit = Some(10)
@@ -128,7 +131,7 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
 
         assertM(steps)(equalTo(N))
       } @@ nondeterministic @@ flaky @@ timeout(1.minute),
-      testM("listTagsOfResource") {
+      test("listTagsOfResource") {
         // simple paginated streaming
         val N = 1000
         val steps = for {
@@ -136,16 +139,16 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
           result <- table.use { tableDescription =>
             for {
               arn <- tableDescription.tableArn
-              _ <- dynamodb.tagResource(
+              _ <- DynamoDb.tagResource(
                 TagResourceRequest(
                   resourceArn = arn,
                   tags = (0 until N)
-                    .map(i => dynamodb.model.Tag(s"tag$i", i.toString))
+                    .map(i => io.github.vigoo.zioaws.dynamodb.model.Tag(s"tag$i", i.toString))
                     .toList
                 )
               )
 
-              tagStream = dynamodb.listTagsOfResource(
+              tagStream = DynamoDb.listTagsOfResource(
                 ListTagsOfResourceRequest(
                   resourceArn = arn
                 )

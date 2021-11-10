@@ -1,16 +1,17 @@
 import io.github.vigoo.zioaws.core.AwsError
+import io.github.vigoo.zioaws.core.config.AwsConfig
 import io.github.vigoo.zioaws.ec2.Ec2
 import io.github.vigoo.zioaws.ec2.model._
 import io.github.vigoo.zioaws.elasticbeanstalk.ElasticBeanstalk
 import io.github.vigoo.zioaws.elasticbeanstalk.model._
-import io.github.vigoo.zioaws.{core, ec2, elasticbeanstalk, netty}
+import io.github.vigoo.zioaws.netty.NettyHttpClient
 import zio._
 import zio.stream._
 
 object Main extends ZIOAppDefault {
-  val program: ZIO[Has[Console] with Ec2 with ElasticBeanstalk, AwsError, Unit] =
+  val program: ZIO[Has[Console] with Has[Ec2] with Has[ElasticBeanstalk], AwsError, Unit] =
     for {
-      appsResult <- elasticbeanstalk.describeApplications(
+      appsResult <- ElasticBeanstalk.describeApplications(
         DescribeApplicationsRequest(applicationNames = Some(List("my-service")))
       )
       app <- appsResult.applications.map(_.headOption)
@@ -24,7 +25,7 @@ object Main extends ZIOAppDefault {
               )
               .ignore
 
-            envStream = elasticbeanstalk.describeEnvironments(
+            envStream = ElasticBeanstalk.describeEnvironments(
               DescribeEnvironmentsRequest(applicationName =
                 Some(applicationName)
               )
@@ -41,7 +42,7 @@ object Main extends ZIOAppDefault {
                     .ignore
 
                   resourcesResult <-
-                    elasticbeanstalk.describeEnvironmentResources(
+                    ElasticBeanstalk.describeEnvironmentResources(
                       DescribeEnvironmentResourcesRequest(environmentId =
                         Some(environmentId)
                       )
@@ -60,7 +61,7 @@ object Main extends ZIOAppDefault {
                     )
                     .ignore
 
-                  reservationsStream = ec2.describeInstances(
+                  reservationsStream = Ec2.describeInstances(
                     DescribeInstancesRequest(instanceIds = Some(instanceIds))
                   )
                   _ <- reservationsStream.run(Sink.foreach { reservation =>
@@ -98,9 +99,9 @@ object Main extends ZIOAppDefault {
     } yield ()
 
   override def run: URIO[ZEnv with Has[ZIOAppArgs], ExitCode] = {
-    val httpClient = netty.default
-    val awsConfig = httpClient >>> core.config.default
-    val aws = awsConfig >>> (ec2.live ++ elasticbeanstalk.live)
+    val httpClient = NettyHttpClient.default
+    val awsConfig = httpClient >>> AwsConfig.default
+    val aws = awsConfig >>> (Ec2.live ++ ElasticBeanstalk.live)
 
     program
       .provideCustomLayer(aws)

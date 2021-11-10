@@ -16,7 +16,7 @@ import zio.stream.ZStream.TerminationStrategy
 
 import scala.reflect.ClassTag
 
-trait AwsServiceBase[R, Self[_]] {
+trait AwsServiceBase[R] {
   val aspect: AwsCallAspect[R]
   val serviceName: String
 

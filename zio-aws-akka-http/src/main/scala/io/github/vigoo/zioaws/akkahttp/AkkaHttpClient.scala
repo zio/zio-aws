@@ -1,19 +1,19 @@
-package io.github.vigoo.zioaws
+package io.github.vigoo.zioaws.akkahttp
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.settings.ConnectionPoolSettings
-import com.github.matsluni.akkahttpspi.AkkaHttpClient
+import com.github.matsluni.akkahttpspi.{AkkaHttpClient => SPI}
 import io.github.vigoo.zioaws.core.BuilderHelper
 import io.github.vigoo.zioaws.core.httpclient.{
   HttpClient,
   ServiceHttpCapabilities
 }
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient
-import zio.{Has, ZIO, ZLayer, ZManaged, Task}
+import zio.{Has, Task, ZIO, ZLayer, ZManaged}
 
 import scala.concurrent.ExecutionContext
 
-package object akkahttp {
+object AkkaHttpClient {
   val builderHelper: BuilderHelper[SdkAsyncHttpClient] = BuilderHelper.apply
 
   import builderHelper._
@@ -21,12 +21,13 @@ package object akkahttp {
   def client(
       connectionPoolSettings: Option[ConnectionPoolSettings] = None,
       executionContext: Option[ExecutionContext] = None
-  ): ZLayer[Has[ActorSystem], Throwable, HttpClient] =
-    ZLayer.fromServiceManaged { actorSystem =>
-      ZManaged
+  ): ZLayer[Has[ActorSystem], Throwable, Has[HttpClient]] =
+    (for {
+      actorSystem <- ZManaged.service[ActorSystem]
+      akkaClient <- ZManaged
         .fromAutoCloseable(
           ZIO(
-            AkkaHttpClient
+            SPI
               .builder()
               .withActorSystem(actorSystem)
               .optionallyWith(connectionPoolSettings)(
@@ -36,12 +37,9 @@ package object akkahttp {
               .build()
           )
         )
-        .map { akkaClient =>
-          new HttpClient.Service {
-            override def clientFor(
-                serviceCaps: ServiceHttpCapabilities
-            ): Task[SdkAsyncHttpClient] = Task.succeed(akkaClient)
-          }
-        }
-    }
+    } yield new HttpClient {
+      override def clientFor(
+          serviceCaps: ServiceHttpCapabilities
+      ): Task[SdkAsyncHttpClient] = Task.succeed(akkaClient)
+    }).toLayer
 }

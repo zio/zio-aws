@@ -6,7 +6,9 @@ import cats.effect.std.Dispatcher
 import cats.effect.unsafe.IORuntime
 import fs2._
 import fs2.interop.reactivestreams._
+import _root_.io.github.vigoo.zioaws.core.httpclient._
 import org.http4s._
+import org.http4s.blaze.channel.{ChannelOptions, OptionValue}
 import org.http4s.client._
 import org.http4s.blaze.client._
 import software.amazon.awssdk.http.async.{
@@ -27,6 +29,10 @@ import zio.interop.catz._
 import scala.jdk.CollectionConverters._
 import scala.compat.java8.FutureConverters._
 import org.typelevel.ci.CIString
+
+import java.nio.channels.AsynchronousChannelGroup
+import javax.net.ssl.SSLContext
+import scala.util.control.NonFatal
 
 class Http4sClient(client: Client[Task], closeFn: () => Unit)(implicit
     runtime: Runtime[Has[Clock]]
@@ -58,13 +64,16 @@ class Http4sClient(client: Client[Task], closeFn: () => Unit)(implicit
 
   private def toMethod(method: SdkHttpMethod): ExtendedMethod =
     method match {
-      case SdkHttpMethod.GET     => ExtendedMethod(Method.GET, true)
-      case SdkHttpMethod.POST    => ExtendedMethod(Method.POST, true)
-      case SdkHttpMethod.PUT     => ExtendedMethod(Method.PUT, true)
-      case SdkHttpMethod.DELETE  => ExtendedMethod(Method.DELETE, true)
-      case SdkHttpMethod.HEAD    => ExtendedMethod(Method.HEAD, true)
-      case SdkHttpMethod.PATCH   => ExtendedMethod(Method.PATCH, true)
-      case SdkHttpMethod.OPTIONS => ExtendedMethod(Method.OPTIONS, true)
+      case SdkHttpMethod.GET  => ExtendedMethod(Method.GET, canHaveBody = true)
+      case SdkHttpMethod.POST => ExtendedMethod(Method.POST, canHaveBody = true)
+      case SdkHttpMethod.PUT  => ExtendedMethod(Method.PUT, canHaveBody = true)
+      case SdkHttpMethod.DELETE =>
+        ExtendedMethod(Method.DELETE, canHaveBody = true)
+      case SdkHttpMethod.HEAD => ExtendedMethod(Method.HEAD, canHaveBody = true)
+      case SdkHttpMethod.PATCH =>
+        ExtendedMethod(Method.PATCH, canHaveBody = true)
+      case SdkHttpMethod.OPTIONS =>
+        ExtendedMethod(Method.OPTIONS, canHaveBody = true)
     }
 
   private def toHeaders(
@@ -158,9 +167,9 @@ class Http4sClient(client: Client[Task], closeFn: () => Unit)(implicit
 }
 
 object Http4sClient {
-  case class ExtendedMethod(value: Method, canHaveBody: Boolean)
+  private case class ExtendedMethod(value: Method, canHaveBody: Boolean)
 
-  case class Http4sClientBuilder(
+  private[http4s] case class Http4sClientBuilder(
       customization: BlazeClientBuilder[Task] => BlazeClientBuilder[Task] =
         identity
   )(implicit runtime: Runtime[Has[Clock]])
@@ -200,5 +209,85 @@ object Http4sClient {
     }
   }
 
-  def builder(): Http4sClientBuilder = Http4sClientBuilder()(Runtime.default)
+  private[http4s] def builder(): Http4sClientBuilder =
+    Http4sClientBuilder()(Runtime.default)
+
+  val default: ZLayer[Has[Clock], Throwable, Has[HttpClient]] = customized(identity)
+
+  def customized(
+      f: BlazeClientBuilder[Task] => BlazeClientBuilder[Task]
+  ): ZLayer[Has[Clock], Throwable, Has[HttpClient]] =
+    ZIO.runtime.toManaged.flatMap { implicit runtime: Runtime[Has[Clock]] =>
+      Http4sClient
+        .Http4sClientBuilder(f)
+        .toManaged
+        .map { c =>
+          new HttpClient {
+            override def clientFor(
+                serviceCaps: ServiceHttpCapabilities
+            ): Task[SdkAsyncHttpClient] = Task.succeed(c)
+          }
+        }
+    }.toLayer
+
+  def configured(
+      sslContext: Option[SSLContext] = tryDefaultSslContext,
+      maxConnectionsPerRequestKey: Option[RequestKey => Int] = None,
+      asynchronousChannelGroup: Option[AsynchronousChannelGroup] = None,
+      additionalSocketOptions: Seq[OptionValue[_]] = Seq.empty
+  ): ZLayer[Has[
+    _root_.io.github.vigoo.zioaws.http4s.BlazeClientConfig
+  ] with Has[Clock], Throwable, Has[HttpClient]] =
+    ZManaged
+      .service[_root_.io.github.vigoo.zioaws.http4s.BlazeClientConfig]
+      .flatMap { config =>
+        ZManaged.runtime.flatMap { implicit runtime: Runtime[Has[Clock]] =>
+          Http4sClient
+            .Http4sClientBuilder(
+              _.withResponseHeaderTimeout(config.responseHeaderTimeout)
+                .withIdleTimeout(config.idleTimeout)
+                .withRequestTimeout(config.requestTimeout)
+                .withConnectTimeout(config.connectTimeout)
+                .withUserAgent(config.userAgent)
+                .withMaxTotalConnections(config.maxTotalConnections)
+                .withMaxWaitQueueLimit(config.maxWaitQueueLimit)
+                .withCheckEndpointAuthentication(
+                  config.checkEndpointIdentification
+                )
+                .withMaxResponseLineSize(config.maxResponseLineSize)
+                .withMaxHeaderLength(config.maxHeaderLength)
+                .withMaxChunkSize(config.maxChunkSize)
+                .withChunkBufferMaxSize(config.chunkBufferMaxSize)
+                .withParserMode(config.parserMode)
+                .withBufferSize(config.bufferSize)
+                .withChannelOptions(
+                  ChannelOptions(
+                    config.channelOptions.options ++ additionalSocketOptions
+                  )
+                )
+                .withSslContextOption(sslContext)
+                .withAsynchronousChannelGroupOption(asynchronousChannelGroup)
+                .withMaxConnectionsPerRequestKey(
+                  maxConnectionsPerRequestKey
+                    .getOrElse(Function.const(config.maxWaitQueueLimit))
+                )
+            )
+            .toManaged
+            .map { c =>
+              new HttpClient {
+                override def clientFor(
+                    serviceCaps: ServiceHttpCapabilities
+                ): Task[SdkAsyncHttpClient] = Task.succeed(c)
+              }
+            }
+        }
+      }
+      .toLayer
+
+  private def tryDefaultSslContext: Option[SSLContext] =
+    try {
+      Some(SSLContext.getDefault)
+    } catch {
+      case NonFatal(_) => None
+    }
 }

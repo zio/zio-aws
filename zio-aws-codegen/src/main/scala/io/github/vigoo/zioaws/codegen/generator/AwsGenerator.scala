@@ -134,9 +134,9 @@ object AwsGenerator {
           AwsGeneratorFailure
         ], Set[File]] = {
           val generate = for {
-            moduleFile <- generateServiceModule()
+            moduleFiles <- generateServiceModule()
             modelFiles <- generateServiceModels()
-          } yield Set(moduleFile) union modelFiles
+          } yield moduleFiles union modelFiles
 
           generate
             .provideSomeLayer[Blocking](
