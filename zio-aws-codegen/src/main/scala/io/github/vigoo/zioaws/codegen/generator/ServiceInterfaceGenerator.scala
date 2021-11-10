@@ -1348,7 +1348,7 @@ trait ServiceInterfaceGenerator {
       supportsHttp2Lit = Lit.Boolean(supportsHttp2)
 
       mockCompose = q"""
-        val compose: zio.URLayer[zio.Has[zio.test.mock.Proxy], $serviceNameT] =
+        val compose: zio.URLayer[zio.Has[zio.test.mock.Proxy], zio.Has[$serviceNameT]] =
           zio.ZIO.service[zio.test.mock.Proxy].flatMap { proxy =>
             withRuntime[zio.Has[zio.test.mock.Proxy]].map { rts =>
               new ${Init(serviceNameT, Name.Anonymous(), List.empty)} {

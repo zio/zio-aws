@@ -33,7 +33,7 @@ object NettyHttpClient {
     ): ZManaged[Any, Throwable, SdkAsyncHttpClient] =
       ZManaged
         .fromAutoCloseable(
-          ZIO.effect(
+          ZIO.attempt(
             customization(
               NettyNioAsyncHttpClient
                 .builder()
@@ -58,7 +58,7 @@ object NettyHttpClient {
     ): ZManaged[Has[NettyClientConfig], Throwable, SdkAsyncHttpClient] =
       ZManaged
         .fromAutoCloseable(ZIO.service[NettyClientConfig].flatMap { config =>
-          ZIO.effect {
+          ZIO.attempt {
             val builderHelper: BuilderHelper[NettyNioAsyncHttpClient] =
               BuilderHelper.apply
             import builderHelper._

@@ -2,7 +2,7 @@ package io.github.vigoo.zioaws.netty
 
 import io.github.vigoo.zioaws.core.httpclient.Protocol
 import io.netty.handler.ssl.SslProvider
-import zio.duration.Duration
+import zio.Duration
 
 case class NettyClientConfig(
     maxConcurrency: Int,

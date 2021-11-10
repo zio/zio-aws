@@ -6,7 +6,7 @@ import io.netty.handler.ssl.SslProvider
 import software.amazon.awssdk.http.SdkHttpConfigurationOption
 import zio.config.ConfigDescriptor._
 import zio.config._
-import zio.duration._
+import zio._
 
 package object descriptors {
   val httpOrHttps: ConfigDescriptor[HttpOrHttps] =

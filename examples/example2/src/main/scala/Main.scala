@@ -38,7 +38,7 @@ object Main extends ZIOAppDefault {
   val program: ZIO[Has[Console] with Has[DynamoDb], AwsError, Unit] =
     for {
       _ <- Console.printLine("Performing full table scan").ignore
-      scan = Dynamodb.scan(ScanRequest(tableName = "test")) // full table scan
+      scan = DynamoDb.scan(ScanRequest(tableName = "test")) // full table scan
       _ <- scan.foreach(item => Console.printLine(item.toString).ignore)
     } yield ()
 

@@ -25,7 +25,7 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
   val nettyClient = NettyHttpClient.default
   val http4sClient = Http4sClient.default
   val actorSystem =
-    ZLayer.fromAcquireRelease(ZIO.effect(ActorSystem("test")))(sys =>
+    ZLayer.fromAcquireRelease(ZIO.attempt(ActorSystem("test")))(sys =>
       ZIO.fromFuture(_ => sys.terminate()).orDie
     )
   val akkaHttpClient = AkkaHttpClient.client()
@@ -43,10 +43,10 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
       env <- ZIO.environment[Has[DynamoDb] with Has[Console]]
       postfix <- Random.nextInt.map(Math.abs)
       tableName = s"${prefix}_$postfix"
-    } yield ZManaged.make(
+    } yield ZManaged.acquireReleaseWith(
       for {
         _ <- Console.printLine(s"Creating table $tableName").ignore
-        tableData <- Dynamodb.createTable(
+        tableData <- DynamoDb.createTable(
           CreateTableRequest(
             tableName = tableName,
             attributeDefinitions = List(
@@ -70,7 +70,7 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
         .flatMap { tableName =>
           for {
             _ <- Console.printLine(s"Deleting table $tableName").ignore
-            _ <- Dynamodb.deleteTable(DeleteTableRequest(tableName))
+            _ <- DynamoDb.deleteTable(DeleteTableRequest(tableName))
           } yield ()
         }
         .provide(env)
@@ -81,7 +81,7 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
 
   def tests(prefix: String) =
     Seq(
-      testM("can create and delete a table") {
+      test("can create and delete a table") {
         // simple request/response calls
         val steps = for {
           table <- testTable(s"${prefix}_cd")
@@ -90,9 +90,9 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
           }
         } yield ()
 
-        assertM(steps.run)(succeeds(isUnit))
+        assertM(steps.exit)(succeeds(isUnit))
       } @@ nondeterministic @@ flaky @@ timeout(1.minute),
-      testM("scan") {
+      test("scan") {
         // java paginator based streaming
 
         val N = 100
@@ -131,7 +131,7 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
 
         assertM(steps)(equalTo(N))
       } @@ nondeterministic @@ flaky @@ timeout(1.minute),
-      testM("listTagsOfResource") {
+      test("listTagsOfResource") {
         // simple paginated streaming
         val N = 1000
         val steps = for {

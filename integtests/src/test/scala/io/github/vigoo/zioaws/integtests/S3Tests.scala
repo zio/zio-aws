@@ -26,7 +26,7 @@ object S3Tests extends DefaultRunnableSpec with Logging {
   val http4sClient = Http4sClient.default
 
   val actorSystem =
-    ZLayer.fromAcquireRelease(ZIO.effect(ActorSystem("test")))(sys =>
+    ZLayer.fromAcquireRelease(ZIO.attempt(ActorSystem("test")))(sys =>
       ZIO.fromFuture(_ => sys.terminate()).orDie
     )
   val akkaHttpClient = AkkaHttpClient.client()
@@ -45,7 +45,7 @@ object S3Tests extends DefaultRunnableSpec with Logging {
       env <- ZIO.environment[Has[S3] with Has[Console]]
       postfix <- Random.nextInt.map(Math.abs)
       bucketName = s"${prefix}-$postfix"
-    } yield ZManaged.make(
+    } yield ZManaged.acquireReleaseWith(
       for {
         _ <- Console.printLine(s"Creating bucket $bucketName").ignore
         _ <- S3.createBucket(
@@ -67,7 +67,7 @@ object S3Tests extends DefaultRunnableSpec with Logging {
 
   def tests(prefix: String, ignoreUpload: Boolean = false) =
     Seq(
-      testM("can create and delete a bucket") {
+      test("can create and delete a bucket") {
         // simple request/response calls
         val steps = for {
           bucket <- testBucket(s"${prefix}-cd")
@@ -76,9 +76,9 @@ object S3Tests extends DefaultRunnableSpec with Logging {
           }
         } yield ()
 
-        assertM(steps.run)(succeeds(isUnit))
+        assertM(steps.exit)(succeeds(isUnit))
       } @@ nondeterministic @@ flaky @@ timeout(1.minute),
-      testM(
+      test(
         "can upload and download items as byte streams with known content length"
       ) {
         // streaming input and streaming output calls
@@ -99,7 +99,7 @@ object S3Tests extends DefaultRunnableSpec with Logging {
                 ),
                 ZStream
                   .fromIterable(testData)
-                  .chunkN(1024)
+                  .rechunk(1024)
               )
               _ <- Console.printLine("Downloading").ignore
               getResponse <- S3.getObject(

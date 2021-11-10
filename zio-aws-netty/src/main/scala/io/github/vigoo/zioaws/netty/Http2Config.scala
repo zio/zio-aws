@@ -1,6 +1,6 @@
 package io.github.vigoo.zioaws.netty
 
-import zio.duration.Duration
+import zio.Duration
 
 case class Http2Config(
     maxStreams: Long,

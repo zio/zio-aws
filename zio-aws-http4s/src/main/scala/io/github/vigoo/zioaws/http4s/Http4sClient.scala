@@ -212,12 +212,12 @@ object Http4sClient {
   private[http4s] def builder(): Http4sClientBuilder =
     Http4sClientBuilder()(Runtime.default)
 
-  val default: ZLayer[Any, Throwable, Has[HttpClient]] = customized(identity)
+  val default: ZLayer[Has[Clock], Throwable, Has[HttpClient]] = customized(identity)
 
   def customized(
       f: BlazeClientBuilder[Task] => BlazeClientBuilder[Task]
-  ): ZLayer[Any, Throwable, Has[HttpClient]] =
-    ZIO.runtime.toManaged_.flatMap { implicit runtime: Runtime[Has[Clock]] =>
+  ): ZLayer[Has[Clock], Throwable, Has[HttpClient]] =
+    ZIO.runtime.toManaged.flatMap { implicit runtime: Runtime[Has[Clock]] =>
       Http4sClient
         .Http4sClientBuilder(f)
         .toManaged
@@ -237,7 +237,7 @@ object Http4sClient {
       additionalSocketOptions: Seq[OptionValue[_]] = Seq.empty
   ): ZLayer[Has[
     _root_.io.github.vigoo.zioaws.http4s.BlazeClientConfig
-  ], Throwable, Has[HttpClient]] =
+  ] with Has[Clock], Throwable, Has[HttpClient]] =
     ZManaged
       .service[_root_.io.github.vigoo.zioaws.http4s.BlazeClientConfig]
       .flatMap { config =>
