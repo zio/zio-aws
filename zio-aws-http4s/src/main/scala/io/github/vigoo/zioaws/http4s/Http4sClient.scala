@@ -217,7 +217,7 @@ object Http4sClient {
   def customized(
       f: BlazeClientBuilder[Task] => BlazeClientBuilder[Task]
   ): ZLayer[Any, Throwable, Has[HttpClient]] =
-    ZIO.runtime.toManaged_.flatMap { implicit runtime: Runtime[Any] =>
+    ZIO.runtime.toManaged_.flatMap { implicit runtime: Runtime[Has[Clock]] =>
       Http4sClient
         .Http4sClientBuilder(f)
         .toManaged
@@ -241,7 +241,7 @@ object Http4sClient {
     ZManaged
       .service[_root_.io.github.vigoo.zioaws.http4s.BlazeClientConfig]
       .flatMap { config =>
-        ZManaged.runtime.flatMap { implicit runtime: Runtime[Any] =>
+        ZManaged.runtime.flatMap { implicit runtime: Runtime[Has[Clock]] =>
           Http4sClient
             .Http4sClientBuilder(
               _.withResponseHeaderTimeout(config.responseHeaderTimeout)
