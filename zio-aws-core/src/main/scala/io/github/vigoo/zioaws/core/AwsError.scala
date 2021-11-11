@@ -29,7 +29,7 @@ object AwsError {
 
   def unwrapOptionField[T](
       name: String,
-      value: Option[T]
+      value: => Option[T]
   ): ZIO[Any, AwsError, T] =
     value match {
       case Some(value) => ZIO.succeed(value)

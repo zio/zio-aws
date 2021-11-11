@@ -195,7 +195,7 @@ trait ServiceModelGenerator {
             q"""$term.map { item => $itemToEditable }"""
           }
       case ModelType.Structure =>
-        ZIO.succeed(q"""$term.editable""")
+        ZIO.succeed(q"""$term.asEditable""")
       case _ =>
         ZIO.succeed(term)
     }
@@ -310,19 +310,10 @@ trait ServiceModelGenerator {
         val finalFieldModel = fieldModels(memberName)
         val property = fieldNames(memberName)
         val propertyNameLit = Lit.String(property.wrapperName)
-        val propertyNameTerm = Term.Name(property.wrapperName)
         val propertyNameJavaTerm = Term.Name(property.javaName)
 
-        val propertyValueNameTerm =
-          if (
-            fieldNames.values.toSet
-              .map((names: PropertyNames) => names.wrapperName)
-              .contains(property.wrapperName + "Value")
-          ) {
-            Term.Name(property.wrapperName + "Value_")
-          } else {
-            Term.Name(property.wrapperName + "Value")
-          }
+        val effectualGetterNameTerm = Term.Name("get" + property.wrapperName.capitalize)
+        val pureGetterNameTerm = Term.Name(property.wrapperName)
 
         val fluentSetter = Term.Name(
           namingStrategy.getFluentSetterMethodName(
@@ -336,7 +327,7 @@ trait ServiceModelGenerator {
           TypeMapping.toWrappedTypeReadOnly(finalFieldModel).flatMap {
             memberRoType =>
               if (required contains memberName) {
-                unwrapSdkValue(finalFieldModel, propertyNameTerm).flatMap {
+                unwrapSdkValue(finalFieldModel, pureGetterNameTerm).flatMap {
                   unwrappedGet =>
                     wrapSdkValue(
                       finalFieldModel,
@@ -345,24 +336,24 @@ trait ServiceModelGenerator {
                         List.empty
                       )
                     ).flatMap { wrappedGet =>
-                      roToEditable(finalFieldModel, propertyValueNameTerm)
+                      roToEditable(finalFieldModel, pureGetterNameTerm)
                         .map { toEditable =>
                           ModelFieldFragments(
                             paramDef =
-                              param"""$propertyNameTerm: ${memberType.typ}""",
+                              param"""$pureGetterNameTerm: ${memberType.typ}""",
                             getterCall = toEditable,
                             getterInterface =
-                              q"""def $propertyValueNameTerm: ${memberRoType.typ}""",
+                              q"""def $pureGetterNameTerm: ${memberRoType.typ}""",
                             getterImplementation =
-                              q"""override def $propertyValueNameTerm: ${memberRoType.typ} = $wrappedGet""",
+                              q"""override val ${Pat.Var(pureGetterNameTerm)}: ${memberRoType.typ} = $wrappedGet""",
                             zioGetterImplementation =
-                              q"""def $propertyNameTerm: ${Types
+                              q"""def $effectualGetterNameTerm: ${Types
                                 .zio(
                                   ScalaType.any,
                                   ScalaType.nothing,
                                   memberRoType
                                 )
-                                .typ} = ZIO.succeed($propertyValueNameTerm)""",
+                                .typ} = ZIO.succeed($pureGetterNameTerm)""",
                             applyToBuilder = builder =>
                               q"""$builder.$fluentSetter($unwrappedGet)"""
                           )
@@ -381,39 +372,39 @@ trait ServiceModelGenerator {
                       roToEditable(finalFieldModel, valueTerm).map {
                         toEditable =>
                           ModelFieldFragments(
-                            paramDef = param"""$propertyNameTerm: ${ScalaType
+                            paramDef = param"""$pureGetterNameTerm: ${ScalaType
                               .option(memberType)
                               .typ} = None""",
                             getterCall =
-                              q"""$propertyValueNameTerm.map(value => $toEditable)""",
+                              q"""$pureGetterNameTerm.map(value => $toEditable)""",
                             getterInterface =
-                              q"""def ${propertyValueNameTerm}: ${ScalaType
+                              q"""def ${pureGetterNameTerm}: ${ScalaType
                                 .option(memberRoType)
                                 .typ}""",
                             getterImplementation =
                               if (wrappedGet == valueTerm) {
-                                q"""override def $propertyValueNameTerm: ${ScalaType
+                                q"""override val ${Pat.Var(pureGetterNameTerm)}: ${ScalaType
                                   .option(memberRoType)
                                   .typ} = ${ScalaType
                                   .option(memberRoType)
                                   .term}($get)"""
                               } else {
-                                q"""override def $propertyValueNameTerm: ${ScalaType
+                                q"""override val ${Pat.Var(pureGetterNameTerm)}: ${ScalaType
                                   .option(memberRoType)
                                   .typ} = ${ScalaType
                                   .option(memberRoType)
                                   .term}($get).map(value => $wrappedGet)"""
                               },
                             zioGetterImplementation =
-                              q"""def $propertyNameTerm: ${Types
+                              q"""def $effectualGetterNameTerm: ${Types
                                 .zio(
                                   ScalaType.any,
                                   Types.awsError,
                                   memberRoType
                                 )
-                                .typ} = ${Types.awsError.term}.unwrapOptionField($propertyNameLit, $propertyValueNameTerm)""",
+                                .typ} = ${Types.awsError.term}.unwrapOptionField($propertyNameLit, $pureGetterNameTerm)""",
                             applyToBuilder = builder =>
-                              q"""$builder.optionallyWith($propertyNameTerm.map(value => $unwrappedGet))(_.$fluentSetter)"""
+                              q"""$builder.optionallyWith($pureGetterNameTerm.map(value => $unwrappedGet))(_.$fluentSetter)"""
                           )
                       }
                   }
@@ -448,13 +439,13 @@ trait ServiceModelGenerator {
           .builderHelper(javaType)
           .typ} = ${Types.builderHelper_.term}.apply
                             trait ${readOnlyType.typName} {
-                              def editable: ${m.generatedType.typ} = ${m.generatedType.term}(..${fields
+                              def asEditable: ${m.generatedType.typ} = ${m.generatedType.term}(..${fields
           .map(_.getterCall)})
                               ..${fields.map(_.getterInterface)}
                               ..${fields.map(_.zioGetterImplementation)}
                             }
 
-                            private class Wrapper(impl: ${javaType.typ}) extends $shapeNameRoInit {
+                            private final class Wrapper(impl: ${javaType.typ}) extends $shapeNameRoInit {
                               ..${fields.map(_.getterImplementation)}
                             }
 

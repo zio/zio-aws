@@ -63,10 +63,10 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
             )
           )
         )
-        tableDesc <- tableData.tableDescription
+        tableDesc <- tableData.getTableDescription
       } yield tableDesc
     )(tableDescription =>
-      tableDescription.tableName
+      tableDescription.getTableName
         .flatMap { tableName =>
           for {
             _ <- Console.printLine(s"Deleting table $tableName").ignore
@@ -101,7 +101,7 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
           result <- table.use { tableDescription =>
             val put =
               for {
-                tableName <- tableDescription.tableName
+                tableName <- tableDescription.getTableName
                 randomKey <- Random.nextString(10)
                 randomValue <- Random.nextInt
                 _ <- DynamoDb.putItem(
@@ -116,7 +116,7 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
               } yield ()
 
             for {
-              tableName <- tableDescription.tableName
+              tableName <- tableDescription.getTableName
               _ <- put.repeatN(N - 1)
               stream = DynamoDb.scan(
                 ScanRequest(
@@ -138,7 +138,7 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
           table <- testTable(s"${prefix}_lt")
           result <- table.use { tableDescription =>
             for {
-              arn <- tableDescription.tableArn
+              arn <- tableDescription.getTableArn
               _ <- DynamoDb.tagResource(
                 TagResourceRequest(
                   resourceArn = arn,
