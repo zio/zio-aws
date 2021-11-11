@@ -6,7 +6,7 @@ case class ModelFieldFragments(
     paramDef: Term.Param,
     getterCall: Term,
     getterInterface: Decl.Def,
-    getterImplementation: Defn.Def,
+    getterImplementation: Defn.Val,
     zioGetterImplementation: Defn.Def,
     applyToBuilder: Term.Apply => Term.Apply
 )

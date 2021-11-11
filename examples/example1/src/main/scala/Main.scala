@@ -14,11 +14,11 @@ object Main extends ZIOAppDefault {
       appsResult <- ElasticBeanstalk.describeApplications(
         DescribeApplicationsRequest(applicationNames = Some(List("my-service")))
       )
-      app <- appsResult.applications.map(_.headOption)
+      app <- appsResult.getApplications.map(_.headOption)
       _ <- app match {
         case Some(appDescription) =>
           for {
-            applicationName <- appDescription.applicationName
+            applicationName <- appDescription.getApplicationName
             _ <- Console
               .printLine(
                 s"Got application description for $applicationName"
@@ -32,9 +32,9 @@ object Main extends ZIOAppDefault {
             )
 
             _ <- envStream.run(Sink.foreach { env =>
-              env.environmentName.flatMap { environmentName =>
+              env.getEnvironmentName.flatMap { environmentName =>
                 (for {
-                  environmentId <- env.environmentId
+                  environmentId <- env.getEnvironmentId
                   _ <- Console
                     .printLine(
                       s"Getting the EB resources of $environmentName"
@@ -47,14 +47,14 @@ object Main extends ZIOAppDefault {
                         Some(environmentId)
                       )
                     )
-                  resources <- resourcesResult.environmentResources
+                  resources <- resourcesResult.getEnvironmentResources
                   _ <- Console
                     .printLine(
                       s"Getting the EC2 instances in $environmentName"
                     )
                     .ignore
-                  instances <- resources.instances
-                  instanceIds <- ZIO.foreach(instances)(_.id)
+                  instances <- resources.getInstances
+                  instanceIds <- ZIO.foreach(instances)(_.getId)
                   _ <- Console
                     .printLine(
                       s"Instance IDs are ${instanceIds.mkString(", ")}"
@@ -65,13 +65,13 @@ object Main extends ZIOAppDefault {
                     DescribeInstancesRequest(instanceIds = Some(instanceIds))
                   )
                   _ <- reservationsStream.run(Sink.foreach { reservation =>
-                    reservation.instances
+                    reservation.getInstances
                       .flatMap { instances =>
                         ZIO.foreach(instances) { instance =>
                           for {
-                            id <- instance.instanceId
-                            typ <- instance.instanceType
-                            launchTime <- instance.launchTime
+                            id <- instance.getInstanceId
+                            typ <- instance.getInstanceType
+                            launchTime <- instance.getLaunchTime
                             _ <- Console.printLine(s"  instance $id:").ignore
                             _ <- Console.printLine(s"    type: $typ").ignore
                             _ <- Console

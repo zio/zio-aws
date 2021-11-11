@@ -19,7 +19,7 @@ object Main extends ZIOAppDefault {
     for {
       streams <- Kinesis.listStreams(ListStreamsRequest())
       _ <- Console.printLine("Streams:").ignore
-      _ <- ZIO.foreachDiscard(streams.streamNamesValue) { streamName =>
+      _ <- ZIO.foreachDiscard(streams.streamNames) { streamName =>
         Console.printLine(streamName).ignore
       }
 
@@ -27,7 +27,7 @@ object Main extends ZIOAppDefault {
       _ <- Console.printLine("Shards:").ignore
       shard <- Kinesis
         .listShards(ListShardsRequest(streamName = Some(streamName)))
-        .tap(shard => Console.printLine(shard.shardIdValue).ignore)
+        .tap(shard => Console.printLine(shard.shardId).ignore)
         .runHead
         .map(_.get)
       streamDescription <- Kinesis.describeStream(
@@ -38,7 +38,7 @@ object Main extends ZIOAppDefault {
       _ <- Kinesis
         .registerStreamConsumer(
           RegisterStreamConsumerRequest(
-            streamDescription.streamDescriptionValue.streamARNValue,
+            streamDescription.streamDescription.streamARN,
             consumerName
           )
         )
@@ -53,23 +53,23 @@ object Main extends ZIOAppDefault {
           DescribeStreamConsumerRequest(
             consumerName = Some(consumerName),
             streamARN =
-              Some(streamDescription.streamDescriptionValue.streamARNValue)
+              Some(streamDescription.streamDescription.streamARN)
           )
         )
         .repeatUntil(
-          _.consumerDescriptionValue.consumerStatusValue == ConsumerStatus.ACTIVE
+          _.consumerDescription.consumerStatus == ConsumerStatus.ACTIVE
         )
 
       _ <- Console
         .printLine(
-          s"Consumer registered: ${consumer.consumerDescriptionValue.consumerARNValue}"
+          s"Consumer registered: ${consumer.consumerDescription.consumerARN}"
         )
         .ignore
 
       shardStream = Kinesis.subscribeToShard(
         SubscribeToShardRequest(
-          consumer.consumerDescriptionValue.consumerARNValue,
-          shard.shardIdValue,
+          consumer.consumerDescription.consumerARN,
+          shard.shardId,
           StartingPosition(ShardIteratorType.TRIM_HORIZON)
         )
       )
@@ -85,7 +85,7 @@ object Main extends ZIOAppDefault {
       _ <- shardStream
         .tap(event =>
           Console
-            .printLine(event.recordsValue.map(_.partitionKeyValue).toString())
+            .printLine(event.records.map(_.partitionKey).toString())
             .ignore
         )
         .runHead
