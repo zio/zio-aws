@@ -72,6 +72,8 @@ object ActionRef {
 case class Condition(expression: String) {
   def &&(other: Condition): Condition =
     Condition(s"($expression) && (${other.expression})")
+  def ||(other: Condition): Condition =
+    Condition(s"($expression) || (${other.expression})")
 }
 object Condition {
   implicit val encoder: Encoder[Condition] =

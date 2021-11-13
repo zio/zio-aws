@@ -194,12 +194,18 @@ object ScalaWorkflow {
   val isNotMaster: Condition = Condition(
     "github.ref != 'refs/heads/master'"
   )
+
+  val isZio2: Condition = Condition(
+    "github.ref == 'refs/heads/zio2'"
+  )
+  
   def isScalaVersion(version: ScalaVersion): Condition = Condition(
     s"matrix.scala == '${version.version}'"
   )
   def isNotScalaVersion(version: ScalaVersion): Condition = Condition(
     s"matrix.scala != '${version.version}'"
   )
+
   case class ScalaVersion(version: String)
 
   sealed trait JavaVersion {
