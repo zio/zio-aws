@@ -112,7 +112,21 @@ trait GithubActionsGenerator {
                   "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
                   "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}"
                 )
-              ).when((isMaster || isZio2) && isNotScalaVersion(scala3)),
+              ).when(isMaster && isNotScalaVersion(scala3)),
+               runSBT(
+                "Publish core snapshot",
+                parameters = List(
+                  "++${{ matrix.scala }}",
+                  "zio-aws-core/publish",
+                  "zio-aws-akka-http/publish",
+                  "zio-aws-http4s/publish",
+                  "zio-aws-netty/publish"
+                ),
+                env = Map(
+                  "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
+                  "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}"
+                )
+              ).when(isZio2 && isNotScalaVersion(scala3)),
               runSBT(
                 "Publish core",
                 parameters = List(
@@ -124,7 +138,19 @@ trait GithubActionsGenerator {
                   "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
                   "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}"
                 )
-              ).when((isMaster || isZio2) && isScalaVersion(scala3)),
+              ).when(isMaster && isScalaVersion(scala3)),
+              runSBT(
+                "Publish core snapshot",
+                parameters = List(
+                  "++${{ matrix.scala }}",
+                  "zio-aws-core/publish",
+                  "zio-aws-netty/publish"
+                ),
+                env = Map(
+                  "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
+                  "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}"
+                )
+              ).when(isZio2 && isScalaVersion(scala3)),
               storeTargets(
                 "core",
                 List(
@@ -177,6 +203,15 @@ trait GithubActionsGenerator {
                     "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}"
                   )
                 ).when(isMaster),
+                runSBT(
+                  "Build and publish library snapshots",
+                  parameters = "++${{ matrix.scala }}" :: group
+                    .map(name => s"$name/publish"),
+                  env = Map(
+                    "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
+                    "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}"
+                  )
+                ).when(isZio2),
                 storeTargets(
                   s"clients-$idx",
                   directories = List("")
