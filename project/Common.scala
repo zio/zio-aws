@@ -40,27 +40,27 @@ object Common extends AutoPlugin {
 
   override val requires = Sonatype
 
-  override lazy val globalSettings =
-    Seq(
-      commands += Command.command("tagAwsVersion") { state =>
-        def log(msg: String) = sLog.value.info(msg)
-        adjustTagForAwsVersion(log) match {
-          case Some(tagAndVersion) =>
-            val tag = tagAndVersion.tag
-            ci.release.early.Utils.push(tag, log)
-            sLog.value.info(
-              "reloading sbt so that sbt-git will set the `version`" +
-                s" setting based on the git tag ($tag)"
-            )
-            "reload" :: state
-          case None =>
-            sLog.value.info(
-              "no need to adjust version to match AWS library version"
-            )
-            state
-        }
-      }
-    )
+  // override lazy val globalSettings =
+  //   Seq(
+  //     commands += Command.command("tagAwsVersion") { state =>
+  //       def log(msg: String) = sLog.value.info(msg)
+  //       adjustTagForAwsVersion(log) match {
+  //         case Some(tagAndVersion) =>
+  //           val tag = tagAndVersion.tag
+  //           ci.release.early.Utils.push(tag, log)
+  //           sLog.value.info(
+  //             "reloading sbt so that sbt-git will set the `version`" +
+  //               s" setting based on the git tag ($tag)"
+  //           )
+  //           "reload" :: state
+  //         case None =>
+  //           sLog.value.info(
+  //             "no need to adjust version to match AWS library version"
+  //           )
+  //           state
+  //       }
+  //     }
+  //   )
 
   override lazy val projectSettings =
     Seq(
@@ -112,25 +112,25 @@ object Common extends AutoPlugin {
         "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
     )
 
-  private def adjustTagForAwsVersion(
-      log: String => Any
-  ): Option[ci.release.early.VersionAndTag] = {
-    import ci.release.early._
-    import ci.release.early.Utils._
+  // private def adjustTagForAwsVersion(
+  //     log: String => Any
+  // ): Option[ci.release.early.VersionAndTag] = {
+  //   import ci.release.early._
+  //   import ci.release.early.Utils._
 
-    verifyGitIsClean
-    val allTags = git.tagList.call.asScala.map(_.getName).toList
-    val highestVersion = findHighestVersion(allTags, log)
-    log(s"highest version so far: $highestVersion")
+  //   verifyGitIsClean
+  //   val allTags = git.tagList.call.asScala.map(_.getName).toList
+  //   val highestVersion = findHighestVersion(allTags, log)
+  //   log(s"highest version so far: $highestVersion")
 
-    if (highestVersion.startsWith(zioAwsVersionPrefix)) {
-      // Prefix is already good
-      None
-    } else {
-      val targetVersion = s"${zioAwsVersionPrefix}0"
-      val tagName = s"v$targetVersion"
-      tag(tagName, log)
-      Some(VersionAndTag(targetVersion, tagName))
-    }
-  }
+  //   if (highestVersion.startsWith(zioAwsVersionPrefix)) {
+  //     // Prefix is already good
+  //     None
+  //   } else {
+  //     val targetVersion = s"${zioAwsVersionPrefix}0"
+  //     val tagName = s"v$targetVersion"
+  //     tag(tagName, log)
+  //     Some(VersionAndTag(targetVersion, tagName))
+  //   }
+  // }
 }
