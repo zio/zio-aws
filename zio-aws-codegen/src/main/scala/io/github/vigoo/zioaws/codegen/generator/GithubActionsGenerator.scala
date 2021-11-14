@@ -124,7 +124,9 @@ trait GithubActionsGenerator {
                 ),
                 env = Map(
                   "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
-                  "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}"
+                  "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}",                
+                  "SONATYPE_USERNAME" -> "${{ secrets.SONATYPE_USERNAME }}",
+                  "SONATYPE_PASSWORD" -> "${{ secrets.SONATYPE_PASSWORD }}"
                 )
               ).when(isZio2 && isNotScalaVersion(scala3)),
               runSBT(
@@ -148,7 +150,9 @@ trait GithubActionsGenerator {
                 ),
                 env = Map(
                   "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
-                  "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}"
+                  "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}",
+                  "SONATYPE_USERNAME" -> "${{ secrets.SONATYPE_USERNAME }}",
+                  "SONATYPE_PASSWORD" -> "${{ secrets.SONATYPE_PASSWORD }}"
                 )
               ).when(isZio2 && isScalaVersion(scala3)),
               storeTargets(
@@ -209,7 +213,9 @@ trait GithubActionsGenerator {
                     .map(name => s"$name/publish"),
                   env = Map(
                     "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
-                    "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}"
+                    "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}",
+                    "SONATYPE_USERNAME" -> "${{ secrets.SONATYPE_USERNAME }}",
+                    "SONATYPE_PASSWORD" -> "${{ secrets.SONATYPE_PASSWORD }}"                    
                   )
                 ).when(isZio2),
                 storeTargets(
