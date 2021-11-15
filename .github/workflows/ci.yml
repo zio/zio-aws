@@ -94,30 +94,18 @@ jobs:
       run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-core/test
         zio-aws-netty/test
     - name: Publish core
-      if: ${{ (github.ref == 'refs/heads/master') && (matrix.scala != '3.1.0') }}
+      if: ${{ ((github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2'))
+        && (matrix.scala != '3.1.0') }}
       run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-core/publishSigned
         zio-aws-akka-http/publishSigned zio-aws-http4s/publishSigned zio-aws-netty/publishSigned
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
-    - name: Publish core snapshot
-      if: ${{ (github.ref == 'refs/heads/zio2') && (matrix.scala != '3.1.0') }}
-      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-core/publish
-        zio-aws-akka-http/publish zio-aws-http4s/publish zio-aws-netty/publish
-      env:
-        PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
-        PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Publish core
-      if: ${{ (github.ref == 'refs/heads/master') && (matrix.scala == '3.1.0') }}
+      if: ${{ ((github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2'))
+        && (matrix.scala == '3.1.0') }}
       run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-core/publishSigned
         zio-aws-netty/publishSigned
-      env:
-        PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
-        PGP_SECRET: ${{ secrets.PGP_SECRET }}
-    - name: Publish core snapshot
-      if: ${{ (github.ref == 'refs/heads/zio2') && (matrix.scala == '3.1.0') }}
-      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-core/publish
-        zio-aws-netty/publish
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
@@ -222,22 +210,6 @@ jobs:
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
-    - name: Build and publish library snapshots
-      if: ${{ github.ref == 'refs/heads/zio2' }}
-      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-accessanalyzer/publish
-        zio-aws-account/publish zio-aws-acm/publish zio-aws-acmpca/publish zio-aws-alexaforbusiness/publish
-        zio-aws-amp/publish zio-aws-amplify/publish zio-aws-amplifybackend/publish
-        zio-aws-apigateway/publish zio-aws-apigatewaymanagementapi/publish zio-aws-apigatewayv2/publish
-        zio-aws-appconfig/publish zio-aws-appflow/publish zio-aws-appintegrations/publish
-        zio-aws-applicationautoscaling/publish zio-aws-applicationcostprofiler/publish
-        zio-aws-applicationdiscovery/publish zio-aws-applicationinsights/publish zio-aws-appmesh/publish
-        zio-aws-apprunner/publish zio-aws-appstream/publish zio-aws-appsync/publish
-        zio-aws-athena/publish zio-aws-auditmanager/publish zio-aws-autoscaling/publish
-        zio-aws-autoscalingplans/publish zio-aws-backup/publish zio-aws-batch/publish
-        zio-aws-braket/publish
-      env:
-        PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
-        PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress clients-0 targets
       if: ${{ github.ref == 'refs/heads/master' }}
       run: tar cvf targets.tar target
@@ -326,22 +298,6 @@ jobs:
         zio-aws-codegurureviewer/publishSigned zio-aws-codepipeline/publishSigned
         zio-aws-codestar/publishSigned zio-aws-codestarconnections/publishSigned zio-aws-codestarnotifications/publishSigned
         zio-aws-cognitoidentity/publishSigned zio-aws-cognitoidentityprovider/publishSigned
-      env:
-        PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
-        PGP_SECRET: ${{ secrets.PGP_SECRET }}
-    - name: Build and publish library snapshots
-      if: ${{ github.ref == 'refs/heads/zio2' }}
-      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-budgets/publish
-        zio-aws-chime/publish zio-aws-chimesdkidentity/publish zio-aws-chimesdkmessaging/publish
-        zio-aws-cloud9/publish zio-aws-cloudcontrol/publish zio-aws-clouddirectory/publish
-        zio-aws-cloudformation/publish zio-aws-cloudfront/publish zio-aws-cloudhsm/publish
-        zio-aws-cloudhsmv2/publish zio-aws-cloudsearch/publish zio-aws-cloudsearchdomain/publish
-        zio-aws-cloudtrail/publish zio-aws-cloudwatch/publish zio-aws-cloudwatchevents/publish
-        zio-aws-cloudwatchlogs/publish zio-aws-codeartifact/publish zio-aws-codebuild/publish
-        zio-aws-codecommit/publish zio-aws-codedeploy/publish zio-aws-codeguruprofiler/publish
-        zio-aws-codegurureviewer/publish zio-aws-codepipeline/publish zio-aws-codestar/publish
-        zio-aws-codestarconnections/publish zio-aws-codestarnotifications/publish
-        zio-aws-cognitoidentity/publish zio-aws-cognitoidentityprovider/publish
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
@@ -435,21 +391,6 @@ jobs:
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
-    - name: Build and publish library snapshots
-      if: ${{ github.ref == 'refs/heads/zio2' }}
-      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-cognitosync/publish
-        zio-aws-comprehend/publish zio-aws-comprehendmedical/publish zio-aws-computeoptimizer/publish
-        zio-aws-config/publish zio-aws-connect/publish zio-aws-connectcontactlens/publish
-        zio-aws-connectparticipant/publish zio-aws-costandusagereport/publish zio-aws-costexplorer/publish
-        zio-aws-customerprofiles/publish zio-aws-databasemigration/publish zio-aws-databrew/publish
-        zio-aws-dataexchange/publish zio-aws-datapipeline/publish zio-aws-datasync/publish
-        zio-aws-dax/publish zio-aws-detective/publish zio-aws-devicefarm/publish zio-aws-devopsguru/publish
-        zio-aws-directconnect/publish zio-aws-directory/publish zio-aws-dlm/publish
-        zio-aws-docdb/publish zio-aws-dynamodb/publish zio-aws-dynamodbstreams/publish
-        zio-aws-ebs/publish zio-aws-ec2instanceconnect/publish zio-aws-ecr/publish
-      env:
-        PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
-        PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress clients-2 targets
       if: ${{ github.ref == 'refs/heads/master' }}
       run: tar cvf targets.tar target
@@ -540,21 +481,6 @@ jobs:
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
-    - name: Build and publish library snapshots
-      if: ${{ github.ref == 'refs/heads/zio2' }}
-      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-ecrpublic/publish
-        zio-aws-ecs/publish zio-aws-efs/publish zio-aws-eks/publish zio-aws-elasticache/publish
-        zio-aws-elasticbeanstalk/publish zio-aws-elasticinference/publish zio-aws-elasticloadbalancing/publish
-        zio-aws-elasticloadbalancingv2/publish zio-aws-elasticsearch/publish zio-aws-elastictranscoder/publish
-        zio-aws-emr/publish zio-aws-emrcontainers/publish zio-aws-eventbridge/publish
-        zio-aws-finspace/publish zio-aws-finspacedata/publish zio-aws-firehose/publish
-        zio-aws-fis/publish zio-aws-fms/publish zio-aws-forecast/publish zio-aws-forecastquery/publish
-        zio-aws-frauddetector/publish zio-aws-fsx/publish zio-aws-gamelift/publish
-        zio-aws-glacier/publish zio-aws-globalaccelerator/publish zio-aws-glue/publish
-        zio-aws-grafana/publish zio-aws-greengrass/publish
-      env:
-        PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
-        PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress clients-3 targets
       if: ${{ github.ref == 'refs/heads/master' }}
       run: tar cvf targets.tar target
@@ -642,21 +568,6 @@ jobs:
         zio-aws-iotsitewise/publishSigned zio-aws-iotthingsgraph/publishSigned zio-aws-iotwireless/publishSigned
         zio-aws-ivs/publishSigned zio-aws-kafka/publishSigned zio-aws-kafkaconnect/publishSigned
         zio-aws-kendra/publishSigned zio-aws-kinesis/publishSigned
-      env:
-        PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
-        PGP_SECRET: ${{ secrets.PGP_SECRET }}
-    - name: Build and publish library snapshots
-      if: ${{ github.ref == 'refs/heads/zio2' }}
-      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-greengrassv2/publish
-        zio-aws-groundstation/publish zio-aws-guardduty/publish zio-aws-health/publish
-        zio-aws-healthlake/publish zio-aws-honeycode/publish zio-aws-iam/publish zio-aws-identitystore/publish
-        zio-aws-imagebuilder/publish zio-aws-inspector/publish zio-aws-iot/publish
-        zio-aws-iot1clickdevices/publish zio-aws-iot1clickprojects/publish zio-aws-iotanalytics/publish
-        zio-aws-iotdataplane/publish zio-aws-iotdeviceadvisor/publish zio-aws-iotevents/publish
-        zio-aws-ioteventsdata/publish zio-aws-iotfleethub/publish zio-aws-iotjobsdataplane/publish
-        zio-aws-iotsecuretunneling/publish zio-aws-iotsitewise/publish zio-aws-iotthingsgraph/publish
-        zio-aws-iotwireless/publish zio-aws-ivs/publish zio-aws-kafka/publish zio-aws-kafkaconnect/publish
-        zio-aws-kendra/publish zio-aws-kinesis/publish
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
@@ -752,22 +663,6 @@ jobs:
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
-    - name: Build and publish library snapshots
-      if: ${{ github.ref == 'refs/heads/zio2' }}
-      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-kinesisanalytics/publish
-        zio-aws-kinesisanalyticsv2/publish zio-aws-kinesisvideo/publish zio-aws-kinesisvideoarchivedmedia/publish
-        zio-aws-kinesisvideomedia/publish zio-aws-kinesisvideosignaling/publish zio-aws-kms/publish
-        zio-aws-lakeformation/publish zio-aws-lambda/publish zio-aws-lexmodelbuilding/publish
-        zio-aws-lexmodelsv2/publish zio-aws-lexruntime/publish zio-aws-lexruntimev2/publish
-        zio-aws-licensemanager/publish zio-aws-lightsail/publish zio-aws-location/publish
-        zio-aws-lookoutequipment/publish zio-aws-lookoutmetrics/publish zio-aws-lookoutvision/publish
-        zio-aws-machinelearning/publish zio-aws-macie/publish zio-aws-macie2/publish
-        zio-aws-managedblockchain/publish zio-aws-marketplacecatalog/publish zio-aws-marketplacecommerceanalytics/publish
-        zio-aws-marketplaceentitlement/publish zio-aws-marketplacemetering/publish
-        zio-aws-mediaconnect/publish zio-aws-mediaconvert/publish
-      env:
-        PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
-        PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress clients-5 targets
       if: ${{ github.ref == 'refs/heads/master' }}
       run: tar cvf targets.tar target
@@ -855,21 +750,6 @@ jobs:
         zio-aws-outposts/publishSigned zio-aws-panorama/publishSigned zio-aws-personalize/publishSigned
         zio-aws-personalizeevents/publishSigned zio-aws-personalizeruntime/publishSigned
         zio-aws-pi/publishSigned zio-aws-pinpoint/publishSigned
-      env:
-        PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
-        PGP_SECRET: ${{ secrets.PGP_SECRET }}
-    - name: Build and publish library snapshots
-      if: ${{ github.ref == 'refs/heads/zio2' }}
-      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-medialive/publish
-        zio-aws-mediapackage/publish zio-aws-mediapackagevod/publish zio-aws-mediastore/publish
-        zio-aws-mediastoredata/publish zio-aws-mediatailor/publish zio-aws-memorydb/publish
-        zio-aws-mgn/publish zio-aws-migrationhub/publish zio-aws-migrationhubconfig/publish
-        zio-aws-mobile/publish zio-aws-mq/publish zio-aws-mturk/publish zio-aws-mwaa/publish
-        zio-aws-neptune/publish zio-aws-networkfirewall/publish zio-aws-networkmanager/publish
-        zio-aws-nimble/publish zio-aws-opensearch/publish zio-aws-opsworks/publish
-        zio-aws-opsworkscm/publish zio-aws-organizations/publish zio-aws-outposts/publish
-        zio-aws-panorama/publish zio-aws-personalize/publish zio-aws-personalizeevents/publish
-        zio-aws-personalizeruntime/publish zio-aws-pi/publish zio-aws-pinpoint/publish
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
@@ -964,21 +844,6 @@ jobs:
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
-    - name: Build and publish library snapshots
-      if: ${{ github.ref == 'refs/heads/zio2' }}
-      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-pinpointemail/publish
-        zio-aws-pinpointsmsvoice/publish zio-aws-polly/publish zio-aws-pricing/publish
-        zio-aws-proton/publish zio-aws-qldb/publish zio-aws-qldbsession/publish zio-aws-quicksight/publish
-        zio-aws-ram/publish zio-aws-rds/publish zio-aws-rdsdata/publish zio-aws-redshift/publish
-        zio-aws-redshiftdata/publish zio-aws-rekognition/publish zio-aws-resourcegroups/publish
-        zio-aws-resourcegroupstaggingapi/publish zio-aws-robomaker/publish zio-aws-route53/publish
-        zio-aws-route53domains/publish zio-aws-route53recoverycluster/publish zio-aws-route53recoverycontrolconfig/publish
-        zio-aws-route53recoveryreadiness/publish zio-aws-route53resolver/publish zio-aws-s3/publish
-        zio-aws-s3control/publish zio-aws-s3outposts/publish zio-aws-sagemaker/publish
-        zio-aws-sagemakera2iruntime/publish zio-aws-sagemakeredge/publish
-      env:
-        PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
-        PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress clients-7 targets
       if: ${{ github.ref == 'refs/heads/master' }}
       run: tar cvf targets.tar target
@@ -1070,21 +935,6 @@ jobs:
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
-    - name: Build and publish library snapshots
-      if: ${{ github.ref == 'refs/heads/zio2' }}
-      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-sagemakerfeaturestoreruntime/publish
-        zio-aws-sagemakerruntime/publish zio-aws-savingsplans/publish zio-aws-schemas/publish
-        zio-aws-secretsmanager/publish zio-aws-securityhub/publish zio-aws-serverlessapplicationrepository/publish
-        zio-aws-servicecatalog/publish zio-aws-servicecatalogappregistry/publish zio-aws-servicediscovery/publish
-        zio-aws-servicequotas/publish zio-aws-ses/publish zio-aws-sesv2/publish zio-aws-sfn/publish
-        zio-aws-shield/publish zio-aws-signer/publish zio-aws-sms/publish zio-aws-snowball/publish
-        zio-aws-snowdevicemanagement/publish zio-aws-sns/publish zio-aws-sqs/publish
-        zio-aws-ssm/publish zio-aws-ssmcontacts/publish zio-aws-ssmincidents/publish
-        zio-aws-sso/publish zio-aws-ssoadmin/publish zio-aws-ssooidc/publish zio-aws-storagegateway/publish
-        zio-aws-sts/publish
-      env:
-        PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
-        PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress clients-8 targets
       if: ${{ github.ref == 'refs/heads/master' }}
       run: tar cvf targets.tar target
@@ -1170,18 +1020,6 @@ jobs:
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
-    - name: Build and publish library snapshots
-      if: ${{ github.ref == 'refs/heads/zio2' }}
-      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-support/publish
-        zio-aws-swf/publish zio-aws-synthetics/publish zio-aws-textract/publish zio-aws-timestreamquery/publish
-        zio-aws-timestreamwrite/publish zio-aws-transcribe/publish zio-aws-transcribestreaming/publish
-        zio-aws-transfer/publish zio-aws-translate/publish zio-aws-voiceid/publish
-        zio-aws-waf/publish zio-aws-wafregional/publish zio-aws-wafv2/publish zio-aws-wellarchitected/publish
-        zio-aws-wisdom/publish zio-aws-workdocs/publish zio-aws-worklink/publish zio-aws-workmail/publish
-        zio-aws-workmailmessageflow/publish zio-aws-workspaces/publish zio-aws-xray/publish
-      env:
-        PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
-        PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress clients-9 targets
       if: ${{ github.ref == 'refs/heads/master' }}
       run: tar cvf targets.tar target
@@ -1250,12 +1088,6 @@ jobs:
     - name: Build and publish libraries
       if: ${{ github.ref == 'refs/heads/master' }}
       run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-ec2/publishSigned
-      env:
-        PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
-        PGP_SECRET: ${{ secrets.PGP_SECRET }}
-    - name: Build and publish library snapshots
-      if: ${{ github.ref == 'refs/heads/zio2' }}
-      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-ec2/publish
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
