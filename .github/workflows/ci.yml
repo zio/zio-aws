@@ -107,8 +107,6 @@ jobs:
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
-        SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-        SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
     - name: Publish core
       if: ${{ (github.ref == 'refs/heads/master') && (matrix.scala == '3.1.0') }}
       run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-core/publishSigned
@@ -123,8 +121,6 @@ jobs:
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
-        SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-        SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
     - name: Compress core targets
       if: ${{ matrix.scala != '3.1.0' }}
       run: tar cvf targets.tar target project/target zio-aws-codegen/target zio-aws-core/target
@@ -242,8 +238,6 @@ jobs:
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
-        SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-        SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
     - name: Compress clients-0 targets
       if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2')
         }}
@@ -353,8 +347,6 @@ jobs:
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
-        SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-        SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
     - name: Compress clients-1 targets
       if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2')
         }}
@@ -462,8 +454,6 @@ jobs:
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
-        SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-        SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
     - name: Compress clients-2 targets
       if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2')
         }}
@@ -571,8 +561,6 @@ jobs:
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
-        SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-        SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
     - name: Compress clients-3 targets
       if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2')
         }}
@@ -680,8 +668,6 @@ jobs:
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
-        SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-        SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
     - name: Compress clients-4 targets
       if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2')
         }}
@@ -792,8 +778,6 @@ jobs:
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
-        SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-        SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
     - name: Compress clients-5 targets
       if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2')
         }}
@@ -901,8 +885,6 @@ jobs:
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
-        SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-        SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
     - name: Compress clients-6 targets
       if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2')
         }}
@@ -1011,8 +993,6 @@ jobs:
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
-        SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-        SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
     - name: Compress clients-7 targets
       if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2')
         }}
@@ -1121,8 +1101,6 @@ jobs:
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
-        SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-        SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
     - name: Compress clients-8 targets
       if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2')
         }}
@@ -1222,8 +1200,6 @@ jobs:
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
-        SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-        SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
     - name: Compress clients-9 targets
       if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2')
         }}
@@ -1303,8 +1279,6 @@ jobs:
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
-        SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-        SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
     - name: Compress clients-10 targets
       if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2')
         }}
