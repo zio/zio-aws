@@ -112,7 +112,7 @@ trait GithubActionsGenerator {
                   "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
                   "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}"
                 )
-              ).when((isMaster || isZio2) && isNotScalaVersion(scala3)),
+              ).when(isMaster && isNotScalaVersion(scala3)),
               runSBT(
                 "Publish core",
                 parameters = List(
@@ -124,7 +124,7 @@ trait GithubActionsGenerator {
                   "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
                   "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}"
                 )
-              ).when((isMaster || isZio2) && isScalaVersion(scala3)),
+              ).when(isMaster && isScalaVersion(scala3)),
               storeTargets(
                 "core",
                 List(
@@ -239,7 +239,7 @@ trait GithubActionsGenerator {
             "Release",
             need = Seq("build-core", "integration-test") ++
               grouped.indices.map(idx => s"build-clients-$idx"),
-            condition = Some(isMaster || isZio2)
+            condition = Some(isMaster)
           ).withSteps(
             checkoutCurrentBranch(),
             setupScala(Some(JavaVersion.AdoptJDK18)),
