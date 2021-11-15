@@ -3,7 +3,7 @@ import microsites.ConfigYml
 import scala.xml.{Node => XmlNode, NodeSeq => XmlNodeSeq, _}
 import scala.xml.transform.{RewriteRule, RuleTransformer}
 
-enablePlugins(Common, ZioAwsCodegenPlugin)
+enablePlugins(Common, ZioAwsCodegenPlugin, GitVersioning)
 
 ThisBuild / ciParallelJobs := 10
 ThisBuild / ciSeparateJobs := Seq("zio-aws-ec2")
