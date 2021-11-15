@@ -215,7 +215,7 @@ trait GithubActionsGenerator {
                 storeTargets(
                   s"clients-$idx",
                   directories = List("")
-                ).when(isMaster || isZio2)
+                ).when(isMaster)
               )
           }
         )

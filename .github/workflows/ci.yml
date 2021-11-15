@@ -239,13 +239,11 @@ jobs:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress clients-0 targets
-      if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2')
-        }}
+      if: ${{ github.ref == 'refs/heads/master' }}
       run: tar cvf targets.tar target
     - name: Upload clients-0 targets
       uses: actions/upload-artifact@v2
-      if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2')
-        }}
+      if: ${{ github.ref == 'refs/heads/master' }}
       with:
         name: target-clients-0-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java
           }}
@@ -348,13 +346,11 @@ jobs:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress clients-1 targets
-      if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2')
-        }}
+      if: ${{ github.ref == 'refs/heads/master' }}
       run: tar cvf targets.tar target
     - name: Upload clients-1 targets
       uses: actions/upload-artifact@v2
-      if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2')
-        }}
+      if: ${{ github.ref == 'refs/heads/master' }}
       with:
         name: target-clients-1-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java
           }}
@@ -455,13 +451,11 @@ jobs:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress clients-2 targets
-      if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2')
-        }}
+      if: ${{ github.ref == 'refs/heads/master' }}
       run: tar cvf targets.tar target
     - name: Upload clients-2 targets
       uses: actions/upload-artifact@v2
-      if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2')
-        }}
+      if: ${{ github.ref == 'refs/heads/master' }}
       with:
         name: target-clients-2-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java
           }}
@@ -562,13 +556,11 @@ jobs:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress clients-3 targets
-      if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2')
-        }}
+      if: ${{ github.ref == 'refs/heads/master' }}
       run: tar cvf targets.tar target
     - name: Upload clients-3 targets
       uses: actions/upload-artifact@v2
-      if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2')
-        }}
+      if: ${{ github.ref == 'refs/heads/master' }}
       with:
         name: target-clients-3-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java
           }}
@@ -669,13 +661,11 @@ jobs:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress clients-4 targets
-      if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2')
-        }}
+      if: ${{ github.ref == 'refs/heads/master' }}
       run: tar cvf targets.tar target
     - name: Upload clients-4 targets
       uses: actions/upload-artifact@v2
-      if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2')
-        }}
+      if: ${{ github.ref == 'refs/heads/master' }}
       with:
         name: target-clients-4-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java
           }}
@@ -779,13 +769,11 @@ jobs:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress clients-5 targets
-      if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2')
-        }}
+      if: ${{ github.ref == 'refs/heads/master' }}
       run: tar cvf targets.tar target
     - name: Upload clients-5 targets
       uses: actions/upload-artifact@v2
-      if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2')
-        }}
+      if: ${{ github.ref == 'refs/heads/master' }}
       with:
         name: target-clients-5-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java
           }}
@@ -886,13 +874,11 @@ jobs:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress clients-6 targets
-      if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2')
-        }}
+      if: ${{ github.ref == 'refs/heads/master' }}
       run: tar cvf targets.tar target
     - name: Upload clients-6 targets
       uses: actions/upload-artifact@v2
-      if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2')
-        }}
+      if: ${{ github.ref == 'refs/heads/master' }}
       with:
         name: target-clients-6-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java
           }}
@@ -994,13 +980,11 @@ jobs:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress clients-7 targets
-      if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2')
-        }}
+      if: ${{ github.ref == 'refs/heads/master' }}
       run: tar cvf targets.tar target
     - name: Upload clients-7 targets
       uses: actions/upload-artifact@v2
-      if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2')
-        }}
+      if: ${{ github.ref == 'refs/heads/master' }}
       with:
         name: target-clients-7-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java
           }}
@@ -1102,13 +1086,11 @@ jobs:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress clients-8 targets
-      if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2')
-        }}
+      if: ${{ github.ref == 'refs/heads/master' }}
       run: tar cvf targets.tar target
     - name: Upload clients-8 targets
       uses: actions/upload-artifact@v2
-      if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2')
-        }}
+      if: ${{ github.ref == 'refs/heads/master' }}
       with:
         name: target-clients-8-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java
           }}
@@ -1201,13 +1183,11 @@ jobs:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress clients-9 targets
-      if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2')
-        }}
+      if: ${{ github.ref == 'refs/heads/master' }}
       run: tar cvf targets.tar target
     - name: Upload clients-9 targets
       uses: actions/upload-artifact@v2
-      if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2')
-        }}
+      if: ${{ github.ref == 'refs/heads/master' }}
       with:
         name: target-clients-9-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java
           }}
@@ -1280,13 +1260,11 @@ jobs:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress clients-10 targets
-      if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2')
-        }}
+      if: ${{ github.ref == 'refs/heads/master' }}
       run: tar cvf targets.tar target
     - name: Upload clients-10 targets
       uses: actions/upload-artifact@v2
-      if: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/zio2')
-        }}
+      if: ${{ github.ref == 'refs/heads/master' }}
       with:
         name: target-clients-10-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java
           }}
