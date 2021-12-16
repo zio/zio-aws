@@ -65,8 +65,16 @@ trait GeneratorBase {
       case ModelType.BigDecimal =>
         ZIO.succeed(q"""$term.bigDecimal""")
       case _ =>
-        TypeMapping.toJavaType(model).map { javaType =>
-          q"""$term : ${javaType.typ}"""
+        if (TypeMapping.isBuiltIn(model.shapeName)) {
+          TypeMapping.toJavaType(model).map { javaType =>
+            q"""$term : ${javaType.typ}"""
+          }
+        } else {
+          TypeMapping.toWrappedType(model).flatMap { wrapperType =>
+            TypeMapping.toJavaType(model).map { javaType =>
+              q"""${wrapperType.term}.unwrap($term) : ${javaType.typ}"""
+            }
+          }
         }
     }
 
@@ -106,7 +114,7 @@ trait GeneratorBase {
         )
       case ModelType.Blob =>
         ZIO.succeed(
-          q"""${Types.chunk_.term}.fromArray($term.asByteArrayUnsafe())"""
+          q"""${model.generatedType.term}(${Types.chunk_.term}.fromArray($term.asByteArrayUnsafe()))"""
         )
       case ModelType.Structure =>
         ZIO.succeed(
@@ -115,7 +123,10 @@ trait GeneratorBase {
       case ModelType.Exception =>
         ZIO.succeed(term)
       case _ =>
-        ZIO.succeed(q"""$term : ${model.generatedType.typ}""")
+        if (TypeMapping.isBuiltIn(model.shapeName))           
+          ZIO.succeed(q"""$term: ${model.generatedType.typ}""")
+        else
+          ZIO.succeed(q"""${model.generatedType.term}($term)""")
     }
 
   protected def propertyName(

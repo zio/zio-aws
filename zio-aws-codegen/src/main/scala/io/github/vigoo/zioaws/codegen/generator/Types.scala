@@ -58,4 +58,7 @@ object Types {
   val throwable: ScalaType = ScalaType(Package.javaLang, "Throwable")
   val instant: ScalaType = ScalaType(Package.javaTime, "Instant")
   val bigDecimal: ScalaType = ScalaType(Package("scala", "math"), "BigDecimal")
+
+  def newtype(t: ScalaType): ScalaType = ScalaType(Packages.zioPrelude, "Newtype", t)
+  def subtype(t: ScalaType): ScalaType = ScalaType(Packages.zioPrelude, "Subtype", t)
 }
