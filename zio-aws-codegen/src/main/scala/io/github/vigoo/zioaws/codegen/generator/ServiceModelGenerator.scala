@@ -215,65 +215,66 @@ trait ServiceModelGenerator {
         case ModelType.Enum =>
           generateEnum(m, javaType)
         case ModelType.String =>
-          generateSimple(
-            m.generatedType.name,
-            q"""type ${m.generatedType.typName} = ${ScalaType.string.typ}"""
+          generateNewtype(
+            m.generatedType,
+            ScalaType.string
           )
         case ModelType.Integer =>
-          generateSimple(
-            m.generatedType.name,
-            q"""type ${m.generatedType.typName} = ${ScalaType.int.typ}"""
+          generateNewtype(
+            m.generatedType,
+            ScalaType.int
           )
         case ModelType.Long =>
-          generateSimple(
-            m.generatedType.name,
-            q"""type ${m.generatedType.typName} = ${ScalaType.long.typ}"""
+          generateNewtype(
+            m.generatedType,
+            ScalaType.long
           )
         case ModelType.Float =>
-          generateSimple(
-            m.generatedType.name,
-            q"""type ${m.generatedType.typName} = ${ScalaType.float.typ}"""
+          generateNewtype(
+            m.generatedType,
+            ScalaType.float
           )
         case ModelType.Double =>
-          generateSimple(
-            m.generatedType.name,
-            q"""type ${m.generatedType.typName} = ${ScalaType.double.typ}"""
+          generateNewtype(
+            m.generatedType,
+            ScalaType.double
           )
         case ModelType.Boolean =>
-          generateSimple(
-            m.generatedType.name,
-            q"""type ${m.generatedType.typName} = ${ScalaType.boolean.typ}"""
+          generateNewtype(
+            m.generatedType,
+            ScalaType.boolean
           )
         case ModelType.Timestamp =>
-          generateSimple(
-            m.generatedType.name,
-            q"""type ${m.generatedType.typName} = ${Types.instant.typ}"""
+          generateNewtype(
+            m.generatedType,
+            Types.instant
           )
         case ModelType.Blob =>
-          generateSimple(
-            m.generatedType.name,
-            q"""type ${m.generatedType.typName} = ${Types
-              .chunk(ScalaType.byte)
-              .typ}"""
+          generateNewtype(
+            m.generatedType,
+            Types.chunk(ScalaType.byte)
           )
         case _ =>
-          generateSimple(
-            m.generatedType.name,
-            q"""type ${m.generatedType.typName} = ${ScalaType.unit.typ}"""
+          generateNewtype(
+            m.generatedType,
+            ScalaType.unit
           )
       }
     } yield wrapper
   }
 
-  private def generateSimple(
-      name: String,
-      defn: Defn
+  private def generateNewtype(
+    wrapperType: ScalaType,
+    underlyingType: ScalaType
   ): ZIO[AwsGeneratorContext, AwsGeneratorFailure, ModelWrapper] =
     ZIO.succeed(
       ModelWrapper(
         None,
-        code = List(defn),
-        name
+        code = List(
+          q"""object ${wrapperType.termName} extends ${Types.subtype(underlyingType).init}""",
+          q"""type ${wrapperType.typName} = ${Type.Select(wrapperType.term, Type.Name("Type"))}"""
+        ),
+        wrapperType.name
       )
     )
 

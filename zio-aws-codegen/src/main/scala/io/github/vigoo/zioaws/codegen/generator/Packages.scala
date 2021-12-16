@@ -11,4 +11,6 @@ object Packages {
 
   val awsCore: Package = Package("software", "amazon", "awssdk", "core")
   val awsAwsCore: Package = Package("software", "amazon", "awssdk", "awscore")
+
+  val zioPrelude: Package = zio / "prelude"
 }
