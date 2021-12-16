@@ -2,7 +2,7 @@ package io.github.vigoo.zioaws.core.httpclient
 
 import io.github.vigoo.zioaws.core.httpclient.Protocol.{Dual, Http11, Http2}
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient
-import zio.{Has, Task, ZIO, ZLayer, ZManaged}
+import zio.{Task, ZIO, ZLayer, ZManaged}
 
 trait HttpClient {
   def clientFor(
@@ -13,7 +13,7 @@ object HttpClient {
   def fromManagedPerProtocol[R, E, A <: SdkAsyncHttpClient](
       http11Client: ZManaged[R, E, A],
       http2Client: ZManaged[R, E, A]
-  )(protocol: Protocol): ZLayer[R, E, Has[HttpClient]] =
+  )(protocol: Protocol): ZLayer[R, E, HttpClient] =
     fromManagedPerProtocolManaged(http11Client, http2Client)(protocol).toLayer
 
   def fromManagedPerProtocolManaged[R, E, A <: SdkAsyncHttpClient](
@@ -65,7 +65,7 @@ object HttpClient {
 
   def clientFor(
       serviceCaps: ServiceHttpCapabilities
-  ): ZIO[Has[HttpClient], Throwable, SdkAsyncHttpClient] =
-    ZIO.serviceWith(_.clientFor(serviceCaps))
+  ): ZIO[HttpClient, Throwable, SdkAsyncHttpClient] =
+    ZIO.serviceWithZIO(_.clientFor(serviceCaps))
 
 }

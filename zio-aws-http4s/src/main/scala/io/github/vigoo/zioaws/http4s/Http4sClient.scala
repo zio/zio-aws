@@ -35,7 +35,7 @@ import javax.net.ssl.SSLContext
 import scala.util.control.NonFatal
 
 class Http4sClient(client: Client[Task], closeFn: () => Unit)(implicit
-    runtime: Runtime[Has[Clock]]
+    runtime: Runtime[Clock]
 ) extends SdkAsyncHttpClient {
 
   import Http4sClient._
@@ -172,10 +172,10 @@ object Http4sClient {
   private[http4s] case class Http4sClientBuilder(
       customization: BlazeClientBuilder[Task] => BlazeClientBuilder[Task] =
         identity
-  )(implicit runtime: Runtime[Has[Clock]])
+  )(implicit runtime: Runtime[Clock])
       extends SdkAsyncHttpClient.Builder[Http4sClientBuilder] {
 
-    def withRuntime(runtime: Runtime[Has[Clock]]): Http4sClientBuilder =
+    def withRuntime(runtime: Runtime[Clock]): Http4sClientBuilder =
       copy()(runtime)
 
     private def createClient(): Resource[Task, Client[Task]] = {
@@ -193,7 +193,7 @@ object Http4sClient {
       new Http4sClient(client, () => runtime.unsafeRun(closeFn))
     }
 
-    def toManaged: ZManaged[Has[Clock], Throwable, Http4sClient] = {
+    def toManaged: ZManaged[Clock, Throwable, Http4sClient] = {
       cats.effect.std
         .Dispatcher[Task]
         .allocated
@@ -212,12 +212,12 @@ object Http4sClient {
   private[http4s] def builder(): Http4sClientBuilder =
     Http4sClientBuilder()(Runtime.default)
 
-  val default: ZLayer[Has[Clock], Throwable, Has[HttpClient]] = customized(identity)
+  val default: ZLayer[Clock, Throwable, HttpClient] = customized(identity)
 
   def customized(
       f: BlazeClientBuilder[Task] => BlazeClientBuilder[Task]
-  ): ZLayer[Has[Clock], Throwable, Has[HttpClient]] =
-    ZIO.runtime.toManaged.flatMap { implicit runtime: Runtime[Has[Clock]] =>
+  ): ZLayer[Clock, Throwable, HttpClient] =
+    ZIO.runtime.toManaged.flatMap { implicit runtime: Runtime[Clock] =>
       Http4sClient
         .Http4sClientBuilder(f)
         .toManaged
@@ -235,13 +235,11 @@ object Http4sClient {
       maxConnectionsPerRequestKey: Option[RequestKey => Int] = None,
       asynchronousChannelGroup: Option[AsynchronousChannelGroup] = None,
       additionalSocketOptions: Seq[OptionValue[_]] = Seq.empty
-  ): ZLayer[Has[
-    _root_.io.github.vigoo.zioaws.http4s.BlazeClientConfig
-  ] with Has[Clock], Throwable, Has[HttpClient]] =
+  ): ZLayer[_root_.io.github.vigoo.zioaws.http4s.BlazeClientConfig & Clock, Throwable, HttpClient] =
     ZManaged
       .service[_root_.io.github.vigoo.zioaws.http4s.BlazeClientConfig]
       .flatMap { config =>
-        ZManaged.runtime.flatMap { implicit runtime: Runtime[Has[Clock]] =>
+        ZManaged.runtime.flatMap { implicit runtime: Runtime[Clock] =>
           Http4sClient
             .Http4sClientBuilder(
               _.withResponseHeaderTimeout(config.responseHeaderTimeout)

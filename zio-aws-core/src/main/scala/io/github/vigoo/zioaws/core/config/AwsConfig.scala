@@ -11,7 +11,7 @@ import software.amazon.awssdk.awscore.client.builder.{
 }
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration
 import software.amazon.awssdk.core.retry.RetryPolicy
-import zio.{Has, Task, ZIO, ZLayer}
+import zio._
 
 import scala.jdk.CollectionConverters._
 
@@ -27,13 +27,13 @@ trait AwsConfig {
 }
 
 object AwsConfig {
-  val default: ZLayer[Has[HttpClient], Nothing, Has[AwsConfig]] = customized(
+  val default: ZLayer[HttpClient, Nothing, AwsConfig] = customized(
     ClientCustomization.None
   )
 
   def customized(
       customization: ClientCustomization
-  ): ZLayer[Has[HttpClient], Nothing, Has[AwsConfig]] =
+  ): ZLayer[HttpClient, Nothing, AwsConfig] =
     (for {
       httpClient <- ZIO.service[HttpClient]
     } yield new AwsConfig {
@@ -53,9 +53,7 @@ object AwsConfig {
         httpClient.clientFor(serviceCaps).map(builder.httpClient)
     }).toLayer
 
-  def configured(): ZLayer[Has[HttpClient] with Has[
-    CommonAwsConfig
-  ], Nothing, Has[AwsConfig]] =
+  def configured(): ZLayer[HttpClient & CommonAwsConfig, Nothing, AwsConfig] =
     (for {
       httpClient <- ZIO.service[HttpClient]
       commonConfig <- ZIO.service[CommonAwsConfig]

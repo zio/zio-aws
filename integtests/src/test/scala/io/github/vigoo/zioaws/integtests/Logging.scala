@@ -5,9 +5,9 @@ import io.github.vigoo.zioaws.core._
 import zio._
 
 trait Logging {
-  val callLogging: AwsCallAspect[Has[Clock] with Has[Console]] =
-    new AwsCallAspect[Has[Clock] with Has[Console]] {
-      override final def apply[R1 <: Has[Clock] with Has[Console], A](
+  val callLogging: AwsCallAspect[Clock & Console] =
+    new AwsCallAspect[Clock & Console] {
+      override final def apply[R1 <: Clock & Console, A](
           f: ZIO[R1, AwsError, Described[A]]
       ): ZIO[R1, AwsError, Described[A]] = {
         f.either.timed

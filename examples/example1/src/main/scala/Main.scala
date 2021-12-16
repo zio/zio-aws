@@ -9,7 +9,7 @@ import zio._
 import zio.stream._
 
 object Main extends ZIOAppDefault {
-  val program: ZIO[Has[Console] with Has[Ec2] with Has[ElasticBeanstalk], AwsError, Unit] =
+  val program: ZIO[Console & Ec2 & ElasticBeanstalk, AwsError, Unit] =
     for {
       appsResult <- ElasticBeanstalk.describeApplications(
         DescribeApplicationsRequest(applicationNames = Some(List("my-service")))
@@ -98,7 +98,7 @@ object Main extends ZIOAppDefault {
       }
     } yield ()
 
-  override def run: URIO[ZEnv with Has[ZIOAppArgs], ExitCode] = {
+  override def run: URIO[ZEnv with ZIOAppArgs, ExitCode] = {
     val httpClient = NettyHttpClient.default
     val awsConfig = httpClient >>> AwsConfig.default
     val aws = awsConfig >>> (Ec2.live ++ ElasticBeanstalk.live)

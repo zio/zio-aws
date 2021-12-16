@@ -14,7 +14,6 @@ import software.amazon.awssdk.regions.Region
 import zio.test._
 import zio.config._
 import zio.config.typesafe.TypesafeConfigSource
-import zio.test.environment.TestEnvironment
 import zio.test.Assertion._
 import zio.test.AssertionM.Render.{className, param}
 

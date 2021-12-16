@@ -14,20 +14,20 @@ import software.amazon.awssdk.http.nio.netty.{
   NettyNioAsyncHttpClient,
   ProxyConfiguration => AwsProxyConfiguration
 }
-import zio.{Has, ZIO, ZLayer, ZManaged}
+import zio.{ZIO, ZLayer, ZManaged}
 
 object NettyHttpClient {
-  val default: ZLayer[Any, Throwable, Has[HttpClient]] =
+  val default: ZLayer[Any, Throwable, HttpClient] =
     customized(Protocol.Http11, identity)
 
-  val dual: ZLayer[Any, Throwable, Has[HttpClient]] =
+  val dual: ZLayer[Any, Throwable, HttpClient] =
     customized(Protocol.Dual, identity)
 
   def customized(
       protocol: Protocol,
       customization: NettyNioAsyncHttpClient.Builder => NettyNioAsyncHttpClient.Builder =
         identity
-  ): ZLayer[Any, Throwable, Has[HttpClient]] = {
+  ): ZLayer[Any, Throwable, HttpClient] = {
     def create(
         awsProtocol: AwsProtocol
     ): ZManaged[Any, Throwable, SdkAsyncHttpClient] =
@@ -52,10 +52,10 @@ object NettyHttpClient {
   def configured(
       tlsKeyManagersProvider: Option[TlsKeyManagersProvider] = None,
       tlsTrustManagersProvider: Option[TlsTrustManagersProvider] = None
-  ): ZLayer[Has[NettyClientConfig], Throwable, Has[HttpClient]] = {
+  ): ZLayer[NettyClientConfig, Throwable, HttpClient] = {
     def create(
         awsProtocol: AwsProtocol
-    ): ZManaged[Has[NettyClientConfig], Throwable, SdkAsyncHttpClient] =
+    ): ZManaged[NettyClientConfig, Throwable, SdkAsyncHttpClient] =
       ZManaged
         .fromAutoCloseable(ZIO.service[NettyClientConfig].flatMap { config =>
           ZIO.attempt {

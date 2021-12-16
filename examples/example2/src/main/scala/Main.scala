@@ -11,9 +11,9 @@ import zio._
 import zio.config._
 
 object Main extends ZIOAppDefault {
-  val callLogging: AwsCallAspect[Has[Clock]] =
-    new AwsCallAspect[Has[Clock]] {
-      override final def apply[R1 <: Has[Clock], A](
+  val callLogging: AwsCallAspect[Clock] =
+    new AwsCallAspect[Clock] {
+      override final def apply[R1 <: Clock, A](
           f: ZIO[R1, AwsError, Described[A]]
       ): ZIO[R1, AwsError, Described[A]] = {
         f.timed.flatMap { case (duration, r @ Described(result, description)) =>
@@ -35,14 +35,14 @@ object Main extends ZIOAppDefault {
         )
     }
 
-  val program: ZIO[Has[Console] with Has[DynamoDb], AwsError, Unit] =
+  val program: ZIO[Console & DynamoDb, AwsError, Unit] =
     for {
       _ <- Console.printLine("Performing full table scan").ignore
       scan = DynamoDb.scan(ScanRequest(tableName = "test")) // full table scan
       _ <- scan.foreach(item => Console.printLine(item.toString).ignore)
     } yield ()
 
-  override def run: URIO[ZEnv with Has[ZIOAppArgs], ExitCode] = {
+  override def run: URIO[ZEnv with ZIOAppArgs, ExitCode] = {
     val httpClient = NettyHttpClient.default
     val config = ZLayer.succeed(
       CommonAwsConfig(

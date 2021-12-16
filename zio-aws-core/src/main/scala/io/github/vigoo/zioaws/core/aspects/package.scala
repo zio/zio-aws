@@ -1,7 +1,7 @@
 package io.github.vigoo.zioaws.core
 
 import izumi.reflect.Tag
-import zio.{Has, ZIO, ZLayer, ZManaged}
+import zio._
 
 package object aspects {
   trait AwsCallAspect[-R] { self =>
@@ -50,15 +50,15 @@ package object aspects {
   }
 
   trait AspectSupport[Self] {
-    def withAspect[R](newAspect: AwsCallAspect[R], r: R): Self
+    def withAspect[R](newAspect: AwsCallAspect[R], r: ZEnvironment[R]): Self
   }
 
-  implicit class ZLayerSyntax[RIn, E, ROut <: AspectSupport[ROut]: Tag](
-      layer: ZLayer[RIn, E, Has[ROut]]
+  implicit class ZLayerSyntax[RIn, E, ROut <: AspectSupport[ROut]: Tag: IsNotIntersection](
+      layer: ZLayer[RIn, E, ROut]
   ) {
     def @@[RIn1 <: RIn: Tag](
         aspect: AwsCallAspect[RIn1]
-    ): ZLayer[RIn1, E, Has[ROut]] =
+    ): ZLayer[RIn1, E, ROut] =
       ZLayer.fromManaged[RIn1, E, ROut] {
         ZManaged.environment[RIn1].flatMap { r =>
           layer.build.map(_.get.withAspect(aspect, r))

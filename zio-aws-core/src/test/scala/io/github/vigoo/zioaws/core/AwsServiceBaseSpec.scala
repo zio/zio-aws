@@ -22,7 +22,6 @@ import zio.stream.ZStream
 import zio.test.Assertion._
 import zio.test.TestAspect.{ignore, nonFlaky, sequential, timeout}
 import zio.test._
-import zio.test.environment.TestEnvironment
 
 import scala.collection.mutable.ArrayBuffer
 

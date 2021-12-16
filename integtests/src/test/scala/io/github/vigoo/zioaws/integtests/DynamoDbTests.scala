@@ -40,7 +40,8 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
 
   private def testTable(prefix: String) = {
     for {
-      env <- ZIO.environment[Has[DynamoDb] with Has[Console]]
+      dynamodb <- ZIO.service[DynamoDb]
+      console <- ZIO.service[Console]
       postfix <- Random.nextInt.map(Math.abs)
       tableName = s"${prefix}_$postfix"
     } yield ZManaged.acquireReleaseWith(
@@ -73,7 +74,7 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
             _ <- DynamoDb.deleteTable(DeleteTableRequest(tableName))
           } yield ()
         }
-        .provide(env)
+        .provideEnvironment(ZEnvironment(dynamodb) ++ ZEnvironment(console))
         .catchAll(error => ZIO.die(error.toThrowable))
         .unit
     )

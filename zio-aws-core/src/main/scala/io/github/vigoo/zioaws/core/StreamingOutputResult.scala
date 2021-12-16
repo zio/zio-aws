@@ -1,6 +1,7 @@
 package io.github.vigoo.zioaws.core
 
 import zio.stream.ZStream
+import zio.ZEnvironment
 
 case class StreamingOutputResult[R, Response, Item](
     response: Response,
@@ -16,6 +17,6 @@ case class StreamingOutputResult[R, Response, Item](
   ): StreamingOutputResult[R, Response, I] =
     copy(output = f(output))
 
-  def provide(r: R): StreamingOutputResult[Any, Response, Item] =
-    StreamingOutputResult(response, output.provide(r))
+  def provideEnvironment(r: ZEnvironment[R]): StreamingOutputResult[Any, Response, Item] =
+    StreamingOutputResult(response, output.provideEnvironment(r))
 }

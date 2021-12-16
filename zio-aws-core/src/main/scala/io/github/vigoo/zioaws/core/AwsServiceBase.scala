@@ -57,7 +57,7 @@ trait AwsServiceBase[R] {
       ).unwrap.flatMap { response =>
         getNextToken(response) match {
           case Some(nextToken) =>
-            val stream = ZStream {
+            val stream = ZStream.fromPull {
               for {
                 nextTokenRef <-
                   Ref.make[Option[String]](Some(nextToken)).toManaged
@@ -109,7 +109,7 @@ trait AwsServiceBase[R] {
     ).unwrap.flatMap { response =>
       getNextToken(response) match {
         case Some(nextToken) =>
-          val stream = ZStream {
+          val stream = ZStream.fromPull {
             for {
               nextTokenRef <-
                 Ref.make[Option[String]](Some(nextToken)).toManaged

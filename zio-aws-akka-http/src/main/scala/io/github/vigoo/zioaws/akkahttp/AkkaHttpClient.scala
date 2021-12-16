@@ -9,7 +9,7 @@ import io.github.vigoo.zioaws.core.httpclient.{
   ServiceHttpCapabilities
 }
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient
-import zio.{Has, Task, ZIO, ZLayer, ZManaged}
+import zio.{Task, ZIO, ZLayer, ZManaged}
 
 import scala.concurrent.ExecutionContext
 
@@ -21,7 +21,7 @@ object AkkaHttpClient {
   def client(
       connectionPoolSettings: Option[ConnectionPoolSettings] = None,
       executionContext: Option[ExecutionContext] = None
-  ): ZLayer[Has[ActorSystem], Throwable, Has[HttpClient]] =
+  ): ZLayer[ActorSystem, Throwable, HttpClient] =
     (for {
       actorSystem <- ZManaged.service[ActorSystem]
       akkaClient <- ZManaged

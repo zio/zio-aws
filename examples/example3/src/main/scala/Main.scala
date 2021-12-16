@@ -15,7 +15,7 @@ object Main extends ZIOAppDefault {
   val accessKey = "TODO"
   val secretKey = "TODO"
 
-  val program: ZIO[Has[Console] with Has[Kinesis], AwsError, Unit] =
+  val program: ZIO[Console & Kinesis, AwsError, Unit] =
     for {
       streams <- Kinesis.listStreams(ListStreamsRequest())
       _ <- Console.printLine("Streams:").ignore
@@ -92,7 +92,7 @@ object Main extends ZIOAppDefault {
 
     } yield ()
 
-  override def run: URIO[ZEnv with Has[ZIOAppArgs], ExitCode] = {
+  override def run: URIO[ZEnv with ZIOAppArgs, ExitCode] = {
     val httpClient = NettyHttpClient.dual
     val cfg = ZLayer.succeed(
       CommonAwsConfig(

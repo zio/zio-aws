@@ -42,7 +42,8 @@ object S3Tests extends DefaultRunnableSpec with Logging {
 
   private def testBucket(prefix: String) = {
     for {
-      env <- ZIO.environment[Has[S3] with Has[Console]]
+      s3 <- ZIO.service[S3]
+      console <- ZIO.service[Console]
       postfix <- Random.nextInt.map(Math.abs)
       bucketName = s"${prefix}-$postfix"
     } yield ZManaged.acquireReleaseWith(
@@ -59,7 +60,7 @@ object S3Tests extends DefaultRunnableSpec with Logging {
         _ <- Console.printLine(s"Deleting bucket $bucketName").ignore
         _ <- S3.deleteBucket(DeleteBucketRequest(bucketName))
       } yield ())
-        .provide(env)
+        .provideEnvironment(ZEnvironment(s3) ++ ZEnvironment(console))
         .catchAll(error => ZIO.die(error.toThrowable))
         .unit
     )
