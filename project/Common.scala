@@ -18,7 +18,7 @@ object Common extends AutoPlugin {
     val zioPreludeVersion = "1.0.0-RC8+50-9f687f11-SNAPSHOT"
     val catsEffectVersion = "3.3.0"
 
-    val awsVersion = "2.17.66"
+    val awsVersion = "2.17.100"
     val awsSubVersion = awsVersion.drop(awsVersion.indexOf('.') + 1)
     val http4sVersion = "0.23.6"
     val fs2Version = "3.2.3"
@@ -99,13 +99,15 @@ object Common extends AutoPlugin {
       sonatypeProjectHosting := Some(
         GitHubHosting("vigoo", "zio-aws", "daniel.vigovszky@gmail.com")
       ),
+      sonatypeCredentialHost := "s01.oss.sonatype.org",
+      sonatypeRepository     := "https://s01.oss.sonatype.org/service/local",
       credentials ++=
         (for {
           username <- Option(System.getenv().get("SONATYPE_USERNAME"))
           password <- Option(System.getenv().get("SONATYPE_PASSWORD"))
         } yield Credentials(
           "Sonatype Nexus Repository Manager",
-          "oss.sonatype.org",
+          "s01.oss.sonatype.org",
           username,
           password
         )).toSeq,

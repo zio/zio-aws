@@ -27,7 +27,7 @@ lazy val core = Project("zio-aws-core", file("zio-aws-core"))
       "dev.zio" %% "zio-interop-reactivestreams" % zioReactiveStreamsInteropVersion,
       "dev.zio" %% "zio-config" % zioConfigVersion,
       "dev.zio" %% "zio-prelude" % zioPreludeVersion,
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.5.0",
+      "org.scala-lang.modules" %% "scala-collection-compat" % "2.6.0",
       "dev.zio" %% "zio-test" % zioVersion % "test",
       "dev.zio" %% "zio-test-sbt" % zioVersion % "test",
       "dev.zio" %% "zio-config-typesafe" % zioConfigVersion % "test"
@@ -46,7 +46,7 @@ lazy val http4s = Project("zio-aws-http4s", file("zio-aws-http4s"))
       "dev.zio" %% "zio-config" % zioConfigVersion,
       "co.fs2" %% "fs2-reactive-streams" % fs2Version,
       "org.typelevel" %% "cats-effect" % catsEffectVersion,
-      "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.1"
+      "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2"
     )
   )
   .dependsOn(core)
@@ -56,7 +56,7 @@ lazy val akkahttp = Project("zio-aws-akka-http", file("zio-aws-akka-http"))
     crossScalaVersions := List(scala212Version, scala213Version),
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-stream" % "2.6.17",
-      "com.typesafe.akka" %% "akka-http" % "10.2.6",
+      "com.typesafe.akka" %% "akka-http" % "10.2.7",
       "com.github.matsluni" %% "aws-spi-akka-http" % "0.0.11"
     )
   )
