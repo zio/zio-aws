@@ -17,15 +17,15 @@ class ZStreamAsyncRequestBody[R](stream: ZStream[R, AwsError, Byte])(implicit
 
   override def subscribe(s: Subscriber[_ >: ByteBuffer]): Unit =
     runtime.unsafeRun {
-      for {
-        (errorP, sink) <- s.toSink[Throwable]
-        _ <-
+      s.toSink[Throwable]
+        .use { case (errorP, sink) =>
           stream
             .mapError(_.toThrowable)
             .mapChunks(chunk => Chunk(ByteBuffer.wrap(chunk.toArray)))
             .run(sink)
             .catchAll(errorP.fail)
-            .forkDaemon
-      } yield ()
+        }
+        .forkDaemon
+        .unit
     }
 }

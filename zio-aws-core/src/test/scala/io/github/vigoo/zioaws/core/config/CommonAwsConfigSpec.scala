@@ -40,51 +40,49 @@ object CommonAwsConfigSpec extends DefaultRunnableSpec {
             |}
             |""".stripMargin
 
-        val config = for {
-          source <- TypesafeConfigSource.fromHoconString(example)
-          config = descriptors.commonAwsConfig from source
-          result <- read(config)
-        } yield result
-        assert(config)(
-          isRight(
-            hasField[CommonAwsConfig, Option[Region]](
-              "region",
-              _.region,
-              isSome(equalTo(Region.US_EAST_1))
-            ) &&
-              hasField[CommonAwsConfig, AwsCredentialsProvider](
-                "credentialsProvider",
-                _.credentialsProvider,
-                isSubtype[StaticCredentialsProvider](
+        val config = read(
+          descriptors.commonAwsConfig from TypesafeConfigSource.fromHoconString(
+            example
+          )
+        )
+        assertM(config)(
+          hasField[CommonAwsConfig, Option[Region]](
+            "region",
+            _.region,
+            isSome(equalTo(Region.US_EAST_1))
+          ) &&
+            hasField[CommonAwsConfig, AwsCredentialsProvider](
+              "credentialsProvider",
+              _.credentialsProvider,
+              isSubtype[StaticCredentialsProvider](
+                hasField[StaticCredentialsProvider, String](
+                  "accessKeyId",
+                  _.resolveCredentials().accessKeyId(),
+                  equalTo("ID")
+                ) &&
                   hasField[StaticCredentialsProvider, String](
-                    "accessKeyId",
-                    _.resolveCredentials().accessKeyId(),
-                    equalTo("ID")
-                  ) &&
-                    hasField[StaticCredentialsProvider, String](
-                      "secretAccessKey",
-                      _.resolveCredentials().secretAccessKey(),
-                      equalTo("SECRET")
-                    )
-                )
-              ) &&
-              hasField[CommonAwsConfig, Option[URI]](
-                "endpointOverride",
-                _.endpointOverride,
-                isNone
-              ) &&
-              hasField[CommonAwsConfig, Option[CommonClientConfig]](
-                "commonClientConfig",
-                _.commonClientConfig,
-                isSome(
-                  hasField[CommonClientConfig, Map[String, List[String]]](
-                    "extraHeaders",
-                    _.extraHeaders,
-                    equalTo(Map("X-Test" -> List("1")))
+                    "secretAccessKey",
+                    _.resolveCredentials().secretAccessKey(),
+                    equalTo("SECRET")
                   )
+              )
+            ) &&
+            hasField[CommonAwsConfig, Option[URI]](
+              "endpointOverride",
+              _.endpointOverride,
+              isNone
+            ) &&
+            hasField[CommonAwsConfig, Option[CommonClientConfig]](
+              "commonClientConfig",
+              _.commonClientConfig,
+              isSome(
+                hasField[CommonClientConfig, Map[String, List[String]]](
+                  "extraHeaders",
+                  _.extraHeaders,
+                  equalTo(Map("X-Test" -> List("1")))
                 )
               )
-          )
+            )
         )
       }
     )
