@@ -15,7 +15,7 @@ object Common extends AutoPlugin {
     val zioCatsInteropVersion = "2.5.1.0"
     val zioReactiveStreamsInteropVersion = "1.3.8"
     val zioConfigVersion = "1.0.10"
-    val catsEffectVersion = "2.5.4"
+    val catsEffectVersion = "3.3.1"
 
     val awsVersion = "2.17.100"
     val awsSubVersion = awsVersion.drop(awsVersion.indexOf('.') + 1)
@@ -99,7 +99,7 @@ object Common extends AutoPlugin {
         GitHubHosting("vigoo", "zio-aws", "daniel.vigovszky@gmail.com")
       ),
       sonatypeCredentialHost := "s01.oss.sonatype.org",
-      sonatypeRepository     := "https://s01.oss.sonatype.org/service/local",
+      sonatypeRepository := "https://s01.oss.sonatype.org/service/local",
       credentials ++=
         (for {
           username <- Option(System.getenv().get("SONATYPE_USERNAME"))
