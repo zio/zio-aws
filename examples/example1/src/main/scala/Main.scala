@@ -64,7 +64,7 @@ object Main extends ZIOAppDefault {
                     .ignore
 
                   reservationsStream = Ec2.describeInstances(
-                    DescribeInstancesRequest(instanceIds = Some(instanceIds))
+                    DescribeInstancesRequest(instanceIds = Some(instanceIds.map(id => zio.aws.ec2.model.primitives.InstanceId(ResourceId.unwrap(id)))))
                   )
                   _ <- reservationsStream.run(Sink.foreach { reservation =>
                     reservation.getInstances
