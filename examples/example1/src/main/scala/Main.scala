@@ -5,6 +5,7 @@ import zio.aws.ec2.model._
 import zio.aws.ec2.model.primitives._
 import zio.aws.elasticbeanstalk.ElasticBeanstalk
 import zio.aws.elasticbeanstalk.model._
+import zio.aws.elasticbeanstalk.model.primitives._
 import zio.aws.netty.NettyHttpClient
 import zio._
 import zio.stream._
