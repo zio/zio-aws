@@ -1,6 +1,6 @@
 package zio.aws.codegen
 
-import zio.nio.core.file.Path
+import zio.nio.file.Path
 
 case class Parameters(
     targetRoot: Path,

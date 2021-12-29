@@ -14,7 +14,7 @@ import scala.jdk.CollectionConverters._
 import software.amazon.awssdk.codegen.model.config.customization.ShapeModifier
 import zio.{Has, ZIO}
 import zio.blocking.Blocking
-import zio.nio.core.file.Path
+import zio.nio.file.Path
 
 import scala.meta._
 
@@ -277,7 +277,7 @@ trait ServiceModelGenerator {
           q"""type ${wrapperType.typName} = ${Type
             .Select(wrapperType.term, Type.Name("Type"))}"""
         ),
-        wrapperType.name
+        wrapperType
       )
     )
 
@@ -461,7 +461,7 @@ trait ServiceModelGenerator {
                           }
                          """
       ),
-      name = m.generatedType.name
+      generatedType = m.generatedType
     )
   }
 
@@ -476,7 +476,7 @@ trait ServiceModelGenerator {
       code = List(
         q"""type ${m.generatedType.typName} = ${ScalaType.list(elemType).typ}"""
       ),
-      name = m.generatedType.name
+      generatedType = m.generatedType
     )
   }
 
@@ -493,7 +493,7 @@ trait ServiceModelGenerator {
       code = List(q"""type ${m.generatedType.typName} = ${ScalaType
         .map(keyType, valueType)
         .typ}"""),
-      name = m.generatedType.name
+      generatedType = m.generatedType
     )
   }
 
@@ -540,7 +540,7 @@ trait ServiceModelGenerator {
             }
          """
       ),
-      name = m.generatedType.name
+      generatedType = m.generatedType
     )
   }
 
@@ -581,18 +581,17 @@ trait ServiceModelGenerator {
         pkg,
         "model"
       ) {
-        ZIO
-          .foreach_(namesInModel)(CodeFileGenerator.knownLocalName(_))
-          .as(
-            q"""import scala.jdk.CollectionConverters._
+        for {
+          _ <- ZIO.foreach_(namesInModel)(CodeFileGenerator.knownLocalName(_))
+          _ <- ZIO.foreach_(primitiveModels.map(m => m.generatedType / "Type"))(CodeFileGenerator.keepFullyQualified(_))
+        } yield q"""import scala.jdk.CollectionConverters._
 
-              object primitives {
-                ..${primitiveModels.flatMap(_.code)}
-              }
+                    object primitives {
+                      ..${primitiveModels.flatMap(_.code)}
+                    }
 
-              ..${modelsForPackage.flatMap(_.code)}
-           """
-          )
+                    ..${modelsForPackage.flatMap(_.code)}
+                 """        
       }
       models <- ZIO.foreach(separateModels) { case (fileName, code) =>
         Generator.generateScalaPackage[Any, Nothing](pkg / "model", fileName) {

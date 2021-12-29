@@ -9,7 +9,7 @@ import software.amazon.awssdk.codegen.model.config.customization.ShapeModifier
 import zio.blocking
 import zio.{Chunk, ZIO}
 import zio.nio.file.Files
-import zio.nio.core.file.Path
+import zio.nio.file.Path
 
 import scala.jdk.CollectionConverters._
 import scala.meta._

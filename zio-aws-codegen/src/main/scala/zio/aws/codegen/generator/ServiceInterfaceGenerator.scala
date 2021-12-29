@@ -6,7 +6,7 @@ import zio.aws.codegen.generator.syntax._
 import zio.aws.codegen.generator.OperationMethodType._
 import software.amazon.awssdk.codegen.model.service.Operation
 import zio.blocking.Blocking
-import zio.nio.core.file.Path
+import zio.nio.file.Path
 import zio.{Has, UIO, ZIO}
 
 import java.lang

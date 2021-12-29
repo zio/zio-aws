@@ -14,7 +14,7 @@ import software.amazon.awssdk.codegen.model.service.{
 }
 import zio._
 import zio.blocking.Blocking
-import zio.nio.core.file.Path
+import zio.nio.file.Path
 import zio.nio.file.{FileSystem, Files}
 
 import scala.jdk.CollectionConverters._
@@ -181,6 +181,8 @@ package object loader {
             if (uri.getScheme == "jar") {
               FileSystem
                 .getFileSystem(uri)
+                .toManaged_    
+                .absorb            
                 .catchSome { case _: FileSystemNotFoundException =>
                   FileSystem.newFileSystem(uri)
                 }

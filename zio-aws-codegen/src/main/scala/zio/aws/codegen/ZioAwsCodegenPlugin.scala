@@ -6,7 +6,7 @@ import sbt.Keys._
 import sbt.Project.projectToRef
 import sbt.{Compile, Def, _}
 import zio._
-import zio.nio.core.file.Path
+import zio.nio.file.Path
 
 object ZioAwsCodegenPlugin extends AutoPlugin {
 
