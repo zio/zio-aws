@@ -738,7 +738,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
                               case (a, b) =>
                                 a ::: List(
                                   SimulatedPublisher.Error(throwable)
-                                ) ::: b
+                                )
                             }
                           case None =>
                             SimulatedPublisher.correctSequence(inChunk)
