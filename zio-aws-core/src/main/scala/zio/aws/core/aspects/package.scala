@@ -4,34 +4,20 @@ import izumi.reflect.Tag
 import zio._
 
 package object aspects {
-  trait AwsCallAspect[-R] { self =>
-    def apply[R1 <: R, A](
-        f: ZIO[R1, AwsError, Described[A]]
-    ): ZIO[R1, AwsError, Described[A]]
-
-    final def >>>[R1 <: R](that: AwsCallAspect[R1]): AwsCallAspect[R1] =
-      andThen(that)
-
-    final def andThen[R1 <: R](that: AwsCallAspect[R1]): AwsCallAspect[R1] =
-      new AwsCallAspect[R1] {
-        def apply[R2 <: R1, A](
-            f: ZIO[R2, AwsError, Described[A]]
-        ): ZIO[R2, AwsError, Described[A]] =
-          that(self(f))
-      }
-  }
+  trait AwsCallAspect[-R]
+    extends ZIOAspect[Nothing, R, AwsError, AwsError, Nothing, Described[_]]
 
   object AwsCallAspect {
-    def identity[R, E]: AwsCallAspect[R] =
+    def identity[R]: AwsCallAspect[R] =
       new AwsCallAspect[R] {
-        override final def apply[R1 <: R, A](
-            f: ZIO[R1, AwsError, Described[A]]
-        ): ZIO[R1, AwsError, Described[A]] = f
+        override final def apply[R, E, A](
+            f: ZIO[R, E, A]
+        )(implicit trace: ZTraceElement): ZIO[R, E, A] = f
       }
   }
 
   case class ServiceCallDescription(service: String, operation: String)
-  case class Described[A](value: A, description: ServiceCallDescription)
+  case class Described[+A](value: A, description: ServiceCallDescription)
 
   private[core] implicit class StringSyntax(service: String) {
     final def /(op: String): ServiceCallDescription =

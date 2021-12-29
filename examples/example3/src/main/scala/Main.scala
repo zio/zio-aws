@@ -2,6 +2,7 @@ import zio.aws.core.{AwsError, GenericAwsError}
 import zio.aws.core.config.{AwsConfig, CommonAwsConfig}
 import zio.aws.kinesis.Kinesis
 import zio.aws.kinesis.model._
+import zio.aws.kinesis.model.primitives._
 import zio.aws.netty.NettyHttpClient
 import software.amazon.awssdk.auth.credentials.{
   AwsBasicCredentials,
@@ -23,7 +24,7 @@ object Main extends ZIOAppDefault {
         Console.printLine(streamName).ignore
       }
 
-      streamName = "test-stream"
+      streamName = StreamName("test-stream")
       _ <- Console.printLine("Shards:").ignore
       shard <- Kinesis
         .listShards(ListShardsRequest(streamName = Some(streamName)))
@@ -33,7 +34,7 @@ object Main extends ZIOAppDefault {
       streamDescription <- Kinesis.describeStream(
         DescribeStreamRequest(streamName)
       )
-      consumerName = "consumer1"
+      consumerName = ConsumerName("consumer1")
 
       _ <- Kinesis
         .registerStreamConsumer(
@@ -77,8 +78,8 @@ object Main extends ZIOAppDefault {
       _ <- Kinesis.putRecord(
         PutRecordRequest(
           streamName,
-          data = Chunk.fromArray("sdf".getBytes),
-          partitionKey = "123"
+          data = Data(Chunk.fromArray("sdf".getBytes)),
+          partitionKey = PartitionKey("123")
         )
       )
 

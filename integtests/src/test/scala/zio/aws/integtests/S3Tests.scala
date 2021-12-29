@@ -5,6 +5,7 @@ import akka.actor.ActorSystem
 import zio.aws.core.AwsError
 import zio.aws.core.aspects._
 import zio.aws.s3.model._
+import zio.aws.s3.model.primitives._
 import zio.aws.s3._
 import zio.aws.core.config._
 import zio.aws.netty._
@@ -45,7 +46,7 @@ object S3Tests extends DefaultRunnableSpec with Logging {
       s3 <- ZIO.service[S3]
       console <- ZIO.service[Console]
       postfix <- Random.nextInt.map(Math.abs)
-      bucketName = s"${prefix}-$postfix"
+      bucketName = BucketName(s"${prefix}-$postfix")
     } yield ZManaged.acquireReleaseWith(
       for {
         _ <- Console.printLine(s"Creating bucket $bucketName").ignore
@@ -86,7 +87,7 @@ object S3Tests extends DefaultRunnableSpec with Logging {
         val steps = for {
           testData <- Random.nextBytes(65536)
           bucket <- testBucket(s"${prefix}-ud")
-          key = "testdata"
+          key = ObjectKey("testdata")
           receivedData <- bucket.use { bucketName =>
             for {
               _ <- Console.printLine(s"Uploading $key to $bucketName").ignore
@@ -95,7 +96,7 @@ object S3Tests extends DefaultRunnableSpec with Logging {
                   bucket = bucketName,
                   key = key,
                   contentLength = Some(
-                    65536L
+                    ContentLength(65536L)
                   ) // Remove to test https://github.com/vigoo/zio-aws/issues/24
                 ),
                 ZStream

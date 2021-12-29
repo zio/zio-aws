@@ -6,6 +6,7 @@ import zio.aws.core._
 import zio.aws.core.aspects._
 import zio.aws.core.config._
 import zio.aws.dynamodb.model._
+import zio.aws.dynamodb.model.primitives._
 import zio.aws.dynamodb._
 import zio.aws.netty._
 import zio.aws.http4s._
@@ -43,7 +44,7 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
       dynamodb <- ZIO.service[DynamoDb]
       console <- ZIO.service[Console]
       postfix <- Random.nextInt.map(Math.abs)
-      tableName = s"${prefix}_$postfix"
+      tableName = TableName(s"${prefix}_$postfix")
     } yield ZManaged.acquireReleaseWith(
       for {
         _ <- Console.printLine(s"Creating table $tableName").ignore
@@ -51,15 +52,15 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
           CreateTableRequest(
             tableName = tableName,
             attributeDefinitions = List(
-              AttributeDefinition("key", ScalarAttributeType.S)
+              AttributeDefinition(KeySchemaAttributeName("key"), ScalarAttributeType.S)
             ),
             keySchema = List(
-              KeySchemaElement("key", KeyType.HASH)
+              KeySchemaElement(KeySchemaAttributeName("key"), KeyType.HASH)
             ),
             provisionedThroughput = Some(
               ProvisionedThroughput(
-                readCapacityUnits = 16L,
-                writeCapacityUnits = 16L
+                readCapacityUnits = PositiveLongObject(16L),
+                writeCapacityUnits = PositiveLongObject(16L)
               )
             )
           )
@@ -102,15 +103,15 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
           result <- table.use { tableDescription =>
             val put =
               for {
-                tableName <- tableDescription.getTableName
-                randomKey <- Random.nextString(10)
-                randomValue <- Random.nextInt
+                tableName <- tableDescription.getTableName.map(TableName(_))
+                randomKey <- Random.nextString(10).map(StringAttributeValue(_))
+                randomValue <- Random.nextInt.map(n => NumberAttributeValue(n.toString))
                 _ <- DynamoDb.putItem(
                   PutItemRequest(
                     tableName = tableName,
                     item = Map(
-                      "key" -> AttributeValue(s = Some(randomKey)),
-                      "value" -> AttributeValue(n = Some(randomValue.toString))
+                      AttributeName("key") -> AttributeValue(s = Some(randomKey)),
+                      AttributeName("value") -> AttributeValue(n = Some(randomValue))
                     )
                   )
                 )
@@ -122,7 +123,7 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
               stream = DynamoDb.scan(
                 ScanRequest(
                   tableName = tableName,
-                  limit = Some(10)
+                  limit = Some(PositiveIntegerObject(10))
                 )
               )
               streamResult <- stream.runCollect
@@ -139,12 +140,12 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
           table <- testTable(s"${prefix}_lt")
           result <- table.use { tableDescription =>
             for {
-              arn <- tableDescription.getTableArn
+              arn <- tableDescription.getTableArn.map(ResourceArnString(_))
               _ <- DynamoDb.tagResource(
                 TagResourceRequest(
                   resourceArn = arn,
                   tags = (0 until N)
-                    .map(i => zio.aws.dynamodb.model.Tag(s"tag$i", i.toString))
+                    .map(i => zio.aws.dynamodb.model.Tag(TagKeyString(s"tag$i"), TagValueString(i.toString)))
                     .toList
                 )
               )

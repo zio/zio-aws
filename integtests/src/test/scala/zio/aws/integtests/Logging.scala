@@ -7,12 +7,12 @@ import zio._
 trait Logging {
   val callLogging: AwsCallAspect[Clock & Console] =
     new AwsCallAspect[Clock & Console] {
-      override final def apply[R1 <: Clock & Console, A](
-          f: ZIO[R1, AwsError, Described[A]]
-      ): ZIO[R1, AwsError, Described[A]] = {
+      override final def apply[R <: Clock & Console, E >: AwsError, A <: Described[_]](
+          f: ZIO[R, E, A]
+      )(implicit trace: ZTraceElement): ZIO[R, E, A] = {
         f.either.timed
           .flatMap {
-            case (duration, Right(r @ Described(result, description))) =>
+            case (duration, Right(r)) =>
               ZIO.succeed(r)
             case (duration, Left(error)) =>
               Console

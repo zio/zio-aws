@@ -2,9 +2,10 @@ import zio.aws.core.aspects._
 import zio.aws.core.AwsError
 import zio.aws.core.config.{AwsConfig, CommonAwsConfig}
 import zio.aws.dynamodb.model.ScanRequest
+import zio.aws.dynamodb.model.primitives._
 import zio.aws.dynamodb.{DynamoDb, model}
 import zio.aws.netty.NettyHttpClient
-import nl.vroste.rezilience.{CircuitBreaker, Retry, TrippingStrategy}
+// import nl.vroste.rezilience.{CircuitBreaker, Retry, TrippingStrategy}
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import zio._
@@ -13,32 +14,32 @@ import zio.config._
 object Main extends ZIOAppDefault {
   val callLogging: AwsCallAspect[Clock] =
     new AwsCallAspect[Clock] {
-      override final def apply[R1 <: Clock, A](
-          f: ZIO[R1, AwsError, Described[A]]
-      ): ZIO[R1, AwsError, Described[A]] = {
-        f.timed.flatMap { case (duration, r @ Described(result, description)) =>
+      override final def apply[R <: Clock, E, A <: Described[_]](
+          f: ZIO[R, E, A]
+      )(implicit trace: ZTraceElement): ZIO[R, E, A] = {
+        f.timed.flatMap { case (duration, r) =>
           ZIO.logInfo(
-              s"[${description.service}/${description.operation}] ran for $duration"
+              s"[${r.description.service}/${r.description.operation}] ran for $duration"
             )
             .as(r)
         }
       }
     }
 
-  def circuitBreaking(cb: CircuitBreaker[AwsError]): AwsCallAspect[Any] =
-    new AwsCallAspect[Any] {
-      override final def apply[R1 <: Any, A](
-          f: ZIO[R1, AwsError, Described[A]]
-      ): ZIO[R1, AwsError, Described[A]] =
-        cb(f).mapError(policyError =>
-          AwsError.fromThrowable(policyError.toException)
-        )
-    }
+  // def circuitBreaking(cb: CircuitBreaker[AwsError]): AwsCallAspect[Any] =
+  //   new AwsCallAspect[Any] {
+  //     override final def apply[R1 <: Any, A](
+  //         f: ZIO[R1, AwsError, Described[A]]
+  //     ): ZIO[R1, AwsError, Described[A]] =
+  //       cb(f).mapError(policyError =>
+  //         AwsError.fromThrowable(policyError.toException)
+  //       )
+  //   }
 
   val program: ZIO[Console & DynamoDb, AwsError, Unit] =
     for {
       _ <- Console.printLine("Performing full table scan").ignore
-      scan = DynamoDb.scan(ScanRequest(tableName = "test")) // full table scan
+      scan = DynamoDb.scan(ScanRequest(tableName = TableName("test"))) // full table scan
       _ <- scan.foreach(item => Console.printLine(item.toString).ignore)
     } yield ()
 
@@ -54,12 +55,12 @@ object Main extends ZIOAppDefault {
     )
     val awsConfig = (httpClient ++ config) >>> AwsConfig.configured()
 
-    val circuitBreaker = CircuitBreaker.make[AwsError](
-      trippingStrategy = TrippingStrategy.failureCount(maxFailures = 3),
-      resetPolicy =
-        Retry.Schedules.exponentialBackoff(min = 1.second, max = 1.minute)
-    )
-    circuitBreaker.use { cb =>
+    // val circuitBreaker = CircuitBreaker.make[AwsError](
+    //   trippingStrategy = TrippingStrategy.failureCount(maxFailures = 3),
+    //   resetPolicy =
+    //     Retry.Schedules.exponentialBackoff(min = 1.second, max = 1.minute)
+    // )
+    // circuitBreaker.use { cb =>
       // Default DynamoDB layer
       // val dynamoDb: ZLayer[AwsConfig, Throwable, DynamoDb] = dynamodb.live
       // DynamoDB with logging
@@ -67,7 +68,7 @@ object Main extends ZIOAppDefault {
       // DynamoDB with circuit breaker
       // val dynamoDb: ZLayer[AwsConfig, Throwable, DynamoDb] = dynamodb.live @@ circuitBreaking(cb)
 
-      val dynamoDb = (DynamoDb.live @@ (callLogging >>> circuitBreaking(cb)))
+      val dynamoDb = (DynamoDb.live @@ callLogging) // (callLogging >>> circuitBreaking(cb)))
       val finalLayer = (Clock.any ++ awsConfig) >>> dynamoDb
 
       program
@@ -79,6 +80,6 @@ object Main extends ZIOAppDefault {
           case Right(_) =>
             ZIO.unit.as(ExitCode.success)
         }
-    }
+    // }
   }
 }

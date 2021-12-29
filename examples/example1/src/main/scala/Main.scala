@@ -2,6 +2,7 @@ import zio.aws.core.AwsError
 import zio.aws.core.config.AwsConfig
 import zio.aws.ec2.Ec2
 import zio.aws.ec2.model._
+import zio.aws.ec2.model.primitives._
 import zio.aws.elasticbeanstalk.ElasticBeanstalk
 import zio.aws.elasticbeanstalk.model._
 import zio.aws.netty.NettyHttpClient
@@ -12,7 +13,7 @@ object Main extends ZIOAppDefault {
   val program: ZIO[Console & Ec2 & ElasticBeanstalk, AwsError, Unit] =
     for {
       appsResult <- ElasticBeanstalk.describeApplications(
-        DescribeApplicationsRequest(applicationNames = Some(List("my-service")))
+        DescribeApplicationsRequest(applicationNames = Some(List(ApplicationName("my-service"))))
       )
       app <- appsResult.getApplications.map(_.headOption)
       _ <- app match {
