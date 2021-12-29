@@ -12,19 +12,7 @@ import zio._
 import zio.config._
 
 object Main extends ZIOAppDefault {
-  val callLogging: AwsCallAspect[Clock] =
-    new AwsCallAspect[Clock] {
-      override final def apply[R <: Clock, E, A <: Described[_]](
-          f: ZIO[R, E, A]
-      )(implicit trace: ZTraceElement): ZIO[R, E, A] = {
-        f.timed.flatMap { case (duration, r) =>
-          ZIO.logInfo(
-              s"[${r.description.service}/${r.description.operation}] ran for $duration"
-            )
-            .as(r)
-        }
-      }
-    }
+  val logging: AwsCallAspect[Clock] = ZIO.logLevel(LogLevel.Info) >>> callLogging    
 
   // def circuitBreaking(cb: CircuitBreaker[AwsError]): AwsCallAspect[Any] =
   //   new AwsCallAspect[Any] {
@@ -68,7 +56,7 @@ object Main extends ZIOAppDefault {
       // DynamoDB with circuit breaker
       // val dynamoDb: ZLayer[AwsConfig, Throwable, DynamoDb] = dynamodb.live @@ circuitBreaking(cb)
 
-      val dynamoDb = (DynamoDb.live @@ callLogging) // (callLogging >>> circuitBreaking(cb)))
+      val dynamoDb = (DynamoDb.live @@ logging) // (callLogging >>> circuitBreaking(cb)))
       val finalLayer = (Clock.any ++ awsConfig) >>> dynamoDb
 
       program

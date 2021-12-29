@@ -4,10 +4,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.settings.ConnectionPoolSettings
 import com.github.matsluni.akkahttpspi.{AkkaHttpClient => SPI}
 import zio.aws.core.BuilderHelper
-import zio.aws.core.httpclient.{
-  HttpClient,
-  ServiceHttpCapabilities
-}
+import zio.aws.core.httpclient.{HttpClient, ServiceHttpCapabilities}
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient
 import zio.{Task, ZIO, ZLayer, ZManaged}
 

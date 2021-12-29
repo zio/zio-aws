@@ -4,17 +4,56 @@ import izumi.reflect.Tag
 import zio._
 
 package object aspects {
-  trait AwsCallAspect[-R]
-    extends ZIOAspect[Nothing, R, AwsError, AwsError, Nothing, Described[_]]
+  type AwsCallAspect[-R] =
+    ZIOAspect[Nothing, R, AwsError, AwsError, Nothing, Described[_]]
 
   object AwsCallAspect {
-    def identity[R]: AwsCallAspect[R] =
-      new AwsCallAspect[R] {
+    val identity: AwsCallAspect[Any] =
+      new AwsCallAspect[Any] {
         override final def apply[R, E, A](
             f: ZIO[R, E, A]
         )(implicit trace: ZTraceElement): ZIO[R, E, A] = f
       }
   }
+
+  val callLogging: AwsCallAspect[Clock] =
+    new AwsCallAspect[Clock] {
+      override final def apply[R <: Clock, E, A <: Described[_]](
+          f: ZIO[R, E, A]
+      )(implicit trace: ZTraceElement): ZIO[R, E, A] = {
+        f.timed.flatMap { case (duration, r) =>
+          ZIO
+            .log(
+              s"[${r.description.service}/${r.description.operation}] ran for $duration"
+            )
+            .as(r)
+        }
+      }
+    }
+
+  def callDuration(
+      prefix: String,
+      boundaries: ZIOMetric.Histogram.Boundaries
+  ): AwsCallAspect[Clock] =
+    new AwsCallAspect[Clock] {
+      override final def apply[R <: Clock, E, A <: Described[_]](
+          f: ZIO[R, E, A]
+      )(implicit trace: ZTraceElement): ZIO[R, E, A] = {
+        f.timed.flatMap { case (duration, r) =>
+          val durationInSeconds =
+            duration.getSeconds + (duration.getNano / 1000000000.0)
+          ZIOMetric
+            .observeHistogram(
+              s"${prefix}_aws_call",
+              boundaries,
+              MetricLabel("aws_service", r.description.service),
+              MetricLabel("aws_operation", r.description.operation)
+            )
+            .observe(durationInSeconds)
+            .zipRight(f)
+        }
+      }
+    }
 
   case class ServiceCallDescription(service: String, operation: String)
   case class Described[+A](value: A, description: ServiceCallDescription)

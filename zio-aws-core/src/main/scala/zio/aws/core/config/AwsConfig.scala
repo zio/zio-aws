@@ -1,10 +1,7 @@
 package zio.aws.core.config
 
 import zio.aws.core.BuilderHelper
-import zio.aws.core.httpclient.{
-  HttpClient,
-  ServiceHttpCapabilities
-}
+import zio.aws.core.httpclient.{HttpClient, ServiceHttpCapabilities}
 import software.amazon.awssdk.awscore.client.builder.{
   AwsAsyncClientBuilder,
   AwsClientBuilder
