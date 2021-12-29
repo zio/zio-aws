@@ -53,7 +53,9 @@ package object aspects {
     def withAspect[R](newAspect: AwsCallAspect[R], r: ZEnvironment[R]): Self
   }
 
-  implicit class ZLayerSyntax[RIn, E, ROut <: AspectSupport[ROut]: Tag: IsNotIntersection](
+  implicit class ZLayerSyntax[RIn, E, ROut <: AspectSupport[
+    ROut
+  ]: Tag: IsNotIntersection](
       layer: ZLayer[RIn, E, ROut]
   ) {
     def @@[RIn1 <: RIn: Tag](

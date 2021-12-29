@@ -1398,7 +1398,7 @@ trait ServiceInterfaceGenerator {
             private class $serviceImplT[R](override val api: ${clientInterface.typ}, override val aspect: io.github.vigoo.zioaws.core.aspects.AwsCallAspect[R], r: zio.ZEnvironment[R])
               extends ${Init(serviceNameT, Name.Anonymous(), List.empty)} with io.github.vigoo.zioaws.core.AwsServiceBase[R] {
                 override val serviceName: ${ScalaType.string.typ} = ${Lit
-          .String(serviceName.value)}
+        .String(serviceName.value)}
                 override def withAspect[R1](newAspect: io.github.vigoo.zioaws.core.aspects.AwsCallAspect[R1], r: zio.ZEnvironment[R1]): $serviceImplT[R1] =
                   new $serviceImplT(api, newAspect, r)
 

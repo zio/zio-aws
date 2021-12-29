@@ -123,7 +123,7 @@ trait GeneratorBase {
       case ModelType.Exception =>
         ZIO.succeed(term)
       case _ =>
-        if (TypeMapping.isBuiltIn(model.shapeName))           
+        if (TypeMapping.isBuiltIn(model.shapeName))
           ZIO.succeed(q"""$term: ${model.generatedType.typ}""")
         else
           ZIO.succeed(q"""${model.generatedType.term}($term)""")

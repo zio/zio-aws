@@ -17,6 +17,8 @@ case class StreamingOutputResult[R, Response, Item](
   ): StreamingOutputResult[R, Response, I] =
     copy(output = f(output))
 
-  def provideEnvironment(r: ZEnvironment[R]): StreamingOutputResult[Any, Response, Item] =
+  def provideEnvironment(
+      r: ZEnvironment[R]
+  ): StreamingOutputResult[Any, Response, Item] =
     StreamingOutputResult(response, output.provideEnvironment(r))
 }

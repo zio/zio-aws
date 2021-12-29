@@ -235,7 +235,11 @@ object Http4sClient {
       maxConnectionsPerRequestKey: Option[RequestKey => Int] = None,
       asynchronousChannelGroup: Option[AsynchronousChannelGroup] = None,
       additionalSocketOptions: Seq[OptionValue[_]] = Seq.empty
-  ): ZLayer[_root_.io.github.vigoo.zioaws.http4s.BlazeClientConfig & Clock, Throwable, HttpClient] =
+  ): ZLayer[
+    _root_.io.github.vigoo.zioaws.http4s.BlazeClientConfig & Clock,
+    Throwable,
+    HttpClient
+  ] =
     ZManaged
       .service[_root_.io.github.vigoo.zioaws.http4s.BlazeClientConfig]
       .flatMap { config =>

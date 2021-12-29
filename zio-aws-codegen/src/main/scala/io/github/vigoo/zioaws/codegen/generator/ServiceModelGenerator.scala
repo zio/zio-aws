@@ -264,15 +264,18 @@ trait ServiceModelGenerator {
   }
 
   private def generateNewtype(
-    wrapperType: ScalaType,
-    underlyingType: ScalaType
+      wrapperType: ScalaType,
+      underlyingType: ScalaType
   ): ZIO[AwsGeneratorContext, AwsGeneratorFailure, ModelWrapper] =
     ZIO.succeed(
       ModelWrapper(
         None,
         code = List(
-          q"""object ${wrapperType.termName} extends ${Types.subtype(underlyingType).init}""",
-          q"""type ${wrapperType.typName} = ${Type.Select(wrapperType.term, Type.Name("Type"))}"""
+          q"""object ${wrapperType.termName} extends ${Types
+            .subtype(underlyingType)
+            .init}""",
+          q"""type ${wrapperType.typName} = ${Type
+            .Select(wrapperType.term, Type.Name("Type"))}"""
         ),
         wrapperType.name
       )
@@ -313,7 +316,8 @@ trait ServiceModelGenerator {
         val propertyNameLit = Lit.String(property.wrapperName)
         val propertyNameJavaTerm = Term.Name(property.javaName)
 
-        val effectualGetterNameTerm = Term.Name("get" + property.wrapperName.capitalize)
+        val effectualGetterNameTerm =
+          Term.Name("get" + property.wrapperName.capitalize)
         val pureGetterNameTerm = Term.Name(property.wrapperName)
 
         val fluentSetter = Term.Name(
@@ -345,8 +349,9 @@ trait ServiceModelGenerator {
                             getterCall = toEditable,
                             getterInterface =
                               q"""def $pureGetterNameTerm: ${memberRoType.typ}""",
-                            getterImplementation =
-                              q"""override val ${Pat.Var(pureGetterNameTerm)}: ${memberRoType.typ} = $wrappedGet""",
+                            getterImplementation = q"""override val ${Pat.Var(
+                              pureGetterNameTerm
+                            )}: ${memberRoType.typ} = $wrappedGet""",
                             zioGetterImplementation =
                               q"""def $effectualGetterNameTerm: ${Types
                                 .zio(
@@ -384,13 +389,15 @@ trait ServiceModelGenerator {
                                 .typ}""",
                             getterImplementation =
                               if (wrappedGet == valueTerm) {
-                                q"""override val ${Pat.Var(pureGetterNameTerm)}: ${ScalaType
+                                q"""override val ${Pat
+                                  .Var(pureGetterNameTerm)}: ${ScalaType
                                   .option(memberRoType)
                                   .typ} = ${ScalaType
                                   .option(memberRoType)
                                   .term}($get)"""
                               } else {
-                                q"""override val ${Pat.Var(pureGetterNameTerm)}: ${ScalaType
+                                q"""override val ${Pat
+                                  .Var(pureGetterNameTerm)}: ${ScalaType
                                   .option(memberRoType)
                                   .typ} = ${ScalaType
                                   .option(memberRoType)

@@ -292,8 +292,8 @@ trait AwsServiceBase[R] {
               case Right(item: Event) => ZStream.succeed(item)
               case Right(_)           => ZStream.empty
             } ++ ZStream.unwrap {
-              // NOTE: we should wait the CompletableFuture's fiber here BUT it seems like there are cases when it never gets completed
-              finishedPromise.await *>
+            // NOTE: we should wait the CompletableFuture's fiber here BUT it seems like there are cases when it never gets completed
+            finishedPromise.await *>
               signalQueue.poll.map {
                 case None => ZStream.empty
                 case Some(failure) =>
