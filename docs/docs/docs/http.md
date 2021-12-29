@@ -32,7 +32,7 @@ See the following table for all the options:
 
 ```scala mdoc:passthrough
 import zio.config._
-import io.github.vigoo.zioaws.netty.descriptors._
+import zio.aws.netty.descriptors._
 
 val docs = generateDocs(nettyClientConfig)
 println(docs.toTable.toGithubFlavouredMarkdown)
@@ -48,7 +48,7 @@ Another alternative is the _http4s client_. To use the default settings, provide
 is also possible by `http4s.customized(customization)`. And similarly to the _Netty_ client, configuration is also possible via zio-config:
 
 ```scala mdoc:passthrough
- import io.github.vigoo.zioaws.http4s.descriptors._
+ import zio.aws.http4s.descriptors._
  
  val docs2 = generateDocs(blazeClientConfig)
  println(docs2.toTable.toGithubFlavouredMarkdown)

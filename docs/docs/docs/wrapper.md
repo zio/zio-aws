@@ -85,7 +85,7 @@ by a _read-only wrapper interface_. The following example shows one from the `tr
 
 ```scala
 object CreateMedicalVocabularyResponse {
-  private lazy val zioAwsBuilderHelper: io.github.vigoo.zioaws.core.BuilderHelper[software.amazon.awssdk.services.transcribe.model.CreateMedicalVocabularyResponse] = io.github.vigoo.zioaws.core.BuilderHelper.apply
+  private lazy val zioAwsBuilderHelper: zio.aws.core.BuilderHelper[software.amazon.awssdk.services.transcribe.model.CreateMedicalVocabularyResponse] = zio.aws.core.BuilderHelper.apply
   trait ReadOnly {
     def editable: CreateMedicalVocabularyResponse = CreateMedicalVocabularyResponse(vocabularyNameValue.map(value => value), languageCodeValue.map(value => value), vocabularyStateValue.map(value => value), lastModifiedTimeValue.map(value => value), failureReasonValue.map(value => value))
     def vocabularyNameValue: scala.Option[primitives.VocabularyName]
@@ -93,11 +93,11 @@ object CreateMedicalVocabularyResponse {
     def vocabularyStateValue: scala.Option[VocabularyState]
     def lastModifiedTimeValue: scala.Option[primitives.DateTime]
     def failureReasonValue: scala.Option[primitives.FailureReason]
-    def vocabularyName: ZIO[Any, io.github.vigoo.zioaws.core.AwsError, primitives.VocabularyName] = io.github.vigoo.zioaws.core.AwsError.unwrapOptionField("vocabularyName", vocabularyNameValue)
-    def languageCode: ZIO[Any, io.github.vigoo.zioaws.core.AwsError, LanguageCode] = io.github.vigoo.zioaws.core.AwsError.unwrapOptionField("languageCode", languageCodeValue)
-    def vocabularyState: ZIO[Any, io.github.vigoo.zioaws.core.AwsError, VocabularyState] = io.github.vigoo.zioaws.core.AwsError.unwrapOptionField("vocabularyState", vocabularyStateValue)
-    def lastModifiedTime: ZIO[Any, io.github.vigoo.zioaws.core.AwsError, primitives.DateTime] = io.github.vigoo.zioaws.core.AwsError.unwrapOptionField("lastModifiedTime", lastModifiedTimeValue)
-    def failureReason: ZIO[Any, io.github.vigoo.zioaws.core.AwsError, primitives.FailureReason] = io.github.vigoo.zioaws.core.AwsError.unwrapOptionField("failureReason", failureReasonValue)
+    def vocabularyName: ZIO[Any, zio.aws.core.AwsError, primitives.VocabularyName] = zio.aws.core.AwsError.unwrapOptionField("vocabularyName", vocabularyNameValue)
+    def languageCode: ZIO[Any, zio.aws.core.AwsError, LanguageCode] = zio.aws.core.AwsError.unwrapOptionField("languageCode", languageCodeValue)
+    def vocabularyState: ZIO[Any, zio.aws.core.AwsError, VocabularyState] = zio.aws.core.AwsError.unwrapOptionField("vocabularyState", vocabularyStateValue)
+    def lastModifiedTime: ZIO[Any, zio.aws.core.AwsError, primitives.DateTime] = zio.aws.core.AwsError.unwrapOptionField("lastModifiedTime", lastModifiedTimeValue)
+    def failureReason: ZIO[Any, zio.aws.core.AwsError, primitives.FailureReason] = zio.aws.core.AwsError.unwrapOptionField("failureReason", failureReasonValue)
   }
   private class Wrapper(impl: software.amazon.awssdk.services.transcribe.model.CreateMedicalVocabularyResponse) extends CreateMedicalVocabularyResponse.ReadOnly {
     override def vocabularyNameValue: scala.Option[primitives.VocabularyName] = scala.Option(impl.vocabularyName()).map(value => value: primitives.VocabularyName)

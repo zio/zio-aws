@@ -1,9 +1,9 @@
-import io.github.vigoo.zioaws.core.aspects._
-import io.github.vigoo.zioaws.core.AwsError
-import io.github.vigoo.zioaws.core.config.{AwsConfig, CommonAwsConfig}
-import io.github.vigoo.zioaws.dynamodb.model.ScanRequest
-import io.github.vigoo.zioaws.dynamodb.{DynamoDb, model}
-import io.github.vigoo.zioaws.netty.NettyHttpClient
+import zio.aws.core.aspects._
+import zio.aws.core.AwsError
+import zio.aws.core.config.{AwsConfig, CommonAwsConfig}
+import zio.aws.dynamodb.model.ScanRequest
+import zio.aws.dynamodb.{DynamoDb, model}
+import zio.aws.netty.NettyHttpClient
 import nl.vroste.rezilience.{CircuitBreaker, Retry, TrippingStrategy}
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
 import software.amazon.awssdk.regions.Region

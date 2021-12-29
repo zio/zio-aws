@@ -1,10 +1,10 @@
-import io.github.vigoo.zioaws.core.AwsError
-import io.github.vigoo.zioaws.core.config.AwsConfig
-import io.github.vigoo.zioaws.ec2.Ec2
-import io.github.vigoo.zioaws.ec2.model._
-import io.github.vigoo.zioaws.elasticbeanstalk.ElasticBeanstalk
-import io.github.vigoo.zioaws.elasticbeanstalk.model._
-import io.github.vigoo.zioaws.netty.NettyHttpClient
+import zio.aws.core.AwsError
+import zio.aws.core.config.AwsConfig
+import zio.aws.ec2.Ec2
+import zio.aws.ec2.model._
+import zio.aws.elasticbeanstalk.ElasticBeanstalk
+import zio.aws.elasticbeanstalk.model._
+import zio.aws.netty.NettyHttpClient
 import zio._
 import zio.stream._
 

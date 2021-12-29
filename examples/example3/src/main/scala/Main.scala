@@ -1,8 +1,8 @@
-import io.github.vigoo.zioaws.core.{AwsError, GenericAwsError}
-import io.github.vigoo.zioaws.core.config.{AwsConfig, CommonAwsConfig}
-import io.github.vigoo.zioaws.kinesis.Kinesis
-import io.github.vigoo.zioaws.kinesis.model._
-import io.github.vigoo.zioaws.netty.NettyHttpClient
+import zio.aws.core.{AwsError, GenericAwsError}
+import zio.aws.core.config.{AwsConfig, CommonAwsConfig}
+import zio.aws.kinesis.Kinesis
+import zio.aws.kinesis.model._
+import zio.aws.netty.NettyHttpClient
 import software.amazon.awssdk.auth.credentials.{
   AwsBasicCredentials,
   StaticCredentialsProvider

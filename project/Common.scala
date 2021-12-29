@@ -1,4 +1,4 @@
-import io.github.vigoo.zioaws.codegen.ZioAwsCodegenPlugin.autoImport._
+import zio.aws.codegen.ZioAwsCodegenPlugin.autoImport._
 import sbt._
 import Keys._
 import com.jsuereth.sbtpgp.PgpKeys._
@@ -71,7 +71,7 @@ object Common extends AutoPlugin {
         scala213Version,
         scala3Version
       ),
-      organization := "io.github.vigoo",
+      organization := "dev.zio",
       awsLibraryVersion := awsVersion,
       zioLibraryVersion := zioVersion,
       scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
