@@ -83,6 +83,16 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
                 .correctSequence(in)
             ).exit
           )(isAwsFailure)
+        ) @@ ignore, // Illegal case according to RS Publisher/9
+        test("fail during emit, no more signals")(
+          assertM(
+            runAsyncJavaPaginatedRequest(in =>
+              SimulatedPublisher.correctSequence(in).splitAt(3) match {
+                case (a, b) =>
+                  a ::: List(SimulatedPublisher.Error(SimulatedException))
+              }
+            ).exit
+          )(isAwsFailure)
         ),
         test("fail during emit")(
           assertM(
@@ -93,7 +103,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
               }
             ).exit
           )(isAwsFailure)
-        ),
+        ) @@ ignore, // Illegal case according to RS Publisher/7
         test("fail before complete")(
           assertM(
             runAsyncJavaPaginatedRequest(in =>
@@ -103,7 +113,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
               )
             ).exit
           )(isAwsFailure)
-        ),
+        ) @@ ignore, // Illegal case according to RS Publisher/7
         test("fail with no complete after")(
           assertM(
             runAsyncJavaPaginatedRequest(in =>
@@ -120,7 +130,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
                 .correctSequence(in)
             ).exit
           )(equalTo(Exit.Success(Chunk.empty)))
-        )
+        ) @@ ignore // Illegal case according to RS Publisher/9
       ),
       suite("asyncSimplePaginatedRequest")(
         test("success")(
@@ -447,6 +457,19 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
                 ) :: SimulatedPublisher.correctSequence(in)
             ).exit
           )(isAwsFailure)
+        ) @@ ignore, // Illegal case according to RS Publisher/9
+        test("publisher fail during emit, no more signals")(
+          assertM(
+            runAsyncRequestEventOutputStream(
+              publisherSteps = in =>
+                SimulatedPublisher.correctSequence(in).splitAt(3) match {
+                  case (a, b) =>
+                    a ::: List(
+                      SimulatedPublisher.Error(SimulatedException)
+                    )
+                }
+            ).exit
+          )(isAwsFailure)
         ),
         test("publisher fail during emit")(
           assertM(
@@ -460,7 +483,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
                 }
             ).exit
           )(isAwsFailure)
-        ),
+        ) @@ ignore, // Illegal case according to RS Publisher/7
         test("publisher fail before complete")(
           assertM(
             runAsyncRequestEventOutputStream(
@@ -471,7 +494,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
                 )
             ).exit
           )(isAwsFailure)
-        ),
+        ) @@ ignore, // Illegal case according to RS Publisher/7
         test("publisher fail with no complete after")(
           assertM(
             runAsyncRequestEventOutputStream(
@@ -490,7 +513,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
                   .correctSequence(in)
             )
           )(equalTo(""))
-        )
+        ) @@ ignore // Illegal case according to RS Publisher/9
       ),
       suite("asyncRequestEventInputStream")(
         test("success") {
@@ -612,6 +635,19 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
                 ) :: SimulatedPublisher.correctSequence(in)
             ).exit
           )(isAwsFailure)
+        ) @@ ignore, // Illegal case according to RS Publisher/9
+        test("publisher fail during emit, no more signals")(
+          assertM(
+            runAsyncRequestEventInputOutputStream(
+              publisherSteps = in =>
+                SimulatedPublisher.correctSequence(in).splitAt(3) match {
+                  case (a, b) =>
+                    a ::: List(
+                      SimulatedPublisher.Error(SimulatedException)
+                    )
+                }
+            ).exit
+          )(isAwsFailure)
         ),
         test("publisher fail during emit")(
           assertM(
@@ -625,7 +661,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
                 }
             ).exit
           )(isAwsFailure)
-        ),
+        ) @@ ignore, // Illegal case according to RS Publisher/7
         test("publisher fail before complete")(
           assertM(
             runAsyncRequestEventInputOutputStream(
@@ -636,7 +672,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
                 )
             ).exit
           )(isAwsFailure)
-        ),
+        ) @@ ignore, // Illegal case according to RS Publisher/7
         test("publisher fail with no complete after")(
           assertM(
             runAsyncRequestEventInputOutputStream(
@@ -655,7 +691,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
                   .correctSequence(in)
             )
           )(equalTo(""))
-        )
+        ) @@ ignore // Illegal case according to RS Publisher/9
       )
     ) @@ nonFlaky(25)
 
@@ -803,7 +839,7 @@ object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
                       .correctSequence(inChunk)
                       .splitAt(3) match {
                       case (a, b) =>
-                        a ::: List(SimulatedPublisher.Error(throwable)) ::: b
+                        a ::: List(SimulatedPublisher.Error(throwable))
                     }
                   case None =>
                     SimulatedPublisher.correctSequence(inChunk)
