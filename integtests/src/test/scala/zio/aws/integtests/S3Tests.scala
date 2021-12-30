@@ -5,7 +5,6 @@ import akka.actor.ActorSystem
 import zio.aws.core.AwsError
 import zio.aws.core.aspects._
 import zio.aws.s3.model._
-import zio.aws.s3.model.primitives._
 import zio.aws.s3._
 import zio.aws.core.config._
 import zio.aws.netty._
@@ -143,7 +142,7 @@ object S3Tests extends DefaultRunnableSpec with Logging {
       ).provideCustomLayer(
         ((Clock.any ++ Console.any ++ (http4sClient >>> awsConfig)) >>> s3Client)
           .mapError(TestFailure.die)
-      ) @@ ignore @@ sequential,
+      ) @@ sequential,
       suite("with akka-http")(
         tests("akkahttp", ignoreUpload = true): _*
       ).provideCustomLayer(

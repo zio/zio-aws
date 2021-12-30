@@ -6,7 +6,6 @@ import zio.aws.core._
 import zio.aws.core.aspects._
 import zio.aws.core.config._
 import zio.aws.dynamodb.model._
-import zio.aws.dynamodb.model.primitives._
 import zio.aws.dynamodb._
 import zio.aws.netty._
 import zio.aws.http4s._
@@ -177,7 +176,7 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
       ).provideCustomLayer(
         ((Clock.any ++ Console.any ++ (http4sClient >>> awsConfig)) >>> dynamoDb)
           .mapError(TestFailure.die)
-      ) @@ ignore @@ sequential,
+      ) @@ sequential,
       suite("with akka-http")(
         tests("akkahttp"): _*
       ).provideCustomLayer(
