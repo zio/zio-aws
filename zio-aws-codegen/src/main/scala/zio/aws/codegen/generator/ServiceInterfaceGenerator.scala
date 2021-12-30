@@ -650,6 +650,33 @@ trait ServiceInterfaceGenerator {
   ): ZIO[AwsGeneratorContext, AwsGeneratorFailure, ServiceMethods] = {
     val objectName = Term.Name(methodName.value.capitalize)
     val methodNameLit = Lit.String(methodName.value)
+
+    val simpleMethodName = 
+      if (pagination.isDefined) Term.Name(methodName.value + "Paginated")
+      else methodName
+    val simpleObjectName = Term.Name(simpleMethodName.value.capitalize)
+
+    val simpleRequestResponse =
+      ServiceMethod(
+        interface = q"""def $simpleMethodName(request: ${requestType.typ}): ${Types
+          .ioAwsError(responseTypeRo)
+          .typ}""",
+        implementation =
+          q"""def $simpleMethodName(request: ${requestType.typ}): ${Types
+            .ioAwsError(responseTypeRo)
+            .typ} =
+                      asyncRequestResponse[${javaRequestType.typ}, ${javaResponseType.typ}]($methodNameLit, api.$methodName)(request.buildAwsValue()).map(${responseType.term}.wrap).provideEnvironment(r)""",
+        accessor = q"""def $simpleMethodName(request: ${requestType.typ}): ${Types
+          .zioAwsError(serviceType, responseTypeRo)
+          .typ} =
+                ${Types.zio_.term}.serviceWithZIO(_.$simpleMethodName(request))""",
+        mockObject =
+          q"""object $simpleObjectName extends Effect[${requestType.typ}, ${Types.awsError.typ}, ${responseTypeRo.typ}]""",
+        mockCompose = q"""def $simpleMethodName(request: ${requestType.typ}):  ${Types
+          .ioAwsError(responseTypeRo)
+          .typ} = proxy($simpleObjectName, request)"""
+      )
+
     pagination match {
       case Some(
             JavaSdkPaginationDefinition(
@@ -692,7 +719,7 @@ trait ServiceInterfaceGenerator {
                 .zioStreamAwsError(ScalaType.any, wrappedItemType)
                 .typ} = rts.unsafeRun(proxy($objectName, request))"""
           )
-        } yield ServiceMethods(streamedPaginator)
+        } yield ServiceMethods(streamedPaginator, simpleRequestResponse)
       case Some(
             ListPaginationDefinition(memberName, listModel, itemModel, isSimple)
           ) =>
@@ -810,7 +837,7 @@ trait ServiceInterfaceGenerator {
                     .typ} = proxy($objectName, request)"""
               )
             }
-        } yield ServiceMethods(streamedPaginator)
+        } yield ServiceMethods(streamedPaginator, simpleRequestResponse)
 
       case Some(
             NestedListPaginationDefinition(
@@ -903,7 +930,7 @@ trait ServiceInterfaceGenerator {
                 )
                 .typ} = proxy($objectName, request)"""
           )
-        } yield ServiceMethods(paginator)
+        } yield ServiceMethods(paginator, simpleRequestResponse)
 
       case Some(
             MapPaginationDefinition(
@@ -1047,7 +1074,7 @@ trait ServiceInterfaceGenerator {
                     .typ} = proxy($objectName, request)"""
               )
             }
-        } yield ServiceMethods(streamedPaginator)
+        } yield ServiceMethods(streamedPaginator, simpleRequestResponse)
       case Some(
             StringPaginationDefinition(memberName, stringModel, isSimple)
           ) =>
@@ -1163,32 +1190,11 @@ trait ServiceInterfaceGenerator {
                     .typ} = proxy($objectName, request)"""
               )
             }
-        } yield ServiceMethods(streamedPaginator)
+        } yield ServiceMethods(streamedPaginator, simpleRequestResponse)
       case None =>
         ZIO.succeed(
           ServiceMethods(
-            ServiceMethod(
-              interface =
-                q"""def $methodName(request: ${requestType.typ}): ${Types
-                  .ioAwsError(responseTypeRo)
-                  .typ}""",
-              implementation =
-                q"""def $methodName(request: ${requestType.typ}): ${Types
-                  .ioAwsError(responseTypeRo)
-                  .typ} =
-                      asyncRequestResponse[${javaRequestType.typ}, ${javaResponseType.typ}]($methodNameLit, api.$methodName)(request.buildAwsValue()).map(${responseType.term}.wrap).provideEnvironment(r)""",
-              accessor =
-                q"""def $methodName(request: ${requestType.typ}): ${Types
-                  .zioAwsError(serviceType, responseTypeRo)
-                  .typ} =
-                ${Types.zio_.term}.serviceWithZIO(_.$methodName(request))""",
-              mockObject =
-                q"""object $objectName extends Effect[${requestType.typ}, ${Types.awsError.typ}, ${responseTypeRo.typ}]""",
-              mockCompose =
-                q"""def $methodName(request: ${requestType.typ}):  ${Types
-                  .ioAwsError(responseTypeRo)
-                  .typ} = proxy($objectName, request)"""
-            )
+            simpleRequestResponse
           )
         )
     }
