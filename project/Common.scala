@@ -100,7 +100,7 @@ object Common extends AutoPlugin {
         GitHubHosting("vigoo", "zio-aws", "daniel.vigovszky@gmail.com")
       ),
       sonatypeCredentialHost := "s01.oss.sonatype.org",
-      sonatypeRepository     := "https://s01.oss.sonatype.org/service/local",
+      sonatypeRepository := "https://s01.oss.sonatype.org/service/local",
       credentials ++=
         (for {
           username <- Option(System.getenv().get("SONATYPE_USERNAME"))
