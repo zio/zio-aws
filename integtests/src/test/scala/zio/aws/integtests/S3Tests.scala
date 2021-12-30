@@ -5,6 +5,7 @@ import akka.actor.ActorSystem
 import zio.aws.core.AwsError
 import zio.aws.core.aspects._
 import zio.aws.s3.model._
+import zio.aws.s3.model.primitives._
 import zio.aws.s3._
 import zio.aws.core.config._
 import zio.aws.netty._
