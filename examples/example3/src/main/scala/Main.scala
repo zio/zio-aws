@@ -2,7 +2,6 @@ import zio.aws.core.{AwsError, GenericAwsError}
 import zio.aws.core.config.{AwsConfig, CommonAwsConfig}
 import zio.aws.kinesis.Kinesis
 import zio.aws.kinesis.model._
-import zio.aws.kinesis.model.primitives._
 import zio.aws.netty.NettyHttpClient
 import software.amazon.awssdk.auth.credentials.{
   AwsBasicCredentials,

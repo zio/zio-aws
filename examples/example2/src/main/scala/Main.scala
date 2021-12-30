@@ -1,8 +1,7 @@
 import zio.aws.core.aspects._
 import zio.aws.core.AwsError
 import zio.aws.core.config.{AwsConfig, CommonAwsConfig}
-import zio.aws.dynamodb.model.ScanRequest
-import zio.aws.dynamodb.model.primitives._
+import zio.aws.dynamodb.model._
 import zio.aws.dynamodb.{DynamoDb, model}
 import zio.aws.netty.NettyHttpClient
 // import nl.vroste.rezilience.{CircuitBreaker, Retry, TrippingStrategy}

@@ -365,8 +365,7 @@ object ModelCollector {
 
     val typ = finalType(shape)
     val sourcePkg = modelPkg
-    val targetPkg =
-      if (isPrimitive) targetModelPkg / "primitives" else targetModelPkg
+    val targetPkg = targetModelPkg
 
     val (sdkType, generatedType) =
       typ match {

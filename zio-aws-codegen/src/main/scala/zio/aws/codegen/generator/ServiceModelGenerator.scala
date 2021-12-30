@@ -586,10 +586,8 @@ trait ServiceModelGenerator {
           _ <- ZIO.foreach_(primitiveModels.map(m => m.generatedType / "Type"))(CodeFileGenerator.keepFullyQualified(_))
         } yield q"""import scala.jdk.CollectionConverters._
 
-                    object primitives {
-                      ..${primitiveModels.flatMap(_.code)}
-                    }
-
+                    ..${primitiveModels.flatMap(_.code)}
+                    
                     ..${modelsForPackage.flatMap(_.code)}
                  """        
       }
