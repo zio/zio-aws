@@ -55,7 +55,7 @@ lazy val akkahttp = Project("zio-aws-akka-http", file("zio-aws-akka-http"))
   .settings(
     crossScalaVersions := List(scala212Version, scala213Version),
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-stream" % "2.6.17",
+      "com.typesafe.akka" %% "akka-stream" % "2.6.18",
       "com.typesafe.akka" %% "akka-http" % "10.2.7",
       "com.github.matsluni" %% "aws-spi-akka-http" % "0.0.11"
     )
@@ -111,10 +111,10 @@ lazy val integtests = Project("integtests", file("integtests"))
       "dev.zio" %% "zio" % zioVersion,
       "dev.zio" %% "zio-test" % zioVersion,
       "dev.zio" %% "zio-test-sbt" % zioVersion,
-      "org.apache.logging.log4j" % "log4j-1.2-api" % "2.13.3",
-      "org.apache.logging.log4j" % "log4j-core" % "2.13.3",
-      "org.apache.logging.log4j" % "log4j-api" % "2.13.3",
-      "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.13.3"
+      "org.apache.logging.log4j" % "log4j-1.2-api" % "2.17.1",
+      "org.apache.logging.log4j" % "log4j-core" % "2.17.1",
+      "org.apache.logging.log4j" % "log4j-api" % "2.17.1",
+      "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.17.1"
     ),
     testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
     evictionErrorLevel := Level.Info
