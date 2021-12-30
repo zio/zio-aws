@@ -29,7 +29,7 @@ jobs:
           ~/.coursier/cache/v1
 
           ~/.cache/coursier/v1
-        key: ubuntu-latest-sbt-2.13.6-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties')
+        key: ubuntu-latest-sbt-2.13.7-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties')
           }}
     - name: Setup GIT user
       uses: fregante/setup-git-user@v1
@@ -50,7 +50,7 @@ jobs:
         - ubuntu-latest
         scala:
         - 2.12.15
-        - 2.13.6
+        - 2.13.7
         - 3.1.0
         java:
         - adopt@1.8
@@ -136,7 +136,7 @@ jobs:
         - ubuntu-latest
         scala:
         - 2.12.15
-        - 2.13.6
+        - 2.13.7
         - 3.1.0
         java:
         - adopt@1.8
@@ -184,14 +184,14 @@ jobs:
       run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-accessanalyzer/compile
         zio-aws-account/compile zio-aws-acm/compile zio-aws-acmpca/compile zio-aws-alexaforbusiness/compile
         zio-aws-amp/compile zio-aws-amplify/compile zio-aws-amplifybackend/compile
-        zio-aws-apigateway/compile zio-aws-apigatewaymanagementapi/compile zio-aws-apigatewayv2/compile
-        zio-aws-appconfig/compile zio-aws-appflow/compile zio-aws-appintegrations/compile
-        zio-aws-applicationautoscaling/compile zio-aws-applicationcostprofiler/compile
-        zio-aws-applicationdiscovery/compile zio-aws-applicationinsights/compile zio-aws-appmesh/compile
-        zio-aws-apprunner/compile zio-aws-appstream/compile zio-aws-appsync/compile
-        zio-aws-athena/compile zio-aws-auditmanager/compile zio-aws-autoscaling/compile
-        zio-aws-autoscalingplans/compile zio-aws-backup/compile zio-aws-batch/compile
-        zio-aws-braket/compile
+        zio-aws-amplifyuibuilder/compile zio-aws-apigateway/compile zio-aws-apigatewaymanagementapi/compile
+        zio-aws-apigatewayv2/compile zio-aws-appconfig/compile zio-aws-appconfigdata/compile
+        zio-aws-appflow/compile zio-aws-appintegrations/compile zio-aws-applicationautoscaling/compile
+        zio-aws-applicationcostprofiler/compile zio-aws-applicationdiscovery/compile
+        zio-aws-applicationinsights/compile zio-aws-appmesh/compile zio-aws-apprunner/compile
+        zio-aws-appstream/compile zio-aws-appsync/compile zio-aws-athena/compile zio-aws-auditmanager/compile
+        zio-aws-autoscaling/compile zio-aws-autoscalingplans/compile zio-aws-backup/compile
+        zio-aws-backupgateway/compile
     - name: Build and publish libraries
       if: ${{ github.ref == 'refs/heads/master' }}
       run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-accessanalyzer/publishSigned
@@ -204,7 +204,7 @@ jobs:
         zio-aws-applicationinsights/publishSigned zio-aws-appmesh/publishSigned zio-aws-apprunner/publishSigned
         zio-aws-appstream/publishSigned zio-aws-appsync/publishSigned zio-aws-athena/publishSigned
         zio-aws-auditmanager/publishSigned zio-aws-autoscaling/publishSigned zio-aws-autoscalingplans/publishSigned
-        zio-aws-backup/publishSigned zio-aws-batch/publishSigned zio-aws-braket/publishSigned
+        zio-aws-backup/publishSigned zio-aws-backupgateway/publishSigned
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
@@ -227,7 +227,7 @@ jobs:
         - ubuntu-latest
         scala:
         - 2.12.15
-        - 2.13.6
+        - 2.13.7
         - 3.1.0
         java:
         - adopt@1.8
@@ -295,7 +295,6 @@ jobs:
         zio-aws-codecommit/publishSigned zio-aws-codedeploy/publishSigned zio-aws-codeguruprofiler/publishSigned
         zio-aws-codegurureviewer/publishSigned zio-aws-codepipeline/publishSigned
         zio-aws-codestar/publishSigned zio-aws-codestarconnections/publishSigned zio-aws-codestarnotifications/publishSigned
-        zio-aws-cognitoidentity/publishSigned zio-aws-cognitoidentityprovider/publishSigned
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
@@ -318,7 +317,7 @@ jobs:
         - ubuntu-latest
         scala:
         - 2.12.15
-        - 2.13.6
+        - 2.13.7
         - 3.1.0
         java:
         - adopt@1.8
@@ -363,19 +362,22 @@ jobs:
         rm targets.tar
     - name: Build libraries
       if: ${{ github.ref != 'refs/heads/master' }}
-      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-cognitosync/compile
-        zio-aws-comprehend/compile zio-aws-comprehendmedical/compile zio-aws-computeoptimizer/compile
-        zio-aws-config/compile zio-aws-connect/compile zio-aws-connectcontactlens/compile
-        zio-aws-connectparticipant/compile zio-aws-costandusagereport/compile zio-aws-costexplorer/compile
-        zio-aws-customerprofiles/compile zio-aws-databasemigration/compile zio-aws-databrew/compile
-        zio-aws-dataexchange/compile zio-aws-datapipeline/compile zio-aws-datasync/compile
-        zio-aws-dax/compile zio-aws-detective/compile zio-aws-devicefarm/compile zio-aws-devopsguru/compile
+      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-cognitoidentity/compile
+        zio-aws-cognitoidentityprovider/compile zio-aws-cognitosync/compile zio-aws-comprehend/compile
+        zio-aws-comprehendmedical/compile zio-aws-computeoptimizer/compile zio-aws-config/compile
+        zio-aws-connect/compile zio-aws-connectcontactlens/compile zio-aws-connectparticipant/compile
+        zio-aws-costandusagereport/compile zio-aws-costexplorer/compile zio-aws-customerprofiles/compile
+        zio-aws-databasemigration/compile zio-aws-databrew/compile zio-aws-dataexchange/compile
+        zio-aws-datapipeline/compile zio-aws-datasync/compile zio-aws-dax/compile
+        zio-aws-detective/compile zio-aws-devicefarm/compile zio-aws-devopsguru/compile
         zio-aws-directconnect/compile zio-aws-directory/compile zio-aws-dlm/compile
         zio-aws-docdb/compile zio-aws-dynamodb/compile zio-aws-dynamodbstreams/compile
         zio-aws-ebs/compile zio-aws-ec2instanceconnect/compile zio-aws-ecr/compile
+
     - name: Build and publish libraries
       if: ${{ github.ref == 'refs/heads/master' }}
-      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-cognitosync/publishSigned
+      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-cognitoidentity/publishSigned
+        zio-aws-cognitoidentityprovider/publishSigned zio-aws-cognitosync/publishSigned
         zio-aws-comprehend/publishSigned zio-aws-comprehendmedical/publishSigned zio-aws-computeoptimizer/publishSigned
         zio-aws-config/publishSigned zio-aws-connect/publishSigned zio-aws-connectcontactlens/publishSigned
         zio-aws-connectparticipant/publishSigned zio-aws-costandusagereport/publishSigned
@@ -386,6 +388,7 @@ jobs:
         zio-aws-directconnect/publishSigned zio-aws-directory/publishSigned zio-aws-dlm/publishSigned
         zio-aws-docdb/publishSigned zio-aws-dynamodb/publishSigned zio-aws-dynamodbstreams/publishSigned
         zio-aws-ebs/publishSigned zio-aws-ec2instanceconnect/publishSigned zio-aws-ecr/publishSigned
+
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
@@ -408,7 +411,7 @@ jobs:
         - ubuntu-latest
         scala:
         - 2.12.15
-        - 2.13.6
+        - 2.13.7
         - 3.1.0
         java:
         - adopt@1.8
@@ -498,7 +501,7 @@ jobs:
         - ubuntu-latest
         scala:
         - 2.12.15
-        - 2.13.6
+        - 2.13.7
         - 3.1.0
         java:
         - adopt@1.8
@@ -588,7 +591,7 @@ jobs:
         - ubuntu-latest
         scala:
         - 2.12.15
-        - 2.13.6
+        - 2.13.7
         - 3.1.0
         java:
         - adopt@1.8
@@ -680,7 +683,7 @@ jobs:
         - ubuntu-latest
         scala:
         - 2.12.15
-        - 2.13.6
+        - 2.13.7
         - 3.1.0
         java:
         - adopt@1.8
@@ -770,7 +773,7 @@ jobs:
         - ubuntu-latest
         scala:
         - 2.12.15
-        - 2.13.6
+        - 2.13.7
         - 3.1.0
         java:
         - adopt@1.8
@@ -861,7 +864,7 @@ jobs:
         - ubuntu-latest
         scala:
         - 2.12.15
-        - 2.13.6
+        - 2.13.7
         - 3.1.0
         java:
         - adopt@1.8
@@ -952,7 +955,7 @@ jobs:
         - ubuntu-latest
         scala:
         - 2.12.15
-        - 2.13.6
+        - 2.13.7
         - 3.1.0
         java:
         - adopt@1.8
@@ -1037,7 +1040,7 @@ jobs:
         - ubuntu-latest
         scala:
         - 2.12.15
-        - 2.13.6
+        - 2.13.7
         - 3.1.0
         java:
         - adopt@1.8
@@ -1108,7 +1111,7 @@ jobs:
         - ubuntu-latest
         scala:
         - 2.12.15
-        - 2.13.6
+        - 2.13.7
         - 3.1.0
         java:
         - adopt@1.8
@@ -1207,12 +1210,12 @@ jobs:
           ~/.coursier/cache/v1
 
           ~/.cache/coursier/v1
-        key: ubuntu-latest-sbt-2.13.6-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties')
+        key: ubuntu-latest-sbt-2.13.7-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties')
           }}
     - name: Download stored core targets
       uses: actions/download-artifact@v2
       with:
-        name: target-core-ubuntu-latest-2.13.6-adopt@1.8
+        name: target-core-ubuntu-latest-2.13.7-adopt@1.8
     - name: Inflate core targets
       run: tar xvf targets.tar
 
@@ -1220,7 +1223,7 @@ jobs:
     - name: Download stored clients-0 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-0-ubuntu-latest-2.13.6-adopt@1.8
+        name: target-clients-0-ubuntu-latest-2.13.7-adopt@1.8
     - name: Inflate clients-0 targets
       run: tar xvf targets.tar
 
@@ -1228,7 +1231,7 @@ jobs:
     - name: Download stored clients-1 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-1-ubuntu-latest-2.13.6-adopt@1.8
+        name: target-clients-1-ubuntu-latest-2.13.7-adopt@1.8
     - name: Inflate clients-1 targets
       run: tar xvf targets.tar
 
@@ -1236,7 +1239,7 @@ jobs:
     - name: Download stored clients-2 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-2-ubuntu-latest-2.13.6-adopt@1.8
+        name: target-clients-2-ubuntu-latest-2.13.7-adopt@1.8
     - name: Inflate clients-2 targets
       run: tar xvf targets.tar
 
@@ -1244,7 +1247,7 @@ jobs:
     - name: Download stored clients-3 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-3-ubuntu-latest-2.13.6-adopt@1.8
+        name: target-clients-3-ubuntu-latest-2.13.7-adopt@1.8
     - name: Inflate clients-3 targets
       run: tar xvf targets.tar
 
@@ -1252,7 +1255,7 @@ jobs:
     - name: Download stored clients-4 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-4-ubuntu-latest-2.13.6-adopt@1.8
+        name: target-clients-4-ubuntu-latest-2.13.7-adopt@1.8
     - name: Inflate clients-4 targets
       run: tar xvf targets.tar
 
@@ -1260,7 +1263,7 @@ jobs:
     - name: Download stored clients-5 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-5-ubuntu-latest-2.13.6-adopt@1.8
+        name: target-clients-5-ubuntu-latest-2.13.7-adopt@1.8
     - name: Inflate clients-5 targets
       run: tar xvf targets.tar
 
@@ -1268,7 +1271,7 @@ jobs:
     - name: Download stored clients-6 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-6-ubuntu-latest-2.13.6-adopt@1.8
+        name: target-clients-6-ubuntu-latest-2.13.7-adopt@1.8
     - name: Inflate clients-6 targets
       run: tar xvf targets.tar
 
@@ -1276,7 +1279,7 @@ jobs:
     - name: Download stored clients-7 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-7-ubuntu-latest-2.13.6-adopt@1.8
+        name: target-clients-7-ubuntu-latest-2.13.7-adopt@1.8
     - name: Inflate clients-7 targets
       run: tar xvf targets.tar
 
@@ -1284,7 +1287,7 @@ jobs:
     - name: Download stored clients-8 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-8-ubuntu-latest-2.13.6-adopt@1.8
+        name: target-clients-8-ubuntu-latest-2.13.7-adopt@1.8
     - name: Inflate clients-8 targets
       run: tar xvf targets.tar
 
@@ -1292,7 +1295,7 @@ jobs:
     - name: Download stored clients-9 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-9-ubuntu-latest-2.13.6-adopt@1.8
+        name: target-clients-9-ubuntu-latest-2.13.7-adopt@1.8
     - name: Inflate clients-9 targets
       run: tar xvf targets.tar
 
@@ -1300,7 +1303,7 @@ jobs:
     - name: Download stored clients-10 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-10-ubuntu-latest-2.13.6-adopt@1.8
+        name: target-clients-10-ubuntu-latest-2.13.7-adopt@1.8
     - name: Inflate clients-10 targets
       run: tar xvf targets.tar
 
@@ -1529,7 +1532,7 @@ jobs:
           ~/.coursier/cache/v1
 
           ~/.cache/coursier/v1
-        key: ubuntu-latest-sbt-2.13.6-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties')
+        key: ubuntu-latest-sbt-2.13.7-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties')
           }}
     - name: Setup GIT user
       uses: fregante/setup-git-user@v1
