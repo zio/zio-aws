@@ -1,81 +1,83 @@
-import io.github.vigoo.zioaws.core.AwsError
-import io.github.vigoo.zioaws.ec2.Ec2
-import io.github.vigoo.zioaws.ec2.model._
-import io.github.vigoo.zioaws.elasticbeanstalk.ElasticBeanstalk
-import io.github.vigoo.zioaws.elasticbeanstalk.model._
-import io.github.vigoo.zioaws.{core, ec2, elasticbeanstalk, netty}
-import zio.{console, _}
-import zio.console._
+import zio.aws.core.AwsError
+import zio.aws.core.config.AwsConfig
+import zio.aws.ec2.Ec2
+import zio.aws.ec2.model._
+import zio.aws.ec2.model.primitives._
+import zio.aws.elasticbeanstalk.ElasticBeanstalk
+import zio.aws.elasticbeanstalk.model._
+import zio.aws.elasticbeanstalk.model.primitives._
+import zio.aws.netty.NettyHttpClient
+import zio._
 import zio.stream._
 
-object Main extends App {
-  val program: ZIO[Console with Ec2 with ElasticBeanstalk, AwsError, Unit] =
+object Main extends ZIOAppDefault {
+  val program: ZIO[Console & Ec2 & ElasticBeanstalk, AwsError, Unit] =
     for {
-      appsResult <- elasticbeanstalk.describeApplications(
-        DescribeApplicationsRequest(applicationNames = Some(List("my-service")))
+      appsResult <- ElasticBeanstalk.describeApplications(
+        DescribeApplicationsRequest(applicationNames = Some(List(ApplicationName("my-service"))))
       )
-      app <- appsResult.applications.map(_.headOption)
+      app <- appsResult.getApplications.map(_.headOption)
       _ <- app match {
         case Some(appDescription) =>
           for {
-            applicationName <- appDescription.applicationName
-            _ <- console
-              .putStrLn(
+            applicationName <- appDescription.getApplicationName
+            _ <- Console
+              .printLine(
                 s"Got application description for $applicationName"
               )
               .ignore
 
-            envStream = elasticbeanstalk.describeEnvironments(
+            envStream = ElasticBeanstalk.describeEnvironments(
               DescribeEnvironmentsRequest(applicationName =
                 Some(applicationName)
               )
             )
 
             _ <- envStream.run(Sink.foreach { env =>
-              env.environmentName.flatMap { environmentName =>
+              env.getEnvironmentName.flatMap { environmentName =>
                 (for {
-                  environmentId <- env.environmentId
-                  _ <- console
-                    .putStrLn(
+                  environmentId <- env.getEnvironmentId
+                  _ <- Console
+                    .printLine(
                       s"Getting the EB resources of $environmentName"
                     )
                     .ignore
 
                   resourcesResult <-
-                    elasticbeanstalk.describeEnvironmentResources(
+                    ElasticBeanstalk.describeEnvironmentResources(
                       DescribeEnvironmentResourcesRequest(environmentId =
                         Some(environmentId)
                       )
                     )
-                  resources <- resourcesResult.environmentResources
-                  _ <- console
-                    .putStrLn(
+                  resources <- resourcesResult.getEnvironmentResources
+                  _ <- Console
+                    .printLine(
                       s"Getting the EC2 instances in $environmentName"
                     )
                     .ignore
-                  instances <- resources.instances
-                  instanceIds <- ZIO.foreach(instances)(_.id)
-                  _ <- console
-                    .putStrLn(
+                  instances <- resources.getInstances
+                  instanceIds <- ZIO.foreach(instances)(_.getId)
+                  _ <- Console
+                    .printLine(
                       s"Instance IDs are ${instanceIds.mkString(", ")}"
                     )
                     .ignore
 
-                  reservationsStream = ec2.describeInstances(
-                    DescribeInstancesRequest(instanceIds = Some(instanceIds))
+                  reservationsStream = Ec2.describeInstances(
+                    DescribeInstancesRequest(instanceIds = Some(instanceIds.map(id => zio.aws.ec2.model.primitives.InstanceId(ResourceId.unwrap(id)))))
                   )
                   _ <- reservationsStream.run(Sink.foreach { reservation =>
-                    reservation.instances
+                    reservation.getInstances
                       .flatMap { instances =>
                         ZIO.foreach(instances) { instance =>
                           for {
-                            id <- instance.instanceId
-                            typ <- instance.instanceType
-                            launchTime <- instance.launchTime
-                            _ <- console.putStrLn(s"  instance $id:").ignore
-                            _ <- console.putStrLn(s"    type: $typ").ignore
-                            _ <- console
-                              .putStrLn(
+                            id <- instance.getInstanceId
+                            typ <- instance.getInstanceType
+                            launchTime <- instance.getLaunchTime
+                            _ <- Console.printLine(s"  instance $id:").ignore
+                            _ <- Console.printLine(s"    type: $typ").ignore
+                            _ <- Console
+                              .printLine(
                                 s"    launched at: $launchTime"
                               )
                               .ignore
@@ -84,8 +86,8 @@ object Main extends App {
                       }
                   })
                 } yield ()).catchAll { error =>
-                  console
-                    .putStrLnErr(
+                  Console
+                    .printLineError(
                       s"Failed to get info for $environmentName: $error"
                     )
                     .ignore
@@ -98,17 +100,17 @@ object Main extends App {
       }
     } yield ()
 
-  override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] = { //
-    val httpClient = netty.default
-    val awsConfig = httpClient >>> core.config.default
-    val aws = awsConfig >>> (ec2.live ++ elasticbeanstalk.live)
+  override def run: URIO[ZEnv with ZIOAppArgs, ExitCode] = {
+    val httpClient = NettyHttpClient.default
+    val awsConfig = httpClient >>> AwsConfig.default
+    val aws = awsConfig >>> (Ec2.live ++ ElasticBeanstalk.live)
 
     program
       .provideCustomLayer(aws)
       .either
       .flatMap {
         case Left(error) =>
-          console.putStrErr(s"AWS error: $error").ignore.as(ExitCode.failure)
+          Console.printLineError(s"AWS error: $error").ignore.as(ExitCode.failure)
         case Right(_) =>
           ZIO.unit.as(ExitCode.success)
       }

@@ -1,4 +1,4 @@
-import io.github.vigoo.zioaws.codegen.ZioAwsCodegenPlugin.autoImport._
+import zio.aws.codegen.ZioAwsCodegenPlugin.autoImport._
 import sbt._
 import Keys._
 import com.jsuereth.sbtpgp.PgpKeys._
@@ -11,16 +11,17 @@ import scala.collection.JavaConverters._
 object Common extends AutoPlugin {
 
   object autoImport {
-    val zioVersion = "1.0.13"
-    val zioCatsInteropVersion = "2.5.1.0"
-    val zioReactiveStreamsInteropVersion = "1.3.8"
-    val zioConfigVersion = "1.0.10"
-    val catsEffectVersion = "2.5.4"
+    val zioVersion = "2.0.0-RC1"
+    val zioCatsInteropVersion = "3.3.0-RC1"
+    val zioReactiveStreamsInteropVersion = "2.0.0-RC1"
+    val zioConfigVersion = "1.0.10+11-5e644c33-SNAPSHOT"
+    val zioPreludeVersion = "1.0.0-RC8+50-9f687f11-SNAPSHOT"
+    val catsEffectVersion = "3.3.1"
 
     val awsVersion = "2.17.102"
     val awsSubVersion = awsVersion.drop(awsVersion.indexOf('.') + 1)
-    val http4sVersion = "0.22.7"
-    val fs2Version = "2.5.10"
+    val http4sVersion = "0.23.7"
+    val fs2Version = "3.2.4"
 
     val majorVersion = "3"
     val zioAwsVersionPrefix = s"$majorVersion.$awsSubVersion."
@@ -70,7 +71,7 @@ object Common extends AutoPlugin {
         scala213Version,
         scala3Version
       ),
-      organization := "io.github.vigoo",
+      organization := "dev.zio",
       awsLibraryVersion := awsVersion,
       zioLibraryVersion := zioVersion,
       scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
@@ -109,7 +110,9 @@ object Common extends AutoPlugin {
           "s01.oss.sonatype.org",
           username,
           password
-        )).toSeq
+        )).toSeq,
+      resolvers +=
+        "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
     )
 
   private def adjustTagForAwsVersion(

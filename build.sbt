@@ -26,6 +26,7 @@ lazy val core = Project("zio-aws-core", file("zio-aws-core"))
       "dev.zio" %% "zio-streams" % zioVersion,
       "dev.zio" %% "zio-interop-reactivestreams" % zioReactiveStreamsInteropVersion,
       "dev.zio" %% "zio-config" % zioConfigVersion,
+      "dev.zio" %% "zio-prelude" % zioPreludeVersion,
       "org.scala-lang.modules" %% "scala-collection-compat" % "2.6.0",
       "dev.zio" %% "zio-test" % zioVersion % "test",
       "dev.zio" %% "zio-test-sbt" % zioVersion % "test",
@@ -86,8 +87,7 @@ lazy val example2 = Project("example2", file("examples") / "example2")
   .settings(
     resolvers += Resolver.jcenterRepo,
     libraryDependencies ++= Seq(
-      "nl.vroste" %% "rezilience" % "0.6.2",
-      "dev.zio" %% "zio-logging" % "0.5.10"
+      "nl.vroste" %% "rezilience" % "0.7.0+35-05acacd5-SNAPSHOT",
     )
   )
   .dependsOn(
@@ -111,10 +111,10 @@ lazy val integtests = Project("integtests", file("integtests"))
       "dev.zio" %% "zio" % zioVersion,
       "dev.zio" %% "zio-test" % zioVersion,
       "dev.zio" %% "zio-test-sbt" % zioVersion,
-      "org.apache.logging.log4j" % "log4j-1.2-api" % "2.13.3",
-      "org.apache.logging.log4j" % "log4j-core" % "2.13.3",
-      "org.apache.logging.log4j" % "log4j-api" % "2.13.3",
-      "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.13.3"
+      "org.apache.logging.log4j" % "log4j-1.2-api" % "2.17.1",
+      "org.apache.logging.log4j" % "log4j-core" % "2.17.1",
+      "org.apache.logging.log4j" % "log4j-api" % "2.17.1",
+      "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.17.1"
     ),
     testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
     evictionErrorLevel := Level.Info

@@ -1,45 +1,45 @@
-import io.github.vigoo.zioaws.core.{AwsError, GenericAwsError}
-import io.github.vigoo.zioaws.core.config.CommonAwsConfig
-import io.github.vigoo.zioaws.kinesis.Kinesis
-import io.github.vigoo.zioaws.kinesis.model._
-import io.github.vigoo.zioaws.{core, kinesis, netty}
+import zio.aws.core.{AwsError, GenericAwsError}
+import zio.aws.core.config.{AwsConfig, CommonAwsConfig}
+import zio.aws.kinesis.Kinesis
+import zio.aws.kinesis.model._
+import zio.aws.kinesis.model.primitives._
+import zio.aws.netty.NettyHttpClient
 import software.amazon.awssdk.auth.credentials.{
   AwsBasicCredentials,
   StaticCredentialsProvider
 }
 import software.amazon.awssdk.regions.Region
-import zio.{console, _}
-import zio.console._
+import zio._
 import zio.stream._
 
-object Main extends App {
+object Main extends ZIOAppDefault {
   val accessKey = "TODO"
   val secretKey = "TODO"
 
-  val program: ZIO[Console with Kinesis, AwsError, Unit] =
+  val program: ZIO[Console & Kinesis, AwsError, Unit] =
     for {
-      streams <- kinesis.listStreams(ListStreamsRequest())
-      _ <- console.putStrLn("Streams:").ignore
-      _ <- ZIO.foreach_(streams.streamNamesValue) { streamName =>
-        console.putStrLn(streamName).ignore
+      streams <- Kinesis.listStreams(ListStreamsRequest())
+      _ <- Console.printLine("Streams:").ignore
+      _ <- ZIO.foreachDiscard(streams.streamNames) { streamName =>
+        Console.printLine(streamName).ignore
       }
 
-      streamName = "test-stream"
-      _ <- console.putStrLn("Shards:").ignore
-      shard <- kinesis
+      streamName = StreamName("test-stream")
+      _ <- Console.printLine("Shards:").ignore
+      shard <- Kinesis
         .listShards(ListShardsRequest(streamName = Some(streamName)))
-        .tap(shard => console.putStrLn(shard.shardIdValue).ignore)
+        .tap(shard => Console.printLine(shard.shardId).ignore)
         .runHead
         .map(_.get)
-      streamDescription <- kinesis.describeStream(
+      streamDescription <- Kinesis.describeStream(
         DescribeStreamRequest(streamName)
       )
-      consumerName = "consumer1"
+      consumerName = ConsumerName("consumer1")
 
-      _ <- kinesis
+      _ <- Kinesis
         .registerStreamConsumer(
           RegisterStreamConsumerRequest(
-            streamDescription.streamDescriptionValue.streamARNValue,
+            streamDescription.streamDescription.streamARN,
             consumerName
           )
         )
@@ -49,52 +49,52 @@ object Main extends App {
               ) =>
             ZIO.unit
         }
-      consumer <- kinesis
+      consumer <- Kinesis
         .describeStreamConsumer(
           DescribeStreamConsumerRequest(
             consumerName = Some(consumerName),
             streamARN =
-              Some(streamDescription.streamDescriptionValue.streamARNValue)
+              Some(streamDescription.streamDescription.streamARN)
           )
         )
         .repeatUntil(
-          _.consumerDescriptionValue.consumerStatusValue == ConsumerStatus.ACTIVE
+          _.consumerDescription.consumerStatus == ConsumerStatus.ACTIVE
         )
 
-      _ <- console
-        .putStrLn(
-          s"Consumer registered: ${consumer.consumerDescriptionValue.consumerARNValue}"
+      _ <- Console
+        .printLine(
+          s"Consumer registered: ${consumer.consumerDescription.consumerARN}"
         )
         .ignore
 
-      shardStream = kinesis.subscribeToShard(
+      shardStream = Kinesis.subscribeToShard(
         SubscribeToShardRequest(
-          consumer.consumerDescriptionValue.consumerARNValue,
-          shard.shardIdValue,
+          consumer.consumerDescription.consumerARN,
+          shard.shardId,
           StartingPosition(ShardIteratorType.TRIM_HORIZON)
         )
       )
 
-      _ <- kinesis.putRecord(
+      _ <- Kinesis.putRecord(
         PutRecordRequest(
           streamName,
-          data = Chunk.fromArray("sdf".getBytes),
-          partitionKey = "123"
+          data = Data(Chunk.fromArray("sdf".getBytes)),
+          partitionKey = PartitionKey("123")
         )
       )
 
       _ <- shardStream
         .tap(event =>
-          console
-            .putStrLn(event.recordsValue.map(_.partitionKeyValue).toString())
+          Console
+            .printLine(event.records.map(_.partitionKey).toString())
             .ignore
         )
         .runHead
 
     } yield ()
 
-  override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] = {
-    val httpClient = netty.dual
+  override def run: URIO[ZEnv with ZIOAppArgs, ExitCode] = {
+    val httpClient = NettyHttpClient.dual
     val cfg = ZLayer.succeed(
       CommonAwsConfig(
         region = Some(Region.US_EAST_1),
@@ -104,15 +104,15 @@ object Main extends App {
         commonClientConfig = None
       )
     )
-    val awsConfig = httpClient ++ cfg >>> core.config.configured()
-    val aws = awsConfig >>> kinesis.live
+    val awsConfig = httpClient ++ cfg >>> AwsConfig.configured()
+    val aws = awsConfig >>> Kinesis.live
 
     program
       .provideCustomLayer(aws)
       .either
       .flatMap {
         case Left(error) =>
-          console.putStrErr(s"AWS error: $error").ignore.as(ExitCode.failure)
+          Console.printLineError(s"AWS error: $error").ignore.as(ExitCode.failure)
         case Right(_) =>
           ZIO.unit.as(ExitCode.success)
       }

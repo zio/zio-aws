@@ -14,8 +14,8 @@ To define an aspect, create an instance of the `AwsCallAspect` trait:
 import zio._
 import zio.clock._
 import zio.console._
-import io.github.vigoo.zioaws.core.aspects._
-import io.github.vigoo.zioaws.core.AwsError
+import zio.aws.core.aspects._
+import zio.aws.core.AwsError
 ```
 
 ```scala mdoc

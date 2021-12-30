@@ -8,12 +8,12 @@ title: Examples
 The following example uses the ElasticBeanstalk and EC2 APIs to print some info. 
 
 ```scala mdoc:invisible
-import io.github.vigoo.zioaws.core.AwsError
-import io.github.vigoo.zioaws.ec2.Ec2
-import io.github.vigoo.zioaws.ec2.model._
-import io.github.vigoo.zioaws.elasticbeanstalk.ElasticBeanstalk
-import io.github.vigoo.zioaws.elasticbeanstalk.model._
-import io.github.vigoo.zioaws.{core, ec2, elasticbeanstalk, http4s, netty}
+import zio.aws.core.AwsError
+import zio.aws.ec2.Ec2
+import zio.aws.ec2.model._
+import zio.aws.elasticbeanstalk.ElasticBeanstalk
+import zio.aws.elasticbeanstalk.model._
+import zio.aws.{core, ec2, elasticbeanstalk, http4s, netty}
 import zio.{console, _}
 import zio.console._
 import zio.stream._

@@ -30,7 +30,7 @@ specific configuration which is described [on the page about the HTTP engines](h
 
 ```scala mdoc:passthrough
 import zio.config._
-import io.github.vigoo.zioaws.core.config.descriptors._
+import zio.aws.core.config.descriptors._
 
 val docs = generateDocs(commonAwsConfig)
 println(docs.toTable.toGithubFlavouredMarkdown)
