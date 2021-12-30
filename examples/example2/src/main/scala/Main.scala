@@ -5,7 +5,7 @@ import zio.aws.dynamodb.model.ScanRequest
 import zio.aws.dynamodb.model.primitives._
 import zio.aws.dynamodb.{DynamoDb, model}
 import zio.aws.netty.NettyHttpClient
-// import nl.vroste.rezilience.{CircuitBreaker, Retry, TrippingStrategy}
+import nl.vroste.rezilience.{CircuitBreaker, Retry, TrippingStrategy}
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import zio._
@@ -14,15 +14,15 @@ import zio.config._
 object Main extends ZIOAppDefault {
   val logging: AwsCallAspect[Clock] = ZIO.logLevel(LogLevel.Info) >>> callLogging    
 
-  // def circuitBreaking(cb: CircuitBreaker[AwsError]): AwsCallAspect[Any] =
-  //   new AwsCallAspect[Any] {
-  //     override final def apply[R1 <: Any, A](
-  //         f: ZIO[R1, AwsError, Described[A]]
-  //     ): ZIO[R1, AwsError, Described[A]] =
-  //       cb(f).mapError(policyError =>
-  //         AwsError.fromThrowable(policyError.toException)
-  //       )
-  //   }
+  def circuitBreaking(cb: CircuitBreaker[AwsError]): AwsCallAspect[Any] =
+    new AwsCallAspect[Any] {
+      override final def apply[R, E >: AwsError <: AwsError, A <: Described[_]](
+          f: ZIO[R, E, A]
+      )(implicit trace: ZTraceElement): ZIO[R, E, A] =
+        cb(f).mapError(policyError =>
+          AwsError.fromThrowable(policyError.toException)
+        )
+    }
 
   val program: ZIO[Console & DynamoDb, AwsError, Unit] =
     for {
@@ -43,12 +43,12 @@ object Main extends ZIOAppDefault {
     )
     val awsConfig = (httpClient ++ config) >>> AwsConfig.configured()
 
-    // val circuitBreaker = CircuitBreaker.make[AwsError](
-    //   trippingStrategy = TrippingStrategy.failureCount(maxFailures = 3),
-    //   resetPolicy =
-    //     Retry.Schedules.exponentialBackoff(min = 1.second, max = 1.minute)
-    // )
-    // circuitBreaker.use { cb =>
+    val circuitBreaker = CircuitBreaker.make[AwsError](
+      trippingStrategy = TrippingStrategy.failureCount(maxFailures = 3),
+      resetPolicy =
+        Retry.Schedules.exponentialBackoff(min = 1.second, max = 1.minute)
+    )
+    circuitBreaker.use { cb =>
       // Default DynamoDB layer
       // val dynamoDb: ZLayer[AwsConfig, Throwable, DynamoDb] = dynamodb.live
       // DynamoDB with logging
@@ -56,7 +56,7 @@ object Main extends ZIOAppDefault {
       // DynamoDB with circuit breaker
       // val dynamoDb: ZLayer[AwsConfig, Throwable, DynamoDb] = dynamodb.live @@ circuitBreaking(cb)
 
-      val dynamoDb = (DynamoDb.live @@ logging) // (callLogging >>> circuitBreaking(cb)))
+      val dynamoDb = DynamoDb.live @@ (logging >>> circuitBreaking(cb))
       val finalLayer = (Clock.any ++ awsConfig) >>> dynamoDb
 
       program
@@ -68,6 +68,6 @@ object Main extends ZIOAppDefault {
           case Right(_) =>
             ZIO.unit.as(ExitCode.success)
         }
-    // }
+    }
   }
 }
