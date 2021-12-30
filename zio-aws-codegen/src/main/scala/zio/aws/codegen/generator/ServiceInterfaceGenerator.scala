@@ -1394,7 +1394,7 @@ trait ServiceInterfaceGenerator {
               b0 <- awsConfig.configure[${clientInterface.typ}, ${clientInterfaceBuilder.typ}](builder).toManaged
               b1 <- awsConfig.configureHttpClient[${clientInterface.typ}, ${clientInterfaceBuilder.typ}](b0, ${Types.serviceHttpCapabilities.term}(supportsHttp2 = $supportsHttp2Lit)).toManaged
               client <- ${Types.zio_.term}(customization(b1).build()).toManaged
-            } yield new $serviceImplT(client, zio.aws.core.aspects.AwsCallAspect.identity, ().asInstanceOf[zio.ZEnvironment[Any]])
+            } yield new $serviceImplT(client, zio.aws.core.aspects.AwsCallAspect.identity, zio.ZEnvironment.empty)
 
             private class $serviceImplT[R](override val api: ${clientInterface.typ}, override val aspect: zio.aws.core.aspects.AwsCallAspect[R], r: zio.ZEnvironment[R])
               extends ${Init(serviceNameT, Name.Anonymous(), List.empty)} with zio.aws.core.AwsServiceBase[R] {
