@@ -39,7 +39,7 @@ object Common extends AutoPlugin {
 
   override val trigger = allRequirements
 
-  override val requires = Sonatype
+  override val requires = (Sonatype && ci.release.early.Plugin)
 
   override lazy val globalSettings =
     Seq(
@@ -112,7 +112,9 @@ object Common extends AutoPlugin {
           password
         )).toSeq,
       resolvers +=
-        "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+        "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
+
+      ci.release.early.Plugin.autoImport.verifyNoSnapshotDependencies := {} // Temporarily disable this check until all dependencies are ready for ZIO 2
     )
 
   private def adjustTagForAwsVersion(
