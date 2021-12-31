@@ -99,15 +99,15 @@ object Common extends AutoPlugin {
       sonatypeProjectHosting := Some(
         GitHubHosting("vigoo", "zio-aws", "daniel.vigovszky@gmail.com")
       ),
-      sonatypeCredentialHost := "s01.oss.sonatype.org",
-      sonatypeRepository := "https://s01.oss.sonatype.org/service/local",
+      sonatypeCredentialHost := "oss.sonatype.org",
+      sonatypeRepository := "https://oss.sonatype.org/service/local",
       credentials ++=
         (for {
           username <- Option(System.getenv().get("SONATYPE_USERNAME"))
           password <- Option(System.getenv().get("SONATYPE_PASSWORD"))
         } yield Credentials(
           "Sonatype Nexus Repository Manager",
-          "s01.oss.sonatype.org",
+          "oss.sonatype.org",
           username,
           password
         )).toSeq,
