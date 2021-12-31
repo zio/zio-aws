@@ -86,9 +86,9 @@ lazy val example1 = Project("example1", file("examples") / "example1")
 lazy val example2 = Project("example2", file("examples") / "example2")
   .settings(
     resolvers += Resolver.jcenterRepo,
-    // libraryDependencies ++= Seq(
-    //   "nl.vroste" %% "rezilience" % "0.7.0+35-05acacd5-SNAPSHOT",
-    // )
+    libraryDependencies ++= Seq(
+      "nl.vroste" %% "rezilience" % "0.7.0+35-05acacd5-SNAPSHOT",
+    )
   )
   .dependsOn(
     core,
