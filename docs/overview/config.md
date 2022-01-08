@@ -1,5 +1,5 @@
 ---
-layout: docs
+id: overview_config
 title: Configuration
 ---
 

@@ -1,0 +1,21 @@
+{
+  "overview-sidebar": {
+    "Overview": [
+      "overview/overview_index",
+      "overview/overview_artifacts",
+      "overview/overview_wrapper",
+      "overview/overview_config",
+      "overview/overview_http",
+      "overview/overview_aspects",
+      "overview/overview_examples",
+      "overview/overview_changelog"
+    ]
+  },  
+  "about-sidebar": {
+      "About": [
+          "about/about_index",
+          "about/about_contributing",
+          "about/about_coc"
+      ]
+  }
+}

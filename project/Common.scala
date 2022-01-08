@@ -97,7 +97,7 @@ object Common extends AutoPlugin {
       publishTo := sonatypePublishToBundle.value,
       sonatypeTimeoutMillis := 300 * 60 * 1000,
       sonatypeProjectHosting := Some(
-        GitHubHosting("vigoo", "zio-aws", "daniel.vigovszky@gmail.com")
+        GitHubHosting("zio", "zio-aws", "daniel.vigovszky@gmail.com")
       ),
       sonatypeCredentialHost := "oss.sonatype.org",
       sonatypeRepository := "https://oss.sonatype.org/service/local",

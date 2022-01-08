@@ -8,7 +8,7 @@ enablePlugins(Common, ZioAwsCodegenPlugin, GitVersioning)
 ThisBuild / ciParallelJobs := 10
 ThisBuild / ciSeparateJobs := Seq("zio-aws-ec2")
 ThisBuild / ciTarget := file(".github/workflows/ci.yml")
-ThisBuild / artifactListTarget := file("docs/docs/docs/artifacts.md")
+ThisBuild / artifactListTarget := file("docs/overview/artifacts.md")
 
 Global / pgpPublicRing := file("/tmp/public.asc")
 Global / pgpSecretRing := file("/tmp/secret.asc")
@@ -128,66 +128,19 @@ lazy val integtests = Project("integtests", file("integtests"))
     LocalProject("zio-aws-dynamodb")
   )
 
+  
 lazy val docs = project
-  .enablePlugins(GhpagesPlugin, MicrositesPlugin)
+  .in(file("zio-aws-docs"))  
   .settings(
-    publishArtifact := false,
-    publish / skip := true,
-    scalaVersion := scala213Version,
-    name := "zio-aws",
-    description := "Low-level AWS wrapper for ZIO for all AWS services",
-    git.remoteRepo := "git@github.com:vigoo/zio-aws.git",
-    micrositeUrl := "https://vigoo.github.io",
-    micrositeBaseUrl := "/zio-aws",
-    micrositeHomepage := "https://vigoo.github.io/zio-aws/",
-    micrositeDocumentationUrl := "/zio-aws/docs",
-    micrositeAuthor := "Daniel Vigovszky",
-    micrositeTwitterCreator := "@dvigovszky",
-    micrositeGithubOwner := "vigoo",
-    micrositeGithubRepo := "zio-aws",
-    micrositeGitterChannel := false,
-    micrositeDataDirectory := baseDirectory.value / "src/microsite/data",
-    micrositeStaticDirectory := baseDirectory.value / "src/microsite/static",
-    micrositeImgDirectory := baseDirectory.value / "src/microsite/img",
-    micrositeCssDirectory := baseDirectory.value / "src/microsite/styles",
-    micrositeSassDirectory := baseDirectory.value / "src/microsite/partials",
-    micrositeJsDirectory := baseDirectory.value / "src/microsite/scripts",
-    micrositeTheme := "light",
-    micrositeHighlightLanguages ++= Seq("scala", "sbt"),
-    micrositeConfigYaml := ConfigYml(
-      yamlCustomProperties = Map(
-        "url" -> "https://vigoo.github.io",
-        "plugins" -> List("jemoji", "jekyll-sitemap")
-      )
-    ),
-    micrositeAnalyticsToken := "UA-56320875-3",
-    makeSite / includeFilter := "*.html" | "*.css" | "*.png" | "*.jpg" | "*.gif" | "*.js" | "*.swf" | "*.txt" | "*.xml" | "*.svg",
-    micrositePushSiteWith := GitHub4s,
-    micrositeGithubToken := sys.env.get("GITHUB_TOKEN"),
-    // Temporary fix to avoid including mdoc in the published POM
-
-    // skip dependency elements with a scope
-    pomPostProcess := { (node: XmlNode) =>
-      new RuleTransformer(new RewriteRule {
-        override def transform(node: XmlNode): XmlNodeSeq = node match {
-          case e: Elem
-              if e.label == "dependency" && e.child.exists(child =>
-                child.label == "artifactId" && child.text.startsWith("mdoc_")
-              ) =>
-            val organization =
-              e.child.filter(_.label == "groupId").flatMap(_.text).mkString
-            val artifact =
-              e.child.filter(_.label == "artifactId").flatMap(_.text).mkString
-            val version =
-              e.child.filter(_.label == "version").flatMap(_.text).mkString
-            Comment(
-              s"dependency $organization#$artifact;$version has been omitted"
-            )
-          case _ => node
-        }
-      }).transform(node).head
-    },
-    evictionErrorLevel := Level.Info
+    publish / skip                             := true,
+    moduleName                                 := "zio-aws-docs",
+    scalacOptions -= "-Yno-imports",
+    scalacOptions -= "-Xfatal-warnings",
+    ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(core, http4s, netty, akkahttp),
+    ScalaUnidoc / unidoc / target              := (LocalRootProject / baseDirectory).value / "website" / "static" / "api",
+    cleanFiles += (ScalaUnidoc / unidoc / target).value,
+    docusaurusCreateSite                       := docusaurusCreateSite.dependsOn(Compile / unidoc).value,
+    docusaurusPublishGhpages                   := docusaurusPublishGhpages.dependsOn(Compile / unidoc).value
   )
   .dependsOn(
     core,
@@ -197,3 +150,4 @@ lazy val docs = project
     LocalProject("zio-aws-elasticbeanstalk"),
     LocalProject("zio-aws-ec2")
   )
+  .enablePlugins(MdocPlugin, DocusaurusPlugin, ScalaUnidocPlugin)
