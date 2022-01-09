@@ -1,0 +1,160 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Configuration · ZIO AWS</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="# Configuration"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Configuration · ZIO AWS"/><meta property="og:type" content="website"/><meta property="og:url" content="https://zio.github.io/zio-aws/"/><meta property="og:description" content="# Configuration"/><meta property="og:image" content="https://zio.github.io/zio-aws/img/undraw_online.svg"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://zio.github.io/zio-aws/img/undraw_tweetstorm.svg"/><link rel="shortcut icon" href="/zio-aws/img/favicon.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100,"cornerOffset":100}
+          )
+        });
+        </script><script src="/zio-aws/js/scrollSpy.js"></script><link rel="stylesheet" href="/zio-aws/css/main.css"/><script src="/zio-aws/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/zio-aws/"><img class="logo" src="/zio-aws/img/navbar_brand2x.png" alt="ZIO AWS"/><h2 class="headerTitleWithLogo">ZIO AWS</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class="siteNavGroupActive"><a href="/zio-aws/docs/overview/overview_index" target="_self">Overview</a></li><li class=""><a href="/zio-aws/api/index.html" target="_self">API</a></li><li class=""><a href="/zio-aws/docs/about/about_index" target="_self">About</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Overview</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Overview</h3><ul class=""><li class="navListItem"><a class="navItem" href="/zio-aws/docs/overview/overview_index">Summary</a></li><li class="navListItem"><a class="navItem" href="/zio-aws/docs/overview/overview_artifacts">Artifacts</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/zio-aws/docs/overview/overview_config">Configuration</a></li><li class="navListItem"><a class="navItem" href="/zio-aws/docs/overview/overview_http">HTTP</a></li><li class="navListItem"><a class="navItem" href="/zio-aws/docs/overview/overview_aspects">Aspects</a></li><li class="navListItem"><a class="navItem" href="/zio-aws/docs/overview/overview_examples">Examples</a></li><li class="navListItem"><a class="navItem" href="/zio-aws/docs/overview/overview_changelog">Version history</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">Configuration</h1></header><article><div><span><h1><a class="anchor" aria-hidden="true" id="configuration"></a><a href="#configuration" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Configuration</h1>
+<h2><a class="anchor" aria-hidden="true" id="common-configuration"></a><a href="#common-configuration" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Common configuration</h2>
+<p>Each <em>service module</em> depends on the <code>AwsConfig</code> layer. This layer is responsible for setting up the
+AWS Java SDK's async client, by setting the <a href="http.html">underlying HTTP engine</a> and all the common
+settings. You can use the following layers to provide <code>AwsConfig</code>:</p>
+<h4><a class="anchor" aria-hidden="true" id="default"></a><a href="#default" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Default</h4>
+<p><code>core.config.default</code> requires a <code>HttpClient</code> as dependency, but does not customize any other setting of the client</p>
+<h4><a class="anchor" aria-hidden="true" id="fully-customized"></a><a href="#fully-customized" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Fully customized</h4>
+<p><code>core.config.customized(customization)</code> gives the freedom to customize the creation of the AWS async client directly by modifying it's <code>Builder</code></p>
+<h4><a class="anchor" aria-hidden="true" id="configured"></a><a href="#configured" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Configured</h4>
+<p><code>core.config.configured()</code> is the <em>recommended</em> way to construct an <code>AwsConfig</code>. Beside requiring a <code>HttpClient</code> it also has <code>ZConfig[CommonAwsConfig]</code> as dependency.
+The <code>CommonAwsConfig</code> value can be either provided from code for example by <code>ZLayer.succeed(CommonAwsConfig(...))</code> or it can
+be read from any of the supported config sources by <a href="https://zio.github.io/zio-config/">zio-config</a>.</p>
+<p>Note that <strong>AWS level retries are disabled</strong> by the configuration layer and it is not exposed in the <code>CommonAwsConfig</code> data structure either. The reason for
+this is that the recommended way to handle retries is to use <a href="aspects.html">aspects on the service layers</a>.</p>
+<p>See the following table about the possible configuration values. Please note that the underlying HTTP engine also has its own
+specific configuration which is described <a href="http.html">on the page about the HTTP engines</a>.</p>
+<h2><a class="anchor" aria-hidden="true" id="configuration-details"></a><a href="#configuration-details" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Configuration Details</h2>
+<table>
+<thead>
+<tr><th>FieldName</th><th>Format</th><th>Description</th><th>Sources</th></tr>
+</thead>
+<tbody>
+<tr><td></td><td><a href="fielddescriptions">all-of</a></td><td></td><td></td></tr>
+</tbody>
+</table>
+<h3><a class="anchor" aria-hidden="true" id="field-descriptions"></a><a href="#field-descriptions" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Field Descriptions</h3>
+<table>
+<thead>
+<tr><th>FieldName</th><th>Format</th><th>Description</th><th>Sources</th></tr>
+</thead>
+<tbody>
+<tr><td>region</td><td>primitive</td><td>value of type string, optional value, AWS region to connect to</td><td></td></tr>
+<tr><td><a href="credentials">credentials</a></td><td><a href="credentials">any-one-of</a></td><td>default value: DefaultCredentialsProvider(providerChain=LazyAwsCredentialsProvider(delegate=Lazy(value=Uninitialized))), AWS credentials provider</td><td></td></tr>
+<tr><td>endpointOverride</td><td>primitive</td><td>value of type uri, optional value, Overrides the AWS service endpoint</td><td></td></tr>
+<tr><td><a href="client">client</a></td><td><a href="client">all-of</a></td><td>optional value, Common settings for AWS service clients</td><td></td></tr>
+</tbody>
+</table>
+<h3><a class="anchor" aria-hidden="true" id="credentials"></a><a href="#credentials" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>credentials</h3>
+<table>
+<thead>
+<tr><th>FieldName</th><th>Format</th><th>Description</th><th>Sources</th></tr>
+</thead>
+<tbody>
+<tr><td></td><td>primitive</td><td>value of type string</td><td></td></tr>
+<tr><td></td><td>primitive</td><td>value of type string</td><td></td></tr>
+<tr><td></td><td><a href="fielddescriptions-1">all-of</a></td><td></td><td></td></tr>
+</tbody>
+</table>
+<h3><a class="anchor" aria-hidden="true" id="field-descriptions-1"></a><a href="#field-descriptions-1" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Field Descriptions</h3>
+<table>
+<thead>
+<tr><th>FieldName</th><th>Format</th><th>Description</th><th>Sources</th></tr>
+</thead>
+<tbody>
+<tr><td>accessKeyId</td><td>primitive</td><td>value of type string, AWS access key ID</td><td></td></tr>
+<tr><td>secretAccessKey</td><td>primitive</td><td>value of type string, AWS secret access key</td><td></td></tr>
+</tbody>
+</table>
+<h3><a class="anchor" aria-hidden="true" id="client"></a><a href="#client" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>client</h3>
+<table>
+<thead>
+<tr><th>FieldName</th><th>Format</th><th>Description</th><th>Sources</th></tr>
+</thead>
+<tbody>
+<tr><td><a href="extraheaders">extraHeaders</a></td><td><a href="extraheaders">list</a></td><td>Extra headers to be sent with each request</td><td></td></tr>
+<tr><td>apiCallTimeout</td><td>primitive</td><td>value of type duration, optional value, Amount of time to allow the client to complete the execution of an API call</td><td></td></tr>
+<tr><td>apiCallAttemptTimeout</td><td>primitive</td><td>value of type duration, optional value, Amount of time to wait for the HTTP request to complete before giving up</td><td></td></tr>
+<tr><td>defaultProfileName</td><td>primitive</td><td>value of type string, optional value, Default profile name</td><td></td></tr>
+</tbody>
+</table>
+<h3><a class="anchor" aria-hidden="true" id="extraheaders"></a><a href="#extraheaders" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>extraHeaders</h3>
+<table>
+<thead>
+<tr><th>FieldName</th><th>Format</th><th>Description</th><th>Sources</th></tr>
+</thead>
+<tbody>
+<tr><td>name</td><td>primitive</td><td>value of type string, Header name</td><td></td></tr>
+<tr><td></td><td><a href="fielddescriptions-1">any-one-of</a></td><td></td><td></td></tr>
+</tbody>
+</table>
+<h3><a class="anchor" aria-hidden="true" id="field-descriptions-2"></a><a href="#field-descriptions-2" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Field Descriptions</h3>
+<table>
+<thead>
+<tr><th>FieldName</th><th>Format</th><th>Description</th><th>Sources</th></tr>
+</thead>
+<tbody>
+<tr><td>value</td><td>list</td><td>value of type string, Header value</td><td></td></tr>
+<tr><td>value</td><td>primitive</td><td>value of type string, Header value</td><td></td></tr>
+</tbody>
+</table>
+<h2><a class="anchor" aria-hidden="true" id="service-layer"></a><a href="#service-layer" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Service layer</h2>
+<p>Each AWS service's generated client has it own layer that depends on <code>AwsConfig</code>. It is possible to reuse the same <code>AwsConfig</code> layer
+for multiple AWS service clients, sharing a common configuration. Usually the service client does not require any additional configuration,
+in this case the <code>live</code> layer can be used, for example:</p>
+<pre><code class="hljs css language-scala">awsConfig &gt;&gt;&gt; (ec2.live ++ elasticbeanstalk.live)
+</code></pre>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-aws/docs/overview/overview_wrapper"><span class="arrow-prev">← </span><span>Previous</span></a><a class="docs-next button" href="/zio-aws/docs/overview/overview_http"><span>HTTP</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#common-configuration">Common configuration</a></li><li><a href="#configuration-details">Configuration Details</a><ul class="toc-headings"><li><a href="#field-descriptions">Field Descriptions</a></li><li><a href="#credentials">credentials</a></li><li><a href="#field-descriptions-1">Field Descriptions</a></li><li><a href="#client">client</a></li><li><a href="#extraheaders">extraHeaders</a></li><li><a href="#field-descriptions-2">Field Descriptions</a></li></ul></li><li><a href="#service-layer">Service layer</a></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/zio-aws/" class="nav-home"><img src="/zio-aws/img/sidebar_brand2x.png" alt="ZIO AWS"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-aws" data-icon="octicon-star" data-count-href="/zio/zio-aws/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Chat with us on Discord</h5><a href="https://discord.gg/2ccFBr4"><img src="/zio-aws//img/discord.png" width="120" alt="discord"/></a></div><div><h5>Additional resources</h5><a href="/zio-aws/api/index.html">Scaladoc of zio-aws</a></div></section><section class="copyright">Copyright © 2022 ZIO Maintainers</section></footer></div></body></html>
