@@ -295,7 +295,7 @@ trait GithubActionsGenerator {
           ).withSteps(
             checkoutCurrentBranch(),
             setupScala(Some(JavaVersion.AdoptJDK18)),
-            setupGPG(),
+            setupGitUser(),
             cacheSBT(
               os = Some(OS.UbuntuLatest),
               scalaVersion = Some(scala213)
@@ -309,7 +309,7 @@ trait GithubActionsGenerator {
               ),
               heapGb = 4,
               env = Map(
-                "GIT_DEPLOY_KEY" -> "${{ secrets.GIT_DEPLOY_KEY }}"
+                "GITHUB_TOKEN" -> "${{ secrets.ADMIN_GITHUB_TOKEN }}"
               )
             )
           )
