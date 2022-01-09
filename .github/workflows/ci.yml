@@ -1502,8 +1502,8 @@ jobs:
       uses: olafurpg/setup-scala@v10
       with:
         java-version: adopt@1.8
-    - name: Setup GPG
-      uses: olafurpg/setup-gpg@v3
+    - name: Setup GIT user
+      uses: fregante/setup-git-user@v1
     - name: Cache SBT
       uses: actions/cache@v2
       with:
@@ -1518,4 +1518,4 @@ jobs:
       run: sbt -J-XX:+UseG1GC -J-Xmx4g -J-Xms4g -J-Xss16m ++2.13.3 generateArtifactList
         docs/docusaurusPublishGhpages
       env:
-        GIT_DEPLOY_KEY: ${{ secrets.GIT_DEPLOY_KEY }}
+        GITHUB_TOKEN: ${{ secrets.ADMIN_GITHUB_TOKEN }}
