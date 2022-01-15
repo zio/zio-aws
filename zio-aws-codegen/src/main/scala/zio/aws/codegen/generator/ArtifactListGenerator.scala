@@ -7,7 +7,7 @@ trait ArtifactListGenerator {
 
   def generateArtifactList(ids: Set[ModelId], version: String): String = {
     val prefix = s"""---
-                    |layout: docs
+                    |id: overview_artifacts
                     |title: Artifacts
                     |---
                     |

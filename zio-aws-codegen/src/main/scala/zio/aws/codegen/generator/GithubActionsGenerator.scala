@@ -36,7 +36,7 @@ trait GithubActionsGenerator {
       .toList ++ separateProjectNames.map(List(_))
 
     val scala212 = ScalaVersion("2.12.15")
-    val scala213 = ScalaVersion("2.13.7")
+    val scala213 = ScalaVersion("2.13.8")
     val scala3 = ScalaVersion("3.1.0")
     val scalaVersions = Seq(
       scala212,
@@ -298,19 +298,17 @@ trait GithubActionsGenerator {
             cacheSBT(
               os = Some(OS.UbuntuLatest),
               scalaVersion = Some(scala213)
-            ),
-            setupGitUser(),
-            setupJekyll(),
+            ),            
             runSBT(
               "Build and publish microsite",
               parameters = List(
                 "++2.13.3",
                 "generateArtifactList",
-                "docs/publishMicrosite"
+                "docs/docusaurusPublishGhpages"
               ),
               heapGb = 4,
               env = Map(
-                "GITHUB_TOKEN" -> "${{ secrets.ADMIN_GITHUB_TOKEN }}"
+                "GIT_DEPLOY_KEY" -> "${{ secrets.GIT_DEPLOY_KEY }}"
               )
             )
           )

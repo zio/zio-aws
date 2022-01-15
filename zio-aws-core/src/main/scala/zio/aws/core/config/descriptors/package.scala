@@ -6,6 +6,7 @@ import software.amazon.awssdk.auth.credentials.{
   AwsCredentials,
   AwsCredentialsProvider,
   DefaultCredentialsProvider,
+  InstanceProfileCredentialsProvider,
   StaticCredentialsProvider
 }
 import software.amazon.awssdk.regions.Region
@@ -44,13 +45,25 @@ package object descriptors {
           case _ => Left("Unsupported credentials provider")
         }
       )
+    val instanceProfileCredentialsProvider: ConfigDescriptor[AwsCredentialsProvider] =
+       string.transformOrFail(
+        s =>
+          if (s == "instance-profile")
+            Right(InstanceProfileCredentialsProvider.create())
+          else Left("Not 'instance-profile'"),
+        {
+          case _: InstanceProfileCredentialsProvider =>
+            Right("instance-profile")
+          case _ => Left("Unsupported credentials provider")
+        }
+      )
     val staticCredentialsProvider: ConfigDescriptor[AwsCredentialsProvider] =
       awsCredentials.transform(
         creds => StaticCredentialsProvider.create(creds),
         _.resolveCredentials()
       )
 
-    defaultCredentialsProvider <> anonymousCredentialsProvider <> staticCredentialsProvider
+    defaultCredentialsProvider <> anonymousCredentialsProvider <> instanceProfileCredentialsProvider <> staticCredentialsProvider
   }
 
   val rawHeader: ConfigDescriptor[(String, List[String])] =

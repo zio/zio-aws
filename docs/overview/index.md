@@ -1,6 +1,6 @@
 ---
-layout: docs
-title: Getting started
+id: overview_index
+title: "Summary"
 ---
 
 # Getting started

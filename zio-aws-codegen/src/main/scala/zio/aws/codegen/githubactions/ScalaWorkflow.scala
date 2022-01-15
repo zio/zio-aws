@@ -147,31 +147,6 @@ object ScalaWorkflow {
       ids.map(loadStoredTarget(_, os, scalaVersion, javaVersion))
     )
 
-  def setupJekyll(): Step =
-    StepSequence(
-      Seq(
-        SingleStep(
-          "Setup Ruby",
-          uses = Some(ActionRef("ruby/setup-ruby@v1")),
-          parameters = Map(
-            "ruby-version" := "2.6.6",
-            "bundler-cache" := true
-          )
-        ),
-        SingleStep(
-          "Install Jekyll",
-          run = Some(
-            List(
-              "gem install sass",
-              "gem install jekyll -v 4.0.0",
-              "gem install jemoji -v 0.11.1",
-              "gem install jekyll-sitemap -v 1.4.0"
-            ).mkString("\n")
-          )
-        )
-      )
-    )
-
   def loadPGPSecret(): Step =
     SingleStep(
       "Load PGP secret",
