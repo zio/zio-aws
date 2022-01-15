@@ -160,7 +160,7 @@ object ModelCollector {
       if (OperationCollector.outputIsEventStreamOf(models, op)) {
         tryFindEventStreamShape(models, op.getOutput.getShape).flatMap {
           eventStream =>
-            val name = eventStream.shape.getMembers.asScala.keys.head
+            val name = eventStream.shape.getMembers.asScala.values.head.getShape
             modelFromShapeName(
               modelPkg,
               targetModelPkg,
