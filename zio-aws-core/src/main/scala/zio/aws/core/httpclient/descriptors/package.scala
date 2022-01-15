@@ -58,29 +58,29 @@ package object descriptors {
 
     (boolSocketOption(
       SO_BROADCAST
-    ) ?? "Allow transmission of broadcast datagrams" |@|
-      boolSocketOption(SO_KEEPALIVE) ?? "Keep connection alive" |@|
-      intSocketOption(SO_SNDBUF) ?? "The size of the socket send buffer" |@|
+    ) ?? "Allow transmission of broadcast datagrams" zip
+      boolSocketOption(SO_KEEPALIVE) ?? "Keep connection alive" zip
+      intSocketOption(SO_SNDBUF) ?? "The size of the socket send buffer" zip
       intSocketOption(
         SO_RCVBUF
-      ) ?? "The size of the socket receive buffer" |@|
-      boolSocketOption(SO_REUSEADDR) ?? "Re-use address" |@|
-      intSocketOption(SO_LINGER) ?? "Linger on close if data is present" |@|
-      intSocketOption(IP_TOS) ?? "The ToS octet in the IP header" |@|
+      ) ?? "The size of the socket receive buffer" zip
+      boolSocketOption(SO_REUSEADDR) ?? "Re-use address" zip
+      intSocketOption(SO_LINGER) ?? "Linger on close if data is present" zip
+      intSocketOption(IP_TOS) ?? "The ToS octet in the IP header" zip
       socketOption(
         IP_MULTICAST_IF,
         identity[NetworkInterface],
         identity[NetworkInterface]
       )(
         networkInterfaceByName
-      ) ?? "The network interface's name for IP multicast datagrams" |@|
+      ) ?? "The network interface's name for IP multicast datagrams" zip
       intSocketOption(
         IP_MULTICAST_TTL
-      ) ?? "The time-to-live for IP multicast datagrams" |@|
+      ) ?? "The time-to-live for IP multicast datagrams" zip
       boolSocketOption(
         IP_MULTICAST_LOOP
-      ) ?? "Loopback for IP multicast datagrams" |@|
-      boolSocketOption(TCP_NODELAY) ?? "Disable the Nagle algorithm").tupled
+      ) ?? "Loopback for IP multicast datagrams" zip
+      boolSocketOption(TCP_NODELAY) ?? "Disable the Nagle algorithm")
       .transform(
         tuple =>
           ChannelOptions(tuple.productIterator.collect {

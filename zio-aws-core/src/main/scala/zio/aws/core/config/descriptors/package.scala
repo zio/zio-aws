@@ -17,11 +17,11 @@ package object descriptors {
   val region: ConfigDescriptor[Region] = string.transform(Region.of, _.id())
 
   val awsCredentials: ConfigDescriptor[AwsCredentials] =
-    (string("accessKeyId") ?? "AWS access key ID" |@|
-      string("secretAccessKey") ?? "AWS secret access key")(
-      AwsBasicCredentials.create,
+    ((string("accessKeyId") ?? "AWS access key ID") zip
+     (string("secretAccessKey") ?? "AWS secret access key")).transform(
+      (AwsBasicCredentials.create _).tupled,
       (creds: AwsCredentials) =>
-        Some((creds.accessKeyId(), creds.secretAccessKey()))
+        (creds.accessKeyId(), creds.secretAccessKey())
     )
 
   val credentialsProvider: ConfigDescriptor[AwsCredentialsProvider] = {
@@ -67,8 +67,8 @@ package object descriptors {
   }
 
   val rawHeader: ConfigDescriptor[(String, List[String])] =
-    (string("name") ?? "Header name" |@|
-      listOrSingleton("value")(string ?? "Header value")).tupled
+    (string("name") ?? "Header name" zip
+      listOrSingleton("value")(string ?? "Header value"))
 
   val rawHeaderMap: ConfigDescriptor[Map[String, List[String]]] =
     list(rawHeader).transform(
@@ -77,28 +77,18 @@ package object descriptors {
     )
 
   val commonClientConfig: ConfigDescriptor[CommonClientConfig] =
-    (nested("extraHeaders")(
-      rawHeaderMap
-    ) ?? "Extra headers to be sent with each request" |@|
-      duration(
-        "apiCallTimeout"
-      ).optional ?? "Amount of time to allow the client to complete the execution of an API call" |@|
-      duration(
-        "apiCallAttemptTimeout"
-      ).optional ?? "Amount of time to wait for the HTTP request to complete before giving up" |@|
-      string("defaultProfileName").optional ?? "Default profile name")
-      .to[CommonClientConfig]
+    (
+    (nested("extraHeaders")(rawHeaderMap) ?? "Extra headers to be sent with each request") zip
+      (duration("apiCallTimeout").optional ?? "Amount of time to allow the client to complete the execution of an API call") zip
+      (duration("apiCallAttemptTimeout").optional ?? "Amount of time to wait for the HTTP request to complete before giving up") zip
+      (string("defaultProfileName").optional ?? "Default profile name")
+    ).to[CommonClientConfig]
 
   val commonAwsConfig: ConfigDescriptor[CommonAwsConfig] =
-    (nested("region")(region).optional ?? "AWS region to connect to" |@|
-      nested("credentials")(credentialsProvider).default(
-        DefaultCredentialsProvider.create()
-      ) ?? "AWS credentials provider" |@|
-      uri(
-        "endpointOverride"
-      ).optional ?? "Overrides the AWS service endpoint" |@|
-      nested("client")(
-        commonClientConfig
-      ).optional ?? "Common settings for AWS service clients")
-      .to[CommonAwsConfig]
+    (
+      (nested("region")(region).optional ?? "AWS region to connect to") zip
+      (nested("credentials")(credentialsProvider).default(DefaultCredentialsProvider.create()) ?? "AWS credentials provider") zip
+      (uri("endpointOverride").optional ?? "Overrides the AWS service endpoint") zip
+      (nested("client")(commonClientConfig).optional ?? "Common settings for AWS service clients")
+    ).to[CommonAwsConfig]
 }
