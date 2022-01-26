@@ -289,8 +289,8 @@ trait ServiceInterfaceGenerator {
     for {
       eventStream <- findEventStreamShape(op.getOutput.getShape)
       awsEventStreamT = ScalaType(modelPkg, eventStream.name)
-      rawEventItemName = eventStream.shape.getMembers.asScala.keys.head
-      eventItemModel <- get(rawEventItemName)
+      rawEventItem = eventStream.shape.getMembers.asScala.values.head
+      eventItemModel <- get(rawEventItem.getShape)
       eventRoT = eventItemModel.generatedType / "ReadOnly"
 
       awsEventT <- TypeMapping.toJavaType(eventItemModel)
@@ -354,8 +354,8 @@ trait ServiceInterfaceGenerator {
     for {
       eventStream <- findEventStreamShape(op.getInput.getShape)
       awsInEventStreamT = modelPkg / eventStream.name
-      rawEventItemName = eventStream.shape.getMembers.asScala.keys.head
-      eventT <- get(rawEventItemName).map(_.generatedType)
+      rawEventItem = eventStream.shape.getMembers.asScala.values.head
+      eventT <- get(rawEventItem.getShape).map(_.generatedType)
       opNameLit = Lit.String(methodName.value)
       objectName = Term.Name(methodName.value.capitalize)
     } yield ServiceMethods(

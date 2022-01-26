@@ -21,23 +21,19 @@ package object descriptors {
     )
 
   val proxyConfiguration: ConfigDescriptor[ProxyConfiguration] =
-    (nested("scheme")(httpOrHttps)
-      .default(HttpOrHttps.Http) ?? "The proxy scheme" |@|
-      string("host") ?? "Hostname of the proxy" |@|
-      int("port") ?? "Port of the proxy" |@|
-      set("nonProxyHosts")(string)
-        .default(Set.empty) ?? "Hosts that should not be proxied")
-      .to[ProxyConfiguration]
+    (
+      (nested("scheme")(httpOrHttps).default(HttpOrHttps.Http) ?? "The proxy scheme") zip
+      (string("host") ?? "Hostname of the proxy") zip
+      (int("port") ?? "Port of the proxy") zip
+      (set("nonProxyHosts")(string).default(Set.empty) ?? "Hosts that should not be proxied")
+    ).to[ProxyConfiguration]
 
   val http2Configuration: ConfigDescriptor[Http2Config] =
-    (long(
-      "maxStreams"
-    ) ?? "Max number of concurrent streams per connection" |@|
-      int("initialWindowSize") ?? "Initial window size of a stream" |@|
-      zioDuration("healthCheckPingPeriod").default(
-        5.seconds
-      ) ?? "The period that the Netty client will send PING frames to the remote endpoint")
-      .to[Http2Config]
+    (
+      (long("maxStreams") ?? "Max number of concurrent streams per connection") zip
+      (int("initialWindowSize") ?? "Initial window size of a stream") zip
+      (zioDuration("healthCheckPingPeriod").default(5.seconds) ?? "The period that the Netty client will send PING frames to the remote endpoint")
+    ).to[Http2Config]
 
   def channelOption[T, JT](
       opt: ChannelOption[JT],
@@ -94,16 +90,14 @@ package object descriptors {
 
     import ChannelOption._
     val channelOptions =
-      (durationMsChannelOption(
-        CONNECT_TIMEOUT_MILLIS
-      ) ?? "Connect timeout" |@|
-        intChannelOption(WRITE_SPIN_COUNT) ?? "Write spin count" |@|
-        boolChannelOption(ALLOW_HALF_CLOSURE) ?? "Allow half closure" |@|
-        boolChannelOption(AUTO_READ) ?? "Auto read" |@|
-        boolChannelOption(AUTO_CLOSE) ?? "Auto close" |@|
-        boolChannelOption(
-          SINGLE_EVENTEXECUTOR_PER_GROUP
-        ) ?? "Single event executor per group").tupled.transform(
+      (
+        (durationMsChannelOption(CONNECT_TIMEOUT_MILLIS) ?? "Connect timeout") zip
+        (intChannelOption(WRITE_SPIN_COUNT) ?? "Write spin count") zip
+        (boolChannelOption(ALLOW_HALF_CLOSURE) ?? "Allow half closure") zip
+        (boolChannelOption(AUTO_READ) ?? "Auto read") zip
+        (boolChannelOption(AUTO_CLOSE) ?? "Auto close") zip
+        (boolChannelOption(SINGLE_EVENTEXECUTOR_PER_GROUP) ?? "Single event executor per group")
+      ).transform(
         tuple =>
           NettyChannelOptions(tuple.productIterator.collect {
             case Some(opt: NettyOptionValue[_]) => opt
@@ -119,9 +113,9 @@ package object descriptors {
           )
       )
 
-    (socketChannelOptions |@| channelOptions)(
-      (opts1, opts2) => opts2.withSocketOptions(opts1),
-      _ => None
+    (socketChannelOptions zip channelOptions).transformOrFail(
+      { case (opts1, opts2) => Right(opts2.withSocketOptions(opts1)) },
+      _ => Left("not supported")
     )
   }
 
@@ -166,47 +160,47 @@ package object descriptors {
       SdkHttpConfigurationOption.GLOBAL_HTTP_DEFAULTS.get(key)
     import SdkHttpConfigurationOption._
     (
-      int("maxConcurrency").default(
+      (int("maxConcurrency").default(
         globalDefault[Integer](MAX_CONNECTIONS)
-      ) ?? "Maximum number of allowed concurrent requests" |@|
-        int("maxPendingConnectionAcquires").default(
+      ) ?? "Maximum number of allowed concurrent requests") zip
+      (int("maxPendingConnectionAcquires").default(
           globalDefault[Integer](MAX_PENDING_CONNECTION_ACQUIRES)
-        ) ?? "The maximum number of pending acquires allowed" |@|
-        zioDuration("readTimeout").default(
+        ) ?? "The maximum number of pending acquires allowed") zip
+        (zioDuration("readTimeout").default(
           globalDefault(READ_TIMEOUT)
-        ) ?? "The amount of time to wait for a read on a socket" |@|
-        zioDuration("writeTimeout").default(
+        ) ?? "The amount of time to wait for a read on a socket") zip
+        (zioDuration("writeTimeout").default(
           globalDefault(WRITE_TIMEOUT)
-        ) ?? "The amount of time to wait for a write on a socket" |@|
-        zioDuration("connectionTimeout").default(
+        ) ?? "The amount of time to wait for a write on a socket") zip
+        (zioDuration("connectionTimeout").default(
           globalDefault(CONNECTION_TIMEOUT)
-        ) ?? "The amount of time to wait when initially establishing a connection before giving up" |@|
-        zioDuration("connectionAcquisitionTimeout").default(
+        ) ?? "The amount of time to wait when initially establishing a connection before giving up") zip
+        (zioDuration("connectionAcquisitionTimeout").default(
           globalDefault(CONNECTION_ACQUIRE_TIMEOUT)
-        ) ?? "The amount of time to wait when acquiring a connection from the pool before giving up" |@|
-        zioDuration("connectionTimeToLive").default(
+        ) ?? "The amount of time to wait when acquiring a connection from the pool before giving up") zip
+        (zioDuration("connectionTimeToLive").default(
           globalDefault(CONNECTION_TIME_TO_LIVE)
-        ) ?? "The maximum amount of time that a connection should be allowed to remain open, regardless of usage frequency" |@|
-        zioDuration("connectionMaxIdleTime").default(
+        ) ?? "The maximum amount of time that a connection should be allowed to remain open, regardless of usage frequency") zip
+        (zioDuration("connectionMaxIdleTime").default(
           5.seconds
-        ) ?? "Maximum amount of time that a connection should be allowed to remain open while idle" |@|
-        boolean("useIdleConnectionReaper").default(
+        ) ?? "Maximum amount of time that a connection should be allowed to remain open while idle") zip
+        (boolean("useIdleConnectionReaper").default(
           globalDefault[java.lang.Boolean](REAP_IDLE_CONNECTIONS)
-        ) ?? "If true, the idle connections in the pool should be closed" |@|
-        nested("protocol")(protocol)
-          .default(Protocol.Dual) ?? "HTTP/1.1 or HTTP/2 or Dual" |@|
-        nested("channelOptions")(nettyChannelOptions).default(
+        ) ?? "If true, the idle connections in the pool should be closed") zip
+        (nested("protocol")(protocol)
+          .default(Protocol.Dual) ?? "HTTP/1.1 or HTTP/2 or Dual") zip
+        (nested("channelOptions")(nettyChannelOptions).default(
           NettyChannelOptions(Vector.empty)
-        ) ?? "Custom Netty channel options" |@|
-        nested("sslProvider")(
+        ) ?? "Custom Netty channel options") zip
+        (nested("sslProvider")(
           sslProvider
-        ).optional ?? "The SSL provider to be used" |@|
-        nested("proxy")(
+        ).optional ?? "The SSL provider to be used") zip
+        (nested("proxy")(
           proxyConfiguration
-        ).optional ?? "Proxy configuration" |@|
-        nested("http2")(
+        ).optional ?? "Proxy configuration") zip
+        (nested("http2")(
           http2Configuration
-        ).optional ?? "HTTP/2 specific options"
+        ).optional ?? "HTTP/2 specific options")
     ).to[NettyClientConfig]
   }
 }

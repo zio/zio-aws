@@ -14,21 +14,21 @@ object Common extends AutoPlugin {
     val zioVersion = "2.0.0-RC1"
     val zioCatsInteropVersion = "3.3.0-RC1"
     val zioReactiveStreamsInteropVersion = "2.0.0-RC1"
-    val zioConfigVersion = "1.0.10+11-5e644c33-SNAPSHOT"
-    val zioPreludeVersion = "1.0.0-RC8+50-9f687f11-SNAPSHOT"
-    val catsEffectVersion = "3.3.1"
+    val zioConfigVersion = "3.0.0-RC1"
+    val zioPreludeVersion = "1.0.0-RC9"
+    val catsEffectVersion = "3.3.4"
 
-    val awsVersion = "2.17.102"
+    val awsVersion = "2.17.118"
     val awsSubVersion = awsVersion.drop(awsVersion.indexOf('.') + 1)
-    val http4sVersion = "0.23.7"
+    val http4sVersion = "0.23.8"
     val fs2Version = "3.2.4"
 
-    val majorVersion = "3"
+    val majorVersion = "5"
     val zioAwsVersionPrefix = s"$majorVersion.$awsSubVersion."
 
     val scala212Version = "2.12.15"
-    val scala213Version = "2.13.7"
-    val scala3Version = "3.1.0"
+    val scala213Version = "2.13.8"
+    val scala3Version = "3.1.1"
 
     val scalacOptions212 = Seq("-Ypartial-unification", "-deprecation")
     val scalacOptions213 = Seq("-deprecation")
@@ -39,7 +39,7 @@ object Common extends AutoPlugin {
 
   override val trigger = allRequirements
 
-  override val requires = Sonatype
+  override val requires = (Sonatype && ci.release.early.Plugin)
 
   override lazy val globalSettings =
     Seq(
@@ -97,22 +97,24 @@ object Common extends AutoPlugin {
       publishTo := sonatypePublishToBundle.value,
       sonatypeTimeoutMillis := 300 * 60 * 1000,
       sonatypeProjectHosting := Some(
-        GitHubHosting("vigoo", "zio-aws", "daniel.vigovszky@gmail.com")
+        GitHubHosting("zio", "zio-aws", "daniel.vigovszky@gmail.com")
       ),
-      sonatypeCredentialHost := "s01.oss.sonatype.org",
-      sonatypeRepository := "https://s01.oss.sonatype.org/service/local",
+      sonatypeCredentialHost := "oss.sonatype.org",
+      sonatypeRepository := "https://oss.sonatype.org/service/local",
       credentials ++=
         (for {
           username <- Option(System.getenv().get("SONATYPE_USERNAME"))
           password <- Option(System.getenv().get("SONATYPE_PASSWORD"))
         } yield Credentials(
           "Sonatype Nexus Repository Manager",
-          "s01.oss.sonatype.org",
+          "oss.sonatype.org",
           username,
           password
         )).toSeq,
       resolvers +=
-        "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+        "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
+
+      ci.release.early.Plugin.autoImport.verifyNoSnapshotDependencies := {} // Temporarily disable this check until all dependencies are ready for ZIO 2
     )
 
   private def adjustTagForAwsVersion(

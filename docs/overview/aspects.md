@@ -1,5 +1,5 @@
 ---
-layout: docs
+id: overview_aspects
 title: Aspects
 ---
 
@@ -12,28 +12,29 @@ To define an aspect, create an instance of the `AwsCallAspect` trait:
 
 ```scala mdoc:invisible
 import zio._
-import zio.clock._
-import zio.console._
 import zio.aws.core.aspects._
 import zio.aws.core.AwsError
 ```
 
 ```scala mdoc
-val callLogging: AwsCallAspect[Clock with Console] =
-  new AwsCallAspect[Clock with Console] {
-    override final def apply[R1 <: Clock with Console, A](
-        f: ZIO[R1, AwsError, Described[A]]
-    ): ZIO[R1, AwsError, Described[A]] = {
-      f.timed.flatMap { case (duration, r @ Described(result, description)) =>
-        console
-          .putStrLn(
-            s"[${description.service}/${description.operation}] ran for $duration"
-          )
-		  .ignore
-          .as(r)
+  val callLogging: AwsCallAspect[Clock & Console] =
+    new AwsCallAspect[Clock & Console] {
+      override final def apply[R <: Clock & Console, E >: AwsError, A <: Described[_]](
+          f: ZIO[R, E, A]
+      )(implicit trace: ZTraceElement): ZIO[R, E, A] = {
+        f.either.timed
+          .flatMap {
+            case (duration, Right(r)) =>
+              ZIO.succeed(r)
+            case (duration, Left(error)) =>
+              Console
+                .printLine(
+                  s"AWS call FAILED in $duration with $error"
+                )
+                .ignore *> ZIO.fail(error)
+          }
       }
     }
-  }
 ```
 
 This aspect can attached to a _client layer_ with the `@@` operator. Multiple aspects can be composed with `>>>`.
