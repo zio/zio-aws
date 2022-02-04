@@ -1355,9 +1355,9 @@ trait ServiceInterfaceGenerator {
       supportsHttp2Lit = Lit.Boolean(supportsHttp2)
 
       mockCompose = q"""
-        val compose: zio.URLayer[zio.test.mock.Proxy, $serviceNameT] =
-          zio.ZIO.service[zio.test.mock.Proxy].flatMap { proxy =>
-            withRuntime[zio.test.mock.Proxy].map { rts =>
+        val compose: zio.URLayer[zio.mock.Proxy, $serviceNameT] =
+          zio.ZIO.service[zio.mock.Proxy].flatMap { proxy =>
+            withRuntime[zio.mock.Proxy].map { rts =>
               new ${Init(serviceNameT, Name.Anonymous(), List.empty)} {
                 val api: ${clientInterface.typ} = null
                 def withAspect[R1](newAspect: zio.aws.core.aspects.AwsCallAspect[R1], r: zio.ZEnvironment[R1]): $serviceNameT = this
@@ -1421,7 +1421,7 @@ trait ServiceInterfaceGenerator {
       pathMock <- Generator.generateScalaPackage(pkg, serviceNameMock.value) {
         ZIO.succeed {
           q"""{
-            object $serviceNameMock extends zio.test.mock.Mock[$serviceNameT] {
+            object $serviceNameMock extends zio.mock.Mock[$serviceNameT] {
               ..$serviceMethodMockObjects
 
               $mockCompose
