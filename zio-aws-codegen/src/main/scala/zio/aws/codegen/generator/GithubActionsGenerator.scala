@@ -108,7 +108,7 @@ trait GithubActionsGenerator {
                   "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
                   "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}"
                 )
-              ),
+              ).when(isMaster),
               storeTargets(
                 "core",
                 List(
