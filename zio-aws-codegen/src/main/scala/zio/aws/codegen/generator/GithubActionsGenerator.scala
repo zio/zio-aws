@@ -94,7 +94,7 @@ trait GithubActionsGenerator {
                   "zio-aws-http4s/test",
                   "zio-aws-netty/test"
                 )
-              )
+              ),
               runSBT(
                 "Publish core",
                 parameters = List(
@@ -108,7 +108,7 @@ trait GithubActionsGenerator {
                   "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
                   "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}"
                 )
-              )
+              ),
               storeTargets(
                 "core",
                 List(
