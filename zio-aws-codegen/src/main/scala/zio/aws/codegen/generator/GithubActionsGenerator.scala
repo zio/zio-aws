@@ -94,15 +94,7 @@ trait GithubActionsGenerator {
                   "zio-aws-http4s/test",
                   "zio-aws-netty/test"
                 )
-              ).when(isNotScalaVersion(scala3)),
-              runSBT(
-                "Build and test core",
-                parameters = List(
-                  "++${{ matrix.scala }}",
-                  "zio-aws-core/test",
-                  "zio-aws-netty/test"
-                )
-              ).when(isScalaVersion(scala3)),
+              ),
               runSBT(
                 "Publish core",
                 parameters = List(
@@ -116,19 +108,7 @@ trait GithubActionsGenerator {
                   "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
                   "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}"
                 )
-              ).when(isMaster && isNotScalaVersion(scala3)),
-              runSBT(
-                "Publish core",
-                parameters = List(
-                  "++${{ matrix.scala }}",
-                  "zio-aws-core/publishSigned",
-                  "zio-aws-netty/publishSigned"
-                ),
-                env = Map(
-                  "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
-                  "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}"
-                )
-              ).when(isMaster && isScalaVersion(scala3)),
+              ).when(isMaster),
               storeTargets(
                 "core",
                 List(
@@ -140,17 +120,7 @@ trait GithubActionsGenerator {
                   "zio-aws-http4s",
                   "zio-aws-netty"
                 )
-              ).when(isNotScalaVersion(scala3)),
-              storeTargets(
-                "core",
-                List(
-                  "",
-                  "project",
-                  "zio-aws-codegen",
-                  "zio-aws-core",
-                  "zio-aws-netty"
-                )
-              ).when(isScalaVersion(scala3))
+              )
             )
         )
         .addJobs(
