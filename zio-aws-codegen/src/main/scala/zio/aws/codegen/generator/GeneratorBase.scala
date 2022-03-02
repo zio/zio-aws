@@ -117,9 +117,14 @@ trait GeneratorBase {
           q"""${model.generatedType.term}.wrap($term)"""
         )
       case ModelType.Blob =>
-        ZIO.succeed(
-          q"""${model.generatedType.term}(${Types.chunk_.term}.fromArray($term.asByteArrayUnsafe()))"""
-        )
+        if (isBlacklistedNewtype(model.generatedType))
+          ZIO.succeed(
+            q"""(${Types.chunk_.term}.fromArray($term.asByteArrayUnsafe()): ${model.generatedType.typ})"""
+          )
+        else
+          ZIO.succeed(
+            q"""${model.generatedType.term}(${Types.chunk_.term}.fromArray($term.asByteArrayUnsafe()))"""
+          )
       case ModelType.Structure =>
         ZIO.succeed(
           q"""${model.generatedType.term}.wrap($term)"""
