@@ -5,7 +5,10 @@ import zio.aws.codegen.Parameters
 import zio.aws.codegen.generator.context._
 import zio.aws.codegen.loader.ModelId
 import software.amazon.awssdk.codegen.C2jModels
-import software.amazon.awssdk.codegen.naming.{DefaultNamingStrategy, NamingStrategy}
+import software.amazon.awssdk.codegen.naming.{
+  DefaultNamingStrategy,
+  NamingStrategy
+}
 import zio._
 import zio.aws.codegen.Parameters
 import zio.blocking.Blocking
@@ -42,7 +45,8 @@ object AwsGenerator {
         with ServiceModelGenerator
         with GithubActionsGenerator
         with ArtifactListGenerator
-        with HasConfig {
+        with HasConfig
+        with Blacklists {
         import scala.meta._
 
         val config: Parameters = cfg

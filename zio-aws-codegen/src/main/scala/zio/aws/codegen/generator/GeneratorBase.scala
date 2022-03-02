@@ -16,6 +16,7 @@ import scala.meta._
 import scala.meta.internal.prettyprinters.TreeSyntax
 
 trait GeneratorBase {
+  this: Blacklists =>
 
   protected def unwrapSdkValue(
       model: Model,
@@ -65,12 +66,15 @@ trait GeneratorBase {
       case ModelType.BigDecimal =>
         ZIO.succeed(q"""$term.bigDecimal""")
       case _ =>
-        if (TypeMapping.isBuiltIn(model.shapeName)) {
-          TypeMapping.toJavaType(model).map { javaType =>
-            q"""$term : ${javaType.typ}"""
-          }
-        } else {
-          TypeMapping.toWrappedType(model).flatMap { wrapperType =>
+        TypeMapping.toWrappedType(model).flatMap { wrapperType =>
+          if (
+            TypeMapping
+              .isBuiltIn(model.shapeName) || isBlacklistedNewtype(wrapperType)
+          ) {
+            TypeMapping.toJavaType(model).map { javaType =>
+              q"""$term : ${javaType.typ}"""
+            }
+          } else {
             TypeMapping.toJavaType(model).map { javaType =>
               q"""${wrapperType.term}.unwrap($term) : ${javaType.typ}"""
             }
@@ -113,9 +117,14 @@ trait GeneratorBase {
           q"""${model.generatedType.term}.wrap($term)"""
         )
       case ModelType.Blob =>
-        ZIO.succeed(
-          q"""${model.generatedType.term}(${Types.chunk_.term}.fromArray($term.asByteArrayUnsafe()))"""
-        )
+        if (isBlacklistedNewtype(model.generatedType))
+          ZIO.succeed(
+            q"""(${Types.chunk_.term}.fromArray($term.asByteArrayUnsafe()): ${model.generatedType.typ})"""
+          )
+        else
+          ZIO.succeed(
+            q"""${model.generatedType.term}(${Types.chunk_.term}.fromArray($term.asByteArrayUnsafe()))"""
+          )
       case ModelType.Structure =>
         ZIO.succeed(
           q"""${model.generatedType.term}.wrap($term)"""
@@ -123,7 +132,11 @@ trait GeneratorBase {
       case ModelType.Exception =>
         ZIO.succeed(term)
       case _ =>
-        if (TypeMapping.isBuiltIn(model.shapeName))
+        if (
+          TypeMapping.isBuiltIn(model.shapeName) || isBlacklistedNewtype(
+            model.generatedType
+          )
+        )
           ZIO.succeed(q"""$term: ${model.generatedType.typ}""")
         else
           ZIO.succeed(q"""${model.generatedType.term}($term)""")

@@ -19,7 +19,7 @@ import zio.nio.file.Path
 import scala.meta._
 
 trait ServiceModelGenerator {
-  this: HasConfig with GeneratorBase =>
+  this: HasConfig with GeneratorBase with Blacklists =>
 
   private def removeDuplicates(modelSet: Set[Model]): Set[Model] =
     modelSet
@@ -267,19 +267,29 @@ trait ServiceModelGenerator {
       wrapperType: ScalaType,
       underlyingType: ScalaType
   ): ZIO[AwsGeneratorContext, AwsGeneratorFailure, ModelWrapper] =
-    ZIO.succeed(
-      ModelWrapper(
-        None,
-        code = List(
-          q"""object ${wrapperType.termName} extends ${Types
-            .subtype(underlyingType)
-            .init}""",
-          q"""type ${wrapperType.typName} = ${Type
-            .Select(wrapperType.term, Type.Name("Type"))}"""
-        ),
-        wrapperType
+    if (isBlacklistedNewtype(wrapperType))
+      ZIO.succeed(
+        ModelWrapper(
+          None,
+          code =
+            List(q"""type ${wrapperType.typName} = ${underlyingType.typ}"""),
+          wrapperType
+        )
       )
-    )
+    else
+      ZIO.succeed(
+        ModelWrapper(
+          None,
+          code = List(
+            q"""object ${wrapperType.termName} extends ${Types
+              .subtype(underlyingType)
+              .init}""",
+            q"""type ${wrapperType.typName} = ${Type
+              .Select(wrapperType.term, Type.Name("Type"))}"""
+          ),
+          wrapperType
+        )
+      )
 
   private def generateStructure(
       m: Model,
@@ -583,7 +593,9 @@ trait ServiceModelGenerator {
       ) {
         for {
           _ <- ZIO.foreach_(namesInModel)(CodeFileGenerator.knownLocalName(_))
-          _ <- ZIO.foreach_(primitiveModels.map(m => m.generatedType / "Type"))(CodeFileGenerator.keepFullyQualified(_))
+          _ <- ZIO.foreach_(primitiveModels.map(m => m.generatedType / "Type"))(
+            CodeFileGenerator.keepFullyQualified(_)
+          )
         } yield q"""import scala.jdk.CollectionConverters._
 
                     object primitives {
@@ -591,7 +603,7 @@ trait ServiceModelGenerator {
                     }
 
                     ..${modelsForPackage.flatMap(_.code)}
-                 """        
+                 """
       }
       models <- ZIO.foreach(separateModels) { case (fileName, code) =>
         Generator.generateScalaPackage[Any, Nothing](pkg / "model", fileName) {

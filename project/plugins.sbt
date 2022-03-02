@@ -7,6 +7,8 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-ghpages" % "0.6.3")
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.4.6")
 addSbtPlugin("com.github.sbt" % "sbt-unidoc" % "0.5.0")
 
+libraryDependencies += "xalan" % "xalan" % "2.7.2"
+
 // Codegen project
 lazy val codegen = project
   .in(file("."))
