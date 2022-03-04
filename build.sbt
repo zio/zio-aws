@@ -56,7 +56,7 @@ lazy val akkahttp = Project("zio-aws-akka-http", file("zio-aws-akka-http"))
     libraryDependencies ++= Seq(
       ("com.typesafe.akka" %% "akka-stream" % "2.6.18").cross(CrossVersion.for3Use2_13)
         .exclude("org.scala-lang.modules", "scala-collection-compat_2.13"),
-      ("com.typesafe.akka" %% "akka-http" % "10.2.8").cross(CrossVersion.for3Use2_13)
+      ("com.typesafe.akka" %% "akka-http" % "10.2.9").cross(CrossVersion.for3Use2_13)
         .exclude("org.scala-lang.modules", "scala-collection-compat_2.13"),        
       ("com.github.matsluni" %% "aws-spi-akka-http" % "0.0.11").cross(CrossVersion.for3Use2_13)
         .exclude("org.scala-lang.modules", "scala-collection-compat_2.13")        
