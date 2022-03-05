@@ -41,7 +41,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
         val log = streams.value.log
 
         val idStr = awsLibraryId.value
-        val id = ModelId.parse(idStr) match {
+        val id = ModuleId.parse(idStr) match {
           case Left(failure) => sys.error(failure)
           case Right(value)  => value
         }
@@ -66,16 +66,16 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
 
         zio.Runtime.default.unsafeRun {
           val cfg = ZLayer.succeed(params)
-          val env = loader.live ++ (cfg >+> AwsGenerator.live)
+          val env = Loader.fromGit ++ (cfg >+> AwsGenerator.live)
           val task =
             for {
-              _ <- ZIO.effect(log.info(s"Generating sources for $id"))
-              model <- loader.loadCodegenModel(id)
+              _ <- ZIO.attempt(log.info(s"Generating sources for $id"))
+              model <- Loader.loadCodegenModel(id)
               files <- AwsGenerator.generateServiceCode(id, model, log)
             } yield files.toSeq
           task.provideCustomLayer(env).tapError { generatorError =>
             ZIO
-              .effect(log.error(s"Code generator failure: ${generatorError}"))
+              .attempt(log.error(s"Code generator failure: ${generatorError}"))
           }
         }
       }
@@ -96,14 +96,13 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
 
   override lazy val extraProjects: Seq[Project] = {
     zio.Runtime.default.unsafeRun {
-      val env = loader.live
+      val env = Loader.fromGit
       val task = for {
-        ids <- loader.findModels()
+        ids <- Loader.findModels()
       } yield generateSbtSubprojects(ids)
 
       task.provideCustomLayer(env).tapError { generatorError =>
-        zio.console
-          .putStrLnErr(s"Code generator failure: ${generatorError}")
+        zio.Console.printLineError(s"Code generator failure: ${generatorError}")
       }
     }
   }
@@ -130,16 +129,16 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
 
     zio.Runtime.default.unsafeRun {
       val cfg = ZLayer.succeed(params)
-      val env = loader.live ++ (cfg >+> AwsGenerator.live)
+      val env = Loader.fromGit ++ (cfg >+> AwsGenerator.live)
       val task =
         for {
-          _ <- ZIO.effect(log.info(s"Regenerating ${params.ciTarget}"))
-          ids <- loader.findModels()
+          _ <- ZIO.attempt(log.info(s"Regenerating ${params.ciTarget}"))
+          ids <- Loader.findModels()
           _ <- AwsGenerator.generateCiYaml(ids)
         } yield ()
       task.provideCustomLayer(env).catchAll { generatorError =>
         ZIO
-          .effect(log.error(s"Code generator failure: ${generatorError}"))
+          .attempt(log.error(s"Code generator failure: ${generatorError}"))
           .as(Seq.empty)
       }
     }
@@ -167,24 +166,24 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
 
     zio.Runtime.default.unsafeRun {
       val cfg = ZLayer.succeed(params)
-      val env = loader.live ++ (cfg >+> AwsGenerator.live)
+      val env = Loader.fromGit ++ (cfg >+> AwsGenerator.live)
       val task =
         for {
-          _ <- ZIO.effect(
+          _ <- ZIO.attempt(
             log.info(s"Regenerating ${params.artifactListTarget}")
           )
-          ids <- loader.findModels()
+          ids <- Loader.findModels()
           _ <- AwsGenerator.generateArtifactList(ids)
         } yield ()
       task.provideCustomLayer(env).catchAll { generatorError =>
         ZIO
-          .effect(log.error(s"Code generator failure: ${generatorError}"))
+          .attempt(log.error(s"Code generator failure: ${generatorError}"))
           .as(Seq.empty)
       }
     }
   }
 
-  protected def generateSbtSubprojects(ids: Set[ModelId]): Seq[Project] = {
+  protected def generateSbtSubprojects(ids: Set[ModuleId]): Seq[Project] = {
     val map = ids.toSeq
       .sortWith { case (a, b) =>
         val aIsDependent = a.subModuleName match {
@@ -199,7 +198,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
         bIsDependent || (!aIsDependent && a.toString < b.toString)
       }
       //.filter(name => Set("elasticbeanstalk", "kinesis", "dynamodb", "s3", "ec2").contains(name.moduleName))
-      .foldLeft(Map.empty[ModelId, Project]) { (mapping, id) =>
+      .foldLeft(Map.empty[ModuleId, Project]) { (mapping, id) =>
         val name = id.moduleName
         val fullName = s"zio-aws-$name"
         val deps: Seq[ClasspathDep[ProjectReference]] = id.subModule match {
@@ -207,7 +206,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
             Seq(
               ClasspathDependency(LocalProject("zio-aws-core"), None),
               ClasspathDependency(
-                mapping(ModelId(id.name, Some(id.name))),
+                mapping(ModuleId(id.name, Some(id.name))),
                 None
               )
             )

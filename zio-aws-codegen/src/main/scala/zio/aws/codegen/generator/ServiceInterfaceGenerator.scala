@@ -2,12 +2,12 @@ package zio.aws.codegen.generator
 
 import io.github.vigoo.metagen.core._
 import zio.aws.codegen.generator.context._
+import zio.aws.codegen.generator.context.AwsGeneratorContext._
 import zio.aws.codegen.generator.syntax._
 import zio.aws.codegen.generator.OperationMethodType._
 import software.amazon.awssdk.codegen.model.service.Operation
-import zio.blocking.Blocking
 import zio.nio.file.Path
-import zio.{Has, UIO, ZIO}
+import zio.{UIO, ZIO}
 
 import java.lang
 import scala.jdk.CollectionConverters._
@@ -24,7 +24,7 @@ trait ServiceInterfaceGenerator {
     for {
       namingStrategy <- getNamingStrategy
       pkg <- getPkg
-      name <- ZIO.effect(namingStrategy.getServiceName).mapError(UnknownError)
+      name <- ZIO.attempt(namingStrategy.getServiceName).mapError(UnknownError)
     } yield ScalaType(pkg, name)
 
   private def opRequestType(
@@ -34,7 +34,7 @@ trait ServiceInterfaceGenerator {
       namingStrategy <- getNamingStrategy
       pkg <- getPkg
       name <- ZIO
-        .effect(namingStrategy.getRequestClassName(opName))
+        .attempt(namingStrategy.getRequestClassName(opName))
         .mapError(UnknownError)
     } yield ScalaType(pkg / "model", name)
 
@@ -45,7 +45,7 @@ trait ServiceInterfaceGenerator {
       namingStrategy <- getNamingStrategy
       pkg <- getPkg
       name <- ZIO
-        .effect(namingStrategy.getResponseClassName(opName))
+        .attempt(namingStrategy.getResponseClassName(opName))
         .mapError(UnknownError)
     } yield ScalaType(pkg / "model", name)
 
@@ -651,30 +651,33 @@ trait ServiceInterfaceGenerator {
     val objectName = Term.Name(methodName.value.capitalize)
     val methodNameLit = Lit.String(methodName.value)
 
-    val simpleMethodName = 
+    val simpleMethodName =
       if (pagination.isDefined) Term.Name(methodName.value + "Paginated")
       else methodName
     val simpleObjectName = Term.Name(simpleMethodName.value.capitalize)
 
     val simpleRequestResponse =
       ServiceMethod(
-        interface = q"""def $simpleMethodName(request: ${requestType.typ}): ${Types
-          .ioAwsError(responseTypeRo)
-          .typ}""",
+        interface =
+          q"""def $simpleMethodName(request: ${requestType.typ}): ${Types
+            .ioAwsError(responseTypeRo)
+            .typ}""",
         implementation =
           q"""def $simpleMethodName(request: ${requestType.typ}): ${Types
             .ioAwsError(responseTypeRo)
             .typ} =
                       asyncRequestResponse[${javaRequestType.typ}, ${javaResponseType.typ}]($methodNameLit, api.$methodName)(request.buildAwsValue()).map(${responseType.term}.wrap).provideEnvironment(r)""",
-        accessor = q"""def $simpleMethodName(request: ${requestType.typ}): ${Types
-          .zioAwsError(serviceType, responseTypeRo)
-          .typ} =
+        accessor =
+          q"""def $simpleMethodName(request: ${requestType.typ}): ${Types
+            .zioAwsError(serviceType, responseTypeRo)
+            .typ} =
                 ${Types.zio_.term}.serviceWithZIO(_.$simpleMethodName(request))""",
         mockObject =
           q"""object $simpleObjectName extends Effect[${requestType.typ}, ${Types.awsError.typ}, ${responseTypeRo.typ}]""",
-        mockCompose = q"""def $simpleMethodName(request: ${requestType.typ}):  ${Types
-          .ioAwsError(responseTypeRo)
-          .typ} = proxy($simpleObjectName, request)"""
+        mockCompose =
+          q"""def $simpleMethodName(request: ${requestType.typ}):  ${Types
+            .ioAwsError(responseTypeRo)
+            .typ} = proxy($simpleObjectName, request)"""
       )
 
     pagination match {
@@ -730,7 +733,7 @@ trait ServiceInterfaceGenerator {
           )
           itemTypeRo <- TypeMapping.toWrappedTypeReadOnly(itemModel)
           awsItemType <- TypeMapping.toJavaType(itemModel)
-          responseModel <- context.get(responseType.name)
+          responseModel <- AwsGeneratorContext.get(responseType.name)
           property <- propertyName(responseModel, listModel, memberName)
           propertyNameTerm = Term.Name(property.javaName)
           streamedPaginator =
@@ -859,7 +862,7 @@ trait ServiceInterfaceGenerator {
             .toWrappedTypeReadOnly(itemModel)
           awsItemType <- TypeMapping.toJavaType(itemModel)
           resultTypeRo <- TypeMapping.toWrappedTypeReadOnly(resultModel)
-          responseModel <- context.get(responseType.name)
+          responseModel <- AwsGeneratorContext.get(responseType.name)
           innerProperty <- propertyName(responseModel, innerModel, innerName)
           innerPropertyNameTerm = Term.Name(innerProperty.javaName)
           listProperty <- propertyName(innerModel, listModel, listName)
@@ -956,7 +959,7 @@ trait ServiceInterfaceGenerator {
             .toWrappedTypeReadOnly(valueModel)
           awsValueType <- TypeMapping.toJavaType(valueModel)
 
-          responseModel <- context.get(responseType.name)
+          responseModel <- AwsGeneratorContext.get(responseType.name)
           property <- propertyName(responseModel, mapModel, memberName)
           propertyNameTerm = Term.Name(property.javaName)
           streamedPaginator =
@@ -1086,7 +1089,7 @@ trait ServiceInterfaceGenerator {
           itemTypeRo <- TypeMapping
             .toWrappedTypeReadOnly(stringModel)
           awsItemType <- TypeMapping.toJavaType(stringModel)
-          responseModel <- context.get(responseType.name)
+          responseModel <- AwsGeneratorContext.get(responseType.name)
           property <- propertyName(responseModel, stringModel, memberName)
           propertyNameTerm = Term.Name(property.javaName)
           streamedPaginator =
@@ -1297,11 +1300,10 @@ trait ServiceInterfaceGenerator {
     )
   }
 
-  private def generateServiceModuleCode(): ZIO[Has[
-    Generator
-  ] with Blocking with AwsGeneratorContext, GeneratorFailure[
-    AwsGeneratorFailure
-  ], Set[Path]] =
+  private def generateServiceModuleCode()
+      : ZIO[Generator with AwsGeneratorContext, GeneratorFailure[
+        AwsGeneratorFailure
+      ], Set[Path]] =
     for {
       id <- getService
       namingStrategy <- getNamingStrategy
@@ -1431,11 +1433,10 @@ trait ServiceInterfaceGenerator {
       }
     } yield Set(path, pathMock)
 
-  protected def generateServiceModule(): ZIO[Has[
-    Generator
-  ] with AwsGeneratorContext with Blocking, GeneratorFailure[
-    AwsGeneratorFailure
-  ], Set[Path]] =
+  protected def generateServiceModule()
+      : ZIO[Generator with AwsGeneratorContext, GeneratorFailure[
+        AwsGeneratorFailure
+      ], Set[Path]] =
     for {
       _ <- Generator.setScalaVersion(scalaVersion)
       _ <- Generator.setRoot(config.targetRoot)

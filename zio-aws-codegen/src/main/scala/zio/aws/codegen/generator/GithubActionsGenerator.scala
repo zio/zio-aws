@@ -1,24 +1,21 @@
 package zio.aws.codegen.generator
 
-import io.circe.Json
 import io.circe.syntax._
 import io.circe.yaml
-import io.circe.yaml.Printer.{LineBreak, StringStyle, YamlVersion}
-import zio.aws.codegen.loader.ModelId
-import zio.aws.codegen.githubactions._
-import zio.aws.codegen.githubactions.ScalaWorkflow._
+import io.circe.yaml.Printer.{LineBreak, YamlVersion}
 import zio.aws.codegen.githubactions.OS.UbuntuLatest
-import zio.aws.codegen.githubactions.ScalaWorkflow.JavaVersion
 import zio.aws.codegen.githubactions.ScalaWorkflow.JavaVersion.AdoptJDK18
-import zio.aws.codegen.githubactions.{Branch, OS, Trigger}
+import zio.aws.codegen.githubactions.ScalaWorkflow.{JavaVersion, _}
+import zio.aws.codegen.githubactions._
+import zio.aws.codegen.loader.ModuleId
 
 trait GithubActionsGenerator {
   this: HasConfig with GeneratorBase =>
 
   def generateCiYaml(
-      ids: Set[ModelId],
-      parallelJobs: Int,
-      separateJobs: Set[String]
+                      ids: Set[ModuleId],
+                      parallelJobs: Int,
+                      separateJobs: Set[String]
   ): String = {
     val sortedProjectNames =
       ids

@@ -4,6 +4,7 @@ import software.amazon.awssdk.codegen.model.service.Shape
 import zio.ZIO
 
 import zio.aws.codegen.generator.context._
+import zio.aws.codegen.generator.context.AwsGeneratorContext._
 import _root_.io.github.vigoo.metagen.core._
 
 object TypeMapping {

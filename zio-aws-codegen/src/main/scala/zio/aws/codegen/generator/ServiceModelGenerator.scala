@@ -1,21 +1,13 @@
 package zio.aws.codegen.generator
 
-import zio.aws.codegen.generator.context._
-import zio.aws.codegen.generator.syntax._
-import io.github.vigoo.metagen.core.{
-  CodeFileGenerator,
-  Generator,
-  GeneratorFailure,
-  Package,
-  ScalaType
-}
-
-import scala.jdk.CollectionConverters._
+import io.github.vigoo.metagen.core.{CodeFileGenerator, Generator, GeneratorFailure, ScalaType}
 import software.amazon.awssdk.codegen.model.config.customization.ShapeModifier
-import zio.{Has, ZIO}
-import zio.blocking.Blocking
+import zio.ZIO
+import zio.aws.codegen.generator.context.AwsGeneratorContext._
+import zio.aws.codegen.generator.context._
 import zio.nio.file.Path
 
+import scala.jdk.CollectionConverters._
 import scala.meta._
 
 trait ServiceModelGenerator {
@@ -554,11 +546,10 @@ trait ServiceModelGenerator {
     )
   }
 
-  private def generateServiceModelsCode(): ZIO[Has[
-    Generator
-  ] with Blocking with AwsGeneratorContext, GeneratorFailure[
-    AwsGeneratorFailure
-  ], Set[Path]] =
+  private def generateServiceModelsCode()
+      : ZIO[Generator with AwsGeneratorContext, GeneratorFailure[
+        AwsGeneratorFailure
+      ], Set[Path]] =
     for {
       pkg <- getPkg
 
@@ -592,8 +583,8 @@ trait ServiceModelGenerator {
         "model"
       ) {
         for {
-          _ <- ZIO.foreach_(namesInModel)(CodeFileGenerator.knownLocalName(_))
-          _ <- ZIO.foreach_(primitiveModels.map(m => m.generatedType / "Type"))(
+          _ <- ZIO.foreachDiscard(namesInModel)(CodeFileGenerator.knownLocalName(_))
+          _ <- ZIO.foreachDiscard(primitiveModels.map(m => m.generatedType / "Type"))(
             CodeFileGenerator.keepFullyQualified(_)
           )
         } yield q"""import scala.jdk.CollectionConverters._
@@ -608,7 +599,7 @@ trait ServiceModelGenerator {
       models <- ZIO.foreach(separateModels) { case (fileName, code) =>
         Generator.generateScalaPackage[Any, Nothing](pkg / "model", fileName) {
           ZIO
-            .foreach_(namesInModel)(CodeFileGenerator.knownLocalName(_))
+            .foreachDiscard(namesInModel)(CodeFileGenerator.knownLocalName(_))
             .as(
               q"""
               import scala.jdk.CollectionConverters._
@@ -620,11 +611,10 @@ trait ServiceModelGenerator {
       }
     } yield (modelPkgObject :: models).toSet
 
-  protected def generateServiceModels(): ZIO[Has[
-    Generator
-  ] with AwsGeneratorContext with Blocking, GeneratorFailure[
-    AwsGeneratorFailure
-  ], Set[Path]] =
+  protected def generateServiceModels()
+      : ZIO[Generator with AwsGeneratorContext, GeneratorFailure[
+        AwsGeneratorFailure
+      ], Set[Path]] =
     for {
       _ <- Generator.setScalaVersion(scalaVersion)
       _ <- Generator.setRoot(config.targetRoot)
