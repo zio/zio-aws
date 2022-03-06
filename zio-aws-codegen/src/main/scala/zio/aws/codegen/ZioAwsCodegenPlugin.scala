@@ -206,7 +206,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
             Seq(
               ClasspathDependency(LocalProject("zio-aws-core"), None),
               ClasspathDependency(
-                mapping(ModuleId(id.name, Some(id.name))),
+                mapping(ModuleId(id.name, None)),
                 None
               )
             )

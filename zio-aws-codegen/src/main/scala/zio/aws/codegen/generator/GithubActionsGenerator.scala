@@ -4,7 +4,10 @@ import io.circe.syntax._
 import io.circe.yaml
 import io.circe.yaml.Printer.{LineBreak, YamlVersion}
 import zio.aws.codegen.githubactions.OS.UbuntuLatest
-import zio.aws.codegen.githubactions.ScalaWorkflow.JavaVersion.AdoptJDK18
+import zio.aws.codegen.githubactions.ScalaWorkflow.JavaVersion.{
+  AdoptJDK18,
+  ZuluJDK17
+}
 import zio.aws.codegen.githubactions.ScalaWorkflow.{JavaVersion, _}
 import zio.aws.codegen.githubactions._
 import zio.aws.codegen.loader.ModuleId
@@ -13,9 +16,9 @@ trait GithubActionsGenerator {
   this: HasConfig with GeneratorBase =>
 
   def generateCiYaml(
-                      ids: Set[ModuleId],
-                      parallelJobs: Int,
-                      separateJobs: Set[String]
+      ids: Set[ModuleId],
+      parallelJobs: Int,
+      separateJobs: Set[String]
   ): String = {
     val sortedProjectNames =
       ids
@@ -57,7 +60,7 @@ trait GithubActionsGenerator {
             "Tag build"
           ).withSteps(
             checkoutCurrentBranch(),
-            setupScala(Some(AdoptJDK18)),
+            setupScala(Some(ZuluJDK17)),
             cacheSBT(
               os = Some(UbuntuLatest),
               scalaVersion = Some(scala213)
@@ -78,7 +81,7 @@ trait GithubActionsGenerator {
           ).matrix(scalaVersions)
             .withSteps(
               checkoutCurrentBranch(),
-              setupScala(),
+              setupScala(Some(ZuluJDK17)),
               setupGPG().when(isMaster),
               loadPGPSecret.when(isMaster),
               cacheSBT(),
@@ -129,7 +132,7 @@ trait GithubActionsGenerator {
             ).matrix(scalaVersions)
               .withSteps(
                 checkoutCurrentBranch(),
-                setupScala(),
+                setupScala(Some(ZuluJDK17)),
                 setupGPG().when(isMaster),
                 loadPGPSecret().when(isMaster),
                 cacheSBT(),
@@ -182,7 +185,7 @@ trait GithubActionsGenerator {
             )
             .withSteps(
               checkoutCurrentBranch(),
-              setupScala(),
+              setupScala(Some(ZuluJDK17)),
               cacheSBT(),
               loadStoredTarget("core"),
               runSBT(
@@ -213,7 +216,7 @@ trait GithubActionsGenerator {
             condition = Some(isMaster)
           ).withSteps(
             checkoutCurrentBranch(),
-            setupScala(Some(JavaVersion.AdoptJDK18)),
+            setupScala(Some(JavaVersion.ZuluJDK17)),
             setupGPG(),
             loadPGPSecret(),
             cacheSBT(
@@ -261,11 +264,11 @@ trait GithubActionsGenerator {
             condition = Some(isMaster)
           ).withSteps(
             checkoutCurrentBranch(),
-            setupScala(Some(JavaVersion.AdoptJDK18)),
+            setupScala(Some(JavaVersion.ZuluJDK17)),
             cacheSBT(
               os = Some(OS.UbuntuLatest),
               scalaVersion = Some(scala213)
-            ),            
+            ),
             runSBT(
               "Build and publish microsite",
               parameters = List(
