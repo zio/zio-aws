@@ -1,19 +1,14 @@
 package zio.aws.codegen.generator
 
-import java.nio.charset.StandardCharsets
-
-import zio.aws.codegen.generator.context._
-import zio.aws.codegen.generator.syntax._
 import software.amazon.awssdk.codegen.internal.Utils
 import software.amazon.awssdk.codegen.model.config.customization.ShapeModifier
-import zio.blocking
-import zio.{Chunk, ZIO}
-import zio.nio.file.Files
-import zio.nio.file.Path
+import zio.ZIO
+import zio.aws.codegen.generator.context.AwsGeneratorContext
+import zio.aws.codegen.generator.context.AwsGeneratorContext._
+import zio.aws.codegen.generator.syntax._
 
 import scala.jdk.CollectionConverters._
 import scala.meta._
-import scala.meta.internal.prettyprinters.TreeSyntax
 
 trait GeneratorBase {
   this: Blacklists =>

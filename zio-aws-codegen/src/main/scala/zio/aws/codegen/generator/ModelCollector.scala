@@ -1,19 +1,14 @@
 package zio.aws.codegen.generator
 
 import io.github.vigoo.metagen.core.{Package, ScalaType}
-import zio.aws.codegen.generator.TypeMapping.{
-  isBuiltIn,
-  isPrimitiveType
-}
-import zio.aws.codegen.generator.context.{
-  AwsGeneratorContext,
-  getServiceName
-}
+import zio.aws.codegen.generator.TypeMapping.{isBuiltIn, isPrimitiveType}
+import zio.aws.codegen.generator.context.AwsGeneratorContext
 import software.amazon.awssdk.codegen.C2jModels
 import software.amazon.awssdk.codegen.model.config.customization.ShapeSubstitution
 import software.amazon.awssdk.codegen.model.service.{Member, Operation, Shape}
 import software.amazon.awssdk.codegen.naming.NamingStrategy
 import zio.ZIO
+import zio.aws.codegen.generator.context.AwsGeneratorContext.getServiceName
 
 import scala.jdk.CollectionConverters._
 

@@ -16,9 +16,9 @@ jobs:
       with:
         fetch-depth: 0
     - name: Setup Java and Scala
-      uses: olafurpg/setup-scala@v10
+      uses: olafurpg/setup-scala@v11
       with:
-        java-version: adopt@1.8
+        java-version: zulu@1.17
     - name: Cache SBT
       uses: actions/cache@v2
       with:
@@ -60,9 +60,9 @@ jobs:
       with:
         fetch-depth: 0
     - name: Setup Java and Scala
-      uses: olafurpg/setup-scala@v10
+      uses: olafurpg/setup-scala@v11
       with:
-        java-version: ${{ matrix.java }}
+        java-version: zulu@1.17
     - name: Setup GPG
       uses: olafurpg/setup-gpg@v3
       if: ${{ github.ref == 'refs/heads/master' }}
@@ -120,9 +120,9 @@ jobs:
       with:
         fetch-depth: 0
     - name: Setup Java and Scala
-      uses: olafurpg/setup-scala@v10
+      uses: olafurpg/setup-scala@v11
       with:
-        java-version: ${{ matrix.java }}
+        java-version: zulu@1.17
     - name: Setup GPG
       uses: olafurpg/setup-gpg@v3
       if: ${{ github.ref == 'refs/heads/master' }}
@@ -210,9 +210,9 @@ jobs:
       with:
         fetch-depth: 0
     - name: Setup Java and Scala
-      uses: olafurpg/setup-scala@v10
+      uses: olafurpg/setup-scala@v11
       with:
-        java-version: ${{ matrix.java }}
+        java-version: zulu@1.17
     - name: Setup GPG
       uses: olafurpg/setup-gpg@v3
       if: ${{ github.ref == 'refs/heads/master' }}
@@ -300,9 +300,9 @@ jobs:
       with:
         fetch-depth: 0
     - name: Setup Java and Scala
-      uses: olafurpg/setup-scala@v10
+      uses: olafurpg/setup-scala@v11
       with:
-        java-version: ${{ matrix.java }}
+        java-version: zulu@1.17
     - name: Setup GPG
       uses: olafurpg/setup-gpg@v3
       if: ${{ github.ref == 'refs/heads/master' }}
@@ -390,9 +390,9 @@ jobs:
       with:
         fetch-depth: 0
     - name: Setup Java and Scala
-      uses: olafurpg/setup-scala@v10
+      uses: olafurpg/setup-scala@v11
       with:
-        java-version: ${{ matrix.java }}
+        java-version: zulu@1.17
     - name: Setup GPG
       uses: olafurpg/setup-gpg@v3
       if: ${{ github.ref == 'refs/heads/master' }}
@@ -479,9 +479,9 @@ jobs:
       with:
         fetch-depth: 0
     - name: Setup Java and Scala
-      uses: olafurpg/setup-scala@v10
+      uses: olafurpg/setup-scala@v11
       with:
-        java-version: ${{ matrix.java }}
+        java-version: zulu@1.17
     - name: Setup GPG
       uses: olafurpg/setup-gpg@v3
       if: ${{ github.ref == 'refs/heads/master' }}
@@ -568,9 +568,9 @@ jobs:
       with:
         fetch-depth: 0
     - name: Setup Java and Scala
-      uses: olafurpg/setup-scala@v10
+      uses: olafurpg/setup-scala@v11
       with:
-        java-version: ${{ matrix.java }}
+        java-version: zulu@1.17
     - name: Setup GPG
       uses: olafurpg/setup-gpg@v3
       if: ${{ github.ref == 'refs/heads/master' }}
@@ -658,9 +658,9 @@ jobs:
       with:
         fetch-depth: 0
     - name: Setup Java and Scala
-      uses: olafurpg/setup-scala@v10
+      uses: olafurpg/setup-scala@v11
       with:
-        java-version: ${{ matrix.java }}
+        java-version: zulu@1.17
     - name: Setup GPG
       uses: olafurpg/setup-gpg@v3
       if: ${{ github.ref == 'refs/heads/master' }}
@@ -748,9 +748,9 @@ jobs:
       with:
         fetch-depth: 0
     - name: Setup Java and Scala
-      uses: olafurpg/setup-scala@v10
+      uses: olafurpg/setup-scala@v11
       with:
-        java-version: ${{ matrix.java }}
+        java-version: zulu@1.17
     - name: Setup GPG
       uses: olafurpg/setup-gpg@v3
       if: ${{ github.ref == 'refs/heads/master' }}
@@ -838,9 +838,9 @@ jobs:
       with:
         fetch-depth: 0
     - name: Setup Java and Scala
-      uses: olafurpg/setup-scala@v10
+      uses: olafurpg/setup-scala@v11
       with:
-        java-version: ${{ matrix.java }}
+        java-version: zulu@1.17
     - name: Setup GPG
       uses: olafurpg/setup-gpg@v3
       if: ${{ github.ref == 'refs/heads/master' }}
@@ -928,9 +928,9 @@ jobs:
       with:
         fetch-depth: 0
     - name: Setup Java and Scala
-      uses: olafurpg/setup-scala@v10
+      uses: olafurpg/setup-scala@v11
       with:
-        java-version: ${{ matrix.java }}
+        java-version: zulu@1.17
     - name: Setup GPG
       uses: olafurpg/setup-gpg@v3
       if: ${{ github.ref == 'refs/heads/master' }}
@@ -1014,9 +1014,9 @@ jobs:
       with:
         fetch-depth: 0
     - name: Setup Java and Scala
-      uses: olafurpg/setup-scala@v10
+      uses: olafurpg/setup-scala@v11
       with:
-        java-version: ${{ matrix.java }}
+        java-version: zulu@1.17
     - name: Setup GPG
       uses: olafurpg/setup-gpg@v3
       if: ${{ github.ref == 'refs/heads/master' }}
@@ -1097,9 +1097,9 @@ jobs:
       with:
         fetch-depth: 0
     - name: Setup Java and Scala
-      uses: olafurpg/setup-scala@v10
+      uses: olafurpg/setup-scala@v11
       with:
-        java-version: ${{ matrix.java }}
+        java-version: zulu@1.17
     - name: Cache SBT
       uses: actions/cache@v2
       with:
@@ -1149,9 +1149,9 @@ jobs:
       with:
         fetch-depth: 0
     - name: Setup Java and Scala
-      uses: olafurpg/setup-scala@v10
+      uses: olafurpg/setup-scala@v11
       with:
-        java-version: adopt@1.8
+        java-version: zulu@1.17
     - name: Setup GPG
       uses: olafurpg/setup-gpg@v3
     - name: Load PGP secret
@@ -1475,9 +1475,9 @@ jobs:
       with:
         fetch-depth: 0
     - name: Setup Java and Scala
-      uses: olafurpg/setup-scala@v10
+      uses: olafurpg/setup-scala@v11
       with:
-        java-version: adopt@1.8
+        java-version: zulu@1.17
     - name: Cache SBT
       uses: actions/cache@v2
       with:
