@@ -11,12 +11,17 @@ trait Loader {
 
 object Loader {
   val fromClasspath: ULayer[Loader] = FromClasspath.toLayer
-  val fromGit: ULayer[Loader] =
-    Ref.make(Map.empty[ModuleId, Path]).map(FromGit).toLayer
+  val fromGit: ZLayer[System, Nothing, FromGit] =
+    ZLayer {
+      for {
+        map <- Ref.make(Map.empty[ModuleId, Path])
+        system <- ZIO.service[System]
+      } yield FromGit(map, system)
+    }
 
   def loadCodegenModel(
-                        id: ModuleId
-                      ): ZIO[Loader, Throwable, C2jModels] =
+      id: ModuleId
+  ): ZIO[Loader, Throwable, C2jModels] =
     ZIO.service[Loader].flatMap(_.loadCodegenModel(id))
 
   def findModels(): ZIO[Loader, Throwable, Set[ModuleId]] =

@@ -5,16 +5,21 @@ import org.eclipse.jgit.lib.TextProgressMonitor
 import software.amazon.awssdk.codegen.C2jModels
 import software.amazon.awssdk.codegen.internal.Jackson
 import software.amazon.awssdk.codegen.model.config.customization.CustomizationConfig
-import software.amazon.awssdk.codegen.model.service.{Paginators, ServiceModel, Waiters}
+import software.amazon.awssdk.codegen.model.service.{
+  Paginators,
+  ServiceModel,
+  Waiters
+}
 import zio.nio.file.{Files, Path}
-import zio.{Ref, ZIO}
+import zio.{Ref, System, ZIO}
 
-import java.io.FileNotFoundException
+import java.io.{File, FileNotFoundException}
 import java.util.Properties
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 
-case class FromGit(modules: Ref[Map[ModuleId, Path]]) extends Loader {
+case class FromGit(modules: Ref[Map[ModuleId, Path]], system: System)
+    extends Loader {
   override def findModels(): ZIO[Any, Throwable, Set[ModuleId]] =
     getOrCollectModules.map { moduleMap =>
       moduleMap.keySet
@@ -64,41 +69,78 @@ case class FromGit(modules: Ref[Map[ModuleId, Path]]) extends Loader {
         )
         props.getProperty("version")
       }
-      result <- Files.createTempDirectoryManaged(None, Iterable.empty).use {
-        tempDir =>
+      result <-
+        Files.createTempDirectoryManaged(None, Iterable.empty).use { tempDir =>
           for {
             _ <- ZIO.logInfo(s"AWS SDK version is $version")
-            _ <- ZIO.logInfo(s"AWS Java SDK clone path is $tempDir")
-            _ <- ZIO.logInfo("Cloning AWS Java SDK repository...")
-
-            _ <- ZIO.attempt {
-              Git
-                .cloneRepository()
-                .setURI("https://github.com/aws/aws-sdk-java-v2.git")
-                .setDirectory(tempDir.toFile)
-                .setBranchesToClone(
-                  List(s"refs/tags/$version").asJavaCollection
-                )
-                .setBranch(s"refs/tags/$version")
-                .setProgressMonitor(new TextProgressMonitor())
-                .call()
+            maybeRepo <- system.env("AWS_JAVA_SDK_REPOSITORY")
+            repoDir <- maybeRepo match {
+              case Some(repo) =>
+                for {
+                  _ <- ZIO.logInfo(
+                    s"Using configured AWS Java SDK repository: $repo"
+                  )
+                  _ <- ZIO.attempt {
+                    Git
+                      .open(new File(repo))
+                      .checkout()
+                      .setName("master")
+                      .setProgressMonitor(new TextProgressMonitor())
+                      .call()
+                  }
+                  _ <- ZIO.logInfo(s"Updating repository...")
+                  _ <- ZIO.attempt {
+                    Git
+                      .open(new File(repo))
+                      .pull()
+                      .setProgressMonitor(new TextProgressMonitor())
+                      .call()
+                  }
+                  _ <- ZIO.logInfo(s"Checking out version by tag...")
+                  _ <- ZIO.attempt {
+                    Git
+                      .open(new File(repo))
+                      .checkout()
+                      .setCreateBranch(false)
+                      .setName(version)
+                      .setStartPoint(s"refs/tags/$version")
+                      .setProgressMonitor(new TextProgressMonitor())
+                      .call()
+                  }
+                } yield Path(repo)
+              case None =>
+                for {
+                  _ <- ZIO.logInfo(s"AWS Java SDK clone path is $tempDir")
+                  _ <- ZIO.logInfo("Cloning AWS Java SDK repository...")
+                  _ <- ZIO.attempt {
+                    Git
+                      .cloneRepository()
+                      .setURI("https://github.com/aws/aws-sdk-java-v2.git")
+                      .setDirectory(tempDir.toFile)
+                      .setBranchesToClone(
+                        List(s"refs/tags/$version").asJavaCollection
+                      )
+                      .setBranch(s"refs/tags/$version")
+                      .setProgressMonitor(new TextProgressMonitor())
+                      .call()
+                  }
+                  _ <- ZIO.logInfo(
+                    "Cloned AWS Java SDK repository, looking for service descriptors"
+                  )
+                } yield tempDir
             }
 
-            _ <- ZIO.logInfo(
-              "Cloned AWS Java SDK repository, looking for service descriptors"
-            )
-
             serviceJsons <- Files
-              .find(tempDir) { case (path, attribs) =>
+              .find(repoDir) { case (path, attribs) =>
                 path.endsWith(Path("service-2.json")) &&
-                  path.startsWith(tempDir / "services") &&
+                  path.startsWith(repoDir / "services") &&
                   attribs.isRegularFile
               }
               .runCollect
           } yield serviceJsons
-            .map(path => pathToModelId(tempDir, path) -> path)
+            .map(path => pathToModelId(repoDir, path) -> path)
             .toMap
-      }
+        }
     } yield result
 
   private def pathToModelId(root: Path, path: Path): ModuleId = {

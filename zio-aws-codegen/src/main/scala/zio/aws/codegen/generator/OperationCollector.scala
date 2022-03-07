@@ -9,7 +9,18 @@ import software.amazon.awssdk.codegen.C2jModels
 import software.amazon.awssdk.codegen.model.config.customization.CustomizationConfig
 import software.amazon.awssdk.codegen.model.service.{Operation, Shape}
 import zio.ZIO
-import zio.aws.codegen.generator.OperationMethodType.{EventStreamInput, EventStreamInputOutput, EventStreamOutput, RequestToUnit, StreamedInput, StreamedInputOutput, StreamedInputToUnit, StreamedOutput, UnitToResponse, UnitToUnit}
+import zio.aws.codegen.generator.OperationMethodType.{
+  EventStreamInput,
+  EventStreamInputOutput,
+  EventStreamOutput,
+  RequestToUnit,
+  StreamedInput,
+  StreamedInputOutput,
+  StreamedInputToUnit,
+  StreamedOutput,
+  UnitToResponse,
+  UnitToUnit
+}
 
 import scala.jdk.CollectionConverters._
 
@@ -327,8 +338,12 @@ object OperationCollector {
               for {
                 mapModel <- AwsGeneratorContext.get(mapShapeName)
                 mapShape = mapModel.shape
-                keyModel <- AwsGeneratorContext.get(mapShape.getMapKeyType.getShape)
-                valueModel <- AwsGeneratorContext.get(mapShape.getMapValueType.getShape)
+                keyModel <- AwsGeneratorContext.get(
+                  mapShape.getMapKeyType.getShape
+                )
+                valueModel <- AwsGeneratorContext.get(
+                  mapShape.getMapValueType.getShape
+                )
               } yield Some(
                 MapPaginationDefinition(
                   memberName,
@@ -440,27 +455,27 @@ object OperationCollector {
   }
 
   case class SelectPaginatedListMember(
-                                        id: loader.ModuleId,
-                                        opName: String,
-                                        memberName: String
+      id: loader.ModuleId,
+      opName: String,
+      memberName: String
   ) extends PaginationOverride {
     override def toKey: OverrideKey = OverrideKey(id, opName)
   }
 
   case class SelectNestedPaginatedListMember(
-                                              id: loader.ModuleId,
-                                              opName: String,
-                                              innerName: String,
-                                              resultName: String,
-                                              listName: String
+      id: loader.ModuleId,
+      opName: String,
+      innerName: String,
+      resultName: String,
+      listName: String
   ) extends PaginationOverride {
     override def toKey: OverrideKey = OverrideKey(id, opName)
   }
 
   case class SelectPaginatedStringMember(
-                                          id: loader.ModuleId,
-                                          opName: String,
-                                          memberName: String
+      id: loader.ModuleId,
+      opName: String,
+      memberName: String
   ) extends PaginationOverride {
     override def toKey: OverrideKey = OverrideKey(id, opName)
   }
