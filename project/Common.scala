@@ -11,7 +11,7 @@ import scala.collection.JavaConverters._
 object Common extends AutoPlugin {
 
   object autoImport {
-    val zioVersion = "2.0.0-RC2"
+    val zioVersion = "2.0.0-RC3"
     val zioMockVersion = "1.0.0-RC2"
     val zioCatsInteropVersion = "3.3.0-RC2"
     val zioReactiveStreamsInteropVersion = "2.0.0-RC3"
