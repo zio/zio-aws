@@ -1,103 +1,115 @@
 package zio.aws.codegen.generator
 
 import zio.aws.codegen.generator.TypeMapping.{toJavaType, toWrappedTypeReadOnly}
-import zio.aws.codegen.generator.context._
+import zio.aws.codegen.generator.context.AwsGeneratorContext._
+import zio.aws.codegen.generator.context.AwsGeneratorContext
 import zio.aws.codegen.generator.OperationMethodType._
 import zio.aws.codegen.loader
 import software.amazon.awssdk.codegen.C2jModels
 import software.amazon.awssdk.codegen.model.config.customization.CustomizationConfig
 import software.amazon.awssdk.codegen.model.service.{Operation, Shape}
 import zio.ZIO
-import zio.aws.codegen.generator.OperationMethodType.{EventStreamInput, EventStreamInputOutput, EventStreamOutput, RequestToUnit, StreamedInput, StreamedInputOutput, StreamedInputToUnit, StreamedOutput, UnitToResponse, UnitToUnit}
+import zio.aws.codegen.generator.OperationMethodType.{
+  EventStreamInput,
+  EventStreamInputOutput,
+  EventStreamOutput,
+  RequestToUnit,
+  StreamedInput,
+  StreamedInputOutput,
+  StreamedInputToUnit,
+  StreamedOutput,
+  UnitToResponse,
+  UnitToUnit
+}
 
 import scala.jdk.CollectionConverters._
 
 object OperationCollector {
   val overrides: Set[PaginationOverride] = Set(
     PaginationNotSupported(
-      loader.ModelId("greengrass", None),
+      loader.ModuleId("greengrass", None),
       "GetDeviceDefinitionVersion"
     ),
     PaginationNotSupported(
-      loader.ModelId("greengrass", None),
+      loader.ModuleId("greengrass", None),
       "GetSubscriptionDefinitionVersion"
     ),
     PaginationNotSupported(
-      loader.ModelId("greengrass", None),
+      loader.ModuleId("greengrass", None),
       "GetFunctionDefinitionVersion"
     ),
     PaginationNotSupported(
-      loader.ModelId("greengrass", None),
+      loader.ModuleId("greengrass", None),
       "GetConnectorDefinitionVersion"
     ),
     PaginationNotSupported(
-      loader.ModelId("budgets", None),
+      loader.ModuleId("budgets", None),
       "DescribeBudgetPerformanceHistory"
     ),
     SelectNestedPaginatedListMember(
-      loader.ModelId("athena", None),
+      loader.ModuleId("athena", None),
       "GetQueryResults",
       "ResultSet",
       "ResultSetMetadata",
       "Rows"
     ),
     PaginationNotSupported(
-      loader.ModelId("guardduty", None),
+      loader.ModuleId("guardduty", None),
       "GetUsageStatistics"
     ),
     SelectPaginatedStringMember(
-      loader.ModelId("fms", None),
+      loader.ModuleId("fms", None),
       "GetProtectionStatus",
       "Data"
     ),
     SelectPaginatedListMember(
-      loader.ModelId("cloudformation", None),
+      loader.ModuleId("cloudformation", None),
       "DescribeChangeSet",
       "Changes"
     ),
     SelectPaginatedListMember(
-      loader.ModelId("ec2", None),
+      loader.ModuleId("ec2", None),
       "DescribeVpcEndpointServices",
       "ServiceDetails"
     ),
     SelectPaginatedListMember(
-      loader.ModelId("pi", None),
+      loader.ModuleId("pi", None),
       "DescribeDimensionKeys",
       "Keys"
     ),
     SelectPaginatedListMember(
-      loader.ModelId("cognitosync", None),
+      loader.ModuleId("cognitosync", None),
       "ListRecords",
       "Records"
     ),
     SelectPaginatedListMember(
-      loader.ModelId("textract", None),
+      loader.ModuleId("textract", None),
       "GetDocumentAnalysis",
       "Blocks"
     ),
     SelectPaginatedListMember(
-      loader.ModelId("textract", None),
+      loader.ModuleId("textract", None),
       "GetDocumentTextDetection",
       "Blocks"
     ),
     SelectPaginatedListMember(
-      loader.ModelId("resourcegroups", None),
+      loader.ModuleId("resourcegroups", None),
       "ListGroups",
       "Groups"
     ),
     SelectPaginatedListMember(
-      loader.ModelId("resourcegroups", None),
+      loader.ModuleId("resourcegroups", None),
       "SearchResources",
       "ResourceIdentifiers"
     ),
     SelectPaginatedListMember(
-      loader.ModelId("resourcegroups", None),
+      loader.ModuleId("resourcegroups", None),
       "ListGroupResources",
       "ResourceIdentifiers"
     )
   )
 
-  case class OverrideKey(id: loader.ModelId, opName: String)
+  case class OverrideKey(id: loader.ModuleId, opName: String)
 
   val overrideMap: Map[OverrideKey, PaginationOverride] =
     overrides.map(o => o.toKey -> o).toMap
@@ -183,7 +195,7 @@ object OperationCollector {
               inputShape.getMembers.containsKey("NextToken")
             ) {
 
-              getPaginationDefinition(opName, op).foldM(
+              getPaginationDefinition(opName, op).foldZIO(
                 failure =>
                   logWarn(s"Failed to get pagination definition: $failure")
                     .as(RequestResponse(None)),
@@ -223,10 +235,10 @@ object OperationCollector {
           case Some(SelectPaginatedListMember(_, _, memberName)) =>
             val listShapeName = outputShape.getMembers.get(memberName).getShape
             for {
-              listModel <- context.get(listShapeName)
+              listModel <- AwsGeneratorContext.get(listShapeName)
               listShape = listModel.shape
               itemShapeName = listShape.getListMember.getShape
-              itemModel <- context.get(itemShapeName)
+              itemModel <- AwsGeneratorContext.get(itemShapeName)
             } yield Some(
               ListPaginationDefinition(
                 memberName,
@@ -246,15 +258,15 @@ object OperationCollector {
               ) =>
             val innerShapeName = outputShape.getMembers.get(innerName).getShape
             for {
-              innerModel <- context.get(innerShapeName)
+              innerModel <- AwsGeneratorContext.get(innerShapeName)
               innerShape = innerModel.shape
               listShapeName = innerShape.getMembers.get(listName).getShape
-              listModel <- context.get(listShapeName)
+              listModel <- AwsGeneratorContext.get(listShapeName)
               listShape = listModel.shape
               itemShapeName = listShape.getListMember.getShape
-              itemModel <- context.get(itemShapeName)
+              itemModel <- AwsGeneratorContext.get(itemShapeName)
               resultShapeName = innerShape.getMembers.get(resultName).getShape
-              resultModel <- context.get(resultShapeName)
+              resultModel <- AwsGeneratorContext.get(resultShapeName)
             } yield Some(
               NestedListPaginationDefinition(
                 innerName,
@@ -271,7 +283,7 @@ object OperationCollector {
             val stringShapeName =
               outputShape.getMembers.get(memberName).getShape
             for {
-              stringModel <- context.get(stringShapeName)
+              stringModel <- AwsGeneratorContext.get(stringShapeName)
             } yield Some(
               StringPaginationDefinition(
                 memberName,
@@ -308,10 +320,10 @@ object OperationCollector {
               val memberName = outputMembersWithListType.keys.head
               val listShapeName = outputMembersWithListType.values.head.getShape
               for {
-                listModel <- context.get(listShapeName)
+                listModel <- AwsGeneratorContext.get(listShapeName)
                 listShape = listModel.shape
                 itemShapeName = listShape.getListMember.getShape
-                itemModel <- context.get(itemShapeName)
+                itemModel <- AwsGeneratorContext.get(itemShapeName)
               } yield Some(
                 ListPaginationDefinition(
                   memberName,
@@ -324,10 +336,14 @@ object OperationCollector {
               val memberName = outputMembersWithMapType.keys.head
               val mapShapeName = outputMembersWithMapType.values.head.getShape
               for {
-                mapModel <- context.get(mapShapeName)
+                mapModel <- AwsGeneratorContext.get(mapShapeName)
                 mapShape = mapModel.shape
-                keyModel <- context.get(mapShape.getMapKeyType.getShape)
-                valueModel <- context.get(mapShape.getMapValueType.getShape)
+                keyModel <- AwsGeneratorContext.get(
+                  mapShape.getMapKeyType.getShape
+                )
+                valueModel <- AwsGeneratorContext.get(
+                  mapShape.getMapValueType.getShape
+                )
               } yield Some(
                 MapPaginationDefinition(
                   memberName,
@@ -342,7 +358,7 @@ object OperationCollector {
               val stringShapeName =
                 outputMembersWithStringType.values.head.getShape
               for {
-                stringModel <- context.get(stringShapeName)
+                stringModel <- AwsGeneratorContext.get(stringShapeName)
               } yield Some(
                 StringPaginationDefinition(memberName, stringModel, isSimple)
               )
@@ -376,7 +392,7 @@ object OperationCollector {
       listShape = models.serviceModel().getShape(outputListMember.getShape)
       itemMember <- Option(listShape.getListMember)
     } yield for {
-      itemModel <- context.get(itemMember.getShape)
+      itemModel <- AwsGeneratorContext.get(itemMember.getShape)
       itemType <- toJavaType(itemModel)
       wrappedTypeRo <- toWrappedTypeReadOnly(itemModel)
     } yield JavaSdkPaginationDefinition(
@@ -433,13 +449,13 @@ object OperationCollector {
     def toKey: OverrideKey
   }
 
-  case class PaginationNotSupported(id: loader.ModelId, opName: String)
+  case class PaginationNotSupported(id: loader.ModuleId, opName: String)
       extends PaginationOverride {
     override def toKey: OverrideKey = OverrideKey(id, opName)
   }
 
   case class SelectPaginatedListMember(
-      id: loader.ModelId,
+      id: loader.ModuleId,
       opName: String,
       memberName: String
   ) extends PaginationOverride {
@@ -447,7 +463,7 @@ object OperationCollector {
   }
 
   case class SelectNestedPaginatedListMember(
-      id: loader.ModelId,
+      id: loader.ModuleId,
       opName: String,
       innerName: String,
       resultName: String,
@@ -457,7 +473,7 @@ object OperationCollector {
   }
 
   case class SelectPaginatedStringMember(
-      id: loader.ModelId,
+      id: loader.ModuleId,
       opName: String,
       memberName: String
   ) extends PaginationOverride {

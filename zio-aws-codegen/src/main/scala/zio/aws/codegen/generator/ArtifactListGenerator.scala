@@ -1,11 +1,11 @@
 package zio.aws.codegen.generator
 
-import zio.aws.codegen.loader.ModelId
+import zio.aws.codegen.loader.ModuleId
 
 trait ArtifactListGenerator {
   this: HasConfig with GeneratorBase =>
 
-  def generateArtifactList(ids: Set[ModelId], version: String): String = {
+  def generateArtifactList(ids: Set[ModuleId], version: String): String = {
     val prefix = s"""---
                     |id: overview_artifacts
                     |title: Artifacts

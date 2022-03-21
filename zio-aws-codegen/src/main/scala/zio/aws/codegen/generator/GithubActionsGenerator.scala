@@ -1,22 +1,22 @@
 package zio.aws.codegen.generator
 
-import io.circe.Json
 import io.circe.syntax._
 import io.circe.yaml
-import io.circe.yaml.Printer.{LineBreak, StringStyle, YamlVersion}
-import zio.aws.codegen.loader.ModelId
-import zio.aws.codegen.githubactions._
-import zio.aws.codegen.githubactions.ScalaWorkflow._
+import io.circe.yaml.Printer.{LineBreak, YamlVersion}
 import zio.aws.codegen.githubactions.OS.UbuntuLatest
-import zio.aws.codegen.githubactions.ScalaWorkflow.JavaVersion
-import zio.aws.codegen.githubactions.ScalaWorkflow.JavaVersion.AdoptJDK18
-import zio.aws.codegen.githubactions.{Branch, OS, Trigger}
+import zio.aws.codegen.githubactions.ScalaWorkflow.JavaVersion.{
+  AdoptJDK18,
+  ZuluJDK17
+}
+import zio.aws.codegen.githubactions.ScalaWorkflow.{JavaVersion, _}
+import zio.aws.codegen.githubactions._
+import zio.aws.codegen.loader.ModuleId
 
 trait GithubActionsGenerator {
   this: HasConfig with GeneratorBase =>
 
   def generateCiYaml(
-      ids: Set[ModelId],
+      ids: Set[ModuleId],
       parallelJobs: Int,
       separateJobs: Set[String]
   ): String = {
@@ -60,7 +60,7 @@ trait GithubActionsGenerator {
             "Tag build"
           ).withSteps(
             checkoutCurrentBranch(),
-            setupScala(Some(AdoptJDK18)),
+            setupScala(Some(ZuluJDK17)),
             cacheSBT(
               os = Some(UbuntuLatest),
               scalaVersion = Some(scala213)
@@ -81,7 +81,7 @@ trait GithubActionsGenerator {
           ).matrix(scalaVersions)
             .withSteps(
               checkoutCurrentBranch(),
-              setupScala(),
+              setupScala(Some(ZuluJDK17)),
               setupGPG().when(isMaster),
               loadPGPSecret.when(isMaster),
               cacheSBT(),
@@ -94,15 +94,7 @@ trait GithubActionsGenerator {
                   "zio-aws-http4s/test",
                   "zio-aws-netty/test"
                 )
-              ).when(isNotScalaVersion(scala3)),
-              runSBT(
-                "Build and test core",
-                parameters = List(
-                  "++${{ matrix.scala }}",
-                  "zio-aws-core/test",
-                  "zio-aws-netty/test"
-                )
-              ).when(isScalaVersion(scala3)),
+              ),
               runSBT(
                 "Publish core",
                 parameters = List(
@@ -116,19 +108,7 @@ trait GithubActionsGenerator {
                   "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
                   "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}"
                 )
-              ).when(isMaster && isNotScalaVersion(scala3)),
-              runSBT(
-                "Publish core",
-                parameters = List(
-                  "++${{ matrix.scala }}",
-                  "zio-aws-core/publishSigned",
-                  "zio-aws-netty/publishSigned"
-                ),
-                env = Map(
-                  "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
-                  "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}"
-                )
-              ).when(isMaster && isScalaVersion(scala3)),
+              ).when(isMaster),
               storeTargets(
                 "core",
                 List(
@@ -140,17 +120,7 @@ trait GithubActionsGenerator {
                   "zio-aws-http4s",
                   "zio-aws-netty"
                 )
-              ).when(isNotScalaVersion(scala3)),
-              storeTargets(
-                "core",
-                List(
-                  "",
-                  "project",
-                  "zio-aws-codegen",
-                  "zio-aws-core",
-                  "zio-aws-netty"
-                )
-              ).when(isScalaVersion(scala3))
+              )
             )
         )
         .addJobs(
@@ -162,7 +132,7 @@ trait GithubActionsGenerator {
             ).matrix(scalaVersions)
               .withSteps(
                 checkoutCurrentBranch(),
-                setupScala(),
+                setupScala(Some(ZuluJDK17)),
                 setupGPG().when(isMaster),
                 loadPGPSecret().when(isMaster),
                 cacheSBT(),
@@ -215,7 +185,7 @@ trait GithubActionsGenerator {
             )
             .withSteps(
               checkoutCurrentBranch(),
-              setupScala(),
+              setupScala(Some(ZuluJDK17)),
               cacheSBT(),
               loadStoredTarget("core"),
               runSBT(
@@ -246,7 +216,7 @@ trait GithubActionsGenerator {
             condition = Some(isMaster)
           ).withSteps(
             checkoutCurrentBranch(),
-            setupScala(Some(JavaVersion.AdoptJDK18)),
+            setupScala(Some(JavaVersion.ZuluJDK17)),
             setupGPG(),
             loadPGPSecret(),
             cacheSBT(
@@ -294,11 +264,11 @@ trait GithubActionsGenerator {
             condition = Some(isMaster)
           ).withSteps(
             checkoutCurrentBranch(),
-            setupScala(Some(JavaVersion.AdoptJDK18)),
+            setupScala(Some(JavaVersion.ZuluJDK17)),
             cacheSBT(
               os = Some(OS.UbuntuLatest),
               scalaVersion = Some(scala213)
-            ),            
+            ),
             runSBT(
               "Build and publish microsite",
               parameters = List(

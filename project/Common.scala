@@ -11,17 +11,18 @@ import scala.collection.JavaConverters._
 object Common extends AutoPlugin {
 
   object autoImport {
-    val zioVersion = "2.0.0-RC1"
-    val zioCatsInteropVersion = "3.3.0-RC1"
-    val zioReactiveStreamsInteropVersion = "2.0.0-RC1"
-    val zioConfigVersion = "3.0.0-RC1"
-    val zioPreludeVersion = "1.0.0-RC9"
-    val catsEffectVersion = "3.3.4"
+    val zioVersion = "2.0.0-RC2"
+    val zioMockVersion = "1.0.0-RC2"
+    val zioCatsInteropVersion = "3.3.0-RC2"
+    val zioReactiveStreamsInteropVersion = "2.0.0-RC3"
+    val zioConfigVersion = "3.0.0-RC3"
+    val zioPreludeVersion = "1.0.0-RC10"
+    val catsEffectVersion = "3.3.8"
 
-    val awsVersion = "2.17.118"
+    val awsVersion = "2.17.152"
     val awsSubVersion = awsVersion.drop(awsVersion.indexOf('.') + 1)
-    val http4sVersion = "0.23.8"
-    val fs2Version = "3.2.4"
+    val http4sVersion = "0.23.11"
+    val fs2Version = "3.2.5"
 
     val majorVersion = "5"
     val zioAwsVersionPrefix = s"$majorVersion.$awsSubVersion."
@@ -74,6 +75,7 @@ object Common extends AutoPlugin {
       organization := "dev.zio",
       awsLibraryVersion := awsVersion,
       zioLibraryVersion := zioVersion,
+      zioMockLibraryVersion := zioMockVersion,
       scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
         case Some((2, 12)) => scalacOptions212
         case Some((2, 13)) => scalacOptions213

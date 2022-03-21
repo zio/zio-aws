@@ -53,11 +53,13 @@ lazy val http4s = Project("zio-aws-http4s", file("zio-aws-http4s"))
 
 lazy val akkahttp = Project("zio-aws-akka-http", file("zio-aws-akka-http"))
   .settings(
-    crossScalaVersions := List(scala212Version, scala213Version),
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-stream" % "2.6.18",
-      "com.typesafe.akka" %% "akka-http" % "10.2.7",
-      "com.github.matsluni" %% "aws-spi-akka-http" % "0.0.11"
+      ("com.typesafe.akka" %% "akka-stream" % "2.6.18").cross(CrossVersion.for3Use2_13)
+        .exclude("org.scala-lang.modules", "scala-collection-compat_2.13"),
+      ("com.typesafe.akka" %% "akka-http" % "10.2.9").cross(CrossVersion.for3Use2_13)
+        .exclude("org.scala-lang.modules", "scala-collection-compat_2.13"),        
+      ("com.github.matsluni" %% "aws-spi-akka-http" % "0.0.11").cross(CrossVersion.for3Use2_13)
+        .exclude("org.scala-lang.modules", "scala-collection-compat_2.13")        
     )
   )
   .dependsOn(core)
@@ -87,7 +89,7 @@ lazy val example2 = Project("example2", file("examples") / "example2")
   .settings(
     resolvers += Resolver.jcenterRepo,
     libraryDependencies ++= Seq(
-      "nl.vroste" %% "rezilience" % "0.7.0+35-05acacd5-SNAPSHOT",
+      "nl.vroste" %% "rezilience" % "0.7.0+44-c98274dc-SNAPSHOT",
     )
   )
   .dependsOn(
