@@ -3,10 +3,9 @@ package zio.aws.http4s
 import java.util.concurrent.CompletableFuture
 import cats.effect.Resource
 import cats.effect.std.Dispatcher
-import cats.effect.unsafe.IORuntime
 import fs2._
 import fs2.interop.reactivestreams._
-import _root_.zio.aws.core.httpclient._
+import zio.aws.core.httpclient._
 import org.http4s._
 import org.http4s.blaze.channel.{ChannelOptions, OptionValue}
 import org.http4s.client._
@@ -35,7 +34,8 @@ import javax.net.ssl.SSLContext
 import scala.util.control.NonFatal
 
 class Http4sClient(client: Client[Task], closeFn: () => Unit)(implicit
-    runtime: Runtime[Clock]
+    runtime: Runtime[Clock],
+    dispatcher: Dispatcher[Task]
 ) extends SdkAsyncHttpClient {
 
   import Http4sClient._
@@ -132,7 +132,7 @@ class Http4sClient(client: Client[Task], closeFn: () => Unit)(implicit
           SdkHttpResponse
             .builder()
             .headers(
-              response.headers.headers.toList
+              response.headers.headers
                 .groupBy(_.name)
                 .map { case (name, values) =>
                   (name.toString, values.map(_.value).asJava)
@@ -145,7 +145,7 @@ class Http4sClient(client: Client[Task], closeFn: () => Unit)(implicit
         )
       )
       streamFinished <- Promise.make[Throwable, Unit]
-      _ <- response.body.chunks
+      stream = response.body.chunks
         .map(_.toByteBuffer)
         .onFinalizeCase {
           case Resource.ExitCase.Succeeded => streamFinished.succeed(()).unit
@@ -153,15 +153,10 @@ class Http4sClient(client: Client[Task], closeFn: () => Unit)(implicit
           case Resource.ExitCase.Errored(throwable) =>
             streamFinished.fail(throwable).unit
         }
-        .toUnicastPublisher
-        .use { publisher =>
-          Task(
-            handler.onStream(
-              publisher
-            )
-          )
-        }
-      _ <- streamFinished.await
+      publisher = StreamUnicastPublisher(stream, dispatcher)
+      _ <- Task {
+        handler.onStream(publisher)
+      }.ensuring(streamFinished.await.ignore)
     } yield null.asInstanceOf[Void]
   }
 }
@@ -189,22 +184,24 @@ object Http4sClient {
     override def buildWithDefaults(
         serviceDefaults: AttributeMap
     ): SdkAsyncHttpClient = {
-      val (client, closeFn) = runtime.unsafeRun(createClient().allocated)
+      val ((dispatcher, client), closeFn) =
+        runtime.unsafeRun(resources.allocated)
+      implicit val d: Dispatcher[Task] = dispatcher
       new Http4sClient(client, () => runtime.unsafeRun(closeFn))
     }
 
     def toManaged: ZManaged[Clock, Throwable, Http4sClient] = {
+      resources.map { case (dispatcher, client) =>
+        implicit val d: Dispatcher[Task] = dispatcher
+        new Http4sClient(client, () => ())
+      }.toManagedZIO
+    }
+
+    private def resources: Resource[Task, (Dispatcher[Task], Client[Task])] = {
       cats.effect.std
         .Dispatcher[Task]
-        .allocated
-        .toManaged
-        .flatMap { case (d, r) =>
-          implicit val dispatcher: Dispatcher[Task] = d
-          ZManaged.acquireRelease(ZIO.unit)(r.ignore).flatMap { _ =>
-            createClient().toManaged.map { client =>
-              new Http4sClient(client, () => ())
-            }
-          }
+        .flatMap { dispatcher =>
+          createClient().map(dispatcher -> _)
         }
     }
   }
