@@ -177,7 +177,7 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
       ).provideCustomLayer(
         ((Clock.any ++ Console.any ++ (http4sClient >>> awsConfig)) >>> dynamoDb)
           .mapError(TestFailure.die)
-      ) @@ ignore @@ sequential,
+      ) @@ sequential,
       suite("with akka-http")(
         tests("akkahttp"): _*
       ).provideCustomLayer(
