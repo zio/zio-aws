@@ -2,7 +2,7 @@ package zio.aws.core.httpclient
 
 import zio.aws.core.httpclient.Protocol.{Dual, Http11, Http2}
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient
-import zio.{Task, ZIO, ZLayer, ZManaged}
+import zio.{Scope, Task, ZIO, ZLayer}
 
 trait HttpClient {
   def clientFor(
@@ -10,16 +10,18 @@ trait HttpClient {
   ): Task[SdkAsyncHttpClient]
 }
 object HttpClient {
-  def fromManagedPerProtocol[R, E, A <: SdkAsyncHttpClient](
-      http11Client: ZManaged[R, E, A],
-      http2Client: ZManaged[R, E, A]
-  )(protocol: Protocol): ZLayer[R, E, HttpClient] =
-    fromManagedPerProtocolManaged(http11Client, http2Client)(protocol).toLayer
+  def fromScopedPerProtocol[R, E, A <: SdkAsyncHttpClient](
+      http11Client: ZIO[R with Scope, E, A],
+      http2Client: ZIO[R with Scope, E, A]
+  )(protocol: Protocol): ZLayer[R, E, HttpClient] =  
+    ZLayer.scoped[R] {
+      fromScopedPerProtocolScoped[R, E, A](http11Client, http2Client)(protocol)
+    }
 
-  def fromManagedPerProtocolManaged[R, E, A <: SdkAsyncHttpClient](
-      http11Client: ZManaged[R, E, A],
-      http2Client: ZManaged[R, E, A]
-  )(protocol: Protocol): ZManaged[R, E, HttpClient] =
+  def fromScopedPerProtocolScoped[R, E, A <: SdkAsyncHttpClient](
+      http11Client: ZIO[R with Scope, E, A],
+      http2Client: ZIO[R with Scope, E, A]
+  )(protocol: Protocol): ZIO[R with Scope, E, HttpClient] =
     protocol match {
       case Http11 =>
         http11Client.map { client =>

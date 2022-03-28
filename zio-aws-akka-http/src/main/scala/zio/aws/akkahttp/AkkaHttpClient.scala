@@ -6,7 +6,7 @@ import com.github.matsluni.akkahttpspi.{AkkaHttpClient => SPI}
 import zio.aws.core.BuilderHelper
 import zio.aws.core.httpclient.{HttpClient, ServiceHttpCapabilities}
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient
-import zio.{Task, ZIO, ZLayer, ZManaged}
+import zio.{Scope, Task, ZIO, ZLayer}
 
 import scala.concurrent.ExecutionContext
 
@@ -19,24 +19,26 @@ object AkkaHttpClient {
       connectionPoolSettings: Option[ConnectionPoolSettings] = None,
       executionContext: Option[ExecutionContext] = None
   ): ZLayer[ActorSystem, Throwable, HttpClient] =
-    (for {
-      actorSystem <- ZManaged.service[ActorSystem]
-      akkaClient <- ZManaged
-        .fromAutoCloseable(
-          ZIO(
-            SPI
-              .builder()
-              .withActorSystem(actorSystem)
-              .optionallyWith(connectionPoolSettings)(
-                _.withConnectionPoolSettings
-              )
-              .optionallyWith(executionContext)(_.withExecutionContext)
-              .build()
+    ZLayer.scoped {
+      for {
+        actorSystem <- ZIO.service[ActorSystem]
+        akkaClient <- ZIO
+          .fromAutoCloseable(
+            ZIO.attempt(
+              SPI
+                .builder()
+                .withActorSystem(actorSystem)
+                .optionallyWith(connectionPoolSettings)(
+                  _.withConnectionPoolSettings
+                )
+                .optionallyWith(executionContext)(_.withExecutionContext)
+                .build()
+            )
           )
-        )
-    } yield new HttpClient {
-      override def clientFor(
-          serviceCaps: ServiceHttpCapabilities
-      ): Task[SdkAsyncHttpClient] = Task.succeed(akkaClient)
-    }).toLayer
+      } yield new HttpClient {
+        override def clientFor(
+            serviceCaps: ServiceHttpCapabilities
+        ): Task[SdkAsyncHttpClient] = Task.succeed(akkaClient)
+      }
+    }
 }

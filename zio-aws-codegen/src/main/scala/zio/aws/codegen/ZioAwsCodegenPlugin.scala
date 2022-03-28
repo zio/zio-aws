@@ -219,7 +219,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
             libraryDependencies += "software.amazon.awssdk" % id.name % awsLibraryVersion.value,
             libraryDependencies += "dev.zio" %% "zio" % zioLibraryVersion.value,
             libraryDependencies += "dev.zio" %% "zio-streams" % zioLibraryVersion.value,
-            libraryDependencies += "dev.zio" %% "mock-test" % zioMockLibraryVersion.value,
+            libraryDependencies += "dev.zio" %% "zio-mock" % zioMockLibraryVersion.value,
             awsLibraryId := id.toString,
             Compile / sourceGenerators += generateSources.taskValue,
             Compile / packageSrc / mappings ++= {

@@ -6,7 +6,7 @@ import java.util.Optional
 
 import org.reactivestreams.Subscriber
 import software.amazon.awssdk.core.async.AsyncRequestBody
-import zio.{Chunk, Runtime}
+import zio.{Chunk, Runtime, ZIO}
 import zio.stream.ZStream
 import zio.interop.reactivestreams._
 
@@ -17,15 +17,15 @@ class ZStreamAsyncRequestBody[R](stream: ZStream[R, AwsError, Byte])(implicit
 
   override def subscribe(s: Subscriber[_ >: ByteBuffer]): Unit =
     runtime.unsafeRun {
-      s.toSink[Throwable]
-        .use { case (errorCallback, sink) =>
-          stream
-            .mapError(_.toThrowable)
-            .mapChunks(chunk => Chunk(ByteBuffer.wrap(chunk.toArray)))
-            .run(sink)
-            .catchAll(errorCallback)
-        }
-        .forkDaemon
-        .unit
+      ZIO.scoped[R] {
+        s.toSink[Throwable]
+          .flatMap { case (errorCallback, sink) =>
+            stream
+              .mapError(_.toThrowable)
+              .mapChunks(chunk => Chunk(ByteBuffer.wrap(chunk.toArray)))
+              .run(sink)
+              .catchAll(errorCallback)
+          }
+        }.forkDaemon.unit
     }
 }
