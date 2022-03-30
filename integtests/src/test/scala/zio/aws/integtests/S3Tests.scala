@@ -47,7 +47,7 @@ object S3Tests extends DefaultRunnableSpec with Logging {
       console <- ZIO.service[Console]
       postfix <- Random.nextInt.map(Math.abs)
       bucketName = BucketName(s"${prefix}-$postfix")
-    } yield ZManaged.acquireReleaseWith(
+    } yield ZIO.acquireRelease(
       for {
         _ <- Console.printLine(s"Creating bucket $bucketName").ignore
         _ <- S3.createBucket(
@@ -73,9 +73,7 @@ object S3Tests extends DefaultRunnableSpec with Logging {
         // simple request/response calls
         val steps = for {
           bucket <- testBucket(s"${prefix}-cd")
-          _ <- bucket.use { bucketName =>
-            ZIO.unit
-          }
+          _ <- ZIO.scoped(bucket.unit)
         } yield ()
 
         assertM(steps.exit)(succeeds(isUnit))
@@ -88,42 +86,44 @@ object S3Tests extends DefaultRunnableSpec with Logging {
           testData <- Random.nextBytes(65536)
           bucket <- testBucket(s"${prefix}-ud")
           key = ObjectKey("testdata")
-          receivedData <- bucket.use { bucketName =>
-            for {
-              _ <- Console.printLine(s"Uploading $key to $bucketName").ignore
-              _ <- S3.putObject(
-                PutObjectRequest(
-                  bucket = bucketName,
-                  key = key,
-                  contentLength = Some(
-                    ContentLength(65536L)
-                  ) // Remove to test https://github.com/vigoo/zio-aws/issues/24
-                ),
-                ZStream
-                  .fromIterable(testData)
-                  .rechunk(1024)
-              )
-              _ <- Console.printLine("Downloading").ignore
-              getResponse <- S3.getObject(
-                GetObjectRequest(
-                  bucket = bucketName,
-                  key = key
+          receivedData <- ZIO.scoped { 
+            bucket.flatMap { bucketName =>
+              for {
+                _ <- Console.printLine(s"Uploading $key to $bucketName").ignore
+                _ <- S3.putObject(
+                  PutObjectRequest(
+                    bucket = bucketName,
+                    key = key,
+                    contentLength = Some(
+                      ContentLength(65536L)
+                    ) // Remove to test https://github.com/vigoo/zio-aws/issues/24
+                  ),
+                  ZStream
+                    .fromIterable(testData)
+                    .rechunk(1024)
                 )
-              )
-              getStream = getResponse.output
-              result <- getStream.runCollect
-
-              _ <- Console.printLine("Deleting").ignore
-              _ <- S3.deleteObject(
-                DeleteObjectRequest(
-                  bucket = bucketName,
-                  key = key
+                _ <- Console.printLine("Downloading").ignore
+                getResponse <- S3.getObject(
+                  GetObjectRequest(
+                    bucket = bucketName,
+                    key = key
+                  )
                 )
-              )
+                getStream = getResponse.output
+                result <- getStream.runCollect
 
-            } yield result
+                _ <- Console.printLine("Deleting").ignore
+                _ <- S3.deleteObject(
+                  DeleteObjectRequest(
+                    bucket = bucketName,
+                    key = key
+                  )
+                )
+
+              } yield result
+            }
           }
-        } yield testData == receivedData
+        } yield testData == receivedData      
 
         assertM(steps)(isTrue)
       } @@ (if (ignoreUpload) ignore

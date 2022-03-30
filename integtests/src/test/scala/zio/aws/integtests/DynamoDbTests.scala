@@ -45,7 +45,7 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
       console <- ZIO.service[Console]
       postfix <- Random.nextInt.map(Math.abs)
       tableName = TableName(s"${prefix}_$postfix")
-    } yield ZManaged.acquireReleaseWith(
+    } yield ZIO.acquireRelease(
       for {
         _ <- Console.printLine(s"Creating table $tableName").ignore
         tableData <- DynamoDb.createTable(
@@ -87,9 +87,7 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
         // simple request/response calls
         val steps = for {
           table <- testTable(s"${prefix}_cd")
-          _ <- table.use { _ =>
-            ZIO.unit
-          }
+          _ <- ZIO.scoped(table.unit)
         } yield ()
 
         assertM(steps.exit)(succeeds(isUnit))
@@ -100,36 +98,38 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
         val N = 100
         val steps = for {
           table <- testTable(s"${prefix}_scn")
-          result <- table.use { tableDescription =>
-            val put =
-              for {
-                tableName <- tableDescription.getTableName.map(TableName(_))
-                randomKey <- Random.nextString(10).map(StringAttributeValue(_))
-                randomValue <- Random.nextInt.map(n => NumberAttributeValue(n.toString))
-                _ <- DynamoDb.putItem(
-                  PutItemRequest(
-                    tableName = tableName,
-                    item = Map(
-                      AttributeName("key") -> AttributeValue(s = Some(randomKey)),
-                      AttributeName("value") -> AttributeValue(n = Some(randomValue))
+          result <- ZIO.scoped {
+              table.flatMap { tableDescription =>
+                val put =
+                  for {
+                    tableName <- tableDescription.getTableName.map(TableName(_))
+                    randomKey <- Random.nextString(10).map(StringAttributeValue(_))
+                    randomValue <- Random.nextInt.map(n => NumberAttributeValue(n.toString))
+                    _ <- DynamoDb.putItem(
+                      PutItemRequest(
+                        tableName = tableName,
+                        item = Map(
+                          AttributeName("key") -> AttributeValue(s = Some(randomKey)),
+                          AttributeName("value") -> AttributeValue(n = Some(randomValue))
+                        )
+                      )
+                    )
+                  } yield ()
+
+                for {
+                  tableName <- tableDescription.getTableName
+                  _ <- put.repeatN(N - 1)
+                  stream = DynamoDb.scan(
+                    ScanRequest(
+                      tableName = tableName,
+                      limit = Some(PositiveIntegerObject(10))
                     )
                   )
-                )
-              } yield ()
-
-            for {
-              tableName <- tableDescription.getTableName
-              _ <- put.repeatN(N - 1)
-              stream = DynamoDb.scan(
-                ScanRequest(
-                  tableName = tableName,
-                  limit = Some(PositiveIntegerObject(10))
-                )
-              )
-              streamResult <- stream.runCollect
-            } yield streamResult
-          }
-        } yield result.length
+                  streamResult <- stream.runCollect
+                } yield streamResult
+              }
+            }
+          } yield result.length
 
         assertM(steps)(equalTo(N))
       } @@ nondeterministic @@ flaky @@ timeout(1.minute),
@@ -138,27 +138,29 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
         val N = 1000
         val steps = for {
           table <- testTable(s"${prefix}_lt")
-          result <- table.use { tableDescription =>
-            for {
-              arn <- tableDescription.getTableArn.map(ResourceArnString(_))
-              _ <- DynamoDb.tagResource(
-                TagResourceRequest(
-                  resourceArn = arn,
-                  tags = (0 until N)
-                    .map(i => zio.aws.dynamodb.model.Tag(TagKeyString(s"tag$i"), TagValueString(i.toString)))
-                    .toList
+          result <- ZIO.scoped {
+            table.flatMap { tableDescription =>
+              for {
+                arn <- tableDescription.getTableArn.map(ResourceArnString(_))
+                _ <- DynamoDb.tagResource(
+                  TagResourceRequest(
+                    resourceArn = arn,
+                    tags = (0 until N)
+                      .map(i => zio.aws.dynamodb.model.Tag(TagKeyString(s"tag$i"), TagValueString(i.toString)))
+                      .toList
+                  )
                 )
-              )
 
-              tagStream = DynamoDb.listTagsOfResource(
-                ListTagsOfResourceRequest(
-                  resourceArn = arn
+                tagStream = DynamoDb.listTagsOfResource(
+                  ListTagsOfResourceRequest(
+                    resourceArn = arn
+                  )
                 )
-              )
-              tags <- tagStream.runCollect
-            } yield tags
+                tags <- tagStream.runCollect
+              } yield tags
+            }
           }
-        } yield result.length
+        } yield result.length      
 
         assertM(steps)(equalTo(N))
       } @@ nondeterministic @@ flaky @@ timeout(1.minute)
