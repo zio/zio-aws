@@ -1383,12 +1383,12 @@ trait ServiceInterfaceGenerator {
             val live: zio.ZLayer[${Types.awsConfig.typ}, ${Types.throwable.typ}, $serviceNameT] = customized(identity)
 
             def customized(customization: ${clientInterfaceBuilder.typ} => ${clientInterfaceBuilder.typ}): zio.ZLayer[${Types.awsConfig.typ}, ${Types.throwable.typ}, $serviceNameT] =
-              managed(customization).toLayer
+              ZLayer.scoped(scoped(customization))
 
-          def managed(customization: ${clientInterfaceBuilder.typ} => ${clientInterfaceBuilder.typ}): zio.ZManaged[${Types.awsConfig.typ}, ${Types.throwable.typ}, $serviceNameT] =
+          def scoped(customization: ${clientInterfaceBuilder.typ} => ${clientInterfaceBuilder.typ}): zio.ZIO[${Types.awsConfig.typ} with zio.Scope, ${Types.throwable.typ}, $serviceNameT] =
             for {
-              awsConfig <- zio.ZManaged.service[AwsConfig]
-              executor <- ${Types.zio_.term}.executor.toManaged
+              awsConfig <- zio.ZIO.service[AwsConfig]
+              executor <- ${Types.zio_.term}.executor
               builder = ${clientInterface.term}.builder()
                   .asyncConfiguration(
                     software.amazon.awssdk.core.client.config.ClientAsyncConfiguration
@@ -1399,9 +1399,9 @@ trait ServiceInterfaceGenerator {
                       )
                       .build()
                   )
-              b0 <- awsConfig.configure[${clientInterface.typ}, ${clientInterfaceBuilder.typ}](builder).toManaged
-              b1 <- awsConfig.configureHttpClient[${clientInterface.typ}, ${clientInterfaceBuilder.typ}](b0, ${Types.serviceHttpCapabilities.term}(supportsHttp2 = $supportsHttp2Lit)).toManaged
-              client <- ${Types.zio_.term}(customization(b1).build()).toManaged
+              b0 <- awsConfig.configure[${clientInterface.typ}, ${clientInterfaceBuilder.typ}](builder)
+              b1 <- awsConfig.configureHttpClient[${clientInterface.typ}, ${clientInterfaceBuilder.typ}](b0, ${Types.serviceHttpCapabilities.term}(supportsHttp2 = $supportsHttp2Lit))
+              client <- ${Types.zio_.term}.attempt(customization(b1).build())
             } yield new $serviceImplT(client, zio.aws.core.aspects.AwsCallAspect.identity, zio.ZEnvironment.empty)
 
             private class $serviceImplT[R](override val api: ${clientInterface.typ}, override val aspect: zio.aws.core.aspects.AwsCallAspect[R], r: zio.ZEnvironment[R])

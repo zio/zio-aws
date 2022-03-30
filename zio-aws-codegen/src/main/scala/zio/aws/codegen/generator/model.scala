@@ -19,6 +19,7 @@ object ModelType {
   case object Blob extends ModelType
   case object Structure extends ModelType
   case object Exception extends ModelType
+  case object Document extends ModelType
   case class Unknown(name: String) extends ModelType
 
   def fromString(typ: String): ModelType =
@@ -42,6 +43,7 @@ object ModelType {
     shape.getType match {
       case "string" if Option(shape.getEnumValues).isDefined => Enum
       case "structure" if shape.isException                  => Exception
+      case "structure" if shape.isDocument                   => Document
       case _ => fromString(shape.getType)
     }
 }

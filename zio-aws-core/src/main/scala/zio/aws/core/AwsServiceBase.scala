@@ -37,7 +37,7 @@ trait AwsServiceBase[R] {
   )(request: Request): ZStream[R, AwsError, Item] =
     ZStream.unwrap {
       aspect(
-        ZIO(selector(impl(request)).toStream().mapError(AwsError.fromThrowable))
+        ZIO.attempt(selector(impl(request)).toStream().mapError(AwsError.fromThrowable))
           .mapError(AwsError.fromThrowable) ? (serviceName / opName)
       ).unwrap
     }
@@ -60,7 +60,7 @@ trait AwsServiceBase[R] {
             val stream = ZStream.fromPull {
               for {
                 nextTokenRef <-
-                  Ref.make[Option[String]](Some(nextToken)).toManaged
+                  Ref.make[Option[String]](Some(nextToken))
                 pull = for {
                   token <- nextTokenRef.get
                   chunk <- token match {
@@ -112,7 +112,7 @@ trait AwsServiceBase[R] {
           val stream = ZStream.fromPull {
             for {
               nextTokenRef <-
-                Ref.make[Option[String]](Some(nextToken)).toManaged
+                Ref.make[Option[String]](Some(nextToken))
               pull = for {
                 token <- nextTokenRef.get
                 chunk <- token match {

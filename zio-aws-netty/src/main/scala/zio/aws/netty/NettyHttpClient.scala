@@ -14,7 +14,7 @@ import software.amazon.awssdk.http.nio.netty.{
   NettyNioAsyncHttpClient,
   ProxyConfiguration => AwsProxyConfiguration
 }
-import zio.{ZIO, ZLayer, ZManaged}
+import zio.{Scope, ZIO, ZLayer}
 
 object NettyHttpClient {
   val default: ZLayer[Any, Throwable, HttpClient] =
@@ -27,26 +27,26 @@ object NettyHttpClient {
       protocol: Protocol,
       customization: NettyNioAsyncHttpClient.Builder => NettyNioAsyncHttpClient.Builder =
         identity
-  ): ZLayer[Any, Throwable, HttpClient] = {
-    def create(
-        awsProtocol: AwsProtocol
-    ): ZManaged[Any, Throwable, SdkAsyncHttpClient] =
-      ZManaged
-        .fromAutoCloseable(
-          ZIO.attempt(
-            customization(
-              NettyNioAsyncHttpClient
-                .builder()
+  ): ZLayer[Any, Throwable, HttpClient] =  {
+      def create(
+          awsProtocol: AwsProtocol
+      ): ZIO[Scope, Throwable, SdkAsyncHttpClient] =
+        ZIO
+          .fromAutoCloseable(
+            ZIO.attempt(
+              customization(
+                NettyNioAsyncHttpClient
+                  .builder()
+              )
+                .protocol(awsProtocol)
+                .build()
             )
-              .protocol(awsProtocol)
-              .build()
           )
-        )
 
-    HttpClient.fromManagedPerProtocol(
-      create(AwsProtocol.HTTP1_1),
-      create(AwsProtocol.HTTP2)
-    )(protocol)
+      HttpClient.fromScopedPerProtocol[Any, Throwable, SdkAsyncHttpClient](
+        create(AwsProtocol.HTTP1_1),
+        create(AwsProtocol.HTTP2)
+      )(protocol)
   }
 
   def configured(
@@ -55,8 +55,8 @@ object NettyHttpClient {
   ): ZLayer[NettyClientConfig, Throwable, HttpClient] = {
     def create(
         awsProtocol: AwsProtocol
-    ): ZManaged[NettyClientConfig, Throwable, SdkAsyncHttpClient] =
-      ZManaged
+    ): ZIO[NettyClientConfig with Scope, Throwable, SdkAsyncHttpClient] =
+      ZIO
         .fromAutoCloseable(ZIO.service[NettyClientConfig].flatMap { config =>
           ZIO.attempt {
             val builderHelper: BuilderHelper[NettyNioAsyncHttpClient] =
@@ -121,9 +121,9 @@ object NettyHttpClient {
           }
         })
 
-    ZLayer.fromManaged {
-      ZManaged.service[NettyClientConfig].flatMap { config =>
-        HttpClient.fromManagedPerProtocolManaged(
+    ZLayer.scoped {
+      ZIO.service[NettyClientConfig].flatMap { config =>
+        HttpClient.fromScopedPerProtocolScoped(
           create(AwsProtocol.HTTP1_1),
           create(AwsProtocol.HTTP2)
         )(config.protocol)

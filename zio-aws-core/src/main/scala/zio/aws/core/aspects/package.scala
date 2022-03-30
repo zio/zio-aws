@@ -2,6 +2,7 @@ package zio.aws.core
 
 import izumi.reflect.Tag
 import zio._
+import zio.metrics._
 
 package object aspects {
   type AwsCallAspect[-R] =
@@ -33,7 +34,7 @@ package object aspects {
 
   def callDuration(
       prefix: String,
-      boundaries: ZIOMetric.Histogram.Boundaries
+      boundaries: MetricKeyType.Histogram.Boundaries
   ): AwsCallAspect[Clock] =
     new AwsCallAspect[Clock] {
       override final def apply[R <: Clock, E, A <: Described[_]](
@@ -42,14 +43,14 @@ package object aspects {
         f.timed.flatMap { case (duration, r) =>
           val durationInSeconds =
             duration.getSeconds + (duration.getNano / 1000000000.0)
-          ZIOMetric
-            .observeHistogram(
+          Metric
+            .histogram(
               s"${prefix}_aws_call",
-              boundaries,
-              MetricLabel("aws_service", r.description.service),
-              MetricLabel("aws_operation", r.description.operation)
+              boundaries
             )
-            .observe(durationInSeconds)
+            .tagged("aws_service", r.description.service)
+            .tagged("aws_operation", r.description.operation)            
+            .update(durationInSeconds)
             .zipRight(f)
         }
       }
@@ -86,10 +87,10 @@ package object aspects {
     def @@[RIn1 <: RIn: Tag](
         aspect: AwsCallAspect[RIn1]
     ): ZLayer[RIn1, E, ROut] =
-      ZLayer.fromManaged[RIn1, E, ROut] {
-        ZManaged.environment[RIn1].flatMap { r =>
+      ZLayer.scoped[RIn1] {
+        ZIO.environment[RIn1].flatMap { r =>
           layer.build.map(_.get.withAspect(aspect, r))
-        }
+        }      
       }
   }
 }

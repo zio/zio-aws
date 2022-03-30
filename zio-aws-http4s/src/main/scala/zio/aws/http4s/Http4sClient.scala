@@ -127,7 +127,7 @@ class Http4sClient(client: Client[Task], closeFn: () => Unit)(implicit
       handler: SdkAsyncHttpResponseHandler
   ): Task[Void] = {
     for {
-      _ <- Task(
+      _ <- ZIO.attempt(
         handler.onHeaders(
           SdkHttpResponse
             .builder()
@@ -154,7 +154,7 @@ class Http4sClient(client: Client[Task], closeFn: () => Unit)(implicit
             streamFinished.fail(throwable).unit
         }
       publisher = StreamUnicastPublisher(stream, dispatcher)
-      _ <- Task {
+      _ <- ZIO.attempt {
         handler.onStream(publisher)
       }.ensuring(streamFinished.await.ignore)
     } yield null.asInstanceOf[Void]
@@ -190,11 +190,11 @@ object Http4sClient {
       new Http4sClient(client, () => runtime.unsafeRun(closeFn))
     }
 
-    def toManaged: ZManaged[Clock, Throwable, Http4sClient] = {
+    def toScoped: ZIO[Clock with Scope, Throwable, Http4sClient] = {
       resources.map { case (dispatcher, client) =>
         implicit val d: Dispatcher[Task] = dispatcher
         new Http4sClient(client, () => ())
-      }.toManagedZIO
+      }.toScopedZIO
     }
 
     private def resources: Resource[Task, (Dispatcher[Task], Client[Task])] = {
@@ -214,18 +214,20 @@ object Http4sClient {
   def customized(
       f: BlazeClientBuilder[Task] => BlazeClientBuilder[Task]
   ): ZLayer[Clock, Throwable, HttpClient] =
-    ZIO.runtime.toManaged.flatMap { implicit runtime: Runtime[Clock] =>
-      Http4sClient
-        .Http4sClientBuilder(f)
-        .toManaged
-        .map { c =>
-          new HttpClient {
-            override def clientFor(
-                serviceCaps: ServiceHttpCapabilities
-            ): Task[SdkAsyncHttpClient] = Task.succeed(c)
+    ZLayer.scoped {
+      ZIO.runtime.flatMap { implicit runtime: Runtime[Clock] =>
+        Http4sClient
+          .Http4sClientBuilder(f)
+          .toScoped        
+          .map { c =>
+            new HttpClient {
+              override def clientFor(
+                  serviceCaps: ServiceHttpCapabilities
+              ): Task[SdkAsyncHttpClient] = Task.succeed(c)
+            }
           }
-        }
-    }.toLayer
+      }
+    }
 
   def configured(
       sslContext: Option[SSLContext] = tryDefaultSslContext,
@@ -237,10 +239,11 @@ object Http4sClient {
     Throwable,
     HttpClient
   ] =
-    ZManaged
+    ZLayer.scoped {
+    ZIO
       .service[_root_.zio.aws.http4s.BlazeClientConfig]
       .flatMap { config =>
-        ZManaged.runtime.flatMap { implicit runtime: Runtime[Clock] =>
+        ZIO.runtime.flatMap { implicit runtime: Runtime[Clock] =>
           Http4sClient
             .Http4sClientBuilder(
               _.withResponseHeaderTimeout(config.responseHeaderTimeout)
@@ -271,7 +274,7 @@ object Http4sClient {
                     .getOrElse(Function.const(config.maxWaitQueueLimit))
                 )
             )
-            .toManaged
+            .toScoped
             .map { c =>
               new HttpClient {
                 override def clientFor(
@@ -281,7 +284,7 @@ object Http4sClient {
             }
         }
       }
-      .toLayer
+    }
 
   private def tryDefaultSslContext: Option[SSLContext] =
     try {

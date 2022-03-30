@@ -38,7 +38,7 @@ object AwsConfig {
         Builder,
         Client
       ]](builder: Builder): Task[Builder] =
-        Task(customization.customize[Client, Builder](builder))
+        ZIO.attempt(customization.customize[Client, Builder](builder))
 
       override def configureHttpClient[
           Client,
@@ -61,7 +61,7 @@ object AwsConfig {
       ]](builder: Builder): Task[Builder] = {
         val builderHelper: BuilderHelper[Client] = BuilderHelper.apply
         import builderHelper._
-        Task {
+        ZIO.attempt {
           val b0 =
             builder
               .optionallyWith(commonConfig.endpointOverride)(

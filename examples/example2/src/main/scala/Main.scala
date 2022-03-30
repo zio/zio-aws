@@ -48,26 +48,28 @@ object Main extends ZIOAppDefault {
       resetPolicy =
         Retry.Schedules.exponentialBackoff(min = 1.second, max = 1.minute)
     )
-    circuitBreaker.use { cb =>
-      // Default DynamoDB layer
-      // val dynamoDb: ZLayer[AwsConfig, Throwable, DynamoDb] = dynamodb.live
-      // DynamoDB with logging
-      // val dynamoDb: ZLayer[Clock with Logging with AwsConfig, Throwable, DynamoDb] = dynamodb.live @@ logging
-      // DynamoDB with circuit breaker
-      // val dynamoDb: ZLayer[AwsConfig, Throwable, DynamoDb] = dynamodb.live @@ circuitBreaking(cb)
+    ZIO.scoped {
+      circuitBreaker.flatMap { cb =>
+        // Default DynamoDB layer
+        // val dynamoDb: ZLayer[AwsConfig, Throwable, DynamoDb] = dynamodb.live
+        // DynamoDB with logging
+        // val dynamoDb: ZLayer[Clock with Logging with AwsConfig, Throwable, DynamoDb] = dynamodb.live @@ logging
+        // DynamoDB with circuit breaker
+        // val dynamoDb: ZLayer[AwsConfig, Throwable, DynamoDb] = dynamodb.live @@ circuitBreaking(cb)
 
-      val dynamoDb = DynamoDb.live @@ (logging >>> circuitBreaking(cb))
-      val finalLayer = (Clock.any ++ awsConfig) >>> dynamoDb
+        val dynamoDb = DynamoDb.live @@ (logging >>> circuitBreaking(cb))
+        val finalLayer = (Clock.any ++ awsConfig) >>> dynamoDb
 
-      program
-        .provideCustomLayer(finalLayer)
-        .either
-        .flatMap {
-          case Left(error) =>
-            Console.printLineError(s"AWS error: $error").ignore.as(ExitCode.failure)
-          case Right(_) =>
-            ZIO.unit.as(ExitCode.success)
-        }
+        program
+          .provideCustomLayer(finalLayer)
+          .either
+          .flatMap {
+            case Left(error) =>
+              Console.printLineError(s"AWS error: $error").ignore.as(ExitCode.failure)
+            case Right(_) =>
+              ZIO.unit.as(ExitCode.success)
+          }
+      }
     }
   }
 }

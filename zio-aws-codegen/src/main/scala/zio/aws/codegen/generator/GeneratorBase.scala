@@ -58,6 +58,8 @@ trait GeneratorBase {
         ZIO.succeed(q"""$term.buildAwsValue()""")
       case ModelType.Exception =>
         ZIO.succeed(term)
+      case ModelType.Document =>
+        ZIO.succeed(term)
       case ModelType.BigDecimal =>
         ZIO.succeed(q"""$term.bigDecimal""")
       case _ =>
@@ -126,6 +128,8 @@ trait GeneratorBase {
         )
       case ModelType.Exception =>
         ZIO.succeed(term)
+      case ModelType.Document =>
+        ZIO.succeed(term)        
       case _ =>
         if (
           TypeMapping.isBuiltIn(model.shapeName) || isBlacklistedNewtype(

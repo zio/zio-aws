@@ -192,11 +192,19 @@ trait GithubActionsGenerator {
                 "Build and run tests",
                 List(
                   "++${{ matrix.scala }}",
+                  "integtests/test"
+                ),
+                heapGb = 5
+              ).when(isScalaVersion(scala212)),
+              runSBT(
+                "Build and run tests",
+                List(
+                  "++${{ matrix.scala }}",
                   "examples/compile",
                   "integtests/test"
                 ),
                 heapGb = 5
-              ).when(isNotScalaVersion(scala3)),
+              ).when(isNotScalaVersion(scala3) && isNotScalaVersion(scala212)),
               runSBT(
                 "Build and run tests",
                 List(
