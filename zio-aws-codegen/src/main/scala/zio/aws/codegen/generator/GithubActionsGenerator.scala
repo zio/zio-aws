@@ -51,7 +51,7 @@ trait GithubActionsGenerator {
             ignoredBranches = Seq(Branch.Named("gh-pages"))
           ),
           Trigger.Push(
-            ignoredBranches = Seq(Branch.Named("gh-pages"))
+            branches = Seq(Branch.Named("master"))
           )
         )
         .addJob(
