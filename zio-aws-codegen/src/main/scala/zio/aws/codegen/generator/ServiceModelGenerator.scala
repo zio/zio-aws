@@ -1,6 +1,11 @@
 package zio.aws.codegen.generator
 
-import io.github.vigoo.metagen.core.{CodeFileGenerator, Generator, GeneratorFailure, ScalaType}
+import io.github.vigoo.metagen.core.{
+  CodeFileGenerator,
+  Generator,
+  GeneratorFailure,
+  ScalaType
+}
 import software.amazon.awssdk.codegen.model.config.customization.ShapeModifier
 import zio.ZIO
 import zio.aws.codegen.generator.context.AwsGeneratorContext._
@@ -382,30 +387,26 @@ trait ServiceModelGenerator {
                       roToEditable(finalFieldModel, valueTerm).map {
                         toEditable =>
                           ModelFieldFragments(
-                            paramDef = param"""$pureGetterNameTerm: ${ScalaType
-                              .option(memberType)
-                              .typ} = None""",
+                            paramDef = param"""$pureGetterNameTerm: ${Types
+                              .optional(memberType)
+                              .typ} = ${Types.optionalAbsent.term}""",
                             getterCall =
                               q"""$pureGetterNameTerm.map(value => $toEditable)""",
                             getterInterface =
-                              q"""def ${pureGetterNameTerm}: ${ScalaType
-                                .option(memberRoType)
+                              q"""def ${pureGetterNameTerm}: ${Types
+                                .optional(memberRoType)
                                 .typ}""",
                             getterImplementation =
                               if (wrappedGet == valueTerm) {
                                 q"""override val ${Pat
-                                  .Var(pureGetterNameTerm)}: ${ScalaType
-                                  .option(memberRoType)
-                                  .typ} = ${ScalaType
-                                  .option(memberRoType)
-                                  .term}($get)"""
+                                  .Var(pureGetterNameTerm)}: ${Types
+                                  .optional(memberRoType)
+                                  .typ} = ${Types.optionalFromNullable}($get)"""
                               } else {
                                 q"""override val ${Pat
-                                  .Var(pureGetterNameTerm)}: ${ScalaType
-                                  .option(memberRoType)
-                                  .typ} = ${ScalaType
-                                  .option(memberRoType)
-                                  .term}($get).map(value => $wrappedGet)"""
+                                  .Var(pureGetterNameTerm)}: ${Types
+                                  .optional(memberRoType)
+                                  .typ} = ${Types.optionalFromNullable}($get).map(value => $wrappedGet)"""
                               },
                             zioGetterImplementation =
                               q"""def $effectualGetterNameTerm: ${Types
@@ -487,7 +488,7 @@ trait ServiceModelGenerator {
   private def generateDocument(
       m: Model
   ): ZIO[AwsGeneratorContext, AwsGeneratorFailure, ModelWrapper] =
-    ZIO.succeed { 
+    ZIO.succeed {
       ModelWrapper(
         fileName = None,
         code = List(
@@ -598,8 +599,12 @@ trait ServiceModelGenerator {
         "model"
       ) {
         for {
-          _ <- ZIO.foreachDiscard(namesInModel)(CodeFileGenerator.knownLocalName(_))
-          _ <- ZIO.foreachDiscard(primitiveModels.map(m => m.generatedType / "Type"))(
+          _ <- ZIO.foreachDiscard(namesInModel)(
+            CodeFileGenerator.knownLocalName(_)
+          )
+          _ <- ZIO.foreachDiscard(
+            primitiveModels.map(m => m.generatedType / "Type")
+          )(
             CodeFileGenerator.keepFullyQualified(_)
           )
         } yield q"""import scala.jdk.CollectionConverters._

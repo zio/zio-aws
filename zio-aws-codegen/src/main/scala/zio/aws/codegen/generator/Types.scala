@@ -3,6 +3,8 @@ package zio.aws.codegen.generator
 import io.github.vigoo.metagen.core.{Package, ScalaType}
 import Packages._
 
+import scala.meta._
+
 object Types {
   val awsError: ScalaType = ScalaType(zioawsCore, "AwsError")
   def builderHelper(a: ScalaType): ScalaType =
@@ -65,4 +67,16 @@ object Types {
     ScalaType(Packages.zioPrelude, "Subtype", t)
 
   val awsDocument: ScalaType = ScalaType(Packages.awsCore / "document", "Document")
+
+  def optional(t: ScalaType): ScalaType =
+    ScalaType(Packages.zioPrelude / "data", "Optional", t)
+
+  val optionalAbsent: ScalaType =
+    ScalaType(Packages.zioPrelude / "data" / "Optional", "Absent")
+  val optionalPresent: ScalaType =
+    ScalaType(Packages.zioPrelude / "data" / "Optional", "Present")
+
+
+  val optionalFromNullable: Term =
+    q"zio.aws.core.internal.optionalFromNullable"
 }
