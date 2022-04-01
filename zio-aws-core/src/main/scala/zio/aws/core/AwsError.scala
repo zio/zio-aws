@@ -1,8 +1,8 @@
 package zio.aws.core
 
 import java.util.concurrent.CompletionException
-
 import zio.ZIO
+import zio.prelude.data.Optional
 
 sealed trait AwsError {
   def toThrowable: Throwable
@@ -29,10 +29,10 @@ object AwsError {
 
   def unwrapOptionField[T](
       name: String,
-      value: => Option[T]
+      value: => Optional[T]
   ): ZIO[Any, AwsError, T] =
     value match {
-      case Some(value) => ZIO.succeed(value)
-      case None        => ZIO.fail(FieldIsNone(name))
+      case Optional.Present(value) => ZIO.succeed(value)
+      case Optional.Absent        => ZIO.fail(FieldIsNone(name))
     }
 }

@@ -2,13 +2,14 @@ package zio.aws.core
 
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient
 import software.amazon.awssdk.utils.builder.SdkBuilder
+import zio.prelude.data.Optional
 
 trait BuilderHelper[T] {
   implicit class BuilderOps[B <: SdkBuilder[B, T]](val builder: B) {
-    def optionallyWith[P](opt: Option[P])(withF: B => P => B): B =
+    def optionallyWith[P](opt: Optional[P])(withF: B => P => B): B =
       opt match {
-        case Some(value) => withF(builder)(value)
-        case None        => builder
+        case Optional.Present(value) => withF(builder)(value)
+        case Optional.Absent         => builder
       }
   }
 
