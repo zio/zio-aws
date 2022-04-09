@@ -31,86 +31,90 @@ object AwsConfig {
   def customized(
       customization: ClientCustomization
   ): ZLayer[HttpClient, Nothing, AwsConfig] =
-    (for {
-      httpClient <- ZIO.service[HttpClient]
-    } yield new AwsConfig {
-      override def configure[Client, Builder <: AwsClientBuilder[
-        Builder,
-        Client
-      ]](builder: Builder): Task[Builder] =
-        ZIO.attempt(customization.customize[Client, Builder](builder))
+    ZLayer {
+      for {
+        httpClient <- ZIO.service[HttpClient]
+      } yield new AwsConfig {
+        override def configure[Client, Builder <: AwsClientBuilder[
+          Builder,
+          Client
+        ]](builder: Builder): Task[Builder] =
+          ZIO.attempt(customization.customize[Client, Builder](builder))
 
-      override def configureHttpClient[
+        override def configureHttpClient[
           Client,
           Builder <: AwsAsyncClientBuilder[Builder, Client]
-      ](
+        ](
           builder: Builder,
           serviceCaps: ServiceHttpCapabilities
-      ): Task[Builder] =
-        httpClient.clientFor(serviceCaps).map(builder.httpClient)
-    }).toLayer
+        ): Task[Builder] =
+          httpClient.clientFor(serviceCaps).map(builder.httpClient)
+      }
+    }
 
   def configured(): ZLayer[HttpClient & CommonAwsConfig, Nothing, AwsConfig] =
-    (for {
-      httpClient <- ZIO.service[HttpClient]
-      commonConfig <- ZIO.service[CommonAwsConfig]
-    } yield new AwsConfig {
-      override def configure[Client, Builder <: AwsClientBuilder[
-        Builder,
-        Client
-      ]](builder: Builder): Task[Builder] = {
-        val builderHelper: BuilderHelper[Client] = BuilderHelper.apply
-        import builderHelper._
-        ZIO.attempt {
-          val b0 =
-            builder
+    ZLayer {
+      for {
+        httpClient <- ZIO.service[HttpClient]
+        commonConfig <- ZIO.service[CommonAwsConfig]
+      } yield new AwsConfig {
+        override def configure[Client, Builder <: AwsClientBuilder[
+          Builder,
+          Client
+        ]](builder: Builder): Task[Builder] = {
+          val builderHelper: BuilderHelper[Client] = BuilderHelper.apply
+          import builderHelper._
+          ZIO.attempt {
+            val b0 =
+              builder
               .optionallyWith(commonConfig.endpointOverride)(
                 _.endpointOverride
               )
-              .optionallyWith(commonConfig.region)(_.region)
-              .credentialsProvider(commonConfig.credentialsProvider)
+                .optionallyWith(commonConfig.region)(_.region)
+                .credentialsProvider(commonConfig.credentialsProvider)
 
-          commonConfig.commonClientConfig match {
-            case Some(commonClientConfig) =>
-              val clientOverrideBuilderHelper
-                  : BuilderHelper[ClientOverrideConfiguration] =
-                BuilderHelper.apply
-              import clientOverrideBuilderHelper._
-              val overrideBuilder =
-                ClientOverrideConfiguration
-                  .builder()
-                  .headers(
-                    commonClientConfig.extraHeaders.map { case (key, value) =>
-                      key -> value.asJava
-                    }.asJava
-                  )
-                  .retryPolicy(RetryPolicy.none())
-                  .optionallyWith(
-                    commonClientConfig.apiCallTimeout
-                      .map(zio.Duration.fromScala)
-                  )(_.apiCallTimeout)
-                  .optionallyWith(
-                    commonClientConfig.apiCallAttemptTimeout
-                      .map(zio.Duration.fromScala)
-                  )(_.apiCallAttemptTimeout)
-                  .optionallyWith(commonClientConfig.defaultProfileName)(
-                    _.defaultProfileName
-                  )
+            commonConfig.commonClientConfig match {
+              case Some(commonClientConfig) =>
+                val clientOverrideBuilderHelper
+                    : BuilderHelper[ClientOverrideConfiguration] =
+                  BuilderHelper.apply
+                import clientOverrideBuilderHelper._
+                val overrideBuilder =
+                  ClientOverrideConfiguration
+                    .builder()
+                    .headers(
+                      commonClientConfig.extraHeaders.map { case (key, value) =>
+                        key -> value.asJava
+                      }.asJava
+                    )
+                    .retryPolicy(RetryPolicy.none())
+                    .optionallyWith(
+                      commonClientConfig.apiCallTimeout
+                        .map(zio.Duration.fromScala)
+                    )(_.apiCallTimeout)
+                    .optionallyWith(
+                      commonClientConfig.apiCallAttemptTimeout
+                        .map(zio.Duration.fromScala)
+                    )(_.apiCallAttemptTimeout)
+                    .optionallyWith(commonClientConfig.defaultProfileName)(
+                      _.defaultProfileName
+                    )
 
-              b0.overrideConfiguration(overrideBuilder.build())
-            case None =>
-              b0
+                b0.overrideConfiguration(overrideBuilder.build())
+              case None =>
+                b0
+            }
           }
         }
-      }
 
-      override def configureHttpClient[
+        override def configureHttpClient[
           Client,
           Builder <: AwsAsyncClientBuilder[Builder, Client]
-      ](
+        ](
           builder: Builder,
           serviceCaps: ServiceHttpCapabilities
-      ): Task[Builder] =
-        httpClient.clientFor(serviceCaps).map(builder.httpClient)
-    }).toLayer
+        ): Task[Builder] =
+          httpClient.clientFor(serviceCaps).map(builder.httpClient)
+      }
+    }
 }

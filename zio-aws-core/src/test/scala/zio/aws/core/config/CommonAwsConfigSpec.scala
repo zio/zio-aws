@@ -19,7 +19,7 @@ import zio.test.AssertionM.Render.{className, param}
 
 import scala.reflect.ClassTag
 
-object CommonAwsConfigSpec extends DefaultRunnableSpec {
+object CommonAwsConfigSpec extends ZIOSpecDefault {
   override def spec: ZSpec[TestEnvironment, Any] =
     suite("commonAwsConfig")(
       test("can read example HOCON") {
