@@ -21,7 +21,7 @@ import zio.test.Assertion._
 import zio.test.TestAspect._
 import zio.test._
 
-object DynamoDbTests extends DefaultRunnableSpec with Logging {
+object DynamoDbTests extends ZIOSpecDefault with Logging {
 
   val nettyClient = NettyHttpClient.default
   val http4sClient = Http4sClient.default
