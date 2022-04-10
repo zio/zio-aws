@@ -26,9 +26,9 @@ object DynamoDbTests extends ZIOSpecDefault with Logging {
   val nettyClient = NettyHttpClient.default
   val http4sClient = Http4sClient.default
   val actorSystem =
-    ZLayer.fromAcquireRelease(ZIO.attempt(ActorSystem("test")))(sys =>
+    ZLayer(ZIO.fromAcquireRelease(ZIO.attempt(ActorSystem("test")))(sys =>
       ZIO.fromFuture(_ => sys.terminate()).orDie
-    )
+    ))
   val akkaHttpClient = AkkaHttpClient.client()
   val awsConfig = AwsConfig.default
   val dynamoDb = DynamoDb.customized(
