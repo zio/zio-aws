@@ -21,14 +21,14 @@ import zio.test.Assertion._
 import zio.test.TestAspect._
 import zio.test._
 
-object DynamoDbTests extends DefaultRunnableSpec with Logging {
+object DynamoDbTests extends ZIOSpecDefault with Logging {
 
   val nettyClient = NettyHttpClient.default
   val http4sClient = Http4sClient.default
   val actorSystem =
-    ZLayer.fromAcquireRelease(ZIO.attempt(ActorSystem("test")))(sys =>
+    ZLayer.scoped(ZIO.acquireRelease(ZIO.attempt(ActorSystem("test")))(sys =>
       ZIO.fromFuture(_ => sys.terminate()).orDie
-    )
+    ))
   val akkaHttpClient = AkkaHttpClient.client()
   val awsConfig = AwsConfig.default
   val dynamoDb = DynamoDb.customized(
@@ -39,10 +39,9 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
       .endpointOverride(new URI("http://localhost:4566"))
   ) @@ callLogging
 
-  private def testTable(prefix: String) = {
+  private def testTable(prefix: String): ZIO[DynamoDb, Nothing, ZIO[DynamoDb with Scope, AwsError, TableDescription.ReadOnly]] = {
     for {
       dynamodb <- ZIO.service[DynamoDb]
-      console <- ZIO.service[Console]
       postfix <- Random.nextInt.map(Math.abs)
       tableName = TableName(s"${prefix}_$postfix")
     } yield ZIO.acquireRelease(
@@ -75,13 +74,13 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
             _ <- DynamoDb.deleteTable(DeleteTableRequest(tableName))
           } yield ()
         }
-        .provideEnvironment(ZEnvironment(dynamodb) ++ ZEnvironment(console))
+        .provideEnvironment(ZEnvironment(dynamodb))
         .catchAll(error => ZIO.die(error.toThrowable))
         .unit
     )
   }
 
-  def tests(prefix: String) =
+  def tests(prefix: String): Seq[ZSpec[TestEnvironment with DynamoDb, Throwable]] =
     Seq(
       test("can create and delete a table") {
         // simple request/response calls
@@ -131,7 +130,7 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
             }
           } yield result.length
 
-        assertM(steps)(equalTo(N))
+        assertM(steps.mapError(_.toThrowable))(equalTo(N))
       } @@ nondeterministic @@ flaky @@ timeout(1.minute),
       test("listTagsOfResource") {
         // simple paginated streaming
@@ -162,29 +161,26 @@ object DynamoDbTests extends DefaultRunnableSpec with Logging {
           }
         } yield result.length      
 
-        assertM(steps)(equalTo(N))
+        assertM(steps.mapError(_.toThrowable))(equalTo(N))
       } @@ nondeterministic @@ flaky @@ timeout(1.minute)
     )
 
-  override def spec = {
+  override def spec: ZSpec[TestEnvironment, Throwable] = {
     suite("DynamoDB")(
       suite("with Netty")(
         tests("netty"): _*
-      ).provideCustomLayer(
-        ((Clock.any ++ Console.any ++ (nettyClient >>> awsConfig)) >>> dynamoDb)
-          .mapError(TestFailure.die)
+      ).provideCustom(
+        nettyClient.mapError(TestFailure.fail), awsConfig, dynamoDb.mapError(TestFailure.fail)
       ) @@ sequential,
       suite("with http4s")(
         tests("http4s"): _*
-      ).provideCustomLayer(
-        ((Clock.any ++ Console.any ++ (http4sClient >>> awsConfig)) >>> dynamoDb)
-          .mapError(TestFailure.die)
+      ).provideCustom(
+        http4sClient.mapError(TestFailure.fail), awsConfig, dynamoDb.mapError(TestFailure.fail)
       ) @@ sequential,
       suite("with akka-http")(
         tests("akkahttp"): _*
-      ).provideCustomLayer(
-        ((Clock.any ++ Console.any ++ (actorSystem >>> akkaHttpClient >>> awsConfig)) >>> dynamoDb)
-          .mapError(TestFailure.die)
+      ).provideCustom(
+        actorSystem.mapError(TestFailure.fail), akkaHttpClient.mapError(TestFailure.fail), awsConfig, dynamoDb.mapError(TestFailure.fail)
       ) @@ sequential
     ) @@ sequential
   }

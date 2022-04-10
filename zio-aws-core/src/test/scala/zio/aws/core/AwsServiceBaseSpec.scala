@@ -27,7 +27,7 @@ import scala.collection.mutable.ArrayBuffer
 
 trait Service[R] extends AwsServiceBase[R]
 
-object AwsServiceBaseSpec extends DefaultRunnableSpec with Service[Any] {
+object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
   override val aspect: AwsCallAspect[Any] = AwsCallAspect.identity
   override val serviceName: String = "test"
 

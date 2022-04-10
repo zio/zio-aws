@@ -245,7 +245,7 @@ trait AwsServiceBase[R] {
         publisherPromise <- Promise.make[AwsError, Publisher[EventI]]
         responsePromise <- Promise.make[AwsError, Response]
         finishedPromise <- Promise.make[AwsError, Unit]
-        signalQueue <- ZQueue.bounded[AwsError](16)
+        signalQueue <- Queue.bounded[AwsError](16)
 
         _ <- aspect(
           ZIO
@@ -347,7 +347,7 @@ trait AwsServiceBase[R] {
         outPublisherPromise <- Promise.make[AwsError, Publisher[OutEventI]]
         responsePromise <- Promise.make[AwsError, Response]
         finishedPromise <- Promise.make[AwsError, Unit]
-        signalQueue <- ZQueue.bounded[AwsError](16)
+        signalQueue <- Queue.bounded[AwsError](16)
 
         _ <- aspect(
           ZIO

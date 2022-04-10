@@ -16,7 +16,7 @@ object Main extends ZIOAppDefault {
   val accessKey = "TODO"
   val secretKey = "TODO"
 
-  val program: ZIO[Console & Kinesis, AwsError, Unit] =
+  val program: ZIO[Kinesis, AwsError, Unit] =
     for {
       streams <- Kinesis.listStreams(ListStreamsRequest())
       _ <- Console.printLine("Streams:").ignore
@@ -93,7 +93,7 @@ object Main extends ZIOAppDefault {
 
     } yield ()
 
-  override def run: URIO[ZEnv with ZIOAppArgs, ExitCode] = {
+  override def run: ZIO[ZIOAppArgs with Scope, Nothing, ExitCode] = {
     val httpClient = NettyHttpClient.dual
     val cfg = ZLayer.succeed(
       CommonAwsConfig(
@@ -108,7 +108,7 @@ object Main extends ZIOAppDefault {
     val aws = awsConfig >>> Kinesis.live
 
     program
-      .provideCustomLayer(aws)
+      .provideLayer(aws)
       .either
       .flatMap {
         case Left(error) =>

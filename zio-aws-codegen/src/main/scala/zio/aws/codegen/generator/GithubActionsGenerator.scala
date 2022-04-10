@@ -123,41 +123,6 @@ trait GithubActionsGenerator {
               )
             )
         )
-        .addJobs(
-          grouped.zipWithIndex.map { case (group, idx) =>
-            Job(
-              s"build-clients-$idx",
-              s"Build client libraries #$idx",
-              need = Seq("build-core")
-            ).matrix(scalaVersions)
-              .withSteps(
-                checkoutCurrentBranch(),
-                setupScala(Some(ZuluJDK17)),
-                setupGPG().when(isMaster),
-                loadPGPSecret().when(isMaster),
-                cacheSBT(),
-                loadStoredTarget("core"),
-                runSBT(
-                  "Build libraries",
-                  parameters = "++${{ matrix.scala }}" :: group
-                    .map(name => s"$name/compile")
-                ).when(isNotMaster),
-                runSBT(
-                  "Build and publish libraries",
-                  parameters = "++${{ matrix.scala }}" :: group
-                    .map(name => s"$name/publishSigned"),
-                  env = Map(
-                    "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
-                    "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}"
-                  )
-                ).when(isMaster),
-                storeTargets(
-                  s"clients-$idx",
-                  directories = List("")
-                ).when(isMaster)
-              )
-          }
-        )
         .addJob(
           Job(
             "integration-test",
@@ -214,6 +179,41 @@ trait GithubActionsGenerator {
                 heapGb = 5
               ).when(isScalaVersion(scala3))
             )
+        )
+        .addJobs(
+          grouped.zipWithIndex.map { case (group, idx) =>
+            Job(
+              s"build-clients-$idx",
+              s"Build client libraries #$idx",
+              need = Seq("build-core", "integration-test")
+            ).matrix(scalaVersions)
+              .withSteps(
+                checkoutCurrentBranch(),
+                setupScala(Some(ZuluJDK17)),
+                setupGPG().when(isMaster),
+                loadPGPSecret().when(isMaster),
+                cacheSBT(),
+                loadStoredTarget("core"),
+                runSBT(
+                  "Build libraries",
+                  parameters = "++${{ matrix.scala }}" :: group
+                    .map(name => s"$name/compile")
+                ).when(isNotMaster),
+                runSBT(
+                  "Build and publish libraries",
+                  parameters = "++${{ matrix.scala }}" :: group
+                    .map(name => s"$name/publishSigned"),
+                  env = Map(
+                    "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
+                    "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}"
+                  )
+                ).when(isMaster),
+                storeTargets(
+                  s"clients-$idx",
+                  directories = List("")
+                ).when(isMaster)
+              )
+          }
         )
         .addJob(
           Job(
