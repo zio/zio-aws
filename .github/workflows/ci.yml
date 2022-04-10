@@ -99,6 +99,72 @@ jobs:
       with:
         name: target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
         path: targets.tar
+  integration-test:
+    name: Integration test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+        - ubuntu-latest
+        scala:
+        - 2.12.15
+        - 2.13.8
+        - 3.1.1
+        java:
+        - adopt@1.8
+    needs:
+    - build-core
+    services:
+      localstack:
+        image: localstack/localstack:latest
+        env:
+          DEFAULT_REGION: us-east-1
+          DEBUG: '0'
+          SERVICES: s3,dynamodb
+          AWS_ACCESS_KEY_ID: dummy-key
+          AWS_SECRET_ACCESS_KEY: dummy-key
+          LOCALSTACK_HOST: localstack
+          AWS_DEFAULT_REGION: us-east-1
+          USE_SSL: 'false'
+        ports:
+        - 4566:4566
+    steps:
+    - name: Checkout current branch
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Setup Java and Scala
+      uses: olafurpg/setup-scala@v11
+      with:
+        java-version: zulu@1.17
+    - name: Cache SBT
+      uses: actions/cache@v2
+      with:
+        path: |-
+          ~/.ivy2/cache
+          ~/.sbt
+          ~/.coursier/cache/v1
+          ~/.cache/coursier/v1
+        key: ${{ matrix.os }}-sbt-${{ matrix.scala }}-${{ hashFiles('**/*.sbt') }}-${{
+          hashFiles('**/build.properties') }}
+    - name: Download stored core targets
+      uses: actions/download-artifact@v2
+      with:
+        name: target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
+    - name: Inflate core targets
+      run: |-
+        tar xvf targets.tar
+        rm targets.tar
+    - name: Build and run tests
+      if: ${{ matrix.scala == '2.12.15' }}
+      run: sbt -J-XX:+UseG1GC -J-Xmx5g -J-Xms5g -J-Xss16m ++${{ matrix.scala }} integtests/test
+    - name: Build and run tests
+      if: ${{ (matrix.scala != '3.1.1') && (matrix.scala != '2.12.15') }}
+      run: sbt -J-XX:+UseG1GC -J-Xmx5g -J-Xms5g -J-Xss16m ++${{ matrix.scala }} examples/compile
+        integtests/test
+    - name: Build and run tests
+      if: ${{ matrix.scala == '3.1.1' }}
+      run: sbt -J-XX:+UseG1GC -J-Xmx5g -J-Xms5g -J-Xss16m ++${{ matrix.scala }} examples/compile
   build-clients-0:
     name: 'Build client libraries #0'
     runs-on: ${{ matrix.os }}
@@ -114,6 +180,7 @@ jobs:
         - adopt@1.8
     needs:
     - build-core
+    - integration-test
     steps:
     - name: Checkout current branch
       uses: actions/checkout@v2
@@ -225,6 +292,7 @@ jobs:
         - adopt@1.8
     needs:
     - build-core
+    - integration-test
     steps:
     - name: Checkout current branch
       uses: actions/checkout@v2
@@ -336,6 +404,7 @@ jobs:
         - adopt@1.8
     needs:
     - build-core
+    - integration-test
     steps:
     - name: Checkout current branch
       uses: actions/checkout@v2
@@ -447,6 +516,7 @@ jobs:
         - adopt@1.8
     needs:
     - build-core
+    - integration-test
     steps:
     - name: Checkout current branch
       uses: actions/checkout@v2
@@ -558,6 +628,7 @@ jobs:
         - adopt@1.8
     needs:
     - build-core
+    - integration-test
     steps:
     - name: Checkout current branch
       uses: actions/checkout@v2
@@ -665,6 +736,7 @@ jobs:
         - adopt@1.8
     needs:
     - build-core
+    - integration-test
     steps:
     - name: Checkout current branch
       uses: actions/checkout@v2
@@ -719,72 +791,6 @@ jobs:
         name: target-clients-5-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java
           }}
         path: targets.tar
-  integration-test:
-    name: Integration test
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os:
-        - ubuntu-latest
-        scala:
-        - 2.12.15
-        - 2.13.8
-        - 3.1.1
-        java:
-        - adopt@1.8
-    needs:
-    - build-core
-    services:
-      localstack:
-        image: localstack/localstack:latest
-        env:
-          DEFAULT_REGION: us-east-1
-          DEBUG: '0'
-          SERVICES: s3,dynamodb
-          AWS_ACCESS_KEY_ID: dummy-key
-          AWS_SECRET_ACCESS_KEY: dummy-key
-          LOCALSTACK_HOST: localstack
-          AWS_DEFAULT_REGION: us-east-1
-          USE_SSL: 'false'
-        ports:
-        - 4566:4566
-    steps:
-    - name: Checkout current branch
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
-    - name: Setup Java and Scala
-      uses: olafurpg/setup-scala@v11
-      with:
-        java-version: zulu@1.17
-    - name: Cache SBT
-      uses: actions/cache@v2
-      with:
-        path: |-
-          ~/.ivy2/cache
-          ~/.sbt
-          ~/.coursier/cache/v1
-          ~/.cache/coursier/v1
-        key: ${{ matrix.os }}-sbt-${{ matrix.scala }}-${{ hashFiles('**/*.sbt') }}-${{
-          hashFiles('**/build.properties') }}
-    - name: Download stored core targets
-      uses: actions/download-artifact@v2
-      with:
-        name: target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
-    - name: Inflate core targets
-      run: |-
-        tar xvf targets.tar
-        rm targets.tar
-    - name: Build and run tests
-      if: ${{ matrix.scala == '2.12.15' }}
-      run: sbt -J-XX:+UseG1GC -J-Xmx5g -J-Xms5g -J-Xss16m ++${{ matrix.scala }} integtests/test
-    - name: Build and run tests
-      if: ${{ (matrix.scala != '3.1.1') && (matrix.scala != '2.12.15') }}
-      run: sbt -J-XX:+UseG1GC -J-Xmx5g -J-Xms5g -J-Xss16m ++${{ matrix.scala }} examples/compile
-        integtests/test
-    - name: Build and run tests
-      if: ${{ matrix.scala == '3.1.1' }}
-      run: sbt -J-XX:+UseG1GC -J-Xmx5g -J-Xms5g -J-Xss16m ++${{ matrix.scala }} examples/compile
   release:
     name: Release
     runs-on: ubuntu-latest
