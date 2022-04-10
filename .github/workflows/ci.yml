@@ -496,14 +496,15 @@ jobs:
         zio-aws-outposts/compile zio-aws-panorama/compile zio-aws-personalize/compile
         zio-aws-personalizeevents/compile zio-aws-personalizeruntime/compile zio-aws-pi/compile
         zio-aws-pinpoint/compile zio-aws-pinpointemail/compile zio-aws-pinpointsmsvoice/compile
-        zio-aws-polly/compile zio-aws-pricing/compile zio-aws-proton/compile zio-aws-qldb/compile
-        zio-aws-qldbsession/compile zio-aws-quicksight/compile zio-aws-ram/compile
-        zio-aws-rbin/compile zio-aws-rds/compile zio-aws-rdsdata/compile zio-aws-redshift/compile
-        zio-aws-redshiftdata/compile zio-aws-rekognition/compile zio-aws-resiliencehub/compile
-        zio-aws-resourcegroups/compile zio-aws-resourcegroupstaggingapi/compile zio-aws-robomaker/compile
-        zio-aws-route53/compile zio-aws-route53domains/compile zio-aws-route53recoverycluster/compile
-        zio-aws-route53recoverycontrolconfig/compile zio-aws-route53recoveryreadiness/compile
-        zio-aws-route53resolver/compile zio-aws-rum/compile zio-aws-s3/compile zio-aws-s3control/compile
+        zio-aws-pinpointsmsvoicev2/compile zio-aws-polly/compile zio-aws-pricing/compile
+        zio-aws-proton/compile zio-aws-qldb/compile zio-aws-qldbsession/compile zio-aws-quicksight/compile
+        zio-aws-ram/compile zio-aws-rbin/compile zio-aws-rds/compile zio-aws-rdsdata/compile
+        zio-aws-redshift/compile zio-aws-redshiftdata/compile zio-aws-rekognition/compile
+        zio-aws-resiliencehub/compile zio-aws-resourcegroups/compile zio-aws-resourcegroupstaggingapi/compile
+        zio-aws-robomaker/compile zio-aws-route53/compile zio-aws-route53domains/compile
+        zio-aws-route53recoverycluster/compile zio-aws-route53recoverycontrolconfig/compile
+        zio-aws-route53recoveryreadiness/compile zio-aws-route53resolver/compile zio-aws-rum/compile
+        zio-aws-s3/compile
     - name: Build and publish libraries
       if: ${{ github.ref == 'refs/heads/master' }}
       run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-mediaconnect/publishSigned
@@ -519,16 +520,16 @@ jobs:
         zio-aws-outposts/publishSigned zio-aws-panorama/publishSigned zio-aws-personalize/publishSigned
         zio-aws-personalizeevents/publishSigned zio-aws-personalizeruntime/publishSigned
         zio-aws-pi/publishSigned zio-aws-pinpoint/publishSigned zio-aws-pinpointemail/publishSigned
-        zio-aws-pinpointsmsvoice/publishSigned zio-aws-polly/publishSigned zio-aws-pricing/publishSigned
-        zio-aws-proton/publishSigned zio-aws-qldb/publishSigned zio-aws-qldbsession/publishSigned
-        zio-aws-quicksight/publishSigned zio-aws-ram/publishSigned zio-aws-rbin/publishSigned
-        zio-aws-rds/publishSigned zio-aws-rdsdata/publishSigned zio-aws-redshift/publishSigned
-        zio-aws-redshiftdata/publishSigned zio-aws-rekognition/publishSigned zio-aws-resiliencehub/publishSigned
-        zio-aws-resourcegroups/publishSigned zio-aws-resourcegroupstaggingapi/publishSigned
-        zio-aws-robomaker/publishSigned zio-aws-route53/publishSigned zio-aws-route53domains/publishSigned
-        zio-aws-route53recoverycluster/publishSigned zio-aws-route53recoverycontrolconfig/publishSigned
-        zio-aws-route53recoveryreadiness/publishSigned zio-aws-route53resolver/publishSigned
-        zio-aws-rum/publishSigned zio-aws-s3/publishSigned zio-aws-s3control/publishSigned
+        zio-aws-pinpointsmsvoice/publishSigned zio-aws-pinpointsmsvoicev2/publishSigned
+        zio-aws-polly/publishSigned zio-aws-pricing/publishSigned zio-aws-proton/publishSigned
+        zio-aws-qldb/publishSigned zio-aws-qldbsession/publishSigned zio-aws-quicksight/publishSigned
+        zio-aws-ram/publishSigned zio-aws-rbin/publishSigned zio-aws-rds/publishSigned
+        zio-aws-rdsdata/publishSigned zio-aws-redshift/publishSigned zio-aws-redshiftdata/publishSigned
+        zio-aws-rekognition/publishSigned zio-aws-resiliencehub/publishSigned zio-aws-resourcegroups/publishSigned
+        zio-aws-resourcegroupstaggingapi/publishSigned zio-aws-robomaker/publishSigned
+        zio-aws-route53/publishSigned zio-aws-route53domains/publishSigned zio-aws-route53recoverycluster/publishSigned
+        zio-aws-route53recoverycontrolconfig/publishSigned zio-aws-route53recoveryreadiness/publishSigned
+        zio-aws-route53resolver/publishSigned zio-aws-rum/publishSigned zio-aws-s3/publishSigned
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
@@ -594,11 +595,11 @@ jobs:
         rm targets.tar
     - name: Build libraries
       if: ${{ github.ref != 'refs/heads/master' }}
-      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-s3outposts/compile
-        zio-aws-sagemaker/compile zio-aws-sagemakera2iruntime/compile zio-aws-sagemakeredge/compile
-        zio-aws-sagemakerfeaturestoreruntime/compile zio-aws-sagemakerruntime/compile
-        zio-aws-savingsplans/compile zio-aws-schemas/compile zio-aws-secretsmanager/compile
-        zio-aws-securityhub/compile zio-aws-serverlessapplicationrepository/compile
+      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-s3control/compile
+        zio-aws-s3outposts/compile zio-aws-sagemaker/compile zio-aws-sagemakera2iruntime/compile
+        zio-aws-sagemakeredge/compile zio-aws-sagemakerfeaturestoreruntime/compile
+        zio-aws-sagemakerruntime/compile zio-aws-savingsplans/compile zio-aws-schemas/compile
+        zio-aws-secretsmanager/compile zio-aws-securityhub/compile zio-aws-serverlessapplicationrepository/compile
         zio-aws-servicecatalog/compile zio-aws-servicecatalogappregistry/compile zio-aws-servicediscovery/compile
         zio-aws-servicequotas/compile zio-aws-ses/compile zio-aws-sesv2/compile zio-aws-sfn/compile
         zio-aws-shield/compile zio-aws-signer/compile zio-aws-sms/compile zio-aws-snowball/compile
@@ -615,8 +616,8 @@ jobs:
         zio-aws-xray/compile
     - name: Build and publish libraries
       if: ${{ github.ref == 'refs/heads/master' }}
-      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-s3outposts/publishSigned
-        zio-aws-sagemaker/publishSigned zio-aws-sagemakera2iruntime/publishSigned
+      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-s3control/publishSigned
+        zio-aws-s3outposts/publishSigned zio-aws-sagemaker/publishSigned zio-aws-sagemakera2iruntime/publishSigned
         zio-aws-sagemakeredge/publishSigned zio-aws-sagemakerfeaturestoreruntime/publishSigned
         zio-aws-sagemakerruntime/publishSigned zio-aws-savingsplans/publishSigned
         zio-aws-schemas/publishSigned zio-aws-secretsmanager/publishSigned zio-aws-securityhub/publishSigned

@@ -12,7 +12,7 @@ import zio._
 import zio.config._
 
 object Main extends ZIOAppDefault {
-  val logging: AwsCallAspect[Clock] = ZIO.logLevel(LogLevel.Info) >>> callLogging    
+  val logging: AwsCallAspect[Any] = ZIO.logLevel(LogLevel.Info) >>> callLogging
 
   def circuitBreaking(cb: CircuitBreaker[AwsError]): AwsCallAspect[Any] =
     new AwsCallAspect[Any] {
@@ -24,14 +24,14 @@ object Main extends ZIOAppDefault {
         )
     }
 
-  val program: ZIO[Console & DynamoDb, AwsError, Unit] =
+  val program: ZIO[DynamoDb, AwsError, Unit] =
     for {
       _ <- Console.printLine("Performing full table scan").ignore
       scan = DynamoDb.scan(ScanRequest(tableName = TableName("test"))) // full table scan
       _ <- scan.foreach(item => Console.printLine(item.toString).ignore)
     } yield ()
 
-  override def run: URIO[ZEnv with ZIOAppArgs, ExitCode] = {
+  override def run: URIO[ZIOAppArgs with Scope, ExitCode] = {
     val httpClient = NettyHttpClient.default
     val config = ZLayer.succeed(
       CommonAwsConfig(
@@ -58,10 +58,10 @@ object Main extends ZIOAppDefault {
         // val dynamoDb: ZLayer[AwsConfig, Throwable, DynamoDb] = dynamodb.live @@ circuitBreaking(cb)
 
         val dynamoDb = DynamoDb.live @@ (logging >>> circuitBreaking(cb))
-        val finalLayer = (Clock.any ++ awsConfig) >>> dynamoDb
+        val finalLayer = awsConfig >>> dynamoDb
 
         program
-          .provideCustomLayer(finalLayer)
+          .provideLayer(finalLayer)
           .either
           .flatMap {
             case Left(error) =>
