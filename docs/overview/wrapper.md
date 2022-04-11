@@ -67,8 +67,8 @@ For each model type a set of wrappers are generated, providing the following fun
 The following example from the `elasticsearch` module shows how the generated case classes look like, to be used as input for the service operations:
 
 ```scala
-case class DescribePackagesFilter(name: scala.Option[DescribePackagesFilterName] = None, 
-                                  value: scala.Option[Iterable[primitives.DescribePackagesFilterValue]] = None) {
+case class DescribePackagesFilter(name: Optional[DescribePackagesFilterName] = None, 
+                                  value: Optional[Iterable[primitives.DescribePackagesFilterValue]] = None) {
     def buildAwsValue(): software.amazon.awssdk.services.elasticsearch.model.DescribePackagesFilter = {
       import DescribePackagesFilter.zioAwsBuilderHelper.BuilderOps
       software.amazon.awssdk.services.elasticsearch.model.DescribePackagesFilter
@@ -88,11 +88,11 @@ object CreateMedicalVocabularyResponse {
   private lazy val zioAwsBuilderHelper: zio.aws.core.BuilderHelper[software.amazon.awssdk.services.transcribe.model.CreateMedicalVocabularyResponse] = zio.aws.core.BuilderHelper.apply
   trait ReadOnly {
     def editable: CreateMedicalVocabularyResponse = CreateMedicalVocabularyResponse(vocabularyNameValue.map(value => value), languageCodeValue.map(value => value), vocabularyStateValue.map(value => value), lastModifiedTimeValue.map(value => value), failureReasonValue.map(value => value))
-    def vocabularyNameValue: scala.Option[primitives.VocabularyName]
-    def languageCodeValue: scala.Option[LanguageCode]
-    def vocabularyStateValue: scala.Option[VocabularyState]
-    def lastModifiedTimeValue: scala.Option[primitives.DateTime]
-    def failureReasonValue: scala.Option[primitives.FailureReason]
+    def vocabularyNameValue: Optional[primitives.VocabularyName]
+    def languageCodeValue: Optional[LanguageCode]
+    def vocabularyStateValue: Optional[VocabularyState]
+    def lastModifiedTimeValue: Optional[primitives.DateTime]
+    def failureReasonValue: Optional[primitives.FailureReason]
     def vocabularyName: ZIO[Any, zio.aws.core.AwsError, primitives.VocabularyName] = zio.aws.core.AwsError.unwrapOptionField("vocabularyName", vocabularyNameValue)
     def languageCode: ZIO[Any, zio.aws.core.AwsError, LanguageCode] = zio.aws.core.AwsError.unwrapOptionField("languageCode", languageCodeValue)
     def vocabularyState: ZIO[Any, zio.aws.core.AwsError, VocabularyState] = zio.aws.core.AwsError.unwrapOptionField("vocabularyState", vocabularyStateValue)
@@ -100,11 +100,11 @@ object CreateMedicalVocabularyResponse {
     def failureReason: ZIO[Any, zio.aws.core.AwsError, primitives.FailureReason] = zio.aws.core.AwsError.unwrapOptionField("failureReason", failureReasonValue)
   }
   private class Wrapper(impl: software.amazon.awssdk.services.transcribe.model.CreateMedicalVocabularyResponse) extends CreateMedicalVocabularyResponse.ReadOnly {
-    override def vocabularyNameValue: scala.Option[primitives.VocabularyName] = scala.Option(impl.vocabularyName()).map(value => value: primitives.VocabularyName)
-    override def languageCodeValue: scala.Option[LanguageCode] = scala.Option(impl.languageCode()).map(value => LanguageCode.wrap(value))
-    override def vocabularyStateValue: scala.Option[VocabularyState] = scala.Option(impl.vocabularyState()).map(value => VocabularyState.wrap(value))
-    override def lastModifiedTimeValue: scala.Option[primitives.DateTime] = scala.Option(impl.lastModifiedTime()).map(value => value: primitives.DateTime)
-    override def failureReasonValue: scala.Option[primitives.FailureReason] = scala.Option(impl.failureReason()).map(value => value: primitives.FailureReason)
+    override def vocabularyNameValue: Optional[primitives.VocabularyName] = Optional(impl.vocabularyName()).map(value => value: primitives.VocabularyName)
+    override def languageCodeValue: Optional[LanguageCode] = Optional(impl.languageCode()).map(value => LanguageCode.wrap(value))
+    override def vocabularyStateValue: Optional[VocabularyState] = Optional(impl.vocabularyState()).map(value => VocabularyState.wrap(value))
+    override def lastModifiedTimeValue: Optional[primitives.DateTime] = Optional(impl.lastModifiedTime()).map(value => value: primitives.DateTime)
+    override def failureReasonValue: Optional[primitives.FailureReason] = Optional(impl.failureReason()).map(value => value: primitives.FailureReason)
   }
   def wrap(impl: software.amazon.awssdk.services.transcribe.model.CreateMedicalVocabularyResponse): ReadOnly = new Wrapper(impl)
 }

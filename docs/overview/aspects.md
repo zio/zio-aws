@@ -17,9 +17,9 @@ import zio.aws.core.AwsError
 ```
 
 ```scala mdoc
-  val callLogging: AwsCallAspect[Clock & Console] =
-    new AwsCallAspect[Clock & Console] {
-      override final def apply[R <: Clock & Console, E >: AwsError, A <: Described[_]](
+  val callLogging: AwsCallAspect[Any] =
+    new AwsCallAspect[Any] {
+      override final def apply[R, E >: AwsError, A <: Described[_]](
           f: ZIO[R, E, A]
       )(implicit trace: ZTraceElement): ZIO[R, E, A] = {
         f.either.timed

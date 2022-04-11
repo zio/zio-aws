@@ -23,7 +23,7 @@ import zio.stream._
 
 ```scala mdoc
 object Main extends ZIOAppDefault {
-  val program: ZIO[Console & Ec2 & ElasticBeanstalk, AwsError, Unit] =
+  val program: ZIO[Ec2 & ElasticBeanstalk, AwsError, Unit] =
     for {
       appsResult <- ElasticBeanstalk.describeApplications(
         DescribeApplicationsRequest(applicationNames = Some(List(ApplicationName("my-service"))))
@@ -112,13 +112,13 @@ object Main extends ZIOAppDefault {
       }
     } yield ()
 
-  override def run: URIO[ZEnv with ZIOAppArgs, ExitCode] = {
+  override def run: URIO[ZIOAppArgs with zio.Scope, ExitCode] = {
     val httpClient = NettyHttpClient.default
     val awsConfig = httpClient >>> AwsConfig.default
     val aws = awsConfig >>> (Ec2.live ++ ElasticBeanstalk.live)
 
     program
-      .provideCustomLayer(aws)
+      .provideLayer(aws)
       .either
       .flatMap {
         case Left(error) =>
