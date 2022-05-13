@@ -107,7 +107,7 @@ case class AwsGeneratorImpl(cfg: Parameters)
       id: ModuleId,
       model: C2jModels,
       sbtLogger: sbt.Logger
-  ): ZIO[Console, GeneratorFailure[
+  ): ZIO[Any, GeneratorFailure[
     AwsGeneratorFailure
   ], Set[File]] = {
     val generate = for {
@@ -125,7 +125,7 @@ case class AwsGeneratorImpl(cfg: Parameters)
 
   override def generateCiYaml(
       ids: Set[ModuleId]
-  ): ZIO[Console, GeneratorFailure[
+  ): ZIO[Any, GeneratorFailure[
     AwsGeneratorFailure
   ], Unit] =
     Generator
@@ -145,7 +145,7 @@ case class AwsGeneratorImpl(cfg: Parameters)
 
   override def generateArtifactList(
       ids: Set[ModuleId]
-  ): ZIO[Console, GeneratorFailure[
+  ): ZIO[Any, GeneratorFailure[
     AwsGeneratorFailure
   ], Unit] =
     Generator

@@ -36,7 +36,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
 
   case object SimulatedException extends RuntimeException("simulated")
 
-  override def spec: ZSpec[TestEnvironment, AwsError] =
+  override def spec: Spec[TestEnvironment, AwsError] =
     suite("AwsServiceBaseSpec")(
       suite("asyncRequestResponse")(
         test("success") {
@@ -65,19 +65,19 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
 
           val call =
             asyncRequestResponse[String, Int]("test", fakeAwsCall)("hello")
-          assertM(call.exit)(
+          assertZIO(call.exit)(
             fails(equalTo(GenericAwsError(SimulatedException)))
           )
         }
       ),
       suite("asyncJavaPaginatedRequest")(
         test("success")(
-          assertM(
+          assertZIO(
             runAsyncJavaPaginatedRequest(SimulatedPublisher.correctSequence)
           )(equalTo(Chunk('h', 'e', 'l', 'l', 'o')))
         ),
         test("fail before subscribe")(
-          assertM(
+          assertZIO(
             runAsyncJavaPaginatedRequest(in =>
               SimulatedPublisher.Error(SimulatedException) :: SimulatedPublisher
                 .correctSequence(in)
@@ -85,7 +85,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
           )(isAwsFailure)
         ) @@ ignore, // Illegal case according to RS Publisher/9
         test("fail during emit, no more signals")(
-          assertM(
+          assertZIO(
             runAsyncJavaPaginatedRequest(in =>
               SimulatedPublisher.correctSequence(in).splitAt(3) match {
                 case (a, b) =>
@@ -95,7 +95,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
           )(isAwsFailure)
         ),
         test("fail during emit")(
-          assertM(
+          assertZIO(
             runAsyncJavaPaginatedRequest(in =>
               SimulatedPublisher.correctSequence(in).splitAt(3) match {
                 case (a, b) =>
@@ -105,7 +105,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
           )(isAwsFailure)
         ) @@ ignore, // Illegal case according to RS Publisher/7
         test("fail before complete")(
-          assertM(
+          assertZIO(
             runAsyncJavaPaginatedRequest(in =>
               SimulatedPublisher.correctSequence(in).init ::: List(
                 SimulatedPublisher.Error(SimulatedException),
@@ -115,7 +115,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
           )(isAwsFailure)
         ) @@ ignore, // Illegal case according to RS Publisher/7
         test("fail with no complete after")(
-          assertM(
+          assertZIO(
             runAsyncJavaPaginatedRequest(in =>
               SimulatedPublisher.correctSequence(in).init ::: List(
                 SimulatedPublisher.Error(SimulatedException)
@@ -124,7 +124,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
           )(isAwsFailure)
         ),
         test("complete before subscribe is empty result")(
-          assertM(
+          assertZIO(
             runAsyncJavaPaginatedRequest(in =>
               SimulatedPublisher.Complete :: SimulatedPublisher
                 .correctSequence(in)
@@ -134,51 +134,51 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
       ),
       suite("asyncSimplePaginatedRequest")(
         test("success")(
-          assertM(
+          assertZIO(
             runAsyncSimplePaginatedRequest("hello")
           )(equalTo(Chunk('h', 'e', 'l', 'l', 'o')))
         ),
         test("success in single-page case")(
-          assertM(
+          assertZIO(
             runAsyncSimplePaginatedRequest("x")
           )(equalTo(Chunk('x')))
         ),
         test("fail on first page")(
-          assertM(
+          assertZIO(
             runAsyncSimplePaginatedRequest("hello", failAfter = Some(0)).exit
           )(isAwsFailure)
         ),
         test("fail on other page")(
-          assertM(
+          assertZIO(
             runAsyncSimplePaginatedRequest("hello", failAfter = Some(3)).exit
           )(isAwsFailure)
         )
       ),
       suite("asyncPaginatedRequest")(
         test("success")(
-          assertM(
+          assertZIO(
             runAsyncPaginatedRequest("hello")
           )(equalTo(Chunk('h', 'e', 'l', 'l', 'o')))
         ),
         test("success in single-page case")(
-          assertM(
+          assertZIO(
             runAsyncPaginatedRequest("x")
           )(equalTo(Chunk('x')))
         ),
         test("fail on first page")(
-          assertM(
+          assertZIO(
             runAsyncPaginatedRequest("hello", failAfter = Some(0)).exit
           )(isAwsFailure)
         ),
         test("fail on other page")(
-          assertM(
+          assertZIO(
             runAsyncPaginatedRequest("hello", failAfter = Some(3)).exit
           )(isAwsFailure)
         )
       ),
       suite("asyncRequestOutputStream")(
         test("success")(
-          assertM(runAsyncRequestOutput())(
+          assertZIO(runAsyncRequestOutput())(
             isCase(
               "Success",
               {
@@ -199,7 +199,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
           )
         ),
         test("future fails before prepare")(
-          assertM(
+          assertZIO(
             runAsyncRequestOutput(
               SimulatedAsyncResponseTransformer
                 .FailureSpec(failBeforePrepare = Some(SimulatedException))
@@ -209,7 +209,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
           )
         ),
         test("report exception on transformer before stream")(
-          assertM(
+          assertZIO(
             runAsyncRequestOutput(
               SimulatedAsyncResponseTransformer
                 .FailureSpec(failTransformerBeforeStream =
@@ -221,7 +221,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
           )
         ),
         test("report exception on transformer after stream")(
-          assertM(
+          assertZIO(
             runAsyncRequestOutput(
               SimulatedAsyncResponseTransformer
                 .FailureSpec(failTransformerAfterStream =
@@ -233,14 +233,14 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
           )
         ),
         test("report exception on stream")(
-          assertM(
+          assertZIO(
             runAsyncRequestOutput(failOnStream = Some(SimulatedException))
           )(
             isAwsFailure
           )
         ),
         test("fail future after stream")(
-          assertM(
+          assertZIO(
             runAsyncRequestOutput(
               SimulatedAsyncResponseTransformer
                 .FailureSpec(failFutureAfterStream = Some(SimulatedException))
@@ -278,7 +278,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
       ),
       suite("asyncRequestInputOutputStream")(
         test("success")(
-          assertM(runAsyncRequestInputOutputRequest())(
+          assertZIO(runAsyncRequestInputOutputRequest())(
             hasField[
               (StreamingOutputResult[Any, Int, Byte], Vector[Byte]),
               Int
@@ -296,12 +296,12 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
           )
         ),
         test("failure on input stream")(
-          assertM(runAsyncRequestInputOutputRequest(failOnInput = true).exit)(
+          assertZIO(runAsyncRequestInputOutputRequest(failOnInput = true).exit)(
             isAwsFailure
           )
         ),
         test("future fails before prepare")(
-          assertM(
+          assertZIO(
             runAsyncRequestInputOutputRequest(
               SimulatedAsyncResponseTransformer
                 .FailureSpec(failBeforePrepare = Some(SimulatedException))
@@ -311,7 +311,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
           )
         ),
         test("report exception on transformer before stream")(
-          assertM(
+          assertZIO(
             runAsyncRequestInputOutputRequest(
               SimulatedAsyncResponseTransformer
                 .FailureSpec(failTransformerBeforeStream =
@@ -323,7 +323,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
           )
         ),
         test("report exception on transformer after stream")(
-          assertM(
+          assertZIO(
             runAsyncRequestInputOutputRequest(
               SimulatedAsyncResponseTransformer
                 .FailureSpec(failTransformerAfterStream =
@@ -335,7 +335,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
           )
         ),
         test("report exception on stream")(
-          assertM(
+          assertZIO(
             runAsyncRequestInputOutputRequest(failOnStream =
               Some(SimulatedException)
             ).exit
@@ -344,7 +344,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
           )
         ),
         test("fail future after stream")(
-          assertM(
+          assertZIO(
             runAsyncRequestInputOutputRequest(
               SimulatedAsyncResponseTransformer
                 .FailureSpec(failFutureAfterStream = Some(SimulatedException))
@@ -356,11 +356,11 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
       ),
       suite("asyncRequestEventOutputStream")(
         test("success") {
-          assertM(runAsyncRequestEventOutputStream())(equalTo("hello"))
+          assertZIO(runAsyncRequestEventOutputStream())(equalTo("hello"))
         },
         test("response can go later than stream starts") {
           import SimulatedEventStreamResponseHandlerReceiver._
-          assertM(
+          assertZIO(
             runAsyncRequestEventOutputStream(
               handlerSteps = List(
                 CompleteFuture,
@@ -372,7 +372,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
         },
         test("future can be completed later") {
           import SimulatedEventStreamResponseHandlerReceiver._
-          assertM(
+          assertZIO(
             runAsyncRequestEventOutputStream(
               handlerSteps = List(
                 EventStream,
@@ -389,7 +389,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
            */
 
           import SimulatedEventStreamResponseHandlerReceiver._
-          assertM(
+          assertZIO(
             runAsyncRequestEventOutputStream(
               handlerSteps = List(
                 EventStream,
@@ -400,7 +400,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
         },
         test("exception before stream") {
           import SimulatedEventStreamResponseHandlerReceiver._
-          assertM(
+          assertZIO(
             runAsyncRequestEventOutputStream(
               handlerSteps = List(
                 ResponseReceived,
@@ -413,7 +413,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
         },
         test("exception after stream") {
           import SimulatedEventStreamResponseHandlerReceiver._
-          assertM(
+          assertZIO(
             runAsyncRequestEventOutputStream(
               handlerSteps = List(
                 ResponseReceived,
@@ -426,7 +426,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
         },
         test("failed future before stream") {
           import SimulatedEventStreamResponseHandlerReceiver._
-          assertM(
+          assertZIO(
             runAsyncRequestEventOutputStream(
               handlerSteps = List(
                 FailFuture(SimulatedException),
@@ -438,7 +438,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
         } @@ ignore, // NOTE: we could only guarantee this by waiting for the future to complete but it seems like there are cases (like kinesis subscribeToShard) where it never happens
         test("failed future after stream") {
           import SimulatedEventStreamResponseHandlerReceiver._
-          assertM(
+          assertZIO(
             runAsyncRequestEventOutputStream(
               handlerSteps = List(
                 ResponseReceived,
@@ -449,7 +449,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
           )(isAwsFailure)
         } @@ ignore, // NOTE: we could only guarantee this by waiting for the future to complete but it seems like there are cases (like kinesis subscribeToShard) where it never happens
         test("publisher fail before subscribe")(
-          assertM(
+          assertZIO(
             runAsyncRequestEventOutputStream(
               publisherSteps = in =>
                 SimulatedPublisher.Error(
@@ -459,7 +459,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
           )(isAwsFailure)
         ) @@ ignore, // Illegal case according to RS Publisher/9
         test("publisher fail during emit, no more signals")(
-          assertM(
+          assertZIO(
             runAsyncRequestEventOutputStream(
               publisherSteps = in =>
                 SimulatedPublisher.correctSequence(in).splitAt(3) match {
@@ -472,7 +472,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
           )(isAwsFailure)
         ),
         test("publisher fail during emit")(
-          assertM(
+          assertZIO(
             runAsyncRequestEventOutputStream(
               publisherSteps = in =>
                 SimulatedPublisher.correctSequence(in).splitAt(3) match {
@@ -485,7 +485,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
           )(isAwsFailure)
         ) @@ ignore, // Illegal case according to RS Publisher/7
         test("publisher fail before complete")(
-          assertM(
+          assertZIO(
             runAsyncRequestEventOutputStream(
               publisherSteps = in =>
                 SimulatedPublisher.correctSequence(in).init ::: List(
@@ -496,7 +496,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
           )(isAwsFailure)
         ) @@ ignore, // Illegal case according to RS Publisher/7
         test("publisher fail with no complete after")(
-          assertM(
+          assertZIO(
             runAsyncRequestEventOutputStream(
               publisherSteps = in =>
                 SimulatedPublisher.correctSequence(in).init ::: List(
@@ -506,7 +506,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
           )(isAwsFailure)
         ),
         test("publisher complete before subscribe is empty result")(
-          assertM(
+          assertZIO(
             runAsyncRequestEventOutputStream(
               publisherSteps = in =>
                 SimulatedPublisher.Complete :: SimulatedPublisher
@@ -517,28 +517,28 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
       ),
       suite("asyncRequestEventInputStream")(
         test("success") {
-          assertM(runAsyncRequestEventInputStream())(equalTo("helloworld"))
+          assertZIO(runAsyncRequestEventInputStream())(equalTo("helloworld"))
         },
         test("failure on input stream") {
-          assertM(runAsyncRequestEventInputStream(failInput = true).exit)(
+          assertZIO(runAsyncRequestEventInputStream(failInput = true).exit)(
             isAwsFailure
           )
         }
       ),
       suite("asyncRequestEventInputOutputStream")(
         test("success") {
-          assertM(runAsyncRequestEventInputOutputStream())(
+          assertZIO(runAsyncRequestEventInputOutputStream())(
             equalTo("helloworld")
           )
         },
         test("failure on input stream") {
-          assertM(runAsyncRequestEventInputOutputStream(failInput = true).exit)(
+          assertZIO(runAsyncRequestEventInputOutputStream(failInput = true).exit)(
             isAwsFailure
           )
         },
         test("response can go later than stream starts") {
           import SimulatedEventStreamResponseHandlerReceiver._
-          assertM(
+          assertZIO(
             runAsyncRequestEventInputOutputStream(
               handlerSteps = List(
                 CompleteFuture,
@@ -550,7 +550,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
         },
         test("future can be completed later") {
           import SimulatedEventStreamResponseHandlerReceiver._
-          assertM(
+          assertZIO(
             runAsyncRequestEventInputOutputStream(
               handlerSteps = List(
                 EventStream,
@@ -567,7 +567,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
            */
 
           import SimulatedEventStreamResponseHandlerReceiver._
-          assertM(
+          assertZIO(
             runAsyncRequestEventInputOutputStream(
               handlerSteps = List(
                 EventStream,
@@ -578,7 +578,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
         },
         test("exception before stream") {
           import SimulatedEventStreamResponseHandlerReceiver._
-          assertM(
+          assertZIO(
             runAsyncRequestEventInputOutputStream(
               handlerSteps = List(
                 ResponseReceived,
@@ -591,7 +591,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
         },
         test("exception after stream") {
           import SimulatedEventStreamResponseHandlerReceiver._
-          assertM(
+          assertZIO(
             runAsyncRequestEventInputOutputStream(
               handlerSteps = List(
                 ResponseReceived,
@@ -604,7 +604,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
         },
         test("failed future before stream") {
           import SimulatedEventStreamResponseHandlerReceiver._
-          assertM(
+          assertZIO(
             runAsyncRequestEventInputOutputStream(
               handlerSteps = List(
                 FailFuture(SimulatedException),
@@ -616,7 +616,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
         } @@ ignore, // NOTE: we could only guarantee this by waiting for the future to complete but it seems like there are cases (like kinesis subscribeToShard) where it never happens,
         test("failed future after stream") {
           import SimulatedEventStreamResponseHandlerReceiver._
-          assertM(
+          assertZIO(
             runAsyncRequestEventInputOutputStream(
               handlerSteps = List(
                 ResponseReceived,
@@ -627,7 +627,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
           )(isAwsFailure)
         } @@ ignore, // NOTE: we could only guarantee this by waiting for the future to complete but it seems like there are cases (like kinesis subscribeToShard) where it never happens
         test("publisher fail before subscribe")(
-          assertM(
+          assertZIO(
             runAsyncRequestEventInputOutputStream(
               publisherSteps = in =>
                 SimulatedPublisher.Error(
@@ -637,7 +637,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
           )(isAwsFailure)
         ) @@ ignore, // Illegal case according to RS Publisher/9
         test("publisher fail during emit, no more signals")(
-          assertM(
+          assertZIO(
             runAsyncRequestEventInputOutputStream(
               publisherSteps = in =>
                 SimulatedPublisher.correctSequence(in).splitAt(3) match {
@@ -650,7 +650,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
           )(isAwsFailure)
         ),
         test("publisher fail during emit")(
-          assertM(
+          assertZIO(
             runAsyncRequestEventInputOutputStream(
               publisherSteps = in =>
                 SimulatedPublisher.correctSequence(in).splitAt(3) match {
@@ -663,7 +663,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
           )(isAwsFailure)
         ) @@ ignore, // Illegal case according to RS Publisher/7
         test("publisher fail before complete")(
-          assertM(
+          assertZIO(
             runAsyncRequestEventInputOutputStream(
               publisherSteps = in =>
                 SimulatedPublisher.correctSequence(in).init ::: List(
@@ -674,7 +674,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
           )(isAwsFailure)
         ) @@ ignore, // Illegal case according to RS Publisher/7
         test("publisher fail with no complete after")(
-          assertM(
+          assertZIO(
             runAsyncRequestEventInputOutputStream(
               publisherSteps = in =>
                 SimulatedPublisher.correctSequence(in).init ::: List(
@@ -684,7 +684,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
           )(isAwsFailure)
         ),
         test("publisher complete before subscribe is empty result")(
-          assertM(
+          assertZIO(
             runAsyncRequestEventInputOutputStream(
               publisherSteps = in =>
                 SimulatedPublisher.Complete :: SimulatedPublisher

@@ -96,8 +96,8 @@ class Http4sClient(client: Client[Task], closeFn: () => Unit)(implicit
     if (method.canHaveBody) {
       publisher
         .toStream(asyncRuntimeInstance)
-        .map(fs2.Chunk.byteBuffer)
-        .flatMap(Stream.chunk)
+        .map(fs2.Chunk.byteBuffer(_))
+        .flatMap(Stream.chunk(_))
     } else {
       EmptyBody
     }
@@ -176,7 +176,7 @@ object Http4sClient {
     private def createClient(): Resource[Task, Client[Task]] = {
       customization(
         BlazeClientBuilder[Task].withExecutionContext(
-          runtime.runtimeConfig.executor.asExecutionContext
+          runtime.executor.asExecutionContext
         )
       ).resource
     }
@@ -223,7 +223,7 @@ object Http4sClient {
             new HttpClient {
               override def clientFor(
                   serviceCaps: ServiceHttpCapabilities
-              ): Task[SdkAsyncHttpClient] = Task.succeed(c)
+              ): Task[SdkAsyncHttpClient] = ZIO.succeed(c)
             }
           }
       }
@@ -279,7 +279,7 @@ object Http4sClient {
               new HttpClient {
                 override def clientFor(
                     serviceCaps: ServiceHttpCapabilities
-                ): Task[SdkAsyncHttpClient] = Task.succeed(c)
+                ): Task[SdkAsyncHttpClient] = ZIO.succeed(c)
               }
             }
         }

@@ -39,8 +39,9 @@ case class FromClasspath() extends Loader {
   private def loadJson[T](url: URL)(implicit
       classTag: ClassTag[T]
   ): ZIO[Any, Throwable, T] =
-    Files.createTempFileManaged(".json", None, Seq()).use { tempPath =>
+    ZIO.scoped { 
       for {
+        tempPath <- Files.createTempFileScoped(".json", None, Seq())
         inputStream <- ZIO.attempt(url.openStream())
         bytes <-
           ZInputStream
@@ -127,19 +128,20 @@ case class FromClasspath() extends Loader {
       result <- ZIO.foreach(codegenRootUrls) { url =>
         val uri = url.toURI
         if (uri.getScheme == "jar") {
-          FileSystem
-            .getFileSystem(uri)
-            .toManaged
-            .absorb
-            .catchSome { case _: FileSystemNotFoundException =>
-              FileSystem.newFileSystem(uri)
-            }
-            .use { fs =>
-              findServiceSpecification(
-                uri,
-                fs.getPath("/codegen-resources")
-              )
-            }
+          ZIO.scoped {
+            FileSystem
+              .getFileSystem(uri)
+              .absorb
+              .catchSome { case _: FileSystemNotFoundException =>
+                FileSystem.newFileSystem(uri)
+              }
+              .flatMap { fs =>
+                findServiceSpecification(
+                  uri,
+                  fs.getPath("/codegen-resources")
+                )
+              }
+          }
         } else {
           findServiceSpecification(uri, Path(uri))
         }
@@ -155,7 +157,7 @@ case class FromClasspath() extends Loader {
       serviceModel <- loadServiceModel(root)
       waiters <- loadWaiters(root)
       paginators <- loadPaginators(root)
-      model <- ZIO {
+      model <- ZIO.attempt {
         C2jModels
           .builder()
           .customizationConfig(customizationConfig)

@@ -10,13 +10,12 @@ trait Loader {
 }
 
 object Loader {
-  val fromClasspath: ULayer[Loader] = FromClasspath.toLayer
-  val fromGit: ZLayer[System, Nothing, FromGit] =
+  val fromClasspath: ULayer[Loader] = ZLayer.succeed(FromClasspath())
+  val fromGit: ZLayer[Any, Nothing, FromGit] =
     ZLayer {
       for {
         map <- Ref.make(Map.empty[ModuleId, Path])
-        system <- ZIO.service[System]
-      } yield FromGit(map, system)
+      } yield FromGit(map)
     }
 
   def loadCodegenModel(

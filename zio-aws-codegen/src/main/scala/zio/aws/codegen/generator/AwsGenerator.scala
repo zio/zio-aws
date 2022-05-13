@@ -13,28 +13,28 @@ trait AwsGenerator {
       id: ModuleId,
       model: C2jModels,
       sbtLogger: sbt.Logger
-  ): ZIO[Console, GeneratorFailure[AwsGeneratorFailure], Set[
+  ): ZIO[Any, GeneratorFailure[AwsGeneratorFailure], Set[
     File
   ]]
 
   def generateCiYaml(
       ids: Set[ModuleId]
-  ): ZIO[Console, GeneratorFailure[AwsGeneratorFailure], Unit]
+  ): ZIO[Any, GeneratorFailure[AwsGeneratorFailure], Unit]
 
   def generateArtifactList(
       ids: Set[ModuleId]
-  ): ZIO[Console, GeneratorFailure[AwsGeneratorFailure], Unit]
+  ): ZIO[Any, GeneratorFailure[AwsGeneratorFailure], Unit]
 }
 
 object AwsGenerator {
 
-  val live: ZLayer[Parameters, Nothing, AwsGenerator] = AwsGeneratorImpl.toLayer
+  val live: ZLayer[Parameters, Nothing, AwsGenerator] = ZLayer(ZIO.service[Parameters].map(AwsGeneratorImpl.apply))
 
   def generateServiceCode(
       id: ModuleId,
       model: C2jModels,
       sbtLogger: sbt.Logger
-  ): ZIO[AwsGenerator with Console, GeneratorFailure[
+  ): ZIO[AwsGenerator, GeneratorFailure[
     AwsGeneratorFailure
   ], Set[
     File
@@ -45,14 +45,14 @@ object AwsGenerator {
 
   def generateCiYaml(
       ids: Set[ModuleId]
-  ): ZIO[AwsGenerator with Console, GeneratorFailure[
+  ): ZIO[AwsGenerator, GeneratorFailure[
     AwsGeneratorFailure
   ], Unit] =
     ZIO.serviceWithZIO[AwsGenerator](_.generateCiYaml(ids))
 
   def generateArtifactList(
       ids: Set[ModuleId]
-  ): ZIO[AwsGenerator with Console, GeneratorFailure[
+  ): ZIO[AwsGenerator, GeneratorFailure[
     AwsGeneratorFailure
   ], Unit] =
     ZIO.serviceWithZIO[AwsGenerator](_.generateArtifactList(ids))

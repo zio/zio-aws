@@ -1360,12 +1360,14 @@ trait ServiceInterfaceGenerator {
         val compose: zio.URLayer[zio.mock.Proxy, $serviceNameT] =
           zio.ZLayer {
             zio.ZIO.service[zio.mock.Proxy].flatMap { proxy =>
-              withRuntime[zio.mock.Proxy].map { rts =>
-                new ${Init(serviceNameT, Name.Anonymous(), List.empty)} {
-                  val api: ${clientInterface.typ} = null
-                  def withAspect[R1](newAspect: zio.aws.core.aspects.AwsCallAspect[R1], r: zio.ZEnvironment[R1]): $serviceNameT = this
+              withRuntime[zio.mock.Proxy, $serviceNameT] { rts =>
+                zio.ZIO.succeed {
+                  new ${Init(serviceNameT, Name.Anonymous(), List.empty)} {
+                    val api: ${clientInterface.typ} = null
+                    def withAspect[R1](newAspect: zio.aws.core.aspects.AwsCallAspect[R1], r: zio.ZEnvironment[R1]): $serviceNameT = this
 
-                  ..$serviceMethodMockComposeMethods
+                    ..$serviceMethodMockComposeMethods
+                  }
                 }
               }
             }

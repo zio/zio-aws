@@ -80,7 +80,7 @@ object DynamoDbTests extends ZIOSpecDefault with Logging {
     )
   }
 
-  def tests(prefix: String): Seq[ZSpec[TestEnvironment with DynamoDb, Throwable]] =
+  def tests(prefix: String): Seq[Spec[TestEnvironment with DynamoDb, Throwable]] =
     Seq(
       test("can create and delete a table") {
         // simple request/response calls
@@ -89,7 +89,7 @@ object DynamoDbTests extends ZIOSpecDefault with Logging {
           _ <- ZIO.scoped(table.unit)
         } yield ()
 
-        assertM(steps.exit)(succeeds(isUnit))
+        assertZIO(steps.exit)(succeeds(isUnit))
       } @@ nondeterministic @@ flaky @@ timeout(1.minute),
       test("scan") {
         // java paginator based streaming
@@ -130,7 +130,7 @@ object DynamoDbTests extends ZIOSpecDefault with Logging {
             }
           } yield result.length
 
-        assertM(steps.mapError(_.toThrowable))(equalTo(N))
+        assertZIO(steps.mapError(_.toThrowable))(equalTo(N))
       } @@ nondeterministic @@ flaky @@ timeout(1.minute),
       test("listTagsOfResource") {
         // simple paginated streaming
@@ -161,26 +161,26 @@ object DynamoDbTests extends ZIOSpecDefault with Logging {
           }
         } yield result.length      
 
-        assertM(steps.mapError(_.toThrowable))(equalTo(N))
+        assertZIO(steps.mapError(_.toThrowable))(equalTo(N))
       } @@ nondeterministic @@ flaky @@ timeout(1.minute)
     )
 
-  override def spec: ZSpec[TestEnvironment, Throwable] = {
+  override def spec: Spec[TestEnvironment, Throwable] = {
     suite("DynamoDB")(
       suite("with Netty")(
         tests("netty"): _*
       ).provideCustom(
-        nettyClient.mapError(TestFailure.fail), awsConfig, dynamoDb.mapError(TestFailure.fail)
+        nettyClient, awsConfig, dynamoDb
       ) @@ sequential,
       suite("with http4s")(
         tests("http4s"): _*
       ).provideCustom(
-        http4sClient.mapError(TestFailure.fail), awsConfig, dynamoDb.mapError(TestFailure.fail)
+        http4sClient, awsConfig, dynamoDb
       ) @@ sequential,
       suite("with akka-http")(
         tests("akkahttp"): _*
       ).provideCustom(
-        actorSystem.mapError(TestFailure.fail), akkaHttpClient.mapError(TestFailure.fail), awsConfig, dynamoDb.mapError(TestFailure.fail)
+        actorSystem, akkaHttpClient, awsConfig, dynamoDb
       ) @@ sequential
     ) @@ sequential
   }

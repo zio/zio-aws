@@ -9,7 +9,7 @@ trait Logging {
     new AwsCallAspect[Any] {
       override final def apply[R, E >: AwsError, A <: Described[_]](
           f: ZIO[R, E, A]
-      )(implicit trace: ZTraceElement): ZIO[R, E, A] = {
+      )(implicit trace: Trace): ZIO[R, E, A] = {
         f.either.timed
           .flatMap {
             case (duration, Right(r)) =>

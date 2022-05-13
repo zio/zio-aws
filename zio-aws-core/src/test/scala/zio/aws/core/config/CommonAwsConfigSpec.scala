@@ -15,12 +15,11 @@ import zio.test._
 import zio.config._
 import zio.config.typesafe.TypesafeConfigSource
 import zio.test.Assertion._
-import zio.test.AssertionM.Render.{className, param}
 
 import scala.reflect.ClassTag
 
 object CommonAwsConfigSpec extends ZIOSpecDefault {
-  override def spec: ZSpec[TestEnvironment, Any] =
+  override def spec: Spec[TestEnvironment, Any] =
     suite("commonAwsConfig")(
       test("can read example HOCON") {
         val example =
@@ -45,7 +44,7 @@ object CommonAwsConfigSpec extends ZIOSpecDefault {
             example
           )
         )
-        assertM(config)(
+        assertZIO(config)(
           hasField[CommonAwsConfig, Option[Region]](
             "region",
             _.region,

@@ -27,7 +27,7 @@ trait AwsServiceBase[R] {
     aspect(
       ZIO
         .fromCompletionStage(impl(request))
-        .mapError(AwsError.fromThrowable) ? (serviceName / opName)
+        .mapError(AwsError.fromThrowable(_)) ? (serviceName / opName)
     ).unwrap
 
   final protected def asyncJavaPaginatedRequest[Request, Item, Response](
@@ -37,8 +37,8 @@ trait AwsServiceBase[R] {
   )(request: Request): ZStream[R, AwsError, Item] =
     ZStream.unwrap {
       aspect(
-        ZIO.attempt(selector(impl(request)).toStream().mapError(AwsError.fromThrowable))
-          .mapError(AwsError.fromThrowable) ? (serviceName / opName)
+        ZIO.attempt(selector(impl(request)).toZIOStream().mapError(AwsError.fromThrowable(_)))
+          .mapError(AwsError.fromThrowable(_)) ? (serviceName / opName)
       ).unwrap
     }
 
@@ -53,7 +53,7 @@ trait AwsServiceBase[R] {
       aspect(
         ZIO
           .fromCompletionStage(impl(request))
-          .mapError(AwsError.fromThrowable) ? (serviceName / opName)
+          .mapError(AwsError.fromThrowable(_)) ? (serviceName / opName)
       ).unwrap.flatMap { response =>
         getNextToken(response) match {
           case Some(nextToken) =>
@@ -105,7 +105,7 @@ trait AwsServiceBase[R] {
     aspect(
       ZIO
         .fromCompletionStage(impl(request))
-        .mapError(AwsError.fromThrowable) ? (serviceName / opName)
+        .mapError(AwsError.fromThrowable(_)) ? (serviceName / opName)
     ).unwrap.flatMap { response =>
       getNextToken(response) match {
         case Some(nextToken) =>
@@ -171,10 +171,10 @@ trait AwsServiceBase[R] {
       streamingOutputResultTask <- aspect(
         ZIO
           .fromCompletionStage(impl(request, transformer))
-          .mapError(AwsError.fromThrowable) ? (serviceName / opName)
+          .mapError(AwsError.fromThrowable(_)) ? (serviceName / opName)
       ).unwrap
       streamingOutputResult <-
-        streamingOutputResultTask.mapError(AwsError.fromThrowable)
+        streamingOutputResultTask.mapError(AwsError.fromThrowable(_))
     } yield streamingOutputResult
   }
 
@@ -216,10 +216,10 @@ trait AwsServiceBase[R] {
             .fromCompletionStage(
               impl(request, new ZStreamAsyncRequestBody(body), transformer)
             )
-            .mapError(AwsError.fromThrowable) ? (serviceName / opName)
+            .mapError(AwsError.fromThrowable(_)) ? (serviceName / opName)
         ).unwrap
         streamingOutputResult <-
-          streamingOutputResultTask.mapError(AwsError.fromThrowable)
+          streamingOutputResultTask.mapError(AwsError.fromThrowable(_))
       } yield streamingOutputResult
     }
   }
@@ -263,7 +263,7 @@ trait AwsServiceBase[R] {
                 )
               )
             )
-            .mapError(AwsError.fromThrowable) ? (serviceName / opName)
+            .mapError(AwsError.fromThrowable(_)) ? (serviceName / opName)
         ).forkWithErrorHandler(error =>
           signalQueue.offerAll(Seq(error, error)) *>
             finishedPromise.fail(error)
@@ -279,8 +279,8 @@ trait AwsServiceBase[R] {
 
         stream =
           publisher
-            .toStream()
-            .mapError(AwsError.fromThrowable)
+            .toZIOStream()
+            .mapError(AwsError.fromThrowable(_))
             .mergeWith(
               ZStream.fromQueue(signalQueue),
               TerminationStrategy.Either
@@ -316,7 +316,7 @@ trait AwsServiceBase[R] {
       response <- aspect(
         ZIO
           .fromCompletionStage(impl(request, publisher))
-          .mapError(AwsError.fromThrowable) ? (serviceName / opName)
+          .mapError(AwsError.fromThrowable(_)) ? (serviceName / opName)
       ).unwrap
     } yield response
 
@@ -383,7 +383,7 @@ trait AwsServiceBase[R] {
 
         stream =
           outPublisher
-            .toStream()
+            .toZIOStream()
             .mapError(AwsError.fromThrowable)
             .mergeWith(
               ZStream.fromQueue(signalQueue),

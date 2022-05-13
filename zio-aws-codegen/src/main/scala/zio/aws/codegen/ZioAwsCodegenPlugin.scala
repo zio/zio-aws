@@ -73,7 +73,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
               model <- Loader.loadCodegenModel(id)
               files <- AwsGenerator.generateServiceCode(id, model, log)
             } yield files.toSeq
-          task.provideCustomLayer(env).tapError { generatorError =>
+          task.provideLayer(env).tapError { generatorError =>
             ZIO
               .attempt(log.error(s"Code generator failure: ${generatorError}"))
           }
@@ -101,7 +101,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
         ids <- Loader.findModels()
       } yield generateSbtSubprojects(ids)
 
-      task.provideCustomLayer(env).tapError { generatorError =>
+      task.provideLayer(env).tapError { generatorError =>
         zio.Console.printLineError(s"Code generator failure: ${generatorError}")
       }
     }
@@ -136,7 +136,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
           ids <- Loader.findModels()
           _ <- AwsGenerator.generateCiYaml(ids)
         } yield ()
-      task.provideCustomLayer(env).catchAll { generatorError =>
+      task.provideLayer(env).catchAll { generatorError =>
         ZIO
           .attempt(log.error(s"Code generator failure: ${generatorError}"))
           .as(Seq.empty)
@@ -175,7 +175,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
           ids <- Loader.findModels()
           _ <- AwsGenerator.generateArtifactList(ids)
         } yield ()
-      task.provideCustomLayer(env).catchAll { generatorError =>
+      task.provideLayer(env).catchAll { generatorError =>
         ZIO
           .attempt(log.error(s"Code generator failure: ${generatorError}"))
           .as(Seq.empty)
