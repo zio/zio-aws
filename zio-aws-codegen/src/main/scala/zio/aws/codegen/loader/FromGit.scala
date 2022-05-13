@@ -18,7 +18,7 @@ import java.util.Properties
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 
-case class FromGit(modules: Ref[Map[ModuleId, Path]], system: System)
+case class FromGit(modules: Ref[Map[ModuleId, Path]])
     extends Loader {
   override def findModels(): ZIO[Any, Throwable, Set[ModuleId]] =
     getOrCollectModules.map { moduleMap =>
@@ -35,7 +35,7 @@ case class FromGit(modules: Ref[Map[ModuleId, Path]], system: System)
             customizationConfig <- loadCustomizationModel(root)
             waiters <- loadWaiters(root)
             paginators <- loadPaginators(root)
-            model <- ZIO {
+            model <- ZIO.attempt {
               C2jModels
                 .builder()
                 .customizationConfig(customizationConfig)
@@ -69,11 +69,11 @@ case class FromGit(modules: Ref[Map[ModuleId, Path]], system: System)
         )
         props.getProperty("version")
       }
-      result <-
-        Files.createTempDirectoryManaged(None, Iterable.empty).use { tempDir =>
+      result <- ZIO.scoped {
           for {
+            tempDir <- Files.createTempDirectoryScoped(None, Iterable.empty)
             _ <- ZIO.logInfo(s"AWS SDK version is $version")
-            maybeRepo <- system.env("AWS_JAVA_SDK_REPOSITORY")
+            maybeRepo <- System.env("AWS_JAVA_SDK_REPOSITORY")
             repoDir <- maybeRepo match {
               case Some(repo) =>
                 for {

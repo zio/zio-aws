@@ -29,7 +29,7 @@ object HttpClient {
             override def clientFor(
                 serviceCaps: ServiceHttpCapabilities
             ): Task[SdkAsyncHttpClient] =
-              Task.succeed(client)
+              ZIO.succeed(client)
           }
         }
       case Http2 =>
@@ -39,9 +39,9 @@ object HttpClient {
                 serviceCaps: ServiceHttpCapabilities
             ): Task[SdkAsyncHttpClient] =
               if (serviceCaps.supportsHttp2) {
-                Task.succeed(client)
+                ZIO.succeed(client)
               } else {
-                Task.fail(
+                ZIO.fail(
                   new UnsupportedOperationException(
                     "The http client only supports HTTP 2 but the client requires HTTP 1.1"
                   )
@@ -58,9 +58,9 @@ object HttpClient {
               serviceCaps: ServiceHttpCapabilities
           ): Task[SdkAsyncHttpClient] =
             if (serviceCaps.supportsHttp2) {
-              Task.succeed(http2)
+              ZIO.succeed(http2)
             } else {
-              Task.succeed(http11)
+              ZIO.succeed(http11)
             }
         }
     }

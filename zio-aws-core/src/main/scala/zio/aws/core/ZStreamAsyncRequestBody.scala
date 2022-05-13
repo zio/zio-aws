@@ -18,7 +18,7 @@ class ZStreamAsyncRequestBody[R](stream: ZStream[R, AwsError, Byte])(implicit
   override def subscribe(s: Subscriber[_ >: ByteBuffer]): Unit =
     runtime.unsafeRun {
       ZIO.scoped[R] {
-        s.toSink[Throwable]
+        s.toZIOSink[Throwable]
           .flatMap { case (errorCallback, sink) =>
             stream
               .mapError(_.toThrowable)

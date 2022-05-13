@@ -38,7 +38,7 @@ object AkkaHttpClient {
       } yield new HttpClient {
         override def clientFor(
             serviceCaps: ServiceHttpCapabilities
-        ): Task[SdkAsyncHttpClient] = Task.succeed(akkaClient)
+        ): Task[SdkAsyncHttpClient] = ZIO.succeed(akkaClient)
       }
     }
 }

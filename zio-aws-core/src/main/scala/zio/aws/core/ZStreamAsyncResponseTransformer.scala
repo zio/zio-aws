@@ -38,7 +38,7 @@ class ZStreamAsyncResponseTransformer[R, Response](
       opt =>
         opt.getOrElse(ZIO.unit) *> ZIO.attempt(
           publisher
-            .toStream()
+            .toZIOStream()
             .interruptWhen(errorPromise)
             .map(Chunk.fromByteBuffer)
             .flattenChunks

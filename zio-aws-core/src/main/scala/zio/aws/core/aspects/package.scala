@@ -1,6 +1,5 @@
 package zio.aws.core
 
-import izumi.reflect.Tag
 import zio._
 import zio.metrics._
 
@@ -13,7 +12,7 @@ package object aspects {
       new AwsCallAspect[Any] {
         override final def apply[R, E, A](
             f: ZIO[R, E, A]
-        )(implicit trace: ZTraceElement): ZIO[R, E, A] = f
+        )(implicit trace: Trace): ZIO[R, E, A] = f
       }
   }
 
@@ -21,7 +20,7 @@ package object aspects {
     new AwsCallAspect[Clock] {
       override final def apply[R <: Clock, E, A <: Described[_]](
           f: ZIO[R, E, A]
-      )(implicit trace: ZTraceElement): ZIO[R, E, A] = {
+      )(implicit trace: Trace): ZIO[R, E, A] = {
         f.timed.flatMap { case (duration, r) =>
           ZIO
             .log(
@@ -39,7 +38,7 @@ package object aspects {
     new AwsCallAspect[Clock] {
       override final def apply[R <: Clock, E, A <: Described[_]](
           f: ZIO[R, E, A]
-      )(implicit trace: ZTraceElement): ZIO[R, E, A] = {
+      )(implicit trace: Trace): ZIO[R, E, A] = {
         f.timed.flatMap { case (duration, r) =>
           val durationInSeconds =
             duration.getSeconds + (duration.getNano / 1000000000.0)
@@ -79,9 +78,7 @@ package object aspects {
     def withAspect[R](newAspect: AwsCallAspect[R], r: ZEnvironment[R]): Self
   }
 
-  implicit class ZLayerSyntax[RIn, E, ROut <: AspectSupport[
-    ROut
-  ]: Tag: IsNotIntersection](
+  implicit class ZLayerSyntax[RIn, E, ROut <: AspectSupport[ROut]: Tag](
       layer: ZLayer[RIn, E, ROut]
   ) {
     def @@[RIn1 <: RIn: Tag](
