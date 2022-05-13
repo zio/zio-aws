@@ -170,17 +170,17 @@ object DynamoDbTests extends ZIOSpecDefault with Logging {
       suite("with Netty")(
         tests("netty"): _*
       ).provideCustom(
-        nettyClient.mapError(TestFailure.fail), awsConfig, dynamoDb.mapError(TestFailure.fail)
+        nettyClient, awsConfig, dynamoDb
       ) @@ sequential,
       suite("with http4s")(
         tests("http4s"): _*
       ).provideCustom(
-        http4sClient.mapError(TestFailure.fail), awsConfig, dynamoDb.mapError(TestFailure.fail)
+        http4sClient, awsConfig, dynamoDb
       ) @@ sequential,
       suite("with akka-http")(
         tests("akkahttp"): _*
       ).provideCustom(
-        actorSystem.mapError(TestFailure.fail), akkaHttpClient.mapError(TestFailure.fail), awsConfig, dynamoDb.mapError(TestFailure.fail)
+        actorSystem, akkaHttpClient, awsConfig, dynamoDb
       ) @@ sequential
     ) @@ sequential
   }

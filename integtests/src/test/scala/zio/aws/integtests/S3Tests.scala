@@ -131,17 +131,17 @@ object S3Tests extends ZIOSpecDefault with Logging {
       suite("with Netty")(
         tests("netty"): _*
       ).provideCustom(
-        nettyClient.mapError(TestFailure.fail),  awsConfig, s3Client.mapError(TestFailure.fail)
+        nettyClient, awsConfig, s3Client
       ) @@ sequential,
       suite("with http4s")(
         tests("http4s"): _*
       ).provideCustom(
-        http4sClient.mapError(TestFailure.fail), awsConfig, s3Client.mapError(TestFailure.fail)
+        http4sClient, awsConfig, s3Client
       ) @@ sequential,
       suite("with akka-http")(
         tests("akkahttp", ignoreUpload = true): _*
       ).provideCustom(
-        actorSystem.mapError(TestFailure.fail), akkaHttpClient.mapError(TestFailure.fail), awsConfig,  s3Client.mapError(TestFailure.fail)
+        actorSystem, akkaHttpClient, awsConfig, s3Client
       ) @@ sequential
     ) @@ sequential
   }
