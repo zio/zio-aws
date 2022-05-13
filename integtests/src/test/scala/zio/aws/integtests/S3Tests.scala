@@ -63,7 +63,7 @@ object S3Tests extends ZIOSpecDefault with Logging {
     )
   }
 
-  def tests(prefix: String, ignoreUpload: Boolean = false): Seq[ZSpec[TestEnvironment with S3, Throwable]] =
+  def tests(prefix: String, ignoreUpload: Boolean = false): Seq[Spec[TestEnvironment with S3, Throwable]] =
     Seq(
       test("can create and delete a bucket") {
         // simple request/response calls
@@ -72,7 +72,7 @@ object S3Tests extends ZIOSpecDefault with Logging {
           _ <- ZIO.scoped(bucket.unit)
         } yield ()
 
-        assertM(steps.exit)(succeeds(isUnit))
+        assertZIO(steps.exit)(succeeds(isUnit))
       } @@ nondeterministic @@ flaky @@ timeout(1.minute),
       test(
         "can upload and download items as byte streams with known content length"
@@ -121,7 +121,7 @@ object S3Tests extends ZIOSpecDefault with Logging {
           }
         } yield testData == receivedData      
 
-        assertM(steps.mapError(_.toThrowable))(isTrue)
+        assertZIO(steps.mapError(_.toThrowable))(isTrue)
       } @@ (if (ignoreUpload) ignore
             else identity) @@ nondeterministic @@ flaky @@ timeout(1.minute)
     )
