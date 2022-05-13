@@ -126,7 +126,7 @@ object S3Tests extends ZIOSpecDefault with Logging {
             else identity) @@ nondeterministic @@ flaky @@ timeout(1.minute)
     )
 
-  override def spec: ZSpec[TestEnvironment, Throwable] = {
+  override def spec: Spec[TestEnvironment, Throwable] = {
     suite("S3")(
       suite("with Netty")(
         tests("netty"): _*

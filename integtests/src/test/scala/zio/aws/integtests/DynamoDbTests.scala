@@ -165,7 +165,7 @@ object DynamoDbTests extends ZIOSpecDefault with Logging {
       } @@ nondeterministic @@ flaky @@ timeout(1.minute)
     )
 
-  override def spec: ZSpec[TestEnvironment, Throwable] = {
+  override def spec: Spec[TestEnvironment, Throwable] = {
     suite("DynamoDB")(
       suite("with Netty")(
         tests("netty"): _*
