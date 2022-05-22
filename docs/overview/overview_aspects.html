@@ -68,7 +68,7 @@ to add logging or metrics to the AWS clients and it's also the recommended way t
     <span class="hljs-keyword">new</span> <span class="hljs-type">AwsCallAspect</span>[<span class="hljs-type">Any</span>] {
       <span class="hljs-keyword">override</span> <span class="hljs-keyword">final</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">apply</span></span>[<span class="hljs-type">R</span>, <span class="hljs-type">E</span> &gt;: <span class="hljs-type">AwsError</span>, <span class="hljs-type">A</span> &lt;: <span class="hljs-type">Described</span>[_]](
           f: <span class="hljs-type">ZIO</span>[<span class="hljs-type">R</span>, <span class="hljs-type">E</span>, <span class="hljs-type">A</span>]
-      )(<span class="hljs-keyword">implicit</span> trace: <span class="hljs-type">ZTraceElement</span>): <span class="hljs-type">ZIO</span>[<span class="hljs-type">R</span>, <span class="hljs-type">E</span>, <span class="hljs-type">A</span>] = {
+      )(<span class="hljs-keyword">implicit</span> trace: <span class="hljs-type">Trace</span>): <span class="hljs-type">ZIO</span>[<span class="hljs-type">R</span>, <span class="hljs-type">E</span>, <span class="hljs-type">A</span>] = {
         f.either.timed
           .flatMap {
             <span class="hljs-keyword">case</span> (duration, <span class="hljs-type">Right</span>(r)) =&gt;
@@ -82,7 +82,7 @@ to add logging or metrics to the AWS clients and it's also the recommended way t
           }
       }
     }
-<span class="hljs-comment">// callLogging: AwsCallAspect[Any] = repl.MdocSession$App$$anon$1@2aeb35aa</span>
+<span class="hljs-comment">// callLogging: AwsCallAspect[Any] = repl.MdocSession$App$$anon$1@8bdbf44</span>
 </code></pre>
 <p>This aspect can attached to a <em>client layer</em> with the <code>@@</code> operator. Multiple aspects can be composed with <code>&gt;&gt;&gt;</code>.</p>
 <p>To see a full example, check <a href="https://github.com/vigoo/zio-aws/blob/master/examples/example2/src/main/scala/Main.scala">example #2</a>.</p>

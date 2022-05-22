@@ -85,7 +85,7 @@
               )
             )
 
-            _ &lt;- envStream.run(<span class="hljs-type">Sink</span>.foreach { env =&gt;
+            _ &lt;- envStream.run(<span class="hljs-type">ZSink</span>.foreach { env =&gt;
               env.getEnvironmentName.flatMap { environmentName =&gt;
                 (<span class="hljs-keyword">for</span> {
                   environmentId &lt;- env.getEnvironmentId
@@ -118,7 +118,7 @@
                   reservationsStream = <span class="hljs-type">Ec2</span>.describeInstances(
                     <span class="hljs-type">DescribeInstancesRequest</span>(instanceIds = <span class="hljs-type">Some</span>(instanceIds.map(id =&gt; zio.aws.ec2.model.primitives.<span class="hljs-type">InstanceId</span>(<span class="hljs-type">ResourceId</span>.unwrap(id)))))
                   )
-                  _ &lt;- reservationsStream.run(<span class="hljs-type">Sink</span>.foreach { reservation =&gt;
+                  _ &lt;- reservationsStream.run(<span class="hljs-type">ZSink</span>.foreach { reservation =&gt;
                     reservation.getInstances
                       .flatMap { instances =&gt;
                         <span class="hljs-type">ZIO</span>.foreach(instances) { instance =&gt;
