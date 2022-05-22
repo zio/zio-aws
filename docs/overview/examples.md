@@ -45,7 +45,7 @@ object Main extends ZIOAppDefault {
               )
             )
 
-            _ <- envStream.run(Sink.foreach { env =>
+            _ <- envStream.run(ZSink.foreach { env =>
               env.getEnvironmentName.flatMap { environmentName =>
                 (for {
                   environmentId <- env.getEnvironmentId
@@ -78,7 +78,7 @@ object Main extends ZIOAppDefault {
                   reservationsStream = Ec2.describeInstances(
                     DescribeInstancesRequest(instanceIds = Some(instanceIds.map(id => zio.aws.ec2.model.primitives.InstanceId(ResourceId.unwrap(id)))))
                   )
-                  _ <- reservationsStream.run(Sink.foreach { reservation =>
+                  _ <- reservationsStream.run(ZSink.foreach { reservation =>
                     reservation.getInstances
                       .flatMap { instances =>
                         ZIO.foreach(instances) { instance =>
