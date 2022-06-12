@@ -35,7 +35,7 @@ trait GithubActionsGenerator {
       )
       .toList ++ separateProjectNames.map(List(_))
 
-    val scala212 = ScalaVersion("2.12.15")
+    val scala212 = ScalaVersion("2.12.16")
     val scala213 = ScalaVersion("2.13.8")
     val scala3 = ScalaVersion("3.1.2")
     val scalaVersions = Seq(
