@@ -1,0 +1,222 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Migration guide · ZIO AWS</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="# Migration from v3.x.x.x"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Migration guide · ZIO AWS"/><meta property="og:type" content="website"/><meta property="og:url" content="https://zio.github.io/zio-aws/"/><meta property="og:description" content="# Migration from v3.x.x.x"/><meta property="og:image" content="https://zio.github.io/zio-aws/img/undraw_online.svg"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://zio.github.io/zio-aws/img/undraw_tweetstorm.svg"/><link rel="shortcut icon" href="/zio-aws/img/favicon.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100,"cornerOffset":100}
+          )
+        });
+        </script><script src="/zio-aws/js/scrollSpy.js"></script><link rel="stylesheet" href="/zio-aws/css/main.css"/><script src="/zio-aws/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/zio-aws/"><img class="logo" src="/zio-aws/img/navbar_brand2x.png" alt="ZIO AWS"/><h2 class="headerTitleWithLogo">ZIO AWS</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class="siteNavGroupActive"><a href="/zio-aws/docs/overview/overview_index" target="_self">Overview</a></li><li class=""><a href="/zio-aws/api/index.html" target="_self">API</a></li><li class=""><a href="/zio-aws/docs/about/about_index" target="_self">About</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Overview</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Overview</h3><ul class=""><li class="navListItem"><a class="navItem" href="/zio-aws/docs/overview/overview_index">Summary</a></li><li class="navListItem"><a class="navItem" href="/zio-aws/docs/overview/overview_artifacts">Artifacts</a></li><li class="navListItem"><a class="navItem" href="/zio-aws/docs/overview/overview_wrappers">Wrappers</a></li><li class="navListItem"><a class="navItem" href="/zio-aws/docs/overview/overview_config">Configuration</a></li><li class="navListItem"><a class="navItem" href="/zio-aws/docs/overview/overview_http">HTTP</a></li><li class="navListItem"><a class="navItem" href="/zio-aws/docs/overview/overview_aspects">Aspects</a></li><li class="navListItem"><a class="navItem" href="/zio-aws/docs/overview/overview_examples">Examples</a></li><li class="navListItem"><a class="navItem" href="/zio-aws/docs/overview/overview_changelog">Version history</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/zio-aws/docs/overview/overview_migration_guide">Migration guide</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">Migration guide</h1></header><article><div><span><h1><a class="anchor" aria-hidden="true" id="migration-from-v3xxx"></a><a href="#migration-from-v3xxx" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Migration from v3.x.x.x</h1>
+<p>There are some major changes compared to the ZIO 1 version (v3.x.x.x and v4.x.x.x). This section contains detailed information about what changed and how to modify existing code.</p>
+<h2><a class="anchor" aria-hidden="true" id="new-package-names"></a><a href="#new-package-names" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>New package names</h2>
+<p>Previously the zio-aws packages had the root package <code>io.github.vigoo.zioaws</code>. By moving to the ZIO organisation this changed to be simply <code>zio.aws</code>.</p>
+<p>So imports for something using the EC2 and ElasticBeanstalk APIs would change from:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> io.github.vigoo.zioaws.core._
+<span class="hljs-keyword">import</span> io.github.vigoo.zioaws.ec2.<span class="hljs-type">Ec2</span>
+<span class="hljs-keyword">import</span> io.github.vigoo.zioaws.ec2.model._
+<span class="hljs-keyword">import</span> io.github.vigoo.zioaws.elasticbeanstalk.<span class="hljs-type">ElasticBeanstalk</span>
+<span class="hljs-keyword">import</span> io.github.vigoo.zioaws.elasticbeanstalk.model._
+</code></pre>
+<p>to</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> zio.aws.core._
+<span class="hljs-keyword">import</span> zio.aws.ec2.<span class="hljs-type">Ec2</span>
+<span class="hljs-keyword">import</span> zio.aws.ec2.model._
+<span class="hljs-keyword">import</span> zio.aws.ec2.model.primitives._
+<span class="hljs-keyword">import</span> zio.aws.elasticbeanstalk.<span class="hljs-type">ElasticBeanstalk</span>
+<span class="hljs-keyword">import</span> zio.aws.elasticbeanstalk.model._
+<span class="hljs-keyword">import</span> zio.aws.elasticbeanstalk.model.primitives._
+</code></pre>
+<p>Some other changes to the imports may be necessary because of switching to the new service pattern of ZIO, described below.</p>
+<h2><a class="anchor" aria-hidden="true" id="new-getter-names"></a><a href="#new-getter-names" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>New getter names</h2>
+<p>In previous version of zio-aws the generated models provided to ways to access fields:</p>
+<ul>
+<li>a ZIO effect that failed if the value is <code>None</code> with the name of the field (for example <code>.instanceId</code>)</li>
+<li>a simple value accessor returning an <code>Option</code> value with the <code>Value</code> suffix (for example <code>.instanceIdValue</code>)</li>
+</ul>
+<p>This has been changed to match the convention used in <code>zio-k8s</code> to the following:</p>
+<ul>
+<li>the ZIO effect for requiring that a field has value now has the <code>get</code> prefix (for example <code>.getInstanceId</code>)</li>
+<li>the value with the field name is the simple accessor returning the optional value: (for example <code>.instanceId</code>)</li>
+</ul>
+<p>So for example the following code that prints information about EC2 instances:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">for</span> {
+    id &lt;- instance.instanceId
+    typ &lt;- instance.instanceType
+    launchTime &lt;- instance.launchTime
+    _ &lt;- console.putStrLn(<span class="hljs-string">s"  instance <span class="hljs-subst">$id</span>:"</span>).ignore
+    _ &lt;- console.putStrLn(<span class="hljs-string">s"    type: <span class="hljs-subst">$typ</span>"</span>).ignore
+    _ &lt;- console.putStrLn(<span class="hljs-string">s"    launched at: <span class="hljs-subst">$launchTime</span>"</span>).ignore
+} <span class="hljs-keyword">yield</span> ()
+</code></pre>
+<p>would have to be changed to:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">for</span> {
+    id &lt;- instance.getInstanceId
+    typ &lt;- instance.getInstanceType
+    launchTime &lt;- instance.getLaunchTime
+    _ &lt;- <span class="hljs-type">Console</span>.printLine(<span class="hljs-string">s"  instance <span class="hljs-subst">$id</span>:"</span>).ignore
+    _ &lt;- <span class="hljs-type">Console</span>.printLine(<span class="hljs-string">s"    type: <span class="hljs-subst">$typ</span>"</span>).ignore
+    _ &lt;- <span class="hljs-type">Console</span>.printLine(<span class="hljs-string">s"    launched at: <span class="hljs-subst">$launchTime</span>"</span>).ignore
+} <span class="hljs-keyword">yield</span> ()
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="new-service-pattern"></a><a href="#new-service-pattern" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>New service pattern</h2>
+<p>Previous versions were following the <em>ZIO module pattern 1.0</em>, so all the generated AWS services consisted of a type alias using <code>Has</code>, a trait called <code>Service</code> and a package object with the service's name. With ZIO 2 we no longer have <code>Has</code> and the recommended way to structure services was changed to the simple new service pattern, where each service is just a <code>trait</code> and one or more implementation classes, constructed by layers.</p>
+<p>In practice this means that:</p>
+<ul>
+<li>instead of the package object with lower-case name, the accessor functions are now in the service companion object (<code>ElasticBeanstalk.describeApplications</code> instead of <code>elasticbeanstalk.describeApplications</code>)</li>
+<li>same for the layers, for example <code>Ec2.live</code> instead of <code>ec2.live</code></li>
+<li>the service trait has the name of the service (for example <code>Ec2</code>) instead of <code>Service</code></li>
+</ul>
+<p>The new service pattern is also applied to the core services like <code>AwsConfig</code> and the http implementations.</p>
+<h2><a class="anchor" aria-hidden="true" id="optional-parameters"></a><a href="#optional-parameters" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Optional parameters</h2>
+<p>A very large part of the fields of AWS models are optional. These previously had the type <code>Option</code>, and although for extracting data from them the library already had the generated getters, constructing these data types still required wrapping most of the parameters in <code>Some(...)</code>. To reduce this boilerplate zio-aws now uses the <code>Optional</code> type instead of <code>Option</code>, which was first used in <a href="https://coralogix.github.io/zio-k8s/docs/overview/overview_resources#model">zio-k8s</a>. Now the two libraries share the same type which was moved to <a href="https://zio.github.io/zio-prelude/">zio-prelude</a>.</p>
+<p>The following example:</p>
+<pre><code class="hljs css language-scala">kinesis.describeStreamConsumer(
+  <span class="hljs-type">DescribeStreamConsumerRequest</span>(
+    consumerName = <span class="hljs-type">Some</span>(consumerName),
+    streamARN = <span class="hljs-type">Some</span>(streamDescription.streamDescriptionValue.streamARNValue)
+  )
+)
+</code></pre>
+<p>becomes</p>
+<pre><code class="hljs css language-scala"><span class="hljs-type">Kinesis</span>.describeStreamConsumer(
+  <span class="hljs-type">DescribeStreamConsumerRequest</span>(
+    consumerName = consumerName,
+    streamARN = streamDescription.streamDescription.streamARN
+  )
+)
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="newtypes"></a><a href="#newtypes" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Newtypes</h2>
+<p>Previously zio-aws generated simple Scala type aliases for primitive types in the AWS SDKs. For example the <code>TableName</code> type in <code>zio-aws-dynamodb</code> was just a type alias for <code>String</code>:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">package</span> io.github.vigoo.zioaws.dynamodb.model
+
+<span class="hljs-keyword">package</span> <span class="hljs-class"><span class="hljs-keyword">object</span> <span class="hljs-title">primitives</span> </span>{
+  <span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">TableName</span> </span>= <span class="hljs-type">String</span>
+}
+</code></pre>
+<p>The new version uses <a href="https://zio.github.io/zio-prelude/docs/newtypes/">zio-prelude's newtype wrappers</a> to provide better type safety:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">package</span> zio.aws.dynamodb.model
+
+<span class="hljs-keyword">package</span> <span class="hljs-class"><span class="hljs-keyword">object</span> <span class="hljs-title">primitives</span> </span>{
+  <span class="hljs-class"><span class="hljs-keyword">object</span> <span class="hljs-title">TableName</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Subtype</span>[<span class="hljs-type">String</span>]</span>
+  <span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">TableName</span> </span>= <span class="hljs-type">TableName</span>.<span class="hljs-type">Type</span>
+}
+</code></pre>
+<p>In practice this means that we have to explicitly wrap these primitive values, for example instead of:</p>
+<pre><code class="hljs css language-scala">elasticbeanstalk.describeApplications(
+  <span class="hljs-type">DescribeApplicationsRequest</span>(applicationNames = <span class="hljs-type">Some</span>(<span class="hljs-type">List</span>(<span class="hljs-string">"my-service"</span>)))
+)
+</code></pre>
+<p>now we have to write</p>
+<pre><code class="hljs css language-scala"><span class="hljs-type">ElasticBeanstalk</span>.describeApplications(
+  <span class="hljs-type">DescribeApplicationsRequest</span>(applicationNames = <span class="hljs-type">List</span>(<span class="hljs-type">ApplicationName</span>(<span class="hljs-string">"my-service"</span>)))
+)
+</code></pre>
+<p>and if we need to convert them to the underlying primitive type we need to call <code>unwrap</code>:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-type">ResourceId</span>.unwrap(id)
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="aspects"></a><a href="#aspects" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Aspects</h2>
+<p>zio-aws introduced <code>AwsCallAspect</code> soon after Adam Fraser's <a href="https://www.youtube.com/watch?v=gcqWdNwNEPg&amp;t=2s">talk</a> but it was a custom implementation, defined as:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-class"><span class="hljs-keyword">trait</span> <span class="hljs-title">AwsCallAspect</span>[-<span class="hljs-type">R</span>] </span>{ self =&gt;
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">apply</span></span>[<span class="hljs-type">R1</span> &lt;: <span class="hljs-type">R</span>, <span class="hljs-type">A</span>](
+    f: <span class="hljs-type">ZIO</span>[<span class="hljs-type">R1</span>, <span class="hljs-type">AwsError</span>, <span class="hljs-type">Described</span>[<span class="hljs-type">A</span>]]
+  ): <span class="hljs-type">ZIO</span>[<span class="hljs-type">R1</span>, <span class="hljs-type">AwsError</span>, <span class="hljs-type">Described</span>[<span class="hljs-type">A</span>]]
+
+  <span class="hljs-comment">// ...</span>
+}
+</code></pre>
+<p>These aspects can be applied to whole zio-aws service layers to add logging, metrics, retries etc for every AWS Java SDK call.</p>
+<p>The ZIO 2.0.0 version is now using ZIO's built-in aspect support as a base:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">AwsCallAspect</span>[-<span class="hljs-type">R</span>] </span>=
+  <span class="hljs-type">ZIOAspect</span>[<span class="hljs-type">Nothing</span>, <span class="hljs-type">R</span>, <span class="hljs-type">AwsError</span>, <span class="hljs-type">AwsError</span>, <span class="hljs-type">Nothing</span>, <span class="hljs-type">Described</span>[_]]
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="new-built-in-aspects"></a><a href="#new-built-in-aspects" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>New built-in aspects</h3>
+<p>With ZIO 2 we have logging and metrics support built-in, so zio-aws now provides ready to use aspects for logging and monitoring AWS calls:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">val</span> callLogging: <span class="hljs-type">AwsCallAspect</span>[<span class="hljs-type">Any</span>]
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">callDuration</span></span>(prefix: <span class="hljs-type">String</span>, boundaries: <span class="hljs-type">MetricKeyType</span>.<span class="hljs-type">Histogram</span>.<span class="hljs-type">Boundaries</span>): <span class="hljs-type">AwsCallAspect</span>[<span class="hljs-type">Any</span>]
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="changes-in-defining-aspects"></a><a href="#changes-in-defining-aspects" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Changes in defining aspects</h3>
+<p>The following example aspect uses <code>rezilience</code> to add circuit breaking for an AWS service:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">circuitBreaking</span></span>(cb: <span class="hljs-type">CircuitBreaker</span>[<span class="hljs-type">AwsError</span>]): <span class="hljs-type">AwsCallAspect</span>[<span class="hljs-type">Any</span>] =
+  <span class="hljs-keyword">new</span> <span class="hljs-type">AwsCallAspect</span>[<span class="hljs-type">Any</span>] {
+    <span class="hljs-keyword">override</span> <span class="hljs-keyword">final</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">apply</span></span>[<span class="hljs-type">R1</span> &lt;: <span class="hljs-type">Any</span>, <span class="hljs-type">A</span>](
+      f: <span class="hljs-type">ZIO</span>[<span class="hljs-type">R1</span>, <span class="hljs-type">AwsError</span>, <span class="hljs-type">Described</span>[<span class="hljs-type">A</span>]]
+    ): <span class="hljs-type">ZIO</span>[<span class="hljs-type">R1</span>, <span class="hljs-type">AwsError</span>, <span class="hljs-type">Described</span>[<span class="hljs-type">A</span>]] =
+      cb(f).mapError(policyError =&gt;
+        <span class="hljs-type">AwsError</span>.fromThrowable(policyError.toException)
+      )
+  }
+</code></pre>
+<p>because of the changed base type for <code>AwsCallAspect</code> with the new version the same aspect is defined like this:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">circuitBreaking</span></span>(cb: <span class="hljs-type">CircuitBreaker</span>[<span class="hljs-type">AwsError</span>]): <span class="hljs-type">AwsCallAspect</span>[<span class="hljs-type">Any</span>] =
+  <span class="hljs-keyword">new</span> <span class="hljs-type">AwsCallAspect</span>[<span class="hljs-type">Any</span>] {
+    <span class="hljs-keyword">override</span> <span class="hljs-keyword">final</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">apply</span></span>[<span class="hljs-type">R</span>, <span class="hljs-type">E</span> &gt;: <span class="hljs-type">AwsError</span> &lt;: <span class="hljs-type">AwsError</span>, <span class="hljs-type">A</span> &lt;: <span class="hljs-type">Described</span>[_]](
+      f: <span class="hljs-type">ZIO</span>[<span class="hljs-type">R</span>, <span class="hljs-type">E</span>, <span class="hljs-type">A</span>]
+    )(<span class="hljs-keyword">implicit</span> trace: <span class="hljs-type">Trace</span>): <span class="hljs-type">ZIO</span>[<span class="hljs-type">R</span>, <span class="hljs-type">E</span>, <span class="hljs-type">A</span>] =
+      cb(f).mapError(policyError =&gt;
+        <span class="hljs-type">AwsError</span>.fromThrowable(policyError.toException)
+      )
+  }
+</code></pre>
+<p>The main differences:</p>
+<ul>
+<li>requiring the implicit <code>Trace</code></li>
+<li>the constraints on the error and result types are now expressed as type bounds because the ZIO aspect is more generic</li>
+</ul>
+<h2><a class="anchor" aria-hidden="true" id="new-config-library"></a><a href="#new-config-library" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>New config library</h2>
+<p>The 3.x series of zio-aws was using <code>zio-config 1.x</code>. The recently released 4.x series was using <code>zio-config 2.x</code> which is the ZIO 1 version of the config library's new API; The ZIO 2 version of zio-aws uses <code>zio-config 3.x</code> which is the same new config API but for ZIO 2.</p>
+<p>This means that coming from zio-aws 3.x requires upgrading to the new config API. For more information about the changes in zio-config, <a href="https://github.com/zio/zio-config/releases/tag/v2.0.0-RC1">see it's release notes</a>.</p>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-aws/docs/overview/overview_changelog"><span class="arrow-prev">← </span><span>Version history</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#new-package-names">New package names</a></li><li><a href="#new-getter-names">New getter names</a></li><li><a href="#new-service-pattern">New service pattern</a></li><li><a href="#optional-parameters">Optional parameters</a></li><li><a href="#newtypes">Newtypes</a></li><li><a href="#aspects">Aspects</a><ul class="toc-headings"><li><a href="#new-built-in-aspects">New built-in aspects</a></li><li><a href="#changes-in-defining-aspects">Changes in defining aspects</a></li></ul></li><li><a href="#new-config-library">New config library</a></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/zio-aws/" class="nav-home"><img src="/zio-aws/img/sidebar_brand2x.png" alt="ZIO AWS"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-aws" data-icon="octicon-star" data-count-href="/zio/zio-aws/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Chat with us on Discord</h5><a href="https://discord.gg/2ccFBr4"><img src="/zio-aws//img/discord.png" width="120" alt="discord"/></a></div><div><h5>Additional resources</h5><a href="/zio-aws/api/index.html">Scaladoc of zio-aws</a></div></section><section class="copyright">Copyright © 2022 ZIO Maintainers</section></footer></div></body></html>

@@ -4,47 +4,110 @@
             {"zIndex":100,"cornerOffset":100}
           )
         });
-        </script><script src="/zio-aws/js/scrollSpy.js"></script><link rel="stylesheet" href="/zio-aws/css/main.css"/><script src="/zio-aws/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/zio-aws/"><img class="logo" src="/zio-aws/img/navbar_brand2x.png" alt="ZIO AWS"/><h2 class="headerTitleWithLogo">ZIO AWS</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/zio-aws/docs/overview/overview_index" target="_self">Overview</a></li><li class=""><a href="/zio-aws/api/index.html" target="_self">API</a></li><li class=""><a href="/zio-aws/docs/about/about_index" target="_self">About</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">Wrappers</h1></header><article><div><span><h1><a class="anchor" aria-hidden="true" id="client-wrappers"></a><a href="#client-wrappers" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Client wrappers</h1>
-<h3><a class="anchor" aria-hidden="true" id="modules"></a><a href="#modules" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Modules</h3>
-<p>For each AWS Service the library defines a <em>ZIO module</em> with wrapper functions for all the <em>operations</em>, and a <code>live</code>
-implementation that depends on a core <em>AWS configuration layer</em>:</p>
+        </script><script src="/zio-aws/js/scrollSpy.js"></script><link rel="stylesheet" href="/zio-aws/css/main.css"/><script src="/zio-aws/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/zio-aws/"><img class="logo" src="/zio-aws/img/navbar_brand2x.png" alt="ZIO AWS"/><h2 class="headerTitleWithLogo">ZIO AWS</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class="siteNavGroupActive"><a href="/zio-aws/docs/overview/overview_index" target="_self">Overview</a></li><li class=""><a href="/zio-aws/api/index.html" target="_self">API</a></li><li class=""><a href="/zio-aws/docs/about/about_index" target="_self">About</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Overview</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Overview</h3><ul class=""><li class="navListItem"><a class="navItem" href="/zio-aws/docs/overview/overview_index">Summary</a></li><li class="navListItem"><a class="navItem" href="/zio-aws/docs/overview/overview_artifacts">Artifacts</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/zio-aws/docs/overview/overview_wrappers">Wrappers</a></li><li class="navListItem"><a class="navItem" href="/zio-aws/docs/overview/overview_config">Configuration</a></li><li class="navListItem"><a class="navItem" href="/zio-aws/docs/overview/overview_http">HTTP</a></li><li class="navListItem"><a class="navItem" href="/zio-aws/docs/overview/overview_aspects">Aspects</a></li><li class="navListItem"><a class="navItem" href="/zio-aws/docs/overview/overview_examples">Examples</a></li><li class="navListItem"><a class="navItem" href="/zio-aws/docs/overview/overview_changelog">Version history</a></li><li class="navListItem"><a class="navItem" href="/zio-aws/docs/overview/overview_migration_guide">Migration guide</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">Wrappers</h1></header><article><div><span><h1><a class="anchor" aria-hidden="true" id="client-wrappers"></a><a href="#client-wrappers" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Client wrappers</h1>
+<h3><a class="anchor" aria-hidden="true" id="service-modules"></a><a href="#service-modules" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Service modules</h3>
+<p>For each AWS Service the library defines a <em>ZIO service</em> with wrapper functions for all the <em>operations</em>, a <code>live</code>
+implementation calling the Java SDK and a <code>mock</code> implementation using <a href="https://github.com/zio/zio-mock">zio-mock</a>.</p>
+<p>The live implementation depends on a core <em>AWS configuration layer</em>:</p>
 <pre><code class="hljs css language-scala"><span class="hljs-keyword">val</span> live: <span class="hljs-type">ZLayer</span>[<span class="hljs-type">AwsConfig</span>, <span class="hljs-type">Throwable</span>, <span class="hljs-type">Ec2</span>]
 </code></pre>
 <p>The <code>AwsConfig</code> layer defines how each service's async Java client gets configured, including the http client which is
 provided by an other layer <code>AwsConfig</code> is depending on.</p>
 <p>Each module has accessor functions for <em>all operations</em> of the given service.</p>
 <h3><a class="anchor" aria-hidden="true" id="operations"></a><a href="#operations" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Operations</h3>
-<p>For simple request-response operations the library generates a very light wrapper (see below to learn about future
-plans of wrapping the model types too):</p>
-<pre><code class="hljs css language-scala"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">deleteVolume</span></span>(request: <span class="hljs-type">DeleteVolumeRequest</span>): <span class="hljs-type">ZIO</span>[<span class="hljs-type">Ec2</span>, <span class="hljs-type">AwsError</span>, <span class="hljs-type">DeleteVolumeResponse</span>]
+<p>For simple request-response operations the library generates a very light wrapper:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">deleteVolume</span></span>(request: <span class="hljs-type">DeleteVolumeRequest</span>): <span class="hljs-type">ZIO</span>[<span class="hljs-type">Ec2</span>, <span class="hljs-type">AwsError</span>, <span class="hljs-type">DeleteVolumeResponse</span>.<span class="hljs-type">ReadOnly</span>]
 </code></pre>
 <p>For operations where either the input or the output or both are <em>byte streams</em>, a <code>ZStream</code> wrapper is generated:</p>
-<pre><code class="hljs css language-scala"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">getObject</span></span>(request: <span class="hljs-type">GetObjectRequest</span>): <span class="hljs-type">ZIO</span>[<span class="hljs-type">S3</span>, <span class="hljs-type">AwsError</span>, <span class="hljs-type">StreamingOutputResult</span>[<span class="hljs-type">GetObjectResponse</span>]]
-<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">putObject</span></span>(request: <span class="hljs-type">PutObjectRequest</span>, body: <span class="hljs-type">ZStream</span>[<span class="hljs-type">Any</span>, <span class="hljs-type">AwsError</span>, <span class="hljs-type">Byte</span>])
+<pre><code class="hljs css language-scala"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">getObject</span></span>(request: <span class="hljs-type">GetObjectRequest</span>): <span class="hljs-type">ZIO</span>[<span class="hljs-type">S3</span>, <span class="hljs-type">AwsError</span>, <span class="hljs-type">StreamingOutputResult</span>[<span class="hljs-type">Any</span>, <span class="hljs-type">GetObjectResponse</span>.<span class="hljs-type">ReadOnly</span>, <span class="hljs-type">Byte</span>]]
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">putObject</span></span>(request: <span class="hljs-type">PutObjectRequest</span>, body: <span class="hljs-type">ZStream</span>[<span class="hljs-type">Any</span>, <span class="hljs-type">AwsError</span>, <span class="hljs-type">Byte</span>]): <span class="hljs-type">ZIO</span>[<span class="hljs-type">S3</span>, <span class="hljs-type">AwsError</span>, <span class="hljs-type">PutObjectResponse</span>.<span class="hljs-type">ReadOnly</span>]
 </code></pre>
 <p>where the output is a stream packed together with additional response data:</p>
-<pre><code class="hljs css language-scala"><span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">StreamingOutputResult</span>[<span class="hljs-type">Response</span>](<span class="hljs-params">response: <span class="hljs-type">Response</span>,
-                                           output: <span class="hljs-type">ZStream</span>[<span class="hljs-type">Any</span>, <span class="hljs-type">AwsError</span>, <span class="hljs-type">Byte</span>]</span>)</span>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">StreamingOutputResult</span>[<span class="hljs-type">R</span>, <span class="hljs-type">Response</span>, <span class="hljs-type">Item</span>](<span class="hljs-params">
+  response: <span class="hljs-type">Response</span>,
+  output: <span class="hljs-type">ZStream</span>[<span class="hljs-type">R</span>, <span class="hljs-type">AwsError</span>, <span class="hljs-type">Item</span>]
+</span>)</span>
 </code></pre>
 <p>For operations with <em>event streams</em> a <code>ZStream</code> of a model type gets generated:</p>
-<pre><code class="hljs css language-scala"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">startStreamTranscription</span></span>(request: <span class="hljs-type">StartStreamTranscriptionRequest</span>, input: <span class="hljs-type">ZStream</span>[<span class="hljs-type">Any</span>, <span class="hljs-type">AwsError</span>, <span class="hljs-type">AudioStream</span>]): <span class="hljs-type">ZStream</span>[<span class="hljs-type">TranscribeStreaming</span>, <span class="hljs-type">AwsError</span>, <span class="hljs-type">TranscriptEvent</span>]
+<pre><code class="hljs css language-scala"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">startStreamTranscription</span></span>(request: <span class="hljs-type">StartStreamTranscriptionRequest</span>, input: <span class="hljs-type">ZStream</span>[<span class="hljs-type">Any</span>, <span class="hljs-type">AwsError</span>, <span class="hljs-type">AudioStream</span>]): <span class="hljs-type">ZStream</span>[<span class="hljs-type">TranscribeStreaming</span>, <span class="hljs-type">AwsError</span>, <span class="hljs-type">TranscriptEvent</span>.<span class="hljs-type">ReadOnly</span>]
 </code></pre>
 <p>And for all operations that supports <em>pagination</em>, streaming wrappers gets generated:</p>
-<pre><code class="hljs css language-scala"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">scan</span></span>(request: <span class="hljs-type">ScanRequest</span>): <span class="hljs-type">ZStream</span>[<span class="hljs-type">DynamoDb</span>, <span class="hljs-type">AwsError</span>, <span class="hljs-type">Map</span>[<span class="hljs-type">String</span>, <span class="hljs-type">AttributeValue</span>]]
+<pre><code class="hljs css language-scala"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">scan</span></span>(request: <span class="hljs-type">ScanRequest</span>): <span class="hljs-type">ZStream</span>[<span class="hljs-type">DynamoDb</span>, <span class="hljs-type">AwsError</span>, <span class="hljs-type">Map</span>[<span class="hljs-type">AttributeName</span>, <span class="hljs-type">AttributeValue</span>.<span class="hljs-type">ReadOnly</span>]]
 </code></pre>
 <p>Note that for event streaming or paginating operations returning a <code>ZStream</code> the actual AWS call happens when the stream gets pulled.</p>
+<p>For use cases when calling the <em>paginating</em> interface directly is necessary - for example when forwarding paginated results through a HTTP API, the library generates non-stremaing wrappers as well for these methods.</p>
+<p>For example the DynamoDB <code>scan</code> method's non-streming variant is defined as:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">scanPaginated</span></span>(request: <span class="hljs-type">ScanRequest</span>): <span class="hljs-type">ZIO</span>[<span class="hljs-type">DynamoDb</span>, <span class="hljs-type">ScanResponse</span>.<span class="hljs-type">ReadOnly</span>]
+</code></pre>
 <h3><a class="anchor" aria-hidden="true" id="model-wrappers"></a><a href="#model-wrappers" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Model wrappers</h3>
 <p>For each model type a set of wrappers are generated, providing the following functionality:</p>
 <ul>
 <li>Case classes with default parameter values instead of the <em>builder pattern</em></li>
+<li><a href="https://zio.github.io/zio-prelude/docs/newtypes/">zio-prelude's newtype wrappers</a> for primitive types</li>
 <li>Automatic conversion to Scala collection types</li>
 <li>ADTs instead of the Java enums</li>
-<li>ZIO functions to &quot;get or fail&quot; the optional model fields</li>
-<li>Primitive type aliases</li>
+<li>ZIO getter functions to &quot;get or fail&quot; the optional model fields</li>
+<li>Using zio-prelude's <code>Optional</code> type to eliminate boilerplate when constructing models with many optional fields</li>
 </ul>
-<p>The following example from the <code>elasticsearch</code> module shows how the generated case classes look like, to be used as input for the service operations:</p>
-<pre><code class="hljs css language-scala"><span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">DescribePackagesFilter</span>(<span class="hljs-params">name: <span class="hljs-type">Optional</span>[<span class="hljs-type">DescribePackagesFilterName</span>] = <span class="hljs-type">None</span>, 
-                                  value: <span class="hljs-type">Optional</span>[<span class="hljs-type">Iterable</span>[primitives.<span class="hljs-type">DescribePackagesFilterValue</span>]] = <span class="hljs-type">None</span></span>) </span>{
+<p>The following example from the <code>zio-aws-elasticsearch</code> library shows how the generated case classes look like, to be used as input for the service operations:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">DescribePackagesFilter</span>(<span class="hljs-params">name: <span class="hljs-type">Optional</span>[<span class="hljs-type">DescribePackagesFilterName</span>] = <span class="hljs-type">Optional</span>.<span class="hljs-type">Absent</span>, 
+                                  value: <span class="hljs-type">Optional</span>[<span class="hljs-type">Iterable</span>[primitives.<span class="hljs-type">DescribePackagesFilterValue</span>]] = <span class="hljs-type">Optional</span>.<span class="hljs-type">Absent</span></span>) </span>{
     <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">buildAwsValue</span></span>(): software.amazon.awssdk.services.elasticsearch.model.<span class="hljs-type">DescribePackagesFilter</span> = {
       <span class="hljs-keyword">import</span> <span class="hljs-type">DescribePackagesFilter</span>.zioAwsBuilderHelper.<span class="hljs-type">BuilderOps</span>
       software.amazon.awssdk.services.elasticsearch.model.<span class="hljs-type">DescribePackagesFilter</span>
@@ -53,37 +116,58 @@ plans of wrapping the model types too):</p>
         .optionallyWith(value.map(value =&gt; value.map { item =&gt; item: java.lang.<span class="hljs-type">String</span> }.asJava))(_.value)
         .build()
     }
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">asReadOnly</span></span>: <span class="hljs-type">DescribePackagesFilter</span>.<span class="hljs-type">ReadOnly</span> = <span class="hljs-type">DescribePackagesFilter</span>.wrap(buildAwsValue())
 }
 </code></pre>
 <p>When processing the <em>results</em> of the operations (either directly or though the <code>ZStream</code> wrappers), the AWS Java model types are wrapped
 by a <em>read-only wrapper interface</em>. The following example shows one from the <code>transcribe</code> module:</p>
 <pre><code class="hljs css language-scala"><span class="hljs-class"><span class="hljs-keyword">object</span> <span class="hljs-title">CreateMedicalVocabularyResponse</span> </span>{
-  <span class="hljs-keyword">private</span> <span class="hljs-keyword">lazy</span> <span class="hljs-keyword">val</span> zioAwsBuilderHelper: zio.aws.core.<span class="hljs-type">BuilderHelper</span>[software.amazon.awssdk.services.transcribe.model.<span class="hljs-type">CreateMedicalVocabularyResponse</span>] = zio.aws.core.<span class="hljs-type">BuilderHelper</span>.apply
+  <span class="hljs-keyword">private</span> <span class="hljs-keyword">lazy</span> <span class="hljs-keyword">val</span> zioAwsBuilderHelper: <span class="hljs-type">BuilderHelper</span>[software.amazon.awssdk.services.transcribe.model.<span class="hljs-type">CreateMedicalVocabularyResponse</span>] = <span class="hljs-type">BuilderHelper</span>.apply
+
   <span class="hljs-class"><span class="hljs-keyword">trait</span> <span class="hljs-title">ReadOnly</span> </span>{
     <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">editable</span></span>: <span class="hljs-type">CreateMedicalVocabularyResponse</span> = <span class="hljs-type">CreateMedicalVocabularyResponse</span>(vocabularyNameValue.map(value =&gt; value), languageCodeValue.map(value =&gt; value), vocabularyStateValue.map(value =&gt; value), lastModifiedTimeValue.map(value =&gt; value), failureReasonValue.map(value =&gt; value))
-    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">vocabularyNameValue</span></span>: <span class="hljs-type">Optional</span>[primitives.<span class="hljs-type">VocabularyName</span>]
-    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">languageCodeValue</span></span>: <span class="hljs-type">Optional</span>[<span class="hljs-type">LanguageCode</span>]
-    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">vocabularyStateValue</span></span>: <span class="hljs-type">Optional</span>[<span class="hljs-type">VocabularyState</span>]
-    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">lastModifiedTimeValue</span></span>: <span class="hljs-type">Optional</span>[primitives.<span class="hljs-type">DateTime</span>]
-    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">failureReasonValue</span></span>: <span class="hljs-type">Optional</span>[primitives.<span class="hljs-type">FailureReason</span>]
-    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">vocabularyName</span></span>: <span class="hljs-type">ZIO</span>[<span class="hljs-type">Any</span>, zio.aws.core.<span class="hljs-type">AwsError</span>, primitives.<span class="hljs-type">VocabularyName</span>] = zio.aws.core.<span class="hljs-type">AwsError</span>.unwrapOptionField(<span class="hljs-string">"vocabularyName"</span>, vocabularyNameValue)
-    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">languageCode</span></span>: <span class="hljs-type">ZIO</span>[<span class="hljs-type">Any</span>, zio.aws.core.<span class="hljs-type">AwsError</span>, <span class="hljs-type">LanguageCode</span>] = zio.aws.core.<span class="hljs-type">AwsError</span>.unwrapOptionField(<span class="hljs-string">"languageCode"</span>, languageCodeValue)
-    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">vocabularyState</span></span>: <span class="hljs-type">ZIO</span>[<span class="hljs-type">Any</span>, zio.aws.core.<span class="hljs-type">AwsError</span>, <span class="hljs-type">VocabularyState</span>] = zio.aws.core.<span class="hljs-type">AwsError</span>.unwrapOptionField(<span class="hljs-string">"vocabularyState"</span>, vocabularyStateValue)
-    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">lastModifiedTime</span></span>: <span class="hljs-type">ZIO</span>[<span class="hljs-type">Any</span>, zio.aws.core.<span class="hljs-type">AwsError</span>, primitives.<span class="hljs-type">DateTime</span>] = zio.aws.core.<span class="hljs-type">AwsError</span>.unwrapOptionField(<span class="hljs-string">"lastModifiedTime"</span>, lastModifiedTimeValue)
-    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">failureReason</span></span>: <span class="hljs-type">ZIO</span>[<span class="hljs-type">Any</span>, zio.aws.core.<span class="hljs-type">AwsError</span>, primitives.<span class="hljs-type">FailureReason</span>] = zio.aws.core.<span class="hljs-type">AwsError</span>.unwrapOptionField(<span class="hljs-string">"failureReason"</span>, failureReasonValue)
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">vocabularyName</span></span>: <span class="hljs-type">Optional</span>[<span class="hljs-type">VocabularyName</span>]
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">languageCode</span></span>: <span class="hljs-type">Optional</span>[<span class="hljs-type">LanguageCode</span>]
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">vocabularyState</span></span>: <span class="hljs-type">Optional</span>[<span class="hljs-type">VocabularyState</span>]
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">lastModifiedTime</span></span>: <span class="hljs-type">Optional</span>[<span class="hljs-type">DateTime</span>]
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">failureReason</span></span>: <span class="hljs-type">Optional</span>[<span class="hljs-type">FailureReason</span>]
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">getVocabularyName</span></span>: <span class="hljs-type">ZIO</span>[<span class="hljs-type">Any</span>, <span class="hljs-type">AwsError</span>, <span class="hljs-type">VocabularyName</span>] = <span class="hljs-type">AwsError</span>.unwrapOptionField(<span class="hljs-string">"vocabularyName"</span>, vocabularyNameValue)
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">getLanguageCode</span></span>: <span class="hljs-type">ZIO</span>[<span class="hljs-type">Any</span>, <span class="hljs-type">AwsError</span>, <span class="hljs-type">LanguageCode</span>] = <span class="hljs-type">AwsError</span>.unwrapOptionField(<span class="hljs-string">"languageCode"</span>, languageCodeValue)
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">getVocabularyState</span></span>: <span class="hljs-type">ZIO</span>[<span class="hljs-type">Any</span>, <span class="hljs-type">AwsError</span>, <span class="hljs-type">VocabularyState</span>] = <span class="hljs-type">AwsError</span>.unwrapOptionField(<span class="hljs-string">"vocabularyState"</span>, vocabularyStateValue)
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">getLastModifiedTime</span></span>: <span class="hljs-type">ZIO</span>[<span class="hljs-type">Any</span>, <span class="hljs-type">AwsError</span>, <span class="hljs-type">DateTime</span>] = <span class="hljs-type">AwsError</span>.unwrapOptionField(<span class="hljs-string">"lastModifiedTime"</span>, lastModifiedTimeValue)
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">getFailureReason</span></span>: <span class="hljs-type">ZIO</span>[<span class="hljs-type">Any</span>, <span class="hljs-type">AwsError</span>, <span class="hljs-type">FailureReason</span>] = <span class="hljs-type">AwsError</span>.unwrapOptionField(<span class="hljs-string">"failureReason"</span>, failureReasonValue)
   }
+
   <span class="hljs-keyword">private</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Wrapper</span>(<span class="hljs-params">impl: software.amazon.awssdk.services.transcribe.model.<span class="hljs-type">CreateMedicalVocabularyResponse</span></span>) <span class="hljs-keyword">extends</span> <span class="hljs-title">CreateMedicalVocabularyResponse</span>.<span class="hljs-title">ReadOnly</span> </span>{
-    <span class="hljs-keyword">override</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">vocabularyNameValue</span></span>: <span class="hljs-type">Optional</span>[primitives.<span class="hljs-type">VocabularyName</span>] = <span class="hljs-type">Optional</span>(impl.vocabularyName()).map(value =&gt; value: primitives.<span class="hljs-type">VocabularyName</span>)
-    <span class="hljs-keyword">override</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">languageCodeValue</span></span>: <span class="hljs-type">Optional</span>[<span class="hljs-type">LanguageCode</span>] = <span class="hljs-type">Optional</span>(impl.languageCode()).map(value =&gt; <span class="hljs-type">LanguageCode</span>.wrap(value))
-    <span class="hljs-keyword">override</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">vocabularyStateValue</span></span>: <span class="hljs-type">Optional</span>[<span class="hljs-type">VocabularyState</span>] = <span class="hljs-type">Optional</span>(impl.vocabularyState()).map(value =&gt; <span class="hljs-type">VocabularyState</span>.wrap(value))
-    <span class="hljs-keyword">override</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">lastModifiedTimeValue</span></span>: <span class="hljs-type">Optional</span>[primitives.<span class="hljs-type">DateTime</span>] = <span class="hljs-type">Optional</span>(impl.lastModifiedTime()).map(value =&gt; value: primitives.<span class="hljs-type">DateTime</span>)
-    <span class="hljs-keyword">override</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">failureReasonValue</span></span>: <span class="hljs-type">Optional</span>[primitives.<span class="hljs-type">FailureReason</span>] = <span class="hljs-type">Optional</span>(impl.failureReason()).map(value =&gt; value: primitives.<span class="hljs-type">FailureReason</span>)
+    <span class="hljs-comment">// ... implements the ReadOnly interface by querying the underlying Java object</span>
   }
+
   <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">wrap</span></span>(impl: software.amazon.awssdk.services.transcribe.model.<span class="hljs-type">CreateMedicalVocabularyResponse</span>): <span class="hljs-type">ReadOnly</span> = <span class="hljs-keyword">new</span> <span class="hljs-type">Wrapper</span>(impl)
 }
 </code></pre>
 <p>As a large part of the models in the AWS SDK are defined as <em>optional</em>, the generated wrapper also contains ZIO accessor functions,
 which lift the option value to make it more comfortable to chain the AWS operations.</p>
 <h3><a class="anchor" aria-hidden="true" id="mocks"></a><a href="#mocks" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Mocks</h3>
-<p>Each module also contains generated <em>ZIO Test mocks</em> for the given service.</p>
-</span></div></article></div><div class="docs-prevnext"></div></div></div><nav class="onPageNav"></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/zio-aws/" class="nav-home"><img src="/zio-aws/img/sidebar_brand2x.png" alt="ZIO AWS"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-aws" data-icon="octicon-star" data-count-href="/zio/zio-aws/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Chat with us on Discord</h5><a href="https://discord.gg/2ccFBr4"><img src="/zio-aws//img/discord.png" width="120" alt="discord"/></a></div><div><h5>Additional resources</h5><a href="/zio-aws/api/index.html">Scaladoc of zio-aws</a></div></section><section class="copyright">Copyright © 2022 ZIO Maintainers</section></footer></div></body></html>
+<p>Each module also contains generated <a href="https://github.com/zio/zio-mock"><em>ZIO Test mocks</em></a> for the given service.</p>
+<p>The following example shows how to use them with the <code>zio-aws-athena</code> library:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">val</span> athena = <span class="hljs-type">AthenaMock</span>.<span class="hljs-type">StartQueryExecution</span>(
+  hasField(
+    <span class="hljs-string">"queryString"</span>,
+    (startQueryExecutionRequest: <span class="hljs-type">StartQueryExecutionRequest</span>) =&gt;
+      startQueryExecutionRequest.queryString,
+      equalTo(givenQuery)
+  ),
+  value(
+    <span class="hljs-type">StartQueryExecutionResponse</span>.wrap(
+      software.amazon.awssdk.services.athena.model.<span class="hljs-type">StartQueryExecutionResponse</span>
+        .builder()
+        .queryExecutionId(executionId)
+        build()
+    )
+  )
+)
+
+codeUsingAthena.provide(athena)
+</code></pre>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-aws/docs/overview/overview_artifacts"><span class="arrow-prev">← </span><span>Artifacts</span></a><a class="docs-next button" href="/zio-aws/docs/overview/overview_config"><span>Configuration</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/zio-aws/" class="nav-home"><img src="/zio-aws/img/sidebar_brand2x.png" alt="ZIO AWS"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-aws" data-icon="octicon-star" data-count-href="/zio/zio-aws/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Chat with us on Discord</h5><a href="https://discord.gg/2ccFBr4"><img src="/zio-aws//img/discord.png" width="120" alt="discord"/></a></div><div><h5>Additional resources</h5><a href="/zio-aws/api/index.html">Scaladoc of zio-aws</a></div></section><section class="copyright">Copyright © 2022 ZIO Maintainers</section></footer></div></body></html>
