@@ -32,7 +32,8 @@ lazy val core = Project("zio-aws-core", file("zio-aws-core"))
       "dev.zio" %% "zio-test-sbt" % zioVersion % "test",
       "dev.zio" %% "zio-config-typesafe" % zioConfigVersion % "test"
     ),
-    testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
+    testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
+    Compile / doc / sources := Seq.empty // Broken on Scala 3
   )
 
 lazy val http4s = Project("zio-aws-http4s", file("zio-aws-http4s"))
