@@ -18,7 +18,7 @@ list may not reflect _all_ changes immediately. Dependencies are continuously up
 - Exposed lower level pagination API calls beside the streaming ones
 - Using the `Optional` type instead of `Option` to reduce boilerplate
 
-See the [migration guide](migration-guide.html) for more information.
+See the [migration guide](overview_migration_guide) for more information.
 
 #### 4.17.104.1
 - Migrated to `zio-config v2.0.0`

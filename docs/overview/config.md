@@ -8,7 +8,7 @@ title: Configuration
 ## Common configuration
 
 Each _service module_ depends on the `AwsConfig` layer. This layer is responsible for setting up the 
-AWS Java SDK's async client, by setting the [underlying HTTP engine](http.html) and all the common
+AWS Java SDK's async client, by setting the [underlying HTTP engine](overview_http) and all the common
 settings. You can use the following layers to provide `AwsConfig`:
 
 #### Default
@@ -22,10 +22,10 @@ settings. You can use the following layers to provide `AwsConfig`:
 The `CommonAwsConfig` value can be either provided from code for example by `ZLayer.succeed(CommonAwsConfig(...))` or it can
 be read from any of the supported config sources by [zio-config](https://zio.github.io/zio-config/).
 
-Note that **AWS level retries are disabled** by the configuration layer and it is not exposed in the `CommonAwsConfig` data structure either. The reason for this is that the recommended way to handle retries is to use [aspects on the service layers](aspects.html).
+Note that **AWS level retries are disabled** by the configuration layer and it is not exposed in the `CommonAwsConfig` data structure either. The reason for this is that the recommended way to handle retries is to use [aspects on the service layers](overview_aspects).
  
 See the following table about the possible configuration values. Please note that the underlying HTTP engine also has its own
-specific configuration which is described [on the page about the HTTP engines](http.html). 
+specific configuration which is described [on the page about the HTTP engines](overview_http). 
 
 ```scala mdoc:passthrough
 import zio.config._

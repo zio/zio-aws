@@ -94,7 +94,7 @@ class Index extends React.Component {
             <div
                 className="productShowcaseSection paddingBottom"
                 style={{textAlign: 'center'}}>
-                <h2>Welcome to ZIO=AWS</h2>
+                <h2>Welcome to ZIO-AWS</h2>
                 <MarkdownBlock>
                     Low level ZIO interface for the full AWS 
                 </MarkdownBlock>
