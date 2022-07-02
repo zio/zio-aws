@@ -27,7 +27,7 @@ object Main extends ZIOAppDefault {
       streamName = StreamName("test-stream")
       _ <- Console.printLine("Shards:").ignore
       shard <- Kinesis
-        .listShards(ListShardsRequest(streamName = Some(streamName)))
+        .listShards(ListShardsRequest(streamName = streamName))
         .tap(shard => Console.printLine(shard.shardId).ignore)
         .runHead
         .map(_.get)
@@ -52,9 +52,8 @@ object Main extends ZIOAppDefault {
       consumer <- Kinesis
         .describeStreamConsumer(
           DescribeStreamConsumerRequest(
-            consumerName = Some(consumerName),
-            streamARN =
-              Some(streamDescription.streamDescription.streamARN)
+            consumerName = consumerName,
+            streamARN = streamDescription.streamDescription.streamARN
           )
         )
         .repeatUntil(

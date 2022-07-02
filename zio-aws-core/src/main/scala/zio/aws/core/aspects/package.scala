@@ -16,9 +16,9 @@ package object aspects {
       }
   }
 
-  val callLogging: AwsCallAspect[Clock] =
-    new AwsCallAspect[Clock] {
-      override final def apply[R <: Clock, E, A <: Described[_]](
+  val callLogging: AwsCallAspect[Any] =
+    new AwsCallAspect[Any] {
+      override final def apply[R, E, A <: Described[_]](
           f: ZIO[R, E, A]
       )(implicit trace: Trace): ZIO[R, E, A] = {
         f.timed.flatMap { case (duration, r) =>
@@ -34,9 +34,9 @@ package object aspects {
   def callDuration(
       prefix: String,
       boundaries: MetricKeyType.Histogram.Boundaries
-  ): AwsCallAspect[Clock] =
-    new AwsCallAspect[Clock] {
-      override final def apply[R <: Clock, E, A <: Described[_]](
+  ): AwsCallAspect[Any] =
+    new AwsCallAspect[Any] {
+      override final def apply[R, E, A <: Described[_]](
           f: ZIO[R, E, A]
       )(implicit trace: Trace): ZIO[R, E, A] = {
         f.timed.flatMap { case (duration, r) =>
