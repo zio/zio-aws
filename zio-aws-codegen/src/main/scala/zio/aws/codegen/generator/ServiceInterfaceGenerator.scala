@@ -270,7 +270,7 @@ trait ServiceInterfaceGenerator {
             .zioStreamAwsError(ScalaType.any, inEventT)
             .typ}): ${Types
             .zioStreamAwsError(ScalaType.any, outEventRoT)
-            .typ} = rts.unsafeRun(proxy($objectName, request, input))"""
+            .typ} = ${unsafeRun(q"""proxy($objectName, request, input)""")}"""
       )
     )
   }
@@ -335,7 +335,7 @@ trait ServiceInterfaceGenerator {
           q"""object $objectName extends Stream[${requestType.typ}, ${Types.awsError.typ}, ${eventRoT.typ}]""",
         mockCompose = q"""def $methodName(request: ${requestType.typ}): ${Types
           .zioStreamAwsError(ScalaType.any, eventRoT)
-          .typ} = rts.unsafeRun(proxy($objectName, request))"""
+          .typ} = ${unsafeRun(q"""proxy($objectName, request)""")}"""
       )
     )
   }
@@ -720,7 +720,7 @@ trait ServiceInterfaceGenerator {
             mockCompose =
               q"""def $methodName(request: ${requestType.typ}): ${Types
                 .zioStreamAwsError(ScalaType.any, wrappedItemType)
-                .typ} = rts.unsafeRun(proxy($objectName, request))"""
+                .typ} = ${unsafeRun(q"""proxy($objectName, request)""")}"""
           )
         } yield ServiceMethods(streamedPaginator, simpleRequestResponse)
       case Some(
@@ -766,7 +766,7 @@ trait ServiceInterfaceGenerator {
                 mockCompose =
                   q"""def $methodName(request: ${requestType.typ}): ${Types
                     .zioStreamAwsError(ScalaType.any, itemTypeRo)
-                    .typ} = rts.unsafeRun(proxy($objectName, request))"""
+                    .typ} = ${unsafeRun(q"""proxy($objectName, request)""")}"""
               )
             } else {
               ServiceMethod(
@@ -1006,7 +1006,7 @@ trait ServiceInterfaceGenerator {
                       ScalaType.any,
                       ScalaType.pair(keyTypeRo, valueTypeRo)
                     )
-                    .typ} = rts.unsafeRun(proxy($objectName, request))"""
+                    .typ} = ${unsafeRun(q"""proxy($objectName, request)""")}"""
               )
             } else {
               ServiceMethod(
@@ -1122,7 +1122,7 @@ trait ServiceInterfaceGenerator {
                 mockCompose =
                   q"""def $methodName(request: ${requestType.typ}): ${Types
                     .zioStreamAwsError(ScalaType.any, itemTypeRo)
-                    .typ} = rts.unsafeRun(proxy($objectName, request))"""
+                    .typ} = ${unsafeRun(q"""proxy($objectName, request)""")}"""
               )
             } else {
               ServiceMethod(

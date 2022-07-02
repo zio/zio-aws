@@ -12,7 +12,7 @@ import software.amazon.awssdk.core.async.{
 import zio._
 import zio.interop.reactivestreams._
 import zio.stream.ZStream
-import zio.stream.ZStream.TerminationStrategy
+import zio.stream.ZStream.HaltStrategy
 
 import scala.reflect.ClassTag
 
@@ -283,7 +283,7 @@ trait AwsServiceBase[R] {
             .mapError(AwsError.fromThrowable(_))
             .mergeWith(
               ZStream.fromQueue(signalQueue),
-              TerminationStrategy.Either
+              HaltStrategy.Either
             )(Left.apply, Right.apply)
             .map(_.swap)
             .takeUntil(_.isLeft)
@@ -387,7 +387,7 @@ trait AwsServiceBase[R] {
             .mapError(AwsError.fromThrowable)
             .mergeWith(
               ZStream.fromQueue(signalQueue),
-              TerminationStrategy.Either
+              HaltStrategy.Either
             )(Left.apply, Right.apply)
             .map(_.swap)
             .takeUntil(_.isLeft)

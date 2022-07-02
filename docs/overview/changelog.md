@@ -8,6 +8,21 @@ title: Version history
 Note: this is a manually maintained list of important changes. Because of having auto-release from CI, this
 list may not reflect _all_ changes immediately. Dependencies are continuously updated and are not documented here.
 
+#### 5.x.x.x
+- Migrated to `ZIO 2.0.0` 
+- Moved to the ZIO organisation
+- Using the new ZIO service pattern
+- Changed getter naming to match `zio-k8s`
+- Using `zio-prelude` _newtype wrappers_ for primitives
+- Using `ZIO` aspects as a base of `AwsCallAspect`
+- Exposed lower level pagination API calls beside the streaming ones
+- Using the `Optional` type instead of `Option` to reduce boilerplate
+
+See the [migration guide](migration-guide.html) for more information.
+
+#### 4.17.104.1
+- Migrated to `zio-config v2.0.0`
+
 #### 3.15.35.5
 - Support for defining dual HTTP/1.1 and HTTP/2 `HttpClient` layers
 - Convert model case classes to `.ReadOnly` trait with `.asReadOnly`

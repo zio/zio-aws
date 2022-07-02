@@ -18,7 +18,7 @@ object Main extends ZIOAppDefault {
     new AwsCallAspect[Any] {
       override final def apply[R, E >: AwsError <: AwsError, A <: Described[_]](
           f: ZIO[R, E, A]
-      )(implicit trace: ZTraceElement): ZIO[R, E, A] =
+      )(implicit trace: Trace): ZIO[R, E, A] =
         cb(f).mapError(policyError =>
           AwsError.fromThrowable(policyError.toException)
         )
@@ -53,7 +53,7 @@ object Main extends ZIOAppDefault {
         // Default DynamoDB layer
         // val dynamoDb: ZLayer[AwsConfig, Throwable, DynamoDb] = dynamodb.live
         // DynamoDB with logging
-        // val dynamoDb: ZLayer[Clock with Logging with AwsConfig, Throwable, DynamoDb] = dynamodb.live @@ logging
+        // val dynamoDb: ZLayer[AwsConfig, Throwable, DynamoDb] = dynamodb.live @@ logging
         // DynamoDB with circuit breaker
         // val dynamoDb: ZLayer[AwsConfig, Throwable, DynamoDb] = dynamodb.live @@ circuitBreaking(cb)
 

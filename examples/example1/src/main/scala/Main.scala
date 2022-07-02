@@ -14,7 +14,7 @@ object Main extends ZIOAppDefault {
   val program: ZIO[Ec2 & ElasticBeanstalk, AwsError, Unit] =
     for {
       appsResult <- ElasticBeanstalk.describeApplications(
-        DescribeApplicationsRequest(applicationNames = Some(List(ApplicationName("my-service"))))
+        DescribeApplicationsRequest(applicationNames = List(ApplicationName("my-service")))
       )
       app <- appsResult.getApplications.map(_.headOption)
       _ <- app match {
@@ -28,9 +28,7 @@ object Main extends ZIOAppDefault {
               .ignore
 
             envStream = ElasticBeanstalk.describeEnvironments(
-              DescribeEnvironmentsRequest(applicationName =
-                Some(applicationName)
-              )
+              DescribeEnvironmentsRequest(applicationName = applicationName)
             )
 
             _ <- envStream.run(ZSink.foreach { env =>
@@ -45,9 +43,7 @@ object Main extends ZIOAppDefault {
 
                   resourcesResult <-
                     ElasticBeanstalk.describeEnvironmentResources(
-                      DescribeEnvironmentResourcesRequest(environmentId =
-                        Some(environmentId)
-                      )
+                      DescribeEnvironmentResourcesRequest(environmentId = environmentId)
                     )
                   resources <- resourcesResult.getEnvironmentResources
                   _ <- Console
@@ -64,7 +60,7 @@ object Main extends ZIOAppDefault {
                     .ignore
 
                   reservationsStream = Ec2.describeInstances(
-                    DescribeInstancesRequest(instanceIds = Some(instanceIds.map(id => zio.aws.ec2.model.primitives.InstanceId(ResourceId.unwrap(id)))))
+                    DescribeInstancesRequest(instanceIds = instanceIds.map(id => zio.aws.ec2.model.primitives.InstanceId(ResourceId.unwrap(id))))
                   )
                   _ <- reservationsStream.run(ZSink.foreach { reservation =>
                     reservation.getInstances

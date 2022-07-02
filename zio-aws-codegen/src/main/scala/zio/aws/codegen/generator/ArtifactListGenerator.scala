@@ -13,6 +13,11 @@ trait ArtifactListGenerator {
                     |
                     |# Published artifacts
                     |
+                    |### Core module
+                    |```scala
+                    |"dev.zio" %% "zio-aws-core" % "$version"
+                    |```
+                    |
                     |### HTTP client modules:
                     |```scala
                     |"dev.zio" %% "zio-aws-akka-http" % "$version"

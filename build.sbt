@@ -83,7 +83,7 @@ lazy val examples = Project("examples", file("examples")).settings(
 lazy val example1 = Project("example1", file("examples") / "example1")
   .dependsOn(
     core,
-    // http4s,
+    http4s,
     netty,
     LocalProject("zio-aws-elasticbeanstalk"),
     LocalProject("zio-aws-ec2")
@@ -105,7 +105,7 @@ lazy val example1 = Project("example1", file("examples") / "example1")
 lazy val example3 = Project("example3", file("examples") / "example3")
   .dependsOn(
     core,
-    // http4s,
+    http4s,
     netty,
     LocalProject("zio-aws-kinesis")
   )
