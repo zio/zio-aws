@@ -5,9 +5,11 @@ title: Wrappers
 
 # Client wrappers
 
-### Modules
-For each AWS Service the library defines a _ZIO module_ with wrapper functions for all the _operations_, and a `live` 
-implementation that depends on a core _AWS configuration layer_:
+### Service modules
+For each AWS Service the library defines a _ZIO service_ with wrapper functions for all the _operations_, a `live` 
+implementation calling the Java SDK and a `mock` implementation using [zio-mock](https://github.com/zio/zio-mock).
+
+The live implementation depends on a core _AWS configuration layer_:
 
 ```scala
 val live: ZLayer[AwsConfig, Throwable, Ec2]
@@ -20,55 +22,65 @@ Each module has accessor functions for _all operations_ of the given service.
 
 ### Operations
 
-For simple request-response operations the library generates a very light wrapper (see below to learn about future
-plans of wrapping the model types too):
+For simple request-response operations the library generates a very light wrapper:
 
 ```scala
-def deleteVolume(request: DeleteVolumeRequest): ZIO[Ec2, AwsError, DeleteVolumeResponse]
+def deleteVolume(request: DeleteVolumeRequest): ZIO[Ec2, AwsError, DeleteVolumeResponse.ReadOnly]
 ```
 
 For operations where either the input or the output or both are _byte streams_, a `ZStream` wrapper is generated:
 
 ```scala
-def getObject(request: GetObjectRequest): ZIO[S3, AwsError, StreamingOutputResult[GetObjectResponse]]
-def putObject(request: PutObjectRequest, body: ZStream[Any, AwsError, Byte])
+def getObject(request: GetObjectRequest): ZIO[S3, AwsError, StreamingOutputResult[Any, GetObjectResponse.ReadOnly, Byte]]
+def putObject(request: PutObjectRequest, body: ZStream[Any, AwsError, Byte]): ZIO[S3, AwsError, PutObjectResponse.ReadOnly]
 ```
 
 where the output is a stream packed together with additional response data:
 
 ```scala
-case class StreamingOutputResult[Response](response: Response,
-                                           output: ZStream[Any, AwsError, Byte])
+case class StreamingOutputResult[R, Response, Item](
+  response: Response,
+  output: ZStream[R, AwsError, Item]
+)
 ```
 
 For operations with _event streams_ a `ZStream` of a model type gets generated:
 
 ```scala
-def startStreamTranscription(request: StartStreamTranscriptionRequest, input: ZStream[Any, AwsError, AudioStream]): ZStream[TranscribeStreaming, AwsError, TranscriptEvent]
+def startStreamTranscription(request: StartStreamTranscriptionRequest, input: ZStream[Any, AwsError, AudioStream]): ZStream[TranscribeStreaming, AwsError, TranscriptEvent.ReadOnly]
 ```
 
 And for all operations that supports _pagination_, streaming wrappers gets generated:
 
 ```scala
-def scan(request: ScanRequest): ZStream[DynamoDb, AwsError, Map[String, AttributeValue]]
+def scan(request: ScanRequest): ZStream[DynamoDb, AwsError, Map[AttributeName, AttributeValue.ReadOnly]]
 ```
 
 Note that for event streaming or paginating operations returning a `ZStream` the actual AWS call happens when the stream gets pulled.
+
+For use cases when calling the _paginating_ interface directly is necessary - for example when forwarding paginated results through a HTTP API, the library generates non-stremaing wrappers as well for these methods.
+
+For example the DynamoDB `scan` method's non-streming variant is defined as:
+
+```scala
+def scanPaginated(request: ScanRequest): ZIO[DynamoDb, ScanResponse.ReadOnly]
+```
 
 ### Model wrappers
 For each model type a set of wrappers are generated, providing the following functionality:
 
 - Case classes with default parameter values instead of the _builder pattern_
+- [zio-prelude's newtype wrappers](https://zio.github.io/zio-prelude/docs/newtypes/) for primitive types
 - Automatic conversion to Scala collection types
 - ADTs instead of the Java enums 
-- ZIO functions to "get or fail" the optional model fields
-- Primitive type aliases
+- ZIO getter functions to "get or fail" the optional model fields
+- Using zio-prelude's `Optional` type to eliminate boilerplate when constructing models with many optional fields
 
-The following example from the `elasticsearch` module shows how the generated case classes look like, to be used as input for the service operations:
+The following example from the `zio-aws-elasticsearch` library shows how the generated case classes look like, to be used as input for the service operations:
 
 ```scala
-case class DescribePackagesFilter(name: Optional[DescribePackagesFilterName] = None, 
-                                  value: Optional[Iterable[primitives.DescribePackagesFilterValue]] = None) {
+case class DescribePackagesFilter(name: Optional[DescribePackagesFilterName] = Optional.Absent, 
+                                  value: Optional[Iterable[primitives.DescribePackagesFilterValue]] = Optional.Absent) {
     def buildAwsValue(): software.amazon.awssdk.services.elasticsearch.model.DescribePackagesFilter = {
       import DescribePackagesFilter.zioAwsBuilderHelper.BuilderOps
       software.amazon.awssdk.services.elasticsearch.model.DescribePackagesFilter
@@ -77,6 +89,8 @@ case class DescribePackagesFilter(name: Optional[DescribePackagesFilterName] = N
         .optionallyWith(value.map(value => value.map { item => item: java.lang.String }.asJava))(_.value)
         .build()
     }
+
+    def asReadOnly: DescribePackagesFilter.ReadOnly = DescribePackagesFilter.wrap(buildAwsValue())
 }
 ```
 
@@ -85,27 +99,26 @@ by a _read-only wrapper interface_. The following example shows one from the `tr
 
 ```scala
 object CreateMedicalVocabularyResponse {
-  private lazy val zioAwsBuilderHelper: zio.aws.core.BuilderHelper[software.amazon.awssdk.services.transcribe.model.CreateMedicalVocabularyResponse] = zio.aws.core.BuilderHelper.apply
+  private lazy val zioAwsBuilderHelper: BuilderHelper[software.amazon.awssdk.services.transcribe.model.CreateMedicalVocabularyResponse] = BuilderHelper.apply
+
   trait ReadOnly {
     def editable: CreateMedicalVocabularyResponse = CreateMedicalVocabularyResponse(vocabularyNameValue.map(value => value), languageCodeValue.map(value => value), vocabularyStateValue.map(value => value), lastModifiedTimeValue.map(value => value), failureReasonValue.map(value => value))
-    def vocabularyNameValue: Optional[primitives.VocabularyName]
-    def languageCodeValue: Optional[LanguageCode]
-    def vocabularyStateValue: Optional[VocabularyState]
-    def lastModifiedTimeValue: Optional[primitives.DateTime]
-    def failureReasonValue: Optional[primitives.FailureReason]
-    def vocabularyName: ZIO[Any, zio.aws.core.AwsError, primitives.VocabularyName] = zio.aws.core.AwsError.unwrapOptionField("vocabularyName", vocabularyNameValue)
-    def languageCode: ZIO[Any, zio.aws.core.AwsError, LanguageCode] = zio.aws.core.AwsError.unwrapOptionField("languageCode", languageCodeValue)
-    def vocabularyState: ZIO[Any, zio.aws.core.AwsError, VocabularyState] = zio.aws.core.AwsError.unwrapOptionField("vocabularyState", vocabularyStateValue)
-    def lastModifiedTime: ZIO[Any, zio.aws.core.AwsError, primitives.DateTime] = zio.aws.core.AwsError.unwrapOptionField("lastModifiedTime", lastModifiedTimeValue)
-    def failureReason: ZIO[Any, zio.aws.core.AwsError, primitives.FailureReason] = zio.aws.core.AwsError.unwrapOptionField("failureReason", failureReasonValue)
+    def vocabularyName: Optional[VocabularyName]
+    def languageCode: Optional[LanguageCode]
+    def vocabularyState: Optional[VocabularyState]
+    def lastModifiedTime: Optional[DateTime]
+    def failureReason: Optional[FailureReason]
+    def getVocabularyName: ZIO[Any, AwsError, VocabularyName] = AwsError.unwrapOptionField("vocabularyName", vocabularyNameValue)
+    def getLanguageCode: ZIO[Any, AwsError, LanguageCode] = AwsError.unwrapOptionField("languageCode", languageCodeValue)
+    def getVocabularyState: ZIO[Any, AwsError, VocabularyState] = AwsError.unwrapOptionField("vocabularyState", vocabularyStateValue)
+    def getLastModifiedTime: ZIO[Any, AwsError, DateTime] = AwsError.unwrapOptionField("lastModifiedTime", lastModifiedTimeValue)
+    def getFailureReason: ZIO[Any, AwsError, FailureReason] = AwsError.unwrapOptionField("failureReason", failureReasonValue)
   }
+
   private class Wrapper(impl: software.amazon.awssdk.services.transcribe.model.CreateMedicalVocabularyResponse) extends CreateMedicalVocabularyResponse.ReadOnly {
-    override def vocabularyNameValue: Optional[primitives.VocabularyName] = Optional(impl.vocabularyName()).map(value => value: primitives.VocabularyName)
-    override def languageCodeValue: Optional[LanguageCode] = Optional(impl.languageCode()).map(value => LanguageCode.wrap(value))
-    override def vocabularyStateValue: Optional[VocabularyState] = Optional(impl.vocabularyState()).map(value => VocabularyState.wrap(value))
-    override def lastModifiedTimeValue: Optional[primitives.DateTime] = Optional(impl.lastModifiedTime()).map(value => value: primitives.DateTime)
-    override def failureReasonValue: Optional[primitives.FailureReason] = Optional(impl.failureReason()).map(value => value: primitives.FailureReason)
+    // ... implements the ReadOnly interface by querying the underlying Java object
   }
+
   def wrap(impl: software.amazon.awssdk.services.transcribe.model.CreateMedicalVocabularyResponse): ReadOnly = new Wrapper(impl)
 }
 ```
@@ -114,4 +127,27 @@ As a large part of the models in the AWS SDK are defined as _optional_, the gene
 which lift the option value to make it more comfortable to chain the AWS operations.
 
 ### Mocks
-Each module also contains generated _ZIO Test mocks_ for the given service.
+Each module also contains generated [_ZIO Test mocks_](https://github.com/zio/zio-mock) for the given service.
+
+The following example shows how to use them with the `zio-aws-athena` library:
+
+```scala
+val athena = AthenaMock.StartQueryExecution(
+  hasField(
+    "queryString",
+    (startQueryExecutionRequest: StartQueryExecutionRequest) =>
+      startQueryExecutionRequest.queryString,
+      equalTo(givenQuery)
+  ),
+  value(
+    StartQueryExecutionResponse.wrap(
+      software.amazon.awssdk.services.athena.model.StartQueryExecutionResponse
+        .builder()
+        .queryExecutionId(executionId)
+        build()
+    )
+  )
+)
+
+codeUsingAthena.provide(athena)
+```

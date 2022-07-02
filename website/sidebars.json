@@ -3,7 +3,7 @@
     "Overview": [
       "overview/overview_index",
       "overview/overview_artifacts",
-      "overview/overview_wrapper",
+      "overview/overview_wrappers",
       "overview/overview_config",
       "overview/overview_http",
       "overview/overview_aspects",

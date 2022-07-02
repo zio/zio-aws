@@ -8,6 +8,13 @@ title: Aspects
 It is possible to define _aspects_ of type `AwsCallAspect[R]` that can modify the behavior of the AWS client modules. This can be used for example 
 to add logging or metrics to the AWS clients and it's also the recommended way to handle retries or apply rate limiting and other similar patterns.
 
+The library contains two default aspects, implementing logging and metrics on top of ZIO 2's core capabilities:
+
+```scala
+val callLogging: AwsCallAspect[Any]
+def callDuration(prefix: String, boundaries: MetricKeyType.Histogram.Boundaries): AwsCallAspect[Any]
+```
+
 To define an aspect, create an instance of the `AwsCallAspect` trait:
 
 ```scala mdoc:invisible
