@@ -16,28 +16,36 @@ object ZEventStreamResponseHandler {
   ): EventStreamResponseHandler[ResponseT, EventT] =
     new EventStreamResponseHandler[ResponseT, EventT] {
       override def responseReceived(response: ResponseT): Unit =
-        runtime.unsafeRun(
-          responsePromise.succeed(response)
-        )
+        Unsafe.unsafeCompat { implicit u =>
+          runtime.unsafe.run(
+            responsePromise.succeed(response)
+          ).getOrThrowFiberFailure()
+        }
 
       override def onEventStream(publisher: SdkPublisher[EventT]): Unit =
-        runtime.unsafeRun(
-          promise.succeed(publisher)
-        )
+        Unsafe.unsafeCompat { implicit u =>
+          runtime.unsafe.run(
+            promise.succeed(publisher)
+          ).getOrThrowFiberFailure()
+        }
 
       override def exceptionOccurred(throwable: Throwable): Unit = {
-        runtime.unsafeRun {
-          val error = AwsError.fromThrowable(throwable)
-          signalQueue.offerAll(Seq(error, error)) *>
-            finishedPromise.fail(error)
+        Unsafe.unsafeCompat { implicit u =>
+          runtime.unsafe.run {
+            val error = AwsError.fromThrowable(throwable)
+            signalQueue.offerAll(Seq(error, error)) *>
+              finishedPromise.fail(error)
+          }.getOrThrowFiberFailure()
         }
       }
 
       override def complete(): Unit = {
-        runtime.unsafeRun {
-          finishedPromise.succeed(())
-          // We cannot signal termination here because the publisher stream may still have buffered items.
-          // Completion is marked by the publisher
+        Unsafe.unsafeCompat { implicit u =>
+          runtime.unsafe.run {
+            finishedPromise.succeed(())
+            // We cannot signal termination here because the publisher stream may still have buffered items.
+            // Completion is marked by the publisher
+          }.getOrThrowFiberFailure()
         }
       }
     }

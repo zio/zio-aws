@@ -42,21 +42,22 @@ class Http4sClient(client: Client[Task], closeFn: () => Unit)(implicit
 
   override def execute(
       request: AsyncExecuteRequest
-  ): CompletableFuture[Void] = {
-    runtime
-      .unsafeRunToFuture(
-        client
-          .run(
-            toHttp4sRequest(
-              request.request(),
-              request.requestContentPublisher()
+  ): CompletableFuture[Void] = 
+    Unsafe.unsafeCompat { implicit u =>
+      runtime
+        .unsafe.runToFuture(
+          client
+            .run(
+              toHttp4sRequest(
+                request.request(),
+                request.requestContentPublisher()
+              )
             )
-          )
-          .use(processResponse(_, request.responseHandler()))
-      )
-      .toJava
-      .toCompletableFuture
-  }
+            .use(processResponse(_, request.responseHandler()))
+        )
+        .toJava
+        .toCompletableFuture
+    }
 
   override def close(): Unit = {
     closeFn()
@@ -176,7 +177,9 @@ object Http4sClient {
     private def createClient(): Resource[Task, Client[Task]] = {
       customization(
         BlazeClientBuilder[Task].withExecutionContext(
-          runtime.executor.asExecutionContext
+          Unsafe.unsafeCompat { implicit u => 
+            runtime.unsafe.run(ZIO.executor.map(_.asExecutionContext)).getOrThrowFiberFailure()
+          }
         )
       ).resource
     }
@@ -185,9 +188,9 @@ object Http4sClient {
         serviceDefaults: AttributeMap
     ): SdkAsyncHttpClient = {
       val ((dispatcher, client), closeFn) =
-        runtime.unsafeRun(resources.allocated)
+        Unsafe.unsafeCompat { implicit u => runtime.unsafe.run(resources.allocated).getOrThrowFiberFailure() }
       implicit val d: Dispatcher[Task] = dispatcher
-      new Http4sClient(client, () => runtime.unsafeRun(closeFn))
+      new Http4sClient(client, () => Unsafe.unsafeCompat { implicit u => runtime.unsafe.run(closeFn) })
     }
 
     def toScoped: ZIO[Scope, Throwable, Http4sClient] = {

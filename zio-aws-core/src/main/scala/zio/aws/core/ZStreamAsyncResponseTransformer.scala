@@ -29,34 +29,38 @@ class ZStreamAsyncResponseTransformer[R, Response](
       } yield StreamingOutputResult(response, stream)
     }
 
-  override def onResponse(response: Response): Unit = {
-    runtime.unsafeRun(responsePromise.complete(ZIO.succeed(response)))
-  }
+  override def onResponse(response: Response): Unit = 
+    Unsafe.unsafeCompat { implicit u =>
+      runtime.unsafe.run(responsePromise.complete(ZIO.succeed(response))).getOrThrowFiberFailure()
+    }
 
-  override def onStream(publisher: SdkPublisher[ByteBuffer]): Unit = {
-    runtime.unsafeRun(resultStreamPromise.complete(errorPromise.poll.flatMap {
-      opt =>
-        opt.getOrElse(ZIO.unit) *> ZIO.attempt(
-          publisher
-            .toZIOStream()
-            .interruptWhen(errorPromise)
-            .map(Chunk.fromByteBuffer)
-            .flattenChunks
-            .concat(
-              ZStream.fromZIOOption[Any, Throwable, Byte](
-                errorPromise.poll.flatMap {
-                  case None    => ZIO.fail(None)
-                  case Some(p) => p.mapError(Some.apply) *> ZIO.fail(None)
-                }
+  override def onStream(publisher: SdkPublisher[ByteBuffer]): Unit = 
+    Unsafe.unsafeCompat { implicit u =>
+      runtime.unsafe.run(resultStreamPromise.complete(errorPromise.poll.flatMap {
+        opt =>
+          opt.getOrElse(ZIO.unit) *> ZIO.attempt(
+            publisher
+              .toZIOStream()
+              .interruptWhen(errorPromise)
+              .map(Chunk.fromByteBuffer)
+              .flattenChunks
+              .concat(
+                ZStream.fromZIOOption[Any, Throwable, Byte](
+                  errorPromise.poll.flatMap {
+                    case None    => ZIO.fail(None)
+                    case Some(p) => p.mapError(Some.apply) *> ZIO.fail(None)
+                  }
+                )
               )
-            )
-            .mapError(AwsError.fromThrowable)
-        )
-    }))
-  }
+              .mapError(AwsError.fromThrowable)
+          )
+      })).getOrThrowFiberFailure()
+    }
 
   override def exceptionOccurred(error: Throwable): Unit =
-    runtime.unsafeRun(errorPromise.fail(error))
+    Unsafe.unsafeCompat { implicit u =>
+      runtime.unsafe.run(errorPromise.fail(error)).getOrThrowFiberFailure()
+    }
 }
 
 object ZStreamAsyncResponseTransformer {
