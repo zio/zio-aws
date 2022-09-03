@@ -42,10 +42,10 @@ class Http4sClient(client: Client[Task], closeFn: () => Unit)(implicit
 
   override def execute(
       request: AsyncExecuteRequest
-  ): CompletableFuture[Void] = 
-    Unsafe.unsafeCompat { implicit u =>
-      runtime
-        .unsafe.runToFuture(
+  ): CompletableFuture[Void] =
+    Unsafe.unsafe { implicit u =>
+      runtime.unsafe
+        .runToFuture(
           client
             .run(
               toHttp4sRequest(
@@ -96,7 +96,7 @@ class Http4sClient(client: Client[Task], closeFn: () => Unit)(implicit
   ): EntityBody[Task] =
     if (method.canHaveBody) {
       publisher
-        .toStream(asyncRuntimeInstance)
+        .toStreamBuffered(1)(asyncRuntimeInstance)
         .map(fs2.Chunk.byteBuffer(_))
         .flatMap(Stream.chunk(_))
     } else {
@@ -152,12 +152,13 @@ class Http4sClient(client: Client[Task], closeFn: () => Unit)(implicit
           case Resource.ExitCase.Succeeded => streamFinished.succeed(()).unit
           case Resource.ExitCase.Canceled  => streamFinished.succeed(()).unit
           case Resource.ExitCase.Errored(throwable) =>
-            streamFinished.fail(throwable).unit
+            ZIO.attempt(handler.onError(throwable)) *>
+              streamFinished.fail(throwable).unit
         }
       publisher = StreamUnicastPublisher(stream, dispatcher)
       _ <- ZIO.attempt {
         handler.onStream(publisher)
-      }.ensuring(streamFinished.await.ignore)
+      }.ensuring(streamFinished.await.orDie)
     } yield null.asInstanceOf[Void]
   }
 }
@@ -177,8 +178,10 @@ object Http4sClient {
     private def createClient(): Resource[Task, Client[Task]] = {
       customization(
         BlazeClientBuilder[Task].withExecutionContext(
-          Unsafe.unsafeCompat { implicit u => 
-            runtime.unsafe.run(ZIO.executor.map(_.asExecutionContext)).getOrThrowFiberFailure()
+          Unsafe.unsafe { implicit u =>
+            runtime.unsafe
+              .run(ZIO.executor.map(_.asExecutionContext))
+              .getOrThrowFiberFailure()
           }
         )
       ).resource
@@ -188,9 +191,14 @@ object Http4sClient {
         serviceDefaults: AttributeMap
     ): SdkAsyncHttpClient = {
       val ((dispatcher, client), closeFn) =
-        Unsafe.unsafeCompat { implicit u => runtime.unsafe.run(resources.allocated).getOrThrowFiberFailure() }
+        Unsafe.unsafe { implicit u =>
+          runtime.unsafe.run(resources.allocated).getOrThrowFiberFailure()
+        }
       implicit val d: Dispatcher[Task] = dispatcher
-      new Http4sClient(client, () => Unsafe.unsafeCompat { implicit u => runtime.unsafe.run(closeFn) })
+      new Http4sClient(
+        client,
+        () => Unsafe.unsafe { implicit u => runtime.unsafe.run(closeFn) }
+      )
     }
 
     def toScoped: ZIO[Scope, Throwable, Http4sClient] = {
@@ -221,7 +229,7 @@ object Http4sClient {
       ZIO.runtime.flatMap { implicit runtime: Runtime[Any] =>
         Http4sClient
           .Http4sClientBuilder(f)
-          .toScoped        
+          .toScoped
           .map { c =>
             new HttpClient {
               override def clientFor(
@@ -243,50 +251,50 @@ object Http4sClient {
     HttpClient
   ] =
     ZLayer.scoped {
-    ZIO
-      .service[_root_.zio.aws.http4s.BlazeClientConfig]
-      .flatMap { config =>
-        ZIO.runtime.flatMap { implicit runtime: Runtime[Any] =>
-          Http4sClient
-            .Http4sClientBuilder(
-              _.withResponseHeaderTimeout(config.responseHeaderTimeout)
-                .withIdleTimeout(config.idleTimeout)
-                .withRequestTimeout(config.requestTimeout)
-                .withConnectTimeout(config.connectTimeout)
-                .withUserAgent(config.userAgent)
-                .withMaxTotalConnections(config.maxTotalConnections)
-                .withMaxWaitQueueLimit(config.maxWaitQueueLimit)
-                .withCheckEndpointAuthentication(
-                  config.checkEndpointIdentification
-                )
-                .withMaxResponseLineSize(config.maxResponseLineSize)
-                .withMaxHeaderLength(config.maxHeaderLength)
-                .withMaxChunkSize(config.maxChunkSize)
-                .withChunkBufferMaxSize(config.chunkBufferMaxSize)
-                .withParserMode(config.parserMode)
-                .withBufferSize(config.bufferSize)
-                .withChannelOptions(
-                  ChannelOptions(
-                    config.channelOptions.options ++ additionalSocketOptions
+      ZIO
+        .service[_root_.zio.aws.http4s.BlazeClientConfig]
+        .flatMap { config =>
+          ZIO.runtime.flatMap { implicit runtime: Runtime[Any] =>
+            Http4sClient
+              .Http4sClientBuilder(
+                _.withResponseHeaderTimeout(config.responseHeaderTimeout)
+                  .withIdleTimeout(config.idleTimeout)
+                  .withRequestTimeout(config.requestTimeout)
+                  .withConnectTimeout(config.connectTimeout)
+                  .withUserAgent(config.userAgent)
+                  .withMaxTotalConnections(config.maxTotalConnections)
+                  .withMaxWaitQueueLimit(config.maxWaitQueueLimit)
+                  .withCheckEndpointAuthentication(
+                    config.checkEndpointIdentification
                   )
-                )
-                .withSslContextOption(sslContext)
-                .withAsynchronousChannelGroupOption(asynchronousChannelGroup)
-                .withMaxConnectionsPerRequestKey(
-                  maxConnectionsPerRequestKey
-                    .getOrElse(Function.const(config.maxWaitQueueLimit))
-                )
-            )
-            .toScoped
-            .map { c =>
-              new HttpClient {
-                override def clientFor(
-                    serviceCaps: ServiceHttpCapabilities
-                ): Task[SdkAsyncHttpClient] = ZIO.succeed(c)
+                  .withMaxResponseLineSize(config.maxResponseLineSize)
+                  .withMaxHeaderLength(config.maxHeaderLength)
+                  .withMaxChunkSize(config.maxChunkSize)
+                  .withChunkBufferMaxSize(config.chunkBufferMaxSize)
+                  .withParserMode(config.parserMode)
+                  .withBufferSize(config.bufferSize)
+                  .withChannelOptions(
+                    ChannelOptions(
+                      config.channelOptions.options ++ additionalSocketOptions
+                    )
+                  )
+                  .withSslContextOption(sslContext)
+                  .withAsynchronousChannelGroupOption(asynchronousChannelGroup)
+                  .withMaxConnectionsPerRequestKey(
+                    maxConnectionsPerRequestKey
+                      .getOrElse(Function.const(config.maxWaitQueueLimit))
+                  )
+              )
+              .toScoped
+              .map { c =>
+                new HttpClient {
+                  override def clientFor(
+                      serviceCaps: ServiceHttpCapabilities
+                  ): Task[SdkAsyncHttpClient] = ZIO.succeed(c)
+                }
               }
-            }
+          }
         }
-      }
     }
 
   private def tryDefaultSslContext: Option[SSLContext] =

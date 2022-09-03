@@ -201,7 +201,7 @@ trait GeneratorBase {
   }
 
   protected def unsafeRun(body: Term): Term =
-    q"""zio.Unsafe.unsafeCompat { implicit u => rts.unsafe.run { $body }.getOrThrowFiberFailure() }"""
+    q"""zio.Unsafe.unsafe { implicit u => rts.unsafe.run { $body }.getOrThrowFiberFailure() }"""
 
   protected def scalaVersion: String
 }

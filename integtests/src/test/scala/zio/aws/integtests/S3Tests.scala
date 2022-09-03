@@ -160,6 +160,6 @@ object S3Tests extends ZIOSpecDefault with Logging with Retries {
         awsConfig,
         s3Client
       ) @@ sequential
-    ) @@ sequential
+    ) @@ sequential @@ withLiveClock
   }
 }

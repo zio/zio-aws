@@ -150,7 +150,7 @@ object DynamoDbTests extends ZIOSpecDefault with Logging with Retries {
         } yield result.length
 
         assertZIO(steps.mapError(_.toThrowable))(equalTo(N))
-      } @@ nondeterministic @@ flaky @@ timeout(2.minutes),
+      } @@ nondeterministic @@ flaky @@ timeout(5.minutes),
       test("listTagsOfResource") {
         // simple paginated streaming
         val N = 1000
@@ -213,6 +213,6 @@ object DynamoDbTests extends ZIOSpecDefault with Logging with Retries {
         awsConfig,
         dynamoDb
       ) @@ sequential
-    ) @@ sequential
+    ) @@ sequential @@ withLiveClock
   }
 }
