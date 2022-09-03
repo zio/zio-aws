@@ -177,7 +177,8 @@ trait GithubActionsGenerator {
                   "examples/compile"
                 ),
                 heapGb = 5
-              ).when(isScalaVersion(scala3))
+              ).when(isScalaVersion(scala3)),
+              collectDockerLogs().when(isFailure)
             )
         )
         .addJobs(

@@ -129,7 +129,7 @@ trait GeneratorBase {
       case ModelType.Exception =>
         ZIO.succeed(term)
       case ModelType.Document =>
-        ZIO.succeed(term)        
+        ZIO.succeed(term)
       case _ =>
         if (
           TypeMapping.isBuiltIn(model.shapeName) || isBlacklistedNewtype(
@@ -200,8 +200,8 @@ trait GeneratorBase {
     }
   }
 
-  protected def unsafeRun(body: Term): Term = 
-    q"""zio.Unsafe.unsafeCompat { implicit u => rts.unsafe.run { $body }.getOrThrowFiberFailure() }"""
+  protected def unsafeRun(body: Term): Term =
+    q"""zio.Unsafe.unsafe { implicit u => rts.unsafe.run { $body }.getOrThrowFiberFailure() }"""
 
   protected def scalaVersion: String
 }

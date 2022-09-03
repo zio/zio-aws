@@ -30,12 +30,12 @@ class ZStreamAsyncResponseTransformer[R, Response](
     }
 
   override def onResponse(response: Response): Unit = 
-    Unsafe.unsafeCompat { implicit u =>
+    Unsafe.unsafe { implicit u =>
       runtime.unsafe.run(responsePromise.complete(ZIO.succeed(response))).getOrThrowFiberFailure()
     }
 
   override def onStream(publisher: SdkPublisher[ByteBuffer]): Unit = 
-    Unsafe.unsafeCompat { implicit u =>
+    Unsafe.unsafe { implicit u =>
       runtime.unsafe.run(resultStreamPromise.complete(errorPromise.poll.flatMap {
         opt =>
           opt.getOrElse(ZIO.unit) *> ZIO.attempt(
@@ -58,7 +58,7 @@ class ZStreamAsyncResponseTransformer[R, Response](
     }
 
   override def exceptionOccurred(error: Throwable): Unit =
-    Unsafe.unsafeCompat { implicit u =>
+    Unsafe.unsafe { implicit u =>
       runtime.unsafe.run(errorPromise.fail(error)).getOrThrowFiberFailure()
     }
 }
