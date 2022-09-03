@@ -16,7 +16,7 @@ class ZStreamAsyncRequestBody[R](stream: ZStream[R, AwsError, Byte])(implicit
   override def contentLength(): Optional[lang.Long] = Optional.empty()
 
   override def subscribe(s: Subscriber[_ >: ByteBuffer]): Unit =
-    Unsafe.unsafeCompat { implicit u =>
+    Unsafe.unsafe { implicit u =>
       runtime.unsafe.run {
         ZIO.scoped[R] {
           s.toZIOSink[Throwable]

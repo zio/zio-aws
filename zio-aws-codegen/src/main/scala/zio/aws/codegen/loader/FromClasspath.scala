@@ -3,7 +3,11 @@ package zio.aws.codegen.loader
 import software.amazon.awssdk.codegen.C2jModels
 import software.amazon.awssdk.codegen.internal.Jackson
 import software.amazon.awssdk.codegen.model.config.customization.CustomizationConfig
-import software.amazon.awssdk.codegen.model.service.{Paginators, ServiceModel, Waiters}
+import software.amazon.awssdk.codegen.model.service.{
+  Paginators,
+  ServiceModel,
+  Waiters
+}
 import zio.nio.file.{FileSystem, Files, Path}
 import zio.{ZIO, ZInputStream}
 
@@ -39,7 +43,7 @@ case class FromClasspath() extends Loader {
   private def loadJson[T](url: URL)(implicit
       classTag: ClassTag[T]
   ): ZIO[Any, Throwable, T] =
-    ZIO.scoped { 
+    ZIO.scoped {
       for {
         tempPath <- Files.createTempFileScoped(".json", None, Seq())
         inputStream <- ZIO.attempt(url.openStream())

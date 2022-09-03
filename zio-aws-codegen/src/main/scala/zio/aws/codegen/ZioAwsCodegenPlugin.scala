@@ -66,20 +66,25 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
         )
 
         unsafe { implicit u =>
-          zio.Runtime.default.unsafe.run {
-            val cfg = ZLayer.succeed(params)
-            val env = Loader.fromGit ++ (cfg >+> AwsGenerator.live)
-            val task =
-              for {
-                _ <- ZIO.attempt(log.info(s"Generating sources for $id"))
-                model <- Loader.loadCodegenModel(id)
-                files <- AwsGenerator.generateServiceCode(id, model, log)
-              } yield files.toSeq
-            task.provideLayer(env).tapError { generatorError =>
-              ZIO
-                .attempt(log.error(s"Code generator failure: ${generatorError}"))
+          zio.Runtime.default.unsafe
+            .run {
+              val cfg = ZLayer.succeed(params)
+              val env =
+                Loader.cached(Loader.fromGit) ++ (cfg >+> AwsGenerator.live)
+              val task =
+                for {
+                  _ <- ZIO.attempt(log.info(s"Generating sources for $id"))
+                  model <- Loader.loadCodegenModel(id)
+                  files <- AwsGenerator.generateServiceCode(id, model, log)
+                } yield files.toSeq
+              task.provideLayer(env).tapError { generatorError =>
+                ZIO
+                  .attempt(
+                    log.error(s"Code generator failure: ${generatorError}")
+                  )
+              }
             }
-          }.getOrThrowFiberFailure()
+            .getOrThrowFiberFailure()
         }
       }
   }
@@ -98,17 +103,20 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
   )
 
   override lazy val extraProjects: Seq[Project] = {
-    unsafe { implicit u => 
-      zio.Runtime.default.unsafe.run {
-        val env = Loader.fromGit
-        val task = for {
-          ids <- Loader.findModels()
-        } yield generateSbtSubprojects(ids)
+    unsafe { implicit u =>
+      zio.Runtime.default.unsafe
+        .run {
+          val env = Loader.cached(Loader.fromGit)
+          val task = for {
+            ids <- Loader.findModels()
+          } yield generateSbtSubprojects(ids)
 
-        task.provideLayer(env).tapError { generatorError =>
-          zio.Console.printLineError(s"Code generator failure: ${generatorError}")
+          task.provideLayer(env).tapError { generatorError =>
+            zio.Console
+              .printLineError(s"Code generator failure: ${generatorError}")
+          }
         }
-      }.getOrThrowFiberFailure()
+        .getOrThrowFiberFailure()
     }
   }
 
@@ -133,21 +141,23 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
     )
 
     unsafe { implicit u =>
-      zio.Runtime.default.unsafe.run {
-        val cfg = ZLayer.succeed(params)
-        val env = Loader.fromGit ++ (cfg >+> AwsGenerator.live)
-        val task =
-          for {
-            _ <- ZIO.attempt(log.info(s"Regenerating ${params.ciTarget}"))
-            ids <- Loader.findModels()
-            _ <- AwsGenerator.generateCiYaml(ids)
-          } yield ()
-        task.provideLayer(env).catchAll { generatorError =>
-          ZIO
-            .attempt(log.error(s"Code generator failure: ${generatorError}"))
-            .as(Seq.empty)
+      zio.Runtime.default.unsafe
+        .run {
+          val cfg = ZLayer.succeed(params)
+          val env = Loader.cached(Loader.fromGit) ++ (cfg >+> AwsGenerator.live)
+          val task =
+            for {
+              _ <- ZIO.attempt(log.info(s"Regenerating ${params.ciTarget}"))
+              ids <- Loader.findModels()
+              _ <- AwsGenerator.generateCiYaml(ids)
+            } yield ()
+          task.provideLayer(env).catchAll { generatorError =>
+            ZIO
+              .attempt(log.error(s"Code generator failure: ${generatorError}"))
+              .as(Seq.empty)
+          }
         }
-      }.getOrThrowFiberFailure()
+        .getOrThrowFiberFailure()
     }
   }
 
@@ -171,24 +181,26 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
       scalaVersion = scalaVer
     )
 
-    unsafe { implicit u => 
-      zio.Runtime.default.unsafe.run {
-        val cfg = ZLayer.succeed(params)
-        val env = Loader.fromGit ++ (cfg >+> AwsGenerator.live)
-        val task =
-          for {
-            _ <- ZIO.attempt(
-              log.info(s"Regenerating ${params.artifactListTarget}")
-            )
-            ids <- Loader.findModels()
-            _ <- AwsGenerator.generateArtifactList(ids)
-          } yield ()
-        task.provideLayer(env).catchAll { generatorError =>
-          ZIO
-            .attempt(log.error(s"Code generator failure: ${generatorError}"))
-            .as(Seq.empty)
+    unsafe { implicit u =>
+      zio.Runtime.default.unsafe
+        .run {
+          val cfg = ZLayer.succeed(params)
+          val env = Loader.cached(Loader.fromGit) ++ (cfg >+> AwsGenerator.live)
+          val task =
+            for {
+              _ <- ZIO.attempt(
+                log.info(s"Regenerating ${params.artifactListTarget}")
+              )
+              ids <- Loader.findModels()
+              _ <- AwsGenerator.generateArtifactList(ids)
+            } yield ()
+          task.provideLayer(env).catchAll { generatorError =>
+            ZIO
+              .attempt(log.error(s"Code generator failure: ${generatorError}"))
+              .as(Seq.empty)
+          }
         }
-      }.getOrThrowFiberFailure()
+        .getOrThrowFiberFailure()
     }
   }
 

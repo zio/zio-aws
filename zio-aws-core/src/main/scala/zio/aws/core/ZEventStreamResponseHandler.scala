@@ -16,21 +16,21 @@ object ZEventStreamResponseHandler {
   ): EventStreamResponseHandler[ResponseT, EventT] =
     new EventStreamResponseHandler[ResponseT, EventT] {
       override def responseReceived(response: ResponseT): Unit =
-        Unsafe.unsafeCompat { implicit u =>
+        Unsafe.unsafe { implicit u =>
           runtime.unsafe.run(
             responsePromise.succeed(response)
           ).getOrThrowFiberFailure()
         }
 
       override def onEventStream(publisher: SdkPublisher[EventT]): Unit =
-        Unsafe.unsafeCompat { implicit u =>
+        Unsafe.unsafe { implicit u =>
           runtime.unsafe.run(
             promise.succeed(publisher)
           ).getOrThrowFiberFailure()
         }
 
       override def exceptionOccurred(throwable: Throwable): Unit = {
-        Unsafe.unsafeCompat { implicit u =>
+        Unsafe.unsafe { implicit u =>
           runtime.unsafe.run {
             val error = AwsError.fromThrowable(throwable)
             signalQueue.offerAll(Seq(error, error)) *>
@@ -40,7 +40,7 @@ object ZEventStreamResponseHandler {
       }
 
       override def complete(): Unit = {
-        Unsafe.unsafeCompat { implicit u =>
+        Unsafe.unsafe { implicit u =>
           runtime.unsafe.run {
             finishedPromise.succeed(())
             // We cannot signal termination here because the publisher stream may still have buffered items.
