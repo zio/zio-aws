@@ -21,14 +21,16 @@ import zio.test.Assertion._
 import zio.test.TestAspect._
 import zio.test._
 
-object DynamoDbTests extends ZIOSpecDefault with Logging {
+object DynamoDbTests extends ZIOSpecDefault with Logging with Retries {
 
   val nettyClient = NettyHttpClient.default
   val http4sClient = Http4sClient.default
   val actorSystem =
-    ZLayer.scoped(ZIO.acquireRelease(ZIO.attempt(ActorSystem("test")))(sys =>
-      ZIO.fromFuture(_ => sys.terminate()).orDie
-    ))
+    ZLayer.scoped(
+      ZIO.acquireRelease(ZIO.attempt(ActorSystem("test")))(sys =>
+        ZIO.fromFuture(_ => sys.terminate()).orDie
+      )
+    )
   val akkaHttpClient = AkkaHttpClient.client()
   val awsConfig = AwsConfig.default
   val dynamoDb = DynamoDb.customized(
@@ -37,9 +39,13 @@ object DynamoDbTests extends ZIOSpecDefault with Logging {
         .create(AwsBasicCredentials.create("dummy", "key"))
     ).region(Region.US_WEST_2)
       .endpointOverride(new URI("http://localhost:4566"))
-  ) @@ callLogging
+  ) @@ callLogging @@ callRetries
 
-  private def testTable(prefix: String): ZIO[DynamoDb, Nothing, ZIO[DynamoDb with Scope, AwsError, TableDescription.ReadOnly]] = {
+  private def testTable(prefix: String): ZIO[DynamoDb, Nothing, ZIO[
+    DynamoDb with Scope,
+    AwsError,
+    TableDescription.ReadOnly
+  ]] = {
     for {
       dynamodb <- ZIO.service[DynamoDb]
       postfix <- Random.nextInt.map(Math.abs)
@@ -51,7 +57,10 @@ object DynamoDbTests extends ZIOSpecDefault with Logging {
           CreateTableRequest(
             tableName = tableName,
             attributeDefinitions = List(
-              AttributeDefinition(KeySchemaAttributeName("key"), ScalarAttributeType.S)
+              AttributeDefinition(
+                KeySchemaAttributeName("key"),
+                ScalarAttributeType.S
+              )
             ),
             keySchema = List(
               KeySchemaElement(KeySchemaAttributeName("key"), KeyType.HASH)
@@ -80,7 +89,9 @@ object DynamoDbTests extends ZIOSpecDefault with Logging {
     )
   }
 
-  def tests(prefix: String): Seq[Spec[TestEnvironment with DynamoDb, Throwable]] =
+  def tests(
+      prefix: String
+  ): Seq[Spec[TestEnvironment with DynamoDb, Throwable]] =
     Seq(
       test("can create and delete a table") {
         // simple request/response calls
@@ -90,7 +101,7 @@ object DynamoDbTests extends ZIOSpecDefault with Logging {
         } yield ()
 
         assertZIO(steps.exit)(succeeds(isUnit))
-      } @@ nondeterministic @@ flaky @@ timeout(1.minute),
+      } @@ nondeterministic @@ flaky @@ timeout(2.minutes),
       test("scan") {
         // java paginator based streaming
 
@@ -98,40 +109,48 @@ object DynamoDbTests extends ZIOSpecDefault with Logging {
         val steps = for {
           table <- testTable(s"${prefix}_scn")
           result <- ZIO.scoped {
-              table.flatMap { tableDescription =>
-                val put =
-                  for {
-                    tableName <- tableDescription.getTableName.map(TableName(_))
-                    randomKey <- Random.nextString(10).map(StringAttributeValue(_))
-                    randomValue <- Random.nextInt.map(n => NumberAttributeValue(n.toString))
-                    _ <- DynamoDb.putItem(
-                      PutItemRequest(
-                        tableName = tableName,
-                        item = Map(
-                          AttributeName("key") -> AttributeValue(s = Some(randomKey)),
-                          AttributeName("value") -> AttributeValue(n = Some(randomValue))
+            table.flatMap { tableDescription =>
+              val put =
+                for {
+                  tableName <- tableDescription.getTableName.map(TableName(_))
+                  randomKey <- Random
+                    .nextString(10)
+                    .map(StringAttributeValue(_))
+                  randomValue <- Random.nextInt.map(n =>
+                    NumberAttributeValue(n.toString)
+                  )
+                  _ <- DynamoDb.putItem(
+                    PutItemRequest(
+                      tableName = tableName,
+                      item = Map(
+                        AttributeName("key") -> AttributeValue(s =
+                          Some(randomKey)
+                        ),
+                        AttributeName("value") -> AttributeValue(n =
+                          Some(randomValue)
                         )
                       )
                     )
-                  } yield ()
-
-                for {
-                  tableName <- tableDescription.getTableName
-                  _ <- put.repeatN(N - 1)
-                  stream = DynamoDb.scan(
-                    ScanRequest(
-                      tableName = tableName,
-                      limit = Some(PositiveIntegerObject(10))
-                    )
                   )
-                  streamResult <- stream.runCollect
-                } yield streamResult
-              }
+                } yield ()
+
+              for {
+                tableName <- tableDescription.getTableName
+                _ <- put.repeatN(N - 1)
+                stream = DynamoDb.scan(
+                  ScanRequest(
+                    tableName = tableName,
+                    limit = Some(PositiveIntegerObject(10))
+                  )
+                )
+                streamResult <- stream.runCollect
+              } yield streamResult
             }
-          } yield result.length
+          }
+        } yield result.length
 
         assertZIO(steps.mapError(_.toThrowable))(equalTo(N))
-      } @@ nondeterministic @@ flaky @@ timeout(1.minute),
+      } @@ nondeterministic @@ flaky @@ timeout(5.minutes),
       test("listTagsOfResource") {
         // simple paginated streaming
         val N = 1000
@@ -145,7 +164,12 @@ object DynamoDbTests extends ZIOSpecDefault with Logging {
                   TagResourceRequest(
                     resourceArn = arn,
                     tags = (0 until N)
-                      .map(i => zio.aws.dynamodb.model.Tag(TagKeyString(s"tag$i"), TagValueString(i.toString)))
+                      .map(i =>
+                        zio.aws.dynamodb.model.Tag(
+                          TagKeyString(s"tag$i"),
+                          TagValueString(i.toString)
+                        )
+                      )
                       .toList
                   )
                 )
@@ -159,10 +183,10 @@ object DynamoDbTests extends ZIOSpecDefault with Logging {
               } yield tags
             }
           }
-        } yield result.length      
+        } yield result.length
 
         assertZIO(steps.mapError(_.toThrowable))(equalTo(N))
-      } @@ nondeterministic @@ flaky @@ timeout(1.minute)
+      } @@ nondeterministic @@ flaky @@ timeout(2.minutes)
     )
 
   override def spec: Spec[TestEnvironment, Throwable] = {
@@ -170,18 +194,25 @@ object DynamoDbTests extends ZIOSpecDefault with Logging {
       suite("with Netty")(
         tests("netty"): _*
       ).provideCustom(
-        nettyClient, awsConfig, dynamoDb
+        nettyClient,
+        awsConfig,
+        dynamoDb
       ) @@ sequential,
       suite("with http4s")(
         tests("http4s"): _*
       ).provideCustom(
-        http4sClient, awsConfig, dynamoDb
+        http4sClient,
+        awsConfig,
+        dynamoDb
       ) @@ sequential,
       suite("with akka-http")(
         tests("akkahttp"): _*
       ).provideCustom(
-        actorSystem, akkaHttpClient, awsConfig, dynamoDb
+        actorSystem,
+        akkaHttpClient,
+        awsConfig,
+        dynamoDb
       ) @@ sequential
-    ) @@ sequential
+    ) @@ sequential @@ withLiveClock
   }
 }

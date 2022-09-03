@@ -28,7 +28,9 @@ trait AwsGenerator {
 
 object AwsGenerator {
 
-  val live: ZLayer[Parameters, Nothing, AwsGenerator] = ZLayer(ZIO.service[Parameters].map(AwsGeneratorImpl.apply))
+  val live: ZLayer[Parameters, Nothing, AwsGenerator] = ZLayer(
+    ZIO.service[Parameters].map(AwsGeneratorImpl.apply)
+  )
 
   def generateServiceCode(
       id: ModuleId,

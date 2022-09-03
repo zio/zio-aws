@@ -163,18 +163,27 @@ object ScalaWorkflow {
       )
     )
 
-  val isMaster: Condition = Condition(
+  def collectDockerLogs(): Step =
+    SingleStep(
+      "Collect Docker logs",
+      uses = Some(ActionRef("jwalton/gh-docker-logs@v1"))
+    )
+
+  val isMaster: Condition = Condition.Expression(
     "github.ref == 'refs/heads/master'"
   )
-  val isNotMaster: Condition = Condition(
+  val isNotMaster: Condition = Condition.Expression(
     "github.ref != 'refs/heads/master'"
   )
-  def isScalaVersion(version: ScalaVersion): Condition = Condition(
+  def isScalaVersion(version: ScalaVersion): Condition = Condition.Expression(
     s"matrix.scala == '${version.version}'"
   )
-  def isNotScalaVersion(version: ScalaVersion): Condition = Condition(
-    s"matrix.scala != '${version.version}'"
-  )
+  def isNotScalaVersion(version: ScalaVersion): Condition =
+    Condition.Expression(
+      s"matrix.scala != '${version.version}'"
+    )
+  val isFailure: Condition = Condition.Function("failure()")
+
   case class ScalaVersion(version: String)
 
   sealed trait JavaVersion {
