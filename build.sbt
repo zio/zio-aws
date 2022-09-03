@@ -40,7 +40,7 @@ lazy val http4s = Project("zio-aws-http4s", file("zio-aws-http4s"))
   .settings(
     libraryDependencies ++= Seq(
       "org.http4s" %% "http4s-dsl" % http4sVersion,
-      "org.http4s" %% "http4s-blaze-client" % http4sVersion,
+      "org.http4s" %% "http4s-blaze-client" % blazeVersion,
       "software.amazon.awssdk" % "http-client-spi" % awsVersion,
       "dev.zio" %% "zio" % zioVersion,
       "dev.zio" %% "zio-interop-cats" % zioCatsInteropVersion,
