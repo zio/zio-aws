@@ -124,6 +124,7 @@ lazy val integtests = Project("integtests", file("integtests"))
       "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.17.1"
     ),
     testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
+    Test/parallelExecution := false,
     evictionErrorLevel := Level.Info
   )
   .dependsOn(

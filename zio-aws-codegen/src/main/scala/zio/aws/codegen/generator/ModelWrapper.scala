@@ -7,8 +7,8 @@ import scala.meta.Defn
 // TODO: remove fileName?
 case class ModelWrapper(
     fileName: Option[String],
-    code: List[Defn],    
+    code: List[Defn],
     generatedType: ScalaType
 ) {
-    def name: String = generatedType.name
+  def name: String = generatedType.name
 }
