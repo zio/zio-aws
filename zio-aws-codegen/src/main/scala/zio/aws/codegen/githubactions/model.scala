@@ -69,13 +69,34 @@ object ActionRef {
     (action: ActionRef) => Json.fromString(action.ref)
 }
 
-case class Condition(expression: String) {
-  def &&(other: Condition): Condition =
-    Condition(s"($expression) && (${other.expression})")
+sealed trait Condition {
+  def &&(other: Condition): Condition
+  def asString: String
 }
+
 object Condition {
+  case class Expression(expression: String) extends Condition {
+    def &&(other: Condition): Condition =
+      other match {
+        case Expression(otherExpression: String) =>
+          Expression(s"($expression) && ($otherExpression)")
+        case Function(otherExpression: String) =>
+          throw new IllegalArgumentException("Not supported currently")
+      }
+
+    def asString: String = s"$${{ $expression }}"
+  }
+
+  case class Function(expression: String) extends Condition {
+    def &&(other: Condition): Condition = throw new IllegalArgumentException(
+      "Not supported currently"
+    )
+
+    def asString: String = expression
+  }
+
   implicit val encoder: Encoder[Condition] =
-    (c: Condition) => Json.fromString(s"$${{ ${c.expression} }}")
+    (c: Condition) => Json.fromString(c.asString)
 }
 
 sealed trait Step {
