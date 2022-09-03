@@ -66,7 +66,8 @@ object Types {
   def subtype(t: ScalaType): ScalaType =
     ScalaType(Packages.zioPrelude, "Subtype", t)
 
-  val awsDocument: ScalaType = ScalaType(Packages.awsCore / "document", "Document")
+  val awsDocument: ScalaType =
+    ScalaType(Packages.awsCore / "document", "Document")
 
   def optional(t: ScalaType): ScalaType =
     ScalaType(Packages.zioPrelude / "data", "Optional", t)
@@ -75,7 +76,6 @@ object Types {
     ScalaType(Packages.zioPrelude / "data" / "Optional", "Absent")
   val optionalPresent: ScalaType =
     ScalaType(Packages.zioPrelude / "data" / "Optional", "Present")
-
 
   val optionalFromNullable: Term =
     q"zio.aws.core.internal.optionalFromNullable"
