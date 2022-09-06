@@ -30,7 +30,7 @@ object Common extends AutoPlugin {
 
     val scala212Version = "2.12.16"
     val scala213Version = "2.13.8"
-    val scala3Version = "3.1.3"
+    val scala3Version = "3.2.0"
 
     val scalacOptions212 = Seq("-Ypartial-unification", "-deprecation")
     val scalacOptions213 = Seq("-deprecation")
@@ -116,7 +116,6 @@ object Common extends AutoPlugin {
         )).toSeq,
       resolvers +=
         "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
-
       ci.release.early.Plugin.autoImport.verifyNoSnapshotDependencies := {} // Temporarily disable this check until all dependencies are ready for ZIO 2
     )
 
