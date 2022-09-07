@@ -23,7 +23,7 @@ object Common extends AutoPlugin {
     val awsSubVersion = awsVersion.drop(awsVersion.indexOf('.') + 1)
     val http4sVersion = "0.23.15"
     val blazeVersion = "0.23.12"
-    val fs2Version = "3.2.12"
+    val fs2Version = "3.2.13"
 
     val majorVersion = "5"
     val zioAwsVersionPrefix = s"$majorVersion.$awsSubVersion."
