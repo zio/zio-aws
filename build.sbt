@@ -55,12 +55,15 @@ lazy val http4s = Project("zio-aws-http4s", file("zio-aws-http4s"))
 lazy val akkahttp = Project("zio-aws-akka-http", file("zio-aws-akka-http"))
   .settings(
     libraryDependencies ++= Seq(
-      ("com.typesafe.akka" %% "akka-stream" % "2.6.19").cross(CrossVersion.for3Use2_13)
+      ("com.typesafe.akka" %% "akka-stream" % "2.6.19")
+        .cross(CrossVersion.for3Use2_13)
         .exclude("org.scala-lang.modules", "scala-collection-compat_2.13"),
-      ("com.typesafe.akka" %% "akka-http" % "10.2.9").cross(CrossVersion.for3Use2_13)
-        .exclude("org.scala-lang.modules", "scala-collection-compat_2.13"),        
-      ("com.github.matsluni" %% "aws-spi-akka-http" % "0.0.11").cross(CrossVersion.for3Use2_13)
-        .exclude("org.scala-lang.modules", "scala-collection-compat_2.13")        
+      ("com.typesafe.akka" %% "akka-http" % "10.2.10")
+        .cross(CrossVersion.for3Use2_13)
+        .exclude("org.scala-lang.modules", "scala-collection-compat_2.13"),
+      ("com.github.matsluni" %% "aws-spi-akka-http" % "0.0.11")
+        .cross(CrossVersion.for3Use2_13)
+        .exclude("org.scala-lang.modules", "scala-collection-compat_2.13")
     )
   )
   .dependsOn(core)
@@ -124,7 +127,7 @@ lazy val integtests = Project("integtests", file("integtests"))
       "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.17.1"
     ),
     testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
-    Test/parallelExecution := false,
+    Test / parallelExecution := false,
     evictionErrorLevel := Level.Info
   )
   .dependsOn(
@@ -136,19 +139,27 @@ lazy val integtests = Project("integtests", file("integtests"))
     LocalProject("zio-aws-dynamodb")
   )
 
-  
 lazy val docs = project
-  .in(file("zio-aws-docs"))  
+  .in(file("zio-aws-docs"))
   .settings(
-    publish / skip                             := true,
-    moduleName                                 := "zio-aws-docs",
+    publish / skip := true,
+    moduleName := "zio-aws-docs",
     scalacOptions -= "-Yno-imports",
     scalacOptions -= "-Xfatal-warnings",
-    ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(core, http4s, netty, akkahttp),
-    ScalaUnidoc / unidoc / target              := (LocalRootProject / baseDirectory).value / "website" / "static" / "api",
+    ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(
+      core,
+      http4s,
+      netty,
+      akkahttp
+    ),
+    ScalaUnidoc / unidoc / target := (LocalRootProject / baseDirectory).value / "website" / "static" / "api",
     cleanFiles += (ScalaUnidoc / unidoc / target).value,
-    docusaurusCreateSite                       := docusaurusCreateSite.dependsOn(Compile / unidoc).value,
-    docusaurusPublishGhpages                   := docusaurusPublishGhpages.dependsOn(Compile / unidoc).value
+    docusaurusCreateSite := docusaurusCreateSite
+      .dependsOn(Compile / unidoc)
+      .value,
+    docusaurusPublishGhpages := docusaurusPublishGhpages
+      .dependsOn(Compile / unidoc)
+      .value
   )
   .dependsOn(
     core,
