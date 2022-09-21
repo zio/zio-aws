@@ -58,9 +58,9 @@ def scan(request: ScanRequest): ZStream[DynamoDb, AwsError, Map[AttributeName, A
 
 Note that for event streaming or paginating operations returning a `ZStream` the actual AWS call happens when the stream gets pulled.
 
-For use cases when calling the _paginating_ interface directly is necessary - for example when forwarding paginated results through a HTTP API, the library generates non-stremaing wrappers as well for these methods.
+For use cases when calling the _paginating_ interface directly is necessary - for example when forwarding paginated results through a HTTP API, the library generates non-streaming wrappers as well for these methods.
 
-For example the DynamoDB `scan` method's non-streming variant is defined as:
+For example the DynamoDB `scan` method's non-streaming variant is defined as:
 
 ```scala
 def scanPaginated(request: ScanRequest): ZIO[DynamoDb, ScanResponse.ReadOnly]
