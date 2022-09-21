@@ -712,7 +712,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
           StreamingOutputResult[Any, Int, Byte]
         ]]
     ) => CompletableFuture[Task[StreamingOutputResult[Any, Int, Byte]]] =
-      (multipler, asyncBody, transformer) =>
+      (multiplier, asyncBody, transformer) =>
         SimulatedAsyncBodyReceiver
           .useAsyncBody[Task[StreamingOutputResult[Any, Int, Byte]]](
             (in, cf, buffer) => {
@@ -748,7 +748,7 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
                   cf
                 )
             }
-          )(threadPool)(multipler, asyncBody)
+          )(threadPool)(multiplier, asyncBody)
 
     for {
       result <- asyncRequestInputOutputStream("test", fakeAwsCall)(

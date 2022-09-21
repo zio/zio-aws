@@ -54,7 +54,7 @@ API breaking changes to make the streaming interface more ergonomic:
 - Input/output byte streams are now flat (`ZStream[Any, AwsError, Byte]` instead of `ZStream[Any, AwsError, Chunk[Byte]`)
 - Streaming operations return a `ZStream` that performs the request on first pull instead of a `ZIO[..., ZStream[...]]`
 - Streaming for paginated operations that does not have a paginator in the Java SDK
-- No `xxxStream` variants, streaming is the default and only interface for paginable operaitons
+- No `xxxStream` variants, streaming is the default and only interface for paginatable operations
 - Updated to AWS SDK 2.14.3
 - Fixed handling of some error cases
 - Scala 2.12 version is now available
