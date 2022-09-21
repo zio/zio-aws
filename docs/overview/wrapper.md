@@ -16,7 +16,7 @@ val live: ZLayer[AwsConfig, Throwable, Ec2]
 ``` 
 
 The `AwsConfig` layer defines how each service's async Java client gets configured, including the http client which is
-provided by an other layer `AwsConfig` is depending on.
+provided by another layer `AwsConfig` is depending on.
 
 Each module has accessor functions for _all operations_ of the given service.
 
