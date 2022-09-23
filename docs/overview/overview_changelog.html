@@ -115,7 +115,7 @@ list may not reflect <em>all</em> changes immediately. Dependencies are continuo
 <li>Input/output byte streams are now flat (<code>ZStream[Any, AwsError, Byte]</code> instead of <code>ZStream[Any, AwsError, Chunk[Byte]</code>)</li>
 <li>Streaming operations return a <code>ZStream</code> that performs the request on first pull instead of a <code>ZIO[..., ZStream[...]]</code></li>
 <li>Streaming for paginated operations that does not have a paginator in the Java SDK</li>
-<li>No <code>xxxStream</code> variants, streaming is the default and only interface for paginable operaitons</li>
+<li>No <code>xxxStream</code> variants, streaming is the default and only interface for paginatable operations</li>
 <li>Updated to AWS SDK 2.14.3</li>
 <li>Fixed handling of some error cases</li>
 <li>Scala 2.12 version is now available</li>
