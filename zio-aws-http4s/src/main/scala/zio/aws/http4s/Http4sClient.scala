@@ -156,9 +156,11 @@ class Http4sClient(client: Client[Task], closeFn: () => Unit)(implicit
               streamFinished.fail(throwable).unit
         }
       publisher = StreamUnicastPublisher(stream, dispatcher)
-      _ <- ZIO.attempt {
-        handler.onStream(publisher)
-      }.ensuring(streamFinished.await.orDie)
+      _ <- ZIO
+        .attempt {
+          handler.onStream(publisher)
+        }
+        .ensuring(streamFinished.await.orDie)
     } yield null.asInstanceOf[Void]
   }
 }

@@ -27,26 +27,26 @@ object NettyHttpClient {
       protocol: Protocol,
       customization: NettyNioAsyncHttpClient.Builder => NettyNioAsyncHttpClient.Builder =
         identity
-  ): ZLayer[Any, Throwable, HttpClient] =  {
-      def create(
-          awsProtocol: AwsProtocol
-      ): ZIO[Scope, Throwable, SdkAsyncHttpClient] =
-        ZIO
-          .fromAutoCloseable(
-            ZIO.attempt(
-              customization(
-                NettyNioAsyncHttpClient
-                  .builder()
-              )
-                .protocol(awsProtocol)
-                .build()
+  ): ZLayer[Any, Throwable, HttpClient] = {
+    def create(
+        awsProtocol: AwsProtocol
+    ): ZIO[Scope, Throwable, SdkAsyncHttpClient] =
+      ZIO
+        .fromAutoCloseable(
+          ZIO.attempt(
+            customization(
+              NettyNioAsyncHttpClient
+                .builder()
             )
+              .protocol(awsProtocol)
+              .build()
           )
+        )
 
-      HttpClient.fromScopedPerProtocol[Any, Throwable, SdkAsyncHttpClient](
-        create(AwsProtocol.HTTP1_1),
-        create(AwsProtocol.HTTP2)
-      )(protocol)
+    HttpClient.fromScopedPerProtocol[Any, Throwable, SdkAsyncHttpClient](
+      create(AwsProtocol.HTTP1_1),
+      create(AwsProtocol.HTTP2)
+    )(protocol)
   }
 
   def configured(

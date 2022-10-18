@@ -33,6 +33,6 @@ object AwsError {
   ): ZIO[Any, AwsError, T] =
     value match {
       case Optional.Present(value) => ZIO.succeed(value)
-      case Optional.Absent        => ZIO.fail(FieldIsNone(name))
+      case Optional.Absent         => ZIO.fail(FieldIsNone(name))
     }
 }

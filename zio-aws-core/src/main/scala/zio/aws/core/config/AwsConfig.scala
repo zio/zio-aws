@@ -42,11 +42,11 @@ object AwsConfig {
           ZIO.attempt(customization.customize[Client, Builder](builder))
 
         override def configureHttpClient[
-          Client,
-          Builder <: AwsAsyncClientBuilder[Builder, Client]
+            Client,
+            Builder <: AwsAsyncClientBuilder[Builder, Client]
         ](
-          builder: Builder,
-          serviceCaps: ServiceHttpCapabilities
+            builder: Builder,
+            serviceCaps: ServiceHttpCapabilities
         ): Task[Builder] =
           httpClient.clientFor(serviceCaps).map(builder.httpClient)
       }
@@ -67,9 +67,9 @@ object AwsConfig {
           ZIO.attempt {
             val b0 =
               builder
-              .optionallyWith(commonConfig.endpointOverride)(
-                _.endpointOverride
-              )
+                .optionallyWith(commonConfig.endpointOverride)(
+                  _.endpointOverride
+                )
                 .optionallyWith(commonConfig.region)(_.region)
                 .credentialsProvider(commonConfig.credentialsProvider)
 
@@ -108,11 +108,11 @@ object AwsConfig {
         }
 
         override def configureHttpClient[
-          Client,
-          Builder <: AwsAsyncClientBuilder[Builder, Client]
+            Client,
+            Builder <: AwsAsyncClientBuilder[Builder, Client]
         ](
-          builder: Builder,
-          serviceCaps: ServiceHttpCapabilities
+            builder: Builder,
+            serviceCaps: ServiceHttpCapabilities
         ): Task[Builder] =
           httpClient.clientFor(serviceCaps).map(builder.httpClient)
       }

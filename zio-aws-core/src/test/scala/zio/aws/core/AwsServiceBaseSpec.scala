@@ -532,7 +532,9 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
           )
         },
         test("failure on input stream") {
-          assertZIO(runAsyncRequestEventInputOutputStream(failInput = true).exit)(
+          assertZIO(
+            runAsyncRequestEventInputOutputStream(failInput = true).exit
+          )(
             isAwsFailure
           )
         },

@@ -27,7 +27,9 @@ object Main extends ZIOAppDefault {
   val program: ZIO[DynamoDb, AwsError, Unit] =
     for {
       _ <- Console.printLine("Performing full table scan").ignore
-      scan = DynamoDb.scan(ScanRequest(tableName = TableName("test"))) // full table scan
+      scan = DynamoDb.scan(
+        ScanRequest(tableName = TableName("test"))
+      ) // full table scan
       _ <- scan.foreach(item => Console.printLine(item.toString).ignore)
     } yield ()
 
@@ -65,7 +67,10 @@ object Main extends ZIOAppDefault {
           .either
           .flatMap {
             case Left(error) =>
-              Console.printLineError(s"AWS error: $error").ignore.as(ExitCode.failure)
+              Console
+                .printLineError(s"AWS error: $error")
+                .ignore
+                .as(ExitCode.failure)
             case Right(_) =>
               ZIO.unit.as(ExitCode.success)
           }

@@ -111,7 +111,10 @@ object Main extends ZIOAppDefault {
       .either
       .flatMap {
         case Left(error) =>
-          Console.printLineError(s"AWS error: $error").ignore.as(ExitCode.failure)
+          Console
+            .printLineError(s"AWS error: $error")
+            .ignore
+            .as(ExitCode.failure)
         case Right(_) =>
           ZIO.unit.as(ExitCode.success)
       }

@@ -17,17 +17,22 @@ class ZStreamAsyncRequestBody[R](stream: ZStream[R, AwsError, Byte])(implicit
 
   override def subscribe(s: Subscriber[_ >: ByteBuffer]): Unit =
     Unsafe.unsafe { implicit u =>
-      runtime.unsafe.run {
-        ZIO.scoped[R] {
-          s.toZIOSink[Throwable]
-            .flatMap { case (errorCallback, sink) =>
-              stream
-                .mapError(_.toThrowable)
-                .mapChunks(chunk => Chunk(ByteBuffer.wrap(chunk.toArray)))
-                .run(sink)
-                .catchAll(errorCallback)
+      runtime.unsafe
+        .run {
+          ZIO
+            .scoped[R] {
+              s.toZIOSink[Throwable]
+                .flatMap { case (errorCallback, sink) =>
+                  stream
+                    .mapError(_.toThrowable)
+                    .mapChunks(chunk => Chunk(ByteBuffer.wrap(chunk.toArray)))
+                    .run(sink)
+                    .catchAll(errorCallback)
+                }
             }
-          }.forkDaemon.unit
-      }.getOrThrowFiberFailure()
+            .forkDaemon
+            .unit
+        }
+        .getOrThrowFiberFailure()
     }
 }
