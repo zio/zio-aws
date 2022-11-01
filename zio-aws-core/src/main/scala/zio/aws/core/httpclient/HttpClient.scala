@@ -13,7 +13,7 @@ object HttpClient {
   def fromScopedPerProtocol[R, E, A <: SdkAsyncHttpClient](
       http11Client: ZIO[R with Scope, E, A],
       http2Client: ZIO[R with Scope, E, A]
-  )(protocol: Protocol): ZLayer[R, E, HttpClient] =  
+  )(protocol: Protocol): ZLayer[R, E, HttpClient] =
     ZLayer.scoped[R] {
       fromScopedPerProtocolScoped[R, E, A](http11Client, http2Client)(protocol)
     }

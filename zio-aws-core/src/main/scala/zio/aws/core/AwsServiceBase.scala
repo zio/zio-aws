@@ -37,7 +37,12 @@ trait AwsServiceBase[R] {
   )(request: Request): ZStream[R, AwsError, Item] =
     ZStream.unwrap {
       aspect(
-        ZIO.attempt(selector(impl(request)).toZIOStream().mapError(AwsError.fromThrowable(_)))
+        ZIO
+          .attempt(
+            selector(impl(request))
+              .toZIOStream()
+              .mapError(AwsError.fromThrowable(_))
+          )
           .mapError(AwsError.fromThrowable(_)) ? (serviceName / opName)
       ).unwrap
     }

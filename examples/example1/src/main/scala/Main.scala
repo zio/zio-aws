@@ -14,7 +14,9 @@ object Main extends ZIOAppDefault {
   val program: ZIO[Ec2 & ElasticBeanstalk, AwsError, Unit] =
     for {
       appsResult <- ElasticBeanstalk.describeApplications(
-        DescribeApplicationsRequest(applicationNames = List(ApplicationName("my-service")))
+        DescribeApplicationsRequest(applicationNames =
+          List(ApplicationName("my-service"))
+        )
       )
       app <- appsResult.getApplications.map(_.headOption)
       _ <- app match {
@@ -43,7 +45,9 @@ object Main extends ZIOAppDefault {
 
                   resourcesResult <-
                     ElasticBeanstalk.describeEnvironmentResources(
-                      DescribeEnvironmentResourcesRequest(environmentId = environmentId)
+                      DescribeEnvironmentResourcesRequest(environmentId =
+                        environmentId
+                      )
                     )
                   resources <- resourcesResult.getEnvironmentResources
                   _ <- Console
@@ -60,7 +64,12 @@ object Main extends ZIOAppDefault {
                     .ignore
 
                   reservationsStream = Ec2.describeInstances(
-                    DescribeInstancesRequest(instanceIds = instanceIds.map(id => zio.aws.ec2.model.primitives.InstanceId(ResourceId.unwrap(id))))
+                    DescribeInstancesRequest(instanceIds =
+                      instanceIds.map(id =>
+                        zio.aws.ec2.model.primitives
+                          .InstanceId(ResourceId.unwrap(id))
+                      )
+                    )
                   )
                   _ <- reservationsStream.run(ZSink.foreach { reservation =>
                     reservation.getInstances
@@ -106,7 +115,10 @@ object Main extends ZIOAppDefault {
       .either
       .flatMap {
         case Left(error) =>
-          Console.printLineError(s"AWS error: $error").ignore.as(ExitCode.failure)
+          Console
+            .printLineError(s"AWS error: $error")
+            .ignore
+            .as(ExitCode.failure)
         case Right(_) =>
           ZIO.unit.as(ExitCode.success)
       }
