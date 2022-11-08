@@ -37,7 +37,7 @@ trait GithubActionsGenerator {
 
     val scala212 = ScalaVersion("2.12.16")
     val scala213 = ScalaVersion("2.13.8")
-    val scala3 = ScalaVersion("3.2.0")
+    val scala3 = ScalaVersion("3.2.1")
     val scalaVersions = Seq(
       scala212,
       scala213,
