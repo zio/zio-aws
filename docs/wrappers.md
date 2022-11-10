@@ -1,5 +1,5 @@
 ---
-id: overview_wrappers
+id: wrappers
 title: Wrappers
 ---
 

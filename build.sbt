@@ -8,7 +8,7 @@ enablePlugins(Common, ZioAwsCodegenPlugin, GitVersioning)
 ThisBuild / ciParallelJobs := 5
 ThisBuild / ciSeparateJobs := Seq("zio-aws-ec2")
 ThisBuild / ciTarget := file(".github/workflows/ci.yml")
-ThisBuild / artifactListTarget := file("docs/overview/artifacts.md")
+ThisBuild / artifactListTarget := file("docs/artifacts.md")
 
 Global / pgpPublicRing := file("/tmp/public.asc")
 Global / pgpSecretRing := file("/tmp/secret.asc")
@@ -16,7 +16,7 @@ Global / pgpPassphrase := sys.env.get("PGP_PASSPHRASE").map(_.toCharArray())
 
 lazy val root = Project("zio-aws", file(".")).settings(
   publishArtifact := false
-) aggregate (core, http4s, netty, akkahttp)
+) aggregate (core, http4s, netty, akkahttp, docs)
 
 lazy val core = Project("zio-aws-core", file("zio-aws-core"))
   .settings(
@@ -145,21 +145,7 @@ lazy val docs = project
     publish / skip := true,
     moduleName := "zio-aws-docs",
     scalacOptions -= "-Yno-imports",
-    scalacOptions -= "-Xfatal-warnings",
-    ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(
-      core,
-      http4s,
-      netty,
-      akkahttp
-    ),
-    ScalaUnidoc / unidoc / target := (LocalRootProject / baseDirectory).value / "website" / "static" / "api",
-    cleanFiles += (ScalaUnidoc / unidoc / target).value,
-    docusaurusCreateSite := docusaurusCreateSite
-      .dependsOn(Compile / unidoc)
-      .value,
-    docusaurusPublishGhpages := docusaurusPublishGhpages
-      .dependsOn(Compile / unidoc)
-      .value
+    scalacOptions -= "-Xfatal-warnings"
   )
   .dependsOn(
     core,
@@ -169,4 +155,4 @@ lazy val docs = project
     LocalProject("zio-aws-elasticbeanstalk"),
     LocalProject("zio-aws-ec2")
   )
-  .enablePlugins(MdocPlugin, DocusaurusPlugin, ScalaUnidocPlugin)
+  .enablePlugins(WebsitePlugin)
