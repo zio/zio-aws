@@ -6,6 +6,7 @@ addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.3.6")
 addSbtPlugin("com.typesafe.sbt" % "sbt-ghpages" % "0.6.3")
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.4.6")
 addSbtPlugin("com.github.sbt" % "sbt-unidoc" % "0.5.0")
+addSbtPlugin("dev.zio" % "zio-sbt-website" % "0.0.0+80-e5b408eb-SNAPSHOT")
 
 libraryDependencies += "xalan" % "xalan" % "2.7.2"
 
@@ -13,3 +14,5 @@ libraryDependencies += "xalan" % "xalan" % "2.7.2"
 lazy val codegen = project
   .in(file("."))
   .dependsOn(ProjectRef(file("../zio-aws-codegen"), "zio-aws-codegen"))
+
+resolvers += Resolver.sonatypeRepo("public")
