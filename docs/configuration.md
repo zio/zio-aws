@@ -1,5 +1,5 @@
 ---
-id: overview_config
+id: configuration
 title: Configuration
 ---
 

@@ -1,6 +1,6 @@
 ---
-id: overview_changelog
-title: Version history
+id: changelog
+title: Changelog
 ---
 
 # Version history

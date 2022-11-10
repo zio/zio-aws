@@ -1,5 +1,5 @@
 ---
-id: overview_migration_guide
+id: migration-guide
 title: Migration guide
 ---
 

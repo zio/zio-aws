@@ -1,6 +1,6 @@
 ---
-id: about_index
-title:  "About ZIO AWS"
+id: index
+title: "Overview"
 ---
 
 Low-level AWS wrapper for [ZIO](https://zio.dev) for _all_ AWS services using the AWS Java SDK v2.

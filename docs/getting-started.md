@@ -1,5 +1,5 @@
 ---
-id: overview_index
+id: getting-started
 title: "Summary"
 ---
 
