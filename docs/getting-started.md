@@ -7,8 +7,7 @@ title: "Summary"
 
 Low-level AWS wrapper for [ZIO](https://zio.dev) for _all_ AWS services using the AWS Java SDK v2.
 
-The library's goal is to have access to all AWS functionality for cases when only a simple, direct access is
-needed from a ZIO application, and to be used as a building block for higher level wrappers around specific services.
+The library's goal is to have access to all AWS functionality for cases when only a simple, direct access is needed from a ZIO application, and to be used as a building block for higher level wrappers around specific services.
 
 Check the [list of available artifacts](artifacts.md) to get started. 
 
