@@ -5,6 +5,7 @@ import java.util.concurrent.CompletableFuture
 import zio.aws.core.aspects._
 import org.reactivestreams.Publisher
 import software.amazon.awssdk.awscore.eventstream.EventStreamResponseHandler
+import software.amazon.awssdk.core.SdkRequest
 import software.amazon.awssdk.core.async.{
   AsyncRequestBody,
   AsyncResponseTransformer
@@ -178,7 +179,7 @@ trait AwsServiceBase[R] {
     } yield streamingOutputResult
   }
 
-  final protected def asyncRequestInputStream[Request, Response](
+  final protected def asyncRequestInputStream[Request <: SdkRequest, Response](
       opName: String,
       impl: (Request, AsyncRequestBody) => CompletableFuture[Response]
   )(
@@ -189,13 +190,19 @@ trait AwsServiceBase[R] {
       aspect(
         ZIO
           .fromCompletionStage(
-            impl(request, new ZStreamAsyncRequestBody[R](body))
+            impl(
+              request,
+              new ZStreamAsyncRequestBody[R](
+                body,
+                request.getValueForField[java.lang.Long]("ContentLength", classOf[java.lang.Long])
+              )
+            )
           )
           .mapError(AwsError.fromThrowable) ? (serviceName / opName)
       ).unwrap
     }
 
-  final protected def asyncRequestInputOutputStream[Request, Response](
+  final protected def asyncRequestInputOutputStream[Request <: SdkRequest, Response](
       opName: String,
       impl: (
           Request,
@@ -214,7 +221,14 @@ trait AwsServiceBase[R] {
         streamingOutputResultTask <- aspect(
           ZIO
             .fromCompletionStage(
-              impl(request, new ZStreamAsyncRequestBody(body), transformer)
+              impl(
+                request,
+                new ZStreamAsyncRequestBody[R](
+                  body,
+                  request.getValueForField[java.lang.Long]("ContentLength", classOf[java.lang.Long])
+                ),
+                transformer
+              )
             )
             .mapError(AwsError.fromThrowable(_)) ? (serviceName / opName)
         ).unwrap
