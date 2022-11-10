@@ -10,10 +10,10 @@ import zio._
 import zio.stream.ZStream
 import zio.interop.reactivestreams._
 
-class ZStreamAsyncRequestBody[R](stream: ZStream[R, AwsError, Byte])(implicit
+class ZStreamAsyncRequestBody[R](stream: ZStream[R, AwsError, Byte], contentLength: Optional[lang.Long])(implicit
     runtime: Runtime[R]
 ) extends AsyncRequestBody {
-  override def contentLength(): Optional[lang.Long] = Optional.empty()
+  override def contentLength(): Optional[lang.Long] = contentLength
 
   override def subscribe(s: Subscriber[_ >: ByteBuffer]): Unit =
     Unsafe.unsafe { implicit u =>
