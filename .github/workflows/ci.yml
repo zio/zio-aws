@@ -118,8 +118,9 @@ jobs:
       localstack:
         image: localstack/localstack:latest
         env:
+          EAGER_SERVICE_LOADING: '1'
           DEFAULT_REGION: us-east-1
-          DEBUG: '0'
+          DEBUG: '1'
           SERVICES: s3,dynamodb
           AWS_ACCESS_KEY_ID: dummy-key
           AWS_SECRET_ACCESS_KEY: dummy-key
