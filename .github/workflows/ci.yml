@@ -1021,7 +1021,7 @@ jobs:
         SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
         SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
   microsite:
-    name: Build and publish microsite
+    name: Publishing Docs to The NPM Registry
     runs-on: ubuntu-latest
     needs:
     - release
@@ -1035,6 +1035,11 @@ jobs:
       uses: olafurpg/setup-scala@v11
       with:
         java-version: zulu@1.17
+    - name: Setup NodeJS
+      uses: actions/setup-node@v3
+      with:
+        node-version: 16.x
+        registry-url: https://registry.npmjs.org
     - name: Cache SBT
       uses: actions/cache@v2
       with:
@@ -1045,11 +1050,8 @@ jobs:
           ~/.cache/coursier/v1
         key: ubuntu-latest-sbt-2.13.8-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties')
           }}
-    - uses: actions/setup-node@v3
-      with:
-        node-version: '16.x'
-        registry-url: 'https://registry.npmjs.org'
-    - name: Publishing Docs to NPM Registry
-      run: sbt -J-XX:+UseG1GC -J-Xmx4g -J-Xms4g -J-Xss16m ++2.13.8 generateArtifactList publishToNpm
+    - name: Publishing Docs to The NPM Registry
+      run: sbt -J-XX:+UseG1GC -J-Xmx4g -J-Xms4g -J-Xss16m ++2.13.8 generateArtifactList
+        publishHashverToNpm
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
