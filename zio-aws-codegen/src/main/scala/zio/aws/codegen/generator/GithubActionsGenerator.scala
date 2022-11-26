@@ -269,26 +269,27 @@ trait GithubActionsGenerator {
         .addJob(
           Job(
             "microsite",
-            "Build and publish microsite",
+            "Publishing Docs to The NPM Registry",
             need = Seq("release"),
             condition = Some(isMaster)
           ).withSteps(
             checkoutCurrentBranch(),
             setupScala(Some(JavaVersion.ZuluJDK17)),
+            setupNode(),
             cacheSBT(
               os = Some(OS.UbuntuLatest),
               scalaVersion = Some(scala213)
             ),
             runSBT(
-              "Build and publish microsite",
+              "Publishing Docs to The NPM Registry",
               parameters = List(
                 "++2.13.8",
                 "generateArtifactList",
-                "docs/docusaurusPublishGhpages"
+                "publishHashverToNpm"
               ),
               heapGb = 4,
               env = Map(
-                "GIT_DEPLOY_KEY" -> "${{ secrets.GIT_DEPLOY_KEY }}"
+                "NODE_AUTH_TOKEN" -> "${{ secrets.NPM_TOKEN }}"
               )
             )
           )
