@@ -149,7 +149,7 @@ lazy val docs = project
     projectName := "ZIO Actors",
     badgeInfo := Some(
       BadgeInfo(
-        artifact = "zio-actors_2.12",
+        artifact = "zio-aws-core_2.13",
         projectStage = ProjectStage.ProductionReady
       )
     ),
