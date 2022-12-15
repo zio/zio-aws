@@ -266,34 +266,6 @@ trait GithubActionsGenerator {
             )
           )
         )
-        .addJob(
-          Job(
-            "microsite",
-            "Publishing Docs to The NPM Registry",
-            need = Seq("release"),
-            condition = Some(isMaster)
-          ).withSteps(
-            checkoutCurrentBranch(),
-            setupScala(Some(JavaVersion.ZuluJDK17)),
-            setupNode(),
-            cacheSBT(
-              os = Some(OS.UbuntuLatest),
-              scalaVersion = Some(scala213)
-            ),
-            runSBT(
-              "Publishing Docs to The NPM Registry",
-              parameters = List(
-                "++2.13.8",
-                "generateArtifactList",
-                "publishHashverToNpm"
-              ),
-              heapGb = 4,
-              env = Map(
-                "NODE_AUTH_TOKEN" -> "${{ secrets.NPM_TOKEN }}"
-              )
-            )
-          )
-        )
 
     yaml
       .Printer(
