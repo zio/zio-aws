@@ -153,7 +153,16 @@ lazy val docs = project
         projectStage = ProjectStage.ProductionReady
       )
     ),
-    docsPublishBranch := "master"
+    docsPublishBranch := "master",
+    sbtBuildOptions := List(
+      "-J-XX:+UseG1GC",
+      "-J-Xmx4g",
+      "-J-Xms4g",
+      "-J-Xss16m",
+      "++2.13.8",
+      "generateArtifactList"
+    ),
+    docsVersioning := DocsVersioning.HashVersioning
   )
   .dependsOn(
     core,
