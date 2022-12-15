@@ -145,7 +145,15 @@ lazy val docs = project
     publish / skip := true,
     moduleName := "zio-aws-docs",
     scalacOptions -= "-Yno-imports",
-    scalacOptions -= "-Xfatal-warnings"
+    scalacOptions -= "-Xfatal-warnings",
+    projectName := "ZIO Actors",
+    badgeInfo := Some(
+      BadgeInfo(
+        artifact = "zio-actors_2.12",
+        projectStage = ProjectStage.ProductionReady
+      )
+    ),
+    docsPublishBranch := "master"
   )
   .dependsOn(
     core,
@@ -153,6 +161,7 @@ lazy val docs = project
     netty,
     akkahttp,
     LocalProject("zio-aws-elasticbeanstalk"),
-    LocalProject("zio-aws-ec2")
+    LocalProject("zio-aws-ec2"),
+    LocalProject("zio-aws-netty")
   )
   .enablePlugins(WebsitePlugin)
