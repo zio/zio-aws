@@ -146,7 +146,7 @@ lazy val docs = project
     moduleName := "zio-aws-docs",
     scalacOptions -= "-Yno-imports",
     scalacOptions -= "-Xfatal-warnings",
-    projectName := "ZIO Actors",
+    projectName := "ZIO AWS",
     badgeInfo := Some(
       BadgeInfo(
         artifact = "zio-aws-core_2.13",
