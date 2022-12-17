@@ -10,6 +10,7 @@ jobs:
   tag:
     name: Tag build
     runs-on: ubuntu-latest
+    if: ${{ github.actor != 'github-actions[bot]' }}
     steps:
     - name: Checkout current branch
       uses: actions/checkout@v2
@@ -54,6 +55,7 @@ jobs:
         - adopt@1.8
     needs:
     - tag
+    if: ${{ github.actor != 'github-actions[bot]' }}
     steps:
     - name: Checkout current branch
       uses: actions/checkout@v2
@@ -129,6 +131,7 @@ jobs:
           USE_SSL: 'false'
         ports:
         - 4566:4566
+    if: ${{ github.actor != 'github-actions[bot]' }}
     steps:
     - name: Checkout current branch
       uses: actions/checkout@v2
@@ -185,6 +188,7 @@ jobs:
     needs:
     - build-core
     - integration-test
+    if: ${{ github.actor != 'github-actions[bot]' }}
     steps:
     - name: Checkout current branch
       uses: actions/checkout@v2
@@ -300,6 +304,7 @@ jobs:
     needs:
     - build-core
     - integration-test
+    if: ${{ github.actor != 'github-actions[bot]' }}
     steps:
     - name: Checkout current branch
       uses: actions/checkout@v2
@@ -414,6 +419,7 @@ jobs:
     needs:
     - build-core
     - integration-test
+    if: ${{ github.actor != 'github-actions[bot]' }}
     steps:
     - name: Checkout current branch
       uses: actions/checkout@v2
@@ -529,6 +535,7 @@ jobs:
     needs:
     - build-core
     - integration-test
+    if: ${{ github.actor != 'github-actions[bot]' }}
     steps:
     - name: Checkout current branch
       uses: actions/checkout@v2
@@ -643,6 +650,7 @@ jobs:
     needs:
     - build-core
     - integration-test
+    if: ${{ github.actor != 'github-actions[bot]' }}
     steps:
     - name: Checkout current branch
       uses: actions/checkout@v2
@@ -753,6 +761,7 @@ jobs:
     needs:
     - build-core
     - integration-test
+    if: ${{ github.actor != 'github-actions[bot]' }}
     steps:
     - name: Checkout current branch
       uses: actions/checkout@v2
@@ -819,7 +828,8 @@ jobs:
     - build-clients-3
     - build-clients-4
     - build-clients-5
-    if: ${{ github.ref == 'refs/heads/master' }}
+    if: ${{ (github.ref == 'refs/heads/master') && (github.actor != 'github-actions[bot]')
+      }}
     steps:
     - name: Checkout current branch
       uses: actions/checkout@v2
