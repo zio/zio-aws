@@ -188,6 +188,9 @@ object ScalaWorkflow {
   val isNotMaster: Condition = Condition.Expression(
     "github.ref != 'refs/heads/master'"
   )
+  val isNotFromGithubActionBot: Condition = Condition.Expression(
+    "github.actor != 'github-actions[bot]'"
+  )
   def isScalaVersion(version: ScalaVersion): Condition = Condition.Expression(
     s"matrix.scala == '${version.version}'"
   )

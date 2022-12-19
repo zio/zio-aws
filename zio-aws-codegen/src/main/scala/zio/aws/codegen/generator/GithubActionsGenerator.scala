@@ -57,7 +57,8 @@ trait GithubActionsGenerator {
         .addJob(
           Job(
             "tag",
-            "Tag build"
+            "Tag build",
+            condition = Some(isNotFromGithubActionBot)
           ).withSteps(
             checkoutCurrentBranch(),
             setupScala(Some(ZuluJDK17)),
@@ -77,7 +78,8 @@ trait GithubActionsGenerator {
           Job(
             "build-core",
             "Build and test core",
-            need = Seq("tag")
+            need = Seq("tag"),
+            condition = Some(isNotFromGithubActionBot)
           ).matrix(scalaVersions)
             .withSteps(
               checkoutCurrentBranch(),
@@ -127,7 +129,8 @@ trait GithubActionsGenerator {
           Job(
             "integration-test",
             "Integration test",
-            need = Seq("build-core")
+            need = Seq("build-core"),
+            condition = Some(isNotFromGithubActionBot)
           ).matrix(scalaVersions)
             .withServices(
               Service(
@@ -187,7 +190,8 @@ trait GithubActionsGenerator {
             Job(
               s"build-clients-$idx",
               s"Build client libraries #$idx",
-              need = Seq("build-core", "integration-test")
+              need = Seq("build-core", "integration-test"),
+              condition = Some(isNotFromGithubActionBot)
             ).matrix(scalaVersions)
               .withSteps(
                 checkoutCurrentBranch(),
@@ -223,7 +227,7 @@ trait GithubActionsGenerator {
             "Release",
             need = Seq("build-core", "integration-test") ++
               grouped.indices.map(idx => s"build-clients-$idx"),
-            condition = Some(isMaster)
+            condition = Some(isMaster && isNotFromGithubActionBot)
           ).withSteps(
             checkoutCurrentBranch(),
             setupScala(Some(JavaVersion.ZuluJDK17)),
