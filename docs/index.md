@@ -29,11 +29,15 @@ There are tones of artifacts [published](artifacts.md) for each AWS service. We 
 
 The following example uses the _ElasticBeanstalk_ and _EC2_ APIs:
 
+> **Note**
+> 
+> See the [artifacts](artifacts.md) page for the latest release.
+
 ```scala
-libraryDependencies += "dev.zio" %% "zio-aws-core"             % "@VERSION@"
-libraryDependencies += "dev.zio" %% "zio-aws-ec2"              % "@VERSION@"
-libraryDependencies += "dev.zio" %% "zio-aws-elasticbeanstalk" % "@VERSION@"
-libraryDependencies += "dev.zio" %% "zio-aws-netty"            % "@VERSION@"
+libraryDependencies += "dev.zio" %% "zio-aws-core"             % "<version>"
+libraryDependencies += "dev.zio" %% "zio-aws-ec2"              % "<version>"
+libraryDependencies += "dev.zio" %% "zio-aws-elasticbeanstalk" % "<version>"
+libraryDependencies += "dev.zio" %% "zio-aws-netty"            % "<version>"
 ```
 
 And here is the example code:
