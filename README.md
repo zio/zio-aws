@@ -2,15 +2,13 @@
 [//]: # (So please do not edit it manually. Instead, change "docs/index.md" file or sbt setting keys)
 [//]: # (e.g. "readmeDocumentation" and "readmeSupport".)
 
-
 # ZIO AWS
 
 [ZIO AWS](https://zio.dev/zio-aws) is AWS wrapper for [ZIO](https://zio.dev) for _all_ AWS services using the AWS Java SDK v2.
 
-Project Stage | CI | Release | Snapshot | Discord | Github |
---------------|----|---------|----------|---------|--------|
-[![Production Ready](https://img.shields.io/badge/Project%20Stage-Production%20Ready-brightgreen.svg)](https://github.com/zio/zio/wiki/Project-Stages)        |![CI Badge](https://github.com/zio/zio-aws/workflows/CI/badge.svg) |[![Sonatype Releases](https://img.shields.io/nexus/r/https/oss.sonatype.org/dev.zio/zio-aws-core_2.13.svg)](https://oss.sonatype.org/content/repositories/releases/dev/zio/zio-aws-core_2.13/) |[![Sonatype Snapshots](https://img.shields.io/nexus/s/https/oss.sonatype.org/dev.zio/zio-aws-core_2.13.svg)](https://oss.sonatype.org/content/repositories/snapshots/dev/zio/zio-aws-core_2.13/) |[![Chat on Discord!](https://img.shields.io/discord/629491597070827530?logo=discord)](https://discord.gg/2ccFBr4) |[![ZIO AWS](https://img.shields.io/github/stars/zio/zio-aws?style=social)](https://github.com/zio/zio-aws) |
-
+|Project Stage | CI | Release | Snapshot | Discord | Github |
+|--------------|----|---------|----------|---------|--------|
+|[![Production Ready](https://img.shields.io/badge/Project%20Stage-Production%20Ready-brightgreen.svg)](https://github.com/zio/zio/wiki/Project-Stages)        |![CI Badge](https://github.com/zio/zio-aws/workflows/CI/badge.svg) |[![Sonatype Releases](https://img.shields.io/nexus/r/https/oss.sonatype.org/dev.zio/zio-aws-core_2.13.svg)](https://oss.sonatype.org/content/repositories/releases/dev/zio/zio-aws-core_2.13/) |[![Sonatype Snapshots](https://img.shields.io/nexus/s/https/oss.sonatype.org/dev.zio/zio-aws-core_2.13.svg)](https://oss.sonatype.org/content/repositories/snapshots/dev/zio/zio-aws-core_2.13/) |[![Chat on Discord!](https://img.shields.io/discord/629491597070827530?logo=discord)](https://discord.gg/2ccFBr4) |[![ZIO AWS](https://img.shields.io/github/stars/zio/zio-aws?style=social)](https://github.com/zio/zio-aws) |
 
 ## Introduction
 
