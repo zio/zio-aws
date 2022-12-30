@@ -19,3 +19,7 @@ lazy val codegen = project
   .dependsOn(ProjectRef(file("../zio-aws-codegen"), "zio-aws-codegen"))
 
 resolvers += Resolver.sonatypeRepo("public")
+
+ThisBuild / libraryDependencySchemes ++= Seq(
+  "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
+)

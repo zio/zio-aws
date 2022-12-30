@@ -16,21 +16,21 @@ object Common extends AutoPlugin {
     val zioCatsInteropVersion = "23.0.0.0"
     val zioReactiveStreamsInteropVersion = "2.0.0"
     val zioConfigVersion = "3.0.6"
-    val zioPreludeVersion = "1.0.0-RC15"
+    val zioPreludeVersion = "1.0.0-RC16"
     val catsEffectVersion = "3.4.3"
 
     val awsVersion = "2.19.7"
     val awsSubVersion = awsVersion.drop(awsVersion.indexOf('.') + 1)
     val http4sVersion = "0.23.16"
     val blazeVersion = "0.23.13"
-    val fs2Version = "3.2.12"
+    val fs2Version = "3.2.14"
 
     val majorVersion = "5"
     val zioAwsVersionPrefix = s"$majorVersion.$awsSubVersion."
 
-    val scala212Version = "2.12.16"
-    val scala213Version = "2.13.8"
-    val scala3Version = "3.2.0"
+    val scala212Version = "2.12.17"
+    val scala213Version = "2.13.10"
+    val scala3Version = "3.2.1"
 
     val scalacOptions212 = Seq("-Ypartial-unification", "-deprecation")
     val scalacOptions213 = Seq("-deprecation")
