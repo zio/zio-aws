@@ -28,6 +28,19 @@ object ScalaWorkflow {
       )
     )
 
+  def setupNode(javaVersion: Option[JavaVersion] = None): Step =
+    SingleStep(
+      name = "Setup NodeJS",
+      uses = Some(ActionRef("actions/setup-node@v3")),
+      parameters = Map(
+        "node-version" := (javaVersion match {
+          case None          => "16.x"
+          case Some(version) => version.asString
+        }),
+        "registry-url" := "https://registry.npmjs.org"
+      )
+    )
+
   def setupGPG(): Step =
     SingleStep(
       "Setup GPG",
@@ -174,6 +187,9 @@ object ScalaWorkflow {
   )
   val isNotMaster: Condition = Condition.Expression(
     "github.ref != 'refs/heads/master'"
+  )
+  val isNotFromGithubActionBot: Condition = Condition.Expression(
+    "github.actor != 'github-actions[bot]'"
   )
   def isScalaVersion(version: ScalaVersion): Condition = Condition.Expression(
     s"matrix.scala == '${version.version}'"

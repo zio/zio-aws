@@ -7,25 +7,27 @@ trait ArtifactListGenerator {
 
   def generateArtifactList(ids: Set[ModuleId], version: String): String = {
     val prefix = s"""---
-                    |id: overview_artifacts
+                    |id: artifacts
                     |title: Artifacts
                     |---
                     |
                     |# Published artifacts
                     |
-                    |### Core module
+                    |## Core module
+                    |
                     |```scala
                     |"dev.zio" %% "zio-aws-core" % "$version"
                     |```
                     |
-                    |### HTTP client modules:
+                    |## HTTP client modules:
+                    |
                     |```scala
                     |"dev.zio" %% "zio-aws-akka-http" % "$version"
                     |"dev.zio" %% "zio-aws-http4s" % "$version"
                     |"dev.zio" %% "zio-aws-netty" % "$version"
                     |```
                     |
-                    |### List of all the generated libraries:
+                    |## List of all the generated libraries:
                     |
                     |```scala
                     |""".stripMargin

@@ -10,6 +10,7 @@ jobs:
   tag:
     name: Tag build
     runs-on: ubuntu-latest
+    if: ${{ github.actor != 'github-actions[bot]' }}
     steps:
     - name: Checkout current branch
       uses: actions/checkout@v2
@@ -54,6 +55,7 @@ jobs:
         - adopt@1.8
     needs:
     - tag
+    if: ${{ github.actor != 'github-actions[bot]' }}
     steps:
     - name: Checkout current branch
       uses: actions/checkout@v2
@@ -118,8 +120,9 @@ jobs:
       localstack:
         image: localstack/localstack:latest
         env:
+          EAGER_SERVICE_LOADING: '1'
           DEFAULT_REGION: us-east-1
-          DEBUG: '0'
+          DEBUG: '1'
           SERVICES: s3,dynamodb
           AWS_ACCESS_KEY_ID: dummy-key
           AWS_SECRET_ACCESS_KEY: dummy-key
@@ -128,6 +131,7 @@ jobs:
           USE_SSL: 'false'
         ports:
         - 4566:4566
+    if: ${{ github.actor != 'github-actions[bot]' }}
     steps:
     - name: Checkout current branch
       uses: actions/checkout@v2
@@ -184,6 +188,7 @@ jobs:
     needs:
     - build-core
     - integration-test
+    if: ${{ github.actor != 'github-actions[bot]' }}
     steps:
     - name: Checkout current branch
       uses: actions/checkout@v2
@@ -242,7 +247,7 @@ jobs:
         zio-aws-codeartifact/compile zio-aws-codebuild/compile zio-aws-codecommit/compile
         zio-aws-codedeploy/compile zio-aws-codeguruprofiler/compile zio-aws-codegurureviewer/compile
         zio-aws-codepipeline/compile zio-aws-codestar/compile zio-aws-codestarconnections/compile
-        zio-aws-codestarnotifications/compile
+        zio-aws-codestarnotifications/compile zio-aws-cognitoidentity/compile
     - name: Build and publish libraries
       if: ${{ github.ref == 'refs/heads/master' }}
       run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-accessanalyzer/publishSigned
@@ -269,6 +274,7 @@ jobs:
         zio-aws-codecommit/publishSigned zio-aws-codedeploy/publishSigned zio-aws-codeguruprofiler/publishSigned
         zio-aws-codegurureviewer/publishSigned zio-aws-codepipeline/publishSigned
         zio-aws-codestar/publishSigned zio-aws-codestarconnections/publishSigned zio-aws-codestarnotifications/publishSigned
+        zio-aws-cognitoidentity/publishSigned
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
@@ -298,6 +304,7 @@ jobs:
     needs:
     - build-core
     - integration-test
+    if: ${{ github.actor != 'github-actions[bot]' }}
     steps:
     - name: Checkout current branch
       uses: actions/checkout@v2
@@ -335,10 +342,10 @@ jobs:
         rm targets.tar
     - name: Build libraries
       if: ${{ github.ref != 'refs/heads/master' }}
-      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-cognitoidentity/compile
-        zio-aws-cognitoidentityprovider/compile zio-aws-cognitosync/compile zio-aws-comprehend/compile
-        zio-aws-comprehendmedical/compile zio-aws-computeoptimizer/compile zio-aws-config/compile
-        zio-aws-connect/compile zio-aws-connectcampaigns/compile zio-aws-connectcontactlens/compile
+      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-cognitoidentityprovider/compile
+        zio-aws-cognitosync/compile zio-aws-comprehend/compile zio-aws-comprehendmedical/compile
+        zio-aws-computeoptimizer/compile zio-aws-config/compile zio-aws-connect/compile
+        zio-aws-connectcampaigns/compile zio-aws-connectcases/compile zio-aws-connectcontactlens/compile
         zio-aws-connectparticipant/compile zio-aws-controltower/compile zio-aws-costandusagereport/compile
         zio-aws-costexplorer/compile zio-aws-customerprofiles/compile zio-aws-databasemigration/compile
         zio-aws-databrew/compile zio-aws-dataexchange/compile zio-aws-datapipeline/compile
@@ -355,13 +362,13 @@ jobs:
         zio-aws-firehose/compile zio-aws-fis/compile zio-aws-fms/compile zio-aws-forecast/compile
         zio-aws-forecastquery/compile zio-aws-frauddetector/compile zio-aws-fsx/compile
         zio-aws-gamelift/compile zio-aws-gamesparks/compile zio-aws-glacier/compile
-        zio-aws-globalaccelerator/compile
+        zio-aws-globalaccelerator/compile zio-aws-glue/compile
     - name: Build and publish libraries
       if: ${{ github.ref == 'refs/heads/master' }}
-      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-cognitoidentity/publishSigned
-        zio-aws-cognitoidentityprovider/publishSigned zio-aws-cognitosync/publishSigned
-        zio-aws-comprehend/publishSigned zio-aws-comprehendmedical/publishSigned zio-aws-computeoptimizer/publishSigned
-        zio-aws-config/publishSigned zio-aws-connect/publishSigned zio-aws-connectcampaigns/publishSigned
+      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-cognitoidentityprovider/publishSigned
+        zio-aws-cognitosync/publishSigned zio-aws-comprehend/publishSigned zio-aws-comprehendmedical/publishSigned
+        zio-aws-computeoptimizer/publishSigned zio-aws-config/publishSigned zio-aws-connect/publishSigned
+        zio-aws-connectcampaigns/publishSigned zio-aws-connectcases/publishSigned
         zio-aws-connectcontactlens/publishSigned zio-aws-connectparticipant/publishSigned
         zio-aws-controltower/publishSigned zio-aws-costandusagereport/publishSigned
         zio-aws-costexplorer/publishSigned zio-aws-customerprofiles/publishSigned
@@ -382,6 +389,7 @@ jobs:
         zio-aws-fms/publishSigned zio-aws-forecast/publishSigned zio-aws-forecastquery/publishSigned
         zio-aws-frauddetector/publishSigned zio-aws-fsx/publishSigned zio-aws-gamelift/publishSigned
         zio-aws-gamesparks/publishSigned zio-aws-glacier/publishSigned zio-aws-globalaccelerator/publishSigned
+        zio-aws-glue/publishSigned
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
@@ -411,6 +419,7 @@ jobs:
     needs:
     - build-core
     - integration-test
+    if: ${{ github.actor != 'github-actions[bot]' }}
     steps:
     - name: Checkout current branch
       uses: actions/checkout@v2
@@ -448,53 +457,55 @@ jobs:
         rm targets.tar
     - name: Build libraries
       if: ${{ github.ref != 'refs/heads/master' }}
-      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-glue/compile
-        zio-aws-grafana/compile zio-aws-greengrass/compile zio-aws-greengrassv2/compile
-        zio-aws-groundstation/compile zio-aws-guardduty/compile zio-aws-health/compile
-        zio-aws-healthlake/compile zio-aws-honeycode/compile zio-aws-iam/compile zio-aws-identitystore/compile
+      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-grafana/compile
+        zio-aws-greengrass/compile zio-aws-greengrassv2/compile zio-aws-groundstation/compile
+        zio-aws-guardduty/compile zio-aws-health/compile zio-aws-healthlake/compile
+        zio-aws-honeycode/compile zio-aws-iam/compile zio-aws-identitystore/compile
         zio-aws-imagebuilder/compile zio-aws-inspector/compile zio-aws-inspector2/compile
         zio-aws-iot/compile zio-aws-iot1clickdevices/compile zio-aws-iot1clickprojects/compile
         zio-aws-iotanalytics/compile zio-aws-iotdataplane/compile zio-aws-iotdeviceadvisor/compile
         zio-aws-iotevents/compile zio-aws-ioteventsdata/compile zio-aws-iotfleethub/compile
-        zio-aws-iotjobsdataplane/compile zio-aws-iotsecuretunneling/compile zio-aws-iotsitewise/compile
-        zio-aws-iotthingsgraph/compile zio-aws-iottwinmaker/compile zio-aws-iotwireless/compile
-        zio-aws-ivs/compile zio-aws-ivschat/compile zio-aws-kafka/compile zio-aws-kafkaconnect/compile
-        zio-aws-kendra/compile zio-aws-keyspaces/compile zio-aws-kinesis/compile zio-aws-kinesisanalytics/compile
-        zio-aws-kinesisanalyticsv2/compile zio-aws-kinesisvideo/compile zio-aws-kinesisvideoarchivedmedia/compile
-        zio-aws-kinesisvideomedia/compile zio-aws-kinesisvideosignaling/compile zio-aws-kms/compile
-        zio-aws-lakeformation/compile zio-aws-lambda/compile zio-aws-lexmodelbuilding/compile
-        zio-aws-lexmodelsv2/compile zio-aws-lexruntime/compile zio-aws-lexruntimev2/compile
-        zio-aws-licensemanager/compile zio-aws-licensemanagerusersubscriptions/compile
-        zio-aws-lightsail/compile zio-aws-location/compile zio-aws-lookoutequipment/compile
-        zio-aws-lookoutmetrics/compile zio-aws-lookoutvision/compile zio-aws-m2/compile
-        zio-aws-machinelearning/compile zio-aws-macie/compile zio-aws-macie2/compile
-        zio-aws-managedblockchain/compile zio-aws-marketplacecatalog/compile zio-aws-marketplacecommerceanalytics/compile
+        zio-aws-iotfleetwise/compile zio-aws-iotjobsdataplane/compile zio-aws-iotsecuretunneling/compile
+        zio-aws-iotsitewise/compile zio-aws-iotthingsgraph/compile zio-aws-iottwinmaker/compile
+        zio-aws-iotwireless/compile zio-aws-ivs/compile zio-aws-ivschat/compile zio-aws-kafka/compile
+        zio-aws-kafkaconnect/compile zio-aws-kendra/compile zio-aws-keyspaces/compile
+        zio-aws-kinesis/compile zio-aws-kinesisanalytics/compile zio-aws-kinesisanalyticsv2/compile
+        zio-aws-kinesisvideo/compile zio-aws-kinesisvideoarchivedmedia/compile zio-aws-kinesisvideomedia/compile
+        zio-aws-kinesisvideosignaling/compile zio-aws-kms/compile zio-aws-lakeformation/compile
+        zio-aws-lambda/compile zio-aws-lexmodelbuilding/compile zio-aws-lexmodelsv2/compile
+        zio-aws-lexruntime/compile zio-aws-lexruntimev2/compile zio-aws-licensemanager/compile
+        zio-aws-licensemanagerusersubscriptions/compile zio-aws-lightsail/compile
+        zio-aws-location/compile zio-aws-lookoutequipment/compile zio-aws-lookoutmetrics/compile
+        zio-aws-lookoutvision/compile zio-aws-m2/compile zio-aws-machinelearning/compile
+        zio-aws-macie/compile zio-aws-macie2/compile zio-aws-managedblockchain/compile
+        zio-aws-marketplacecatalog/compile zio-aws-marketplacecommerceanalytics/compile
+        zio-aws-marketplaceentitlement/compile
     - name: Build and publish libraries
       if: ${{ github.ref == 'refs/heads/master' }}
-      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-glue/publishSigned
-        zio-aws-grafana/publishSigned zio-aws-greengrass/publishSigned zio-aws-greengrassv2/publishSigned
-        zio-aws-groundstation/publishSigned zio-aws-guardduty/publishSigned zio-aws-health/publishSigned
-        zio-aws-healthlake/publishSigned zio-aws-honeycode/publishSigned zio-aws-iam/publishSigned
-        zio-aws-identitystore/publishSigned zio-aws-imagebuilder/publishSigned zio-aws-inspector/publishSigned
-        zio-aws-inspector2/publishSigned zio-aws-iot/publishSigned zio-aws-iot1clickdevices/publishSigned
-        zio-aws-iot1clickprojects/publishSigned zio-aws-iotanalytics/publishSigned
-        zio-aws-iotdataplane/publishSigned zio-aws-iotdeviceadvisor/publishSigned
+      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-grafana/publishSigned
+        zio-aws-greengrass/publishSigned zio-aws-greengrassv2/publishSigned zio-aws-groundstation/publishSigned
+        zio-aws-guardduty/publishSigned zio-aws-health/publishSigned zio-aws-healthlake/publishSigned
+        zio-aws-honeycode/publishSigned zio-aws-iam/publishSigned zio-aws-identitystore/publishSigned
+        zio-aws-imagebuilder/publishSigned zio-aws-inspector/publishSigned zio-aws-inspector2/publishSigned
+        zio-aws-iot/publishSigned zio-aws-iot1clickdevices/publishSigned zio-aws-iot1clickprojects/publishSigned
+        zio-aws-iotanalytics/publishSigned zio-aws-iotdataplane/publishSigned zio-aws-iotdeviceadvisor/publishSigned
         zio-aws-iotevents/publishSigned zio-aws-ioteventsdata/publishSigned zio-aws-iotfleethub/publishSigned
-        zio-aws-iotjobsdataplane/publishSigned zio-aws-iotsecuretunneling/publishSigned
-        zio-aws-iotsitewise/publishSigned zio-aws-iotthingsgraph/publishSigned zio-aws-iottwinmaker/publishSigned
-        zio-aws-iotwireless/publishSigned zio-aws-ivs/publishSigned zio-aws-ivschat/publishSigned
-        zio-aws-kafka/publishSigned zio-aws-kafkaconnect/publishSigned zio-aws-kendra/publishSigned
-        zio-aws-keyspaces/publishSigned zio-aws-kinesis/publishSigned zio-aws-kinesisanalytics/publishSigned
-        zio-aws-kinesisanalyticsv2/publishSigned zio-aws-kinesisvideo/publishSigned
-        zio-aws-kinesisvideoarchivedmedia/publishSigned zio-aws-kinesisvideomedia/publishSigned
-        zio-aws-kinesisvideosignaling/publishSigned zio-aws-kms/publishSigned zio-aws-lakeformation/publishSigned
-        zio-aws-lambda/publishSigned zio-aws-lexmodelbuilding/publishSigned zio-aws-lexmodelsv2/publishSigned
-        zio-aws-lexruntime/publishSigned zio-aws-lexruntimev2/publishSigned zio-aws-licensemanager/publishSigned
-        zio-aws-licensemanagerusersubscriptions/publishSigned zio-aws-lightsail/publishSigned
-        zio-aws-location/publishSigned zio-aws-lookoutequipment/publishSigned zio-aws-lookoutmetrics/publishSigned
-        zio-aws-lookoutvision/publishSigned zio-aws-m2/publishSigned zio-aws-machinelearning/publishSigned
-        zio-aws-macie/publishSigned zio-aws-macie2/publishSigned zio-aws-managedblockchain/publishSigned
-        zio-aws-marketplacecatalog/publishSigned zio-aws-marketplacecommerceanalytics/publishSigned
+        zio-aws-iotfleetwise/publishSigned zio-aws-iotjobsdataplane/publishSigned
+        zio-aws-iotsecuretunneling/publishSigned zio-aws-iotsitewise/publishSigned
+        zio-aws-iotthingsgraph/publishSigned zio-aws-iottwinmaker/publishSigned zio-aws-iotwireless/publishSigned
+        zio-aws-ivs/publishSigned zio-aws-ivschat/publishSigned zio-aws-kafka/publishSigned
+        zio-aws-kafkaconnect/publishSigned zio-aws-kendra/publishSigned zio-aws-keyspaces/publishSigned
+        zio-aws-kinesis/publishSigned zio-aws-kinesisanalytics/publishSigned zio-aws-kinesisanalyticsv2/publishSigned
+        zio-aws-kinesisvideo/publishSigned zio-aws-kinesisvideoarchivedmedia/publishSigned
+        zio-aws-kinesisvideomedia/publishSigned zio-aws-kinesisvideosignaling/publishSigned
+        zio-aws-kms/publishSigned zio-aws-lakeformation/publishSigned zio-aws-lambda/publishSigned
+        zio-aws-lexmodelbuilding/publishSigned zio-aws-lexmodelsv2/publishSigned zio-aws-lexruntime/publishSigned
+        zio-aws-lexruntimev2/publishSigned zio-aws-licensemanager/publishSigned zio-aws-licensemanagerusersubscriptions/publishSigned
+        zio-aws-lightsail/publishSigned zio-aws-location/publishSigned zio-aws-lookoutequipment/publishSigned
+        zio-aws-lookoutmetrics/publishSigned zio-aws-lookoutvision/publishSigned zio-aws-m2/publishSigned
+        zio-aws-machinelearning/publishSigned zio-aws-macie/publishSigned zio-aws-macie2/publishSigned
+        zio-aws-managedblockchain/publishSigned zio-aws-marketplacecatalog/publishSigned
+        zio-aws-marketplacecommerceanalytics/publishSigned zio-aws-marketplaceentitlement/publishSigned
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
@@ -524,6 +535,7 @@ jobs:
     needs:
     - build-core
     - integration-test
+    if: ${{ github.actor != 'github-actions[bot]' }}
     steps:
     - name: Checkout current branch
       uses: actions/checkout@v2
@@ -561,12 +573,12 @@ jobs:
         rm targets.tar
     - name: Build libraries
       if: ${{ github.ref != 'refs/heads/master' }}
-      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-marketplaceentitlement/compile
-        zio-aws-marketplacemetering/compile zio-aws-mediaconnect/compile zio-aws-mediaconvert/compile
-        zio-aws-medialive/compile zio-aws-mediapackage/compile zio-aws-mediapackagevod/compile
-        zio-aws-mediastore/compile zio-aws-mediastoredata/compile zio-aws-mediatailor/compile
-        zio-aws-memorydb/compile zio-aws-mgn/compile zio-aws-migrationhub/compile
-        zio-aws-migrationhubconfig/compile zio-aws-migrationhubrefactorspaces/compile
+      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-marketplacemetering/compile
+        zio-aws-mediaconnect/compile zio-aws-mediaconvert/compile zio-aws-medialive/compile
+        zio-aws-mediapackage/compile zio-aws-mediapackagevod/compile zio-aws-mediastore/compile
+        zio-aws-mediastoredata/compile zio-aws-mediatailor/compile zio-aws-memorydb/compile
+        zio-aws-mgn/compile zio-aws-migrationhub/compile zio-aws-migrationhubconfig/compile
+        zio-aws-migrationhuborchestrator/compile zio-aws-migrationhubrefactorspaces/compile
         zio-aws-migrationhubstrategy/compile zio-aws-mobile/compile zio-aws-mq/compile
         zio-aws-mturk/compile zio-aws-mwaa/compile zio-aws-neptune/compile zio-aws-networkfirewall/compile
         zio-aws-networkmanager/compile zio-aws-nimble/compile zio-aws-opensearch/compile
@@ -582,34 +594,33 @@ jobs:
         zio-aws-resiliencehub/compile zio-aws-resourcegroups/compile zio-aws-resourcegroupstaggingapi/compile
         zio-aws-robomaker/compile zio-aws-rolesanywhere/compile zio-aws-route53/compile
         zio-aws-route53domains/compile zio-aws-route53recoverycluster/compile zio-aws-route53recoverycontrolconfig/compile
-        zio-aws-route53recoveryreadiness/compile
+        zio-aws-route53recoveryreadiness/compile zio-aws-route53resolver/compile
     - name: Build and publish libraries
       if: ${{ github.ref == 'refs/heads/master' }}
-      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-marketplaceentitlement/publishSigned
-        zio-aws-marketplacemetering/publishSigned zio-aws-mediaconnect/publishSigned
-        zio-aws-mediaconvert/publishSigned zio-aws-medialive/publishSigned zio-aws-mediapackage/publishSigned
-        zio-aws-mediapackagevod/publishSigned zio-aws-mediastore/publishSigned zio-aws-mediastoredata/publishSigned
-        zio-aws-mediatailor/publishSigned zio-aws-memorydb/publishSigned zio-aws-mgn/publishSigned
-        zio-aws-migrationhub/publishSigned zio-aws-migrationhubconfig/publishSigned
-        zio-aws-migrationhubrefactorspaces/publishSigned zio-aws-migrationhubstrategy/publishSigned
-        zio-aws-mobile/publishSigned zio-aws-mq/publishSigned zio-aws-mturk/publishSigned
-        zio-aws-mwaa/publishSigned zio-aws-neptune/publishSigned zio-aws-networkfirewall/publishSigned
-        zio-aws-networkmanager/publishSigned zio-aws-nimble/publishSigned zio-aws-opensearch/publishSigned
-        zio-aws-opsworks/publishSigned zio-aws-opsworkscm/publishSigned zio-aws-organizations/publishSigned
-        zio-aws-outposts/publishSigned zio-aws-panorama/publishSigned zio-aws-personalize/publishSigned
-        zio-aws-personalizeevents/publishSigned zio-aws-personalizeruntime/publishSigned
-        zio-aws-pi/publishSigned zio-aws-pinpoint/publishSigned zio-aws-pinpointemail/publishSigned
-        zio-aws-pinpointsmsvoice/publishSigned zio-aws-pinpointsmsvoicev2/publishSigned
-        zio-aws-polly/publishSigned zio-aws-pricing/publishSigned zio-aws-privatenetworks/publishSigned
-        zio-aws-proton/publishSigned zio-aws-qldb/publishSigned zio-aws-qldbsession/publishSigned
-        zio-aws-quicksight/publishSigned zio-aws-ram/publishSigned zio-aws-rbin/publishSigned
-        zio-aws-rds/publishSigned zio-aws-rdsdata/publishSigned zio-aws-redshift/publishSigned
-        zio-aws-redshiftdata/publishSigned zio-aws-redshiftserverless/publishSigned
+      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-marketplacemetering/publishSigned
+        zio-aws-mediaconnect/publishSigned zio-aws-mediaconvert/publishSigned zio-aws-medialive/publishSigned
+        zio-aws-mediapackage/publishSigned zio-aws-mediapackagevod/publishSigned zio-aws-mediastore/publishSigned
+        zio-aws-mediastoredata/publishSigned zio-aws-mediatailor/publishSigned zio-aws-memorydb/publishSigned
+        zio-aws-mgn/publishSigned zio-aws-migrationhub/publishSigned zio-aws-migrationhubconfig/publishSigned
+        zio-aws-migrationhuborchestrator/publishSigned zio-aws-migrationhubrefactorspaces/publishSigned
+        zio-aws-migrationhubstrategy/publishSigned zio-aws-mobile/publishSigned zio-aws-mq/publishSigned
+        zio-aws-mturk/publishSigned zio-aws-mwaa/publishSigned zio-aws-neptune/publishSigned
+        zio-aws-networkfirewall/publishSigned zio-aws-networkmanager/publishSigned
+        zio-aws-nimble/publishSigned zio-aws-opensearch/publishSigned zio-aws-opsworks/publishSigned
+        zio-aws-opsworkscm/publishSigned zio-aws-organizations/publishSigned zio-aws-outposts/publishSigned
+        zio-aws-panorama/publishSigned zio-aws-personalize/publishSigned zio-aws-personalizeevents/publishSigned
+        zio-aws-personalizeruntime/publishSigned zio-aws-pi/publishSigned zio-aws-pinpoint/publishSigned
+        zio-aws-pinpointemail/publishSigned zio-aws-pinpointsmsvoice/publishSigned
+        zio-aws-pinpointsmsvoicev2/publishSigned zio-aws-polly/publishSigned zio-aws-pricing/publishSigned
+        zio-aws-privatenetworks/publishSigned zio-aws-proton/publishSigned zio-aws-qldb/publishSigned
+        zio-aws-qldbsession/publishSigned zio-aws-quicksight/publishSigned zio-aws-ram/publishSigned
+        zio-aws-rbin/publishSigned zio-aws-rds/publishSigned zio-aws-rdsdata/publishSigned
+        zio-aws-redshift/publishSigned zio-aws-redshiftdata/publishSigned zio-aws-redshiftserverless/publishSigned
         zio-aws-rekognition/publishSigned zio-aws-resiliencehub/publishSigned zio-aws-resourcegroups/publishSigned
         zio-aws-resourcegroupstaggingapi/publishSigned zio-aws-robomaker/publishSigned
         zio-aws-rolesanywhere/publishSigned zio-aws-route53/publishSigned zio-aws-route53domains/publishSigned
         zio-aws-route53recoverycluster/publishSigned zio-aws-route53recoverycontrolconfig/publishSigned
-        zio-aws-route53recoveryreadiness/publishSigned
+        zio-aws-route53recoveryreadiness/publishSigned zio-aws-route53resolver/publishSigned
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
@@ -639,6 +650,7 @@ jobs:
     needs:
     - build-core
     - integration-test
+    if: ${{ github.actor != 'github-actions[bot]' }}
     steps:
     - name: Checkout current branch
       uses: actions/checkout@v2
@@ -676,12 +688,11 @@ jobs:
         rm targets.tar
     - name: Build libraries
       if: ${{ github.ref != 'refs/heads/master' }}
-      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-route53resolver/compile
-        zio-aws-rum/compile zio-aws-s3/compile zio-aws-s3control/compile zio-aws-s3outposts/compile
-        zio-aws-sagemaker/compile zio-aws-sagemakera2iruntime/compile zio-aws-sagemakeredge/compile
-        zio-aws-sagemakerfeaturestoreruntime/compile zio-aws-sagemakerruntime/compile
-        zio-aws-savingsplans/compile zio-aws-schemas/compile zio-aws-secretsmanager/compile
-        zio-aws-securityhub/compile zio-aws-serverlessapplicationrepository/compile
+      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-rum/compile
+        zio-aws-s3/compile zio-aws-s3control/compile zio-aws-s3outposts/compile zio-aws-sagemaker/compile
+        zio-aws-sagemakera2iruntime/compile zio-aws-sagemakeredge/compile zio-aws-sagemakerfeaturestoreruntime/compile
+        zio-aws-sagemakerruntime/compile zio-aws-savingsplans/compile zio-aws-schemas/compile
+        zio-aws-secretsmanager/compile zio-aws-securityhub/compile zio-aws-serverlessapplicationrepository/compile
         zio-aws-servicecatalog/compile zio-aws-servicecatalogappregistry/compile zio-aws-servicediscovery/compile
         zio-aws-servicequotas/compile zio-aws-ses/compile zio-aws-sesv2/compile zio-aws-sfn/compile
         zio-aws-shield/compile zio-aws-signer/compile zio-aws-sms/compile zio-aws-snowball/compile
@@ -698,9 +709,9 @@ jobs:
         zio-aws-xray/compile
     - name: Build and publish libraries
       if: ${{ github.ref == 'refs/heads/master' }}
-      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-route53resolver/publishSigned
-        zio-aws-rum/publishSigned zio-aws-s3/publishSigned zio-aws-s3control/publishSigned
-        zio-aws-s3outposts/publishSigned zio-aws-sagemaker/publishSigned zio-aws-sagemakera2iruntime/publishSigned
+      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-rum/publishSigned
+        zio-aws-s3/publishSigned zio-aws-s3control/publishSigned zio-aws-s3outposts/publishSigned
+        zio-aws-sagemaker/publishSigned zio-aws-sagemakera2iruntime/publishSigned
         zio-aws-sagemakeredge/publishSigned zio-aws-sagemakerfeaturestoreruntime/publishSigned
         zio-aws-sagemakerruntime/publishSigned zio-aws-savingsplans/publishSigned
         zio-aws-schemas/publishSigned zio-aws-secretsmanager/publishSigned zio-aws-securityhub/publishSigned
@@ -750,6 +761,7 @@ jobs:
     needs:
     - build-core
     - integration-test
+    if: ${{ github.actor != 'github-actions[bot]' }}
     steps:
     - name: Checkout current branch
       uses: actions/checkout@v2
@@ -816,7 +828,8 @@ jobs:
     - build-clients-3
     - build-clients-4
     - build-clients-5
-    if: ${{ github.ref == 'refs/heads/master' }}
+    if: ${{ (github.ref == 'refs/heads/master') && (github.actor != 'github-actions[bot]')
+      }}
     steps:
     - name: Checkout current branch
       uses: actions/checkout@v2
@@ -1017,33 +1030,3 @@ jobs:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
         SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
         SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
-  microsite:
-    name: Build and publish microsite
-    runs-on: ubuntu-latest
-    needs:
-    - release
-    if: ${{ github.ref == 'refs/heads/master' }}
-    steps:
-    - name: Checkout current branch
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
-    - name: Setup Java and Scala
-      uses: olafurpg/setup-scala@v11
-      with:
-        java-version: zulu@1.17
-    - name: Cache SBT
-      uses: actions/cache@v2
-      with:
-        path: |-
-          ~/.ivy2/cache
-          ~/.sbt
-          ~/.coursier/cache/v1
-          ~/.cache/coursier/v1
-        key: ubuntu-latest-sbt-2.13.8-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties')
-          }}
-    - name: Build and publish microsite
-      run: sbt -J-XX:+UseG1GC -J-Xmx4g -J-Xms4g -J-Xss16m ++2.13.8 generateArtifactList
-        docs/docusaurusPublishGhpages
-      env:
-        GIT_DEPLOY_KEY: ${{ secrets.GIT_DEPLOY_KEY }}

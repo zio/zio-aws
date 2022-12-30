@@ -1,5 +1,5 @@
 ---
-id: overview_aspects
+id: aspects
 title: Aspects
 ---
 

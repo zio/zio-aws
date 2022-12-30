@@ -8,7 +8,7 @@ enablePlugins(Common, ZioAwsCodegenPlugin, GitVersioning)
 ThisBuild / ciParallelJobs := 5
 ThisBuild / ciSeparateJobs := Seq("zio-aws-ec2")
 ThisBuild / ciTarget := file(".github/workflows/ci.yml")
-ThisBuild / artifactListTarget := file("docs/overview/artifacts.md")
+ThisBuild / artifactListTarget := file("docs/artifacts.md")
 
 Global / pgpPublicRing := file("/tmp/public.asc")
 Global / pgpSecretRing := file("/tmp/secret.asc")
@@ -16,7 +16,7 @@ Global / pgpPassphrase := sys.env.get("PGP_PASSPHRASE").map(_.toCharArray())
 
 lazy val root = Project("zio-aws", file(".")).settings(
   publishArtifact := false
-) aggregate (core, http4s, netty, akkahttp)
+) aggregate (core, http4s, netty, akkahttp, docs)
 
 lazy val core = Project("zio-aws-core", file("zio-aws-core"))
   .settings(
@@ -27,7 +27,7 @@ lazy val core = Project("zio-aws-core", file("zio-aws-core"))
       "dev.zio" %% "zio-interop-reactivestreams" % zioReactiveStreamsInteropVersion,
       "dev.zio" %% "zio-config" % zioConfigVersion,
       "dev.zio" %% "zio-prelude" % zioPreludeVersion,
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.8.1",
+      "org.scala-lang.modules" %% "scala-collection-compat" % "2.9.0",
       "dev.zio" %% "zio-test" % zioVersion % "test",
       "dev.zio" %% "zio-test-sbt" % zioVersion % "test",
       "dev.zio" %% "zio-config-typesafe" % zioConfigVersion % "test"
@@ -146,20 +146,23 @@ lazy val docs = project
     moduleName := "zio-aws-docs",
     scalacOptions -= "-Yno-imports",
     scalacOptions -= "-Xfatal-warnings",
-    ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(
-      core,
-      http4s,
-      netty,
-      akkahttp
+    projectName := "ZIO AWS",
+    badgeInfo := Some(
+      BadgeInfo(
+        artifact = "zio-aws-core_2.13",
+        projectStage = ProjectStage.ProductionReady
+      )
     ),
-    ScalaUnidoc / unidoc / target := (LocalRootProject / baseDirectory).value / "website" / "static" / "api",
-    cleanFiles += (ScalaUnidoc / unidoc / target).value,
-    docusaurusCreateSite := docusaurusCreateSite
-      .dependsOn(Compile / unidoc)
-      .value,
-    docusaurusPublishGhpages := docusaurusPublishGhpages
-      .dependsOn(Compile / unidoc)
-      .value
+    docsPublishBranch := "master",
+    sbtBuildOptions := List(
+      "-J-XX:+UseG1GC",
+      "-J-Xmx4g",
+      "-J-Xms4g",
+      "-J-Xss16m",
+      "++2.13.8",
+      "generateArtifactList"
+    ),
+    docsVersioning := DocsVersioning.HashVersioning
   )
   .dependsOn(
     core,
@@ -167,6 +170,7 @@ lazy val docs = project
     netty,
     akkahttp,
     LocalProject("zio-aws-elasticbeanstalk"),
-    LocalProject("zio-aws-ec2")
+    LocalProject("zio-aws-ec2"),
+    LocalProject("zio-aws-netty")
   )
-  .enablePlugins(MdocPlugin, DocusaurusPlugin, ScalaUnidocPlugin)
+  .enablePlugins(WebsitePlugin)

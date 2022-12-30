@@ -57,7 +57,8 @@ trait GithubActionsGenerator {
         .addJob(
           Job(
             "tag",
-            "Tag build"
+            "Tag build",
+            condition = Some(isNotFromGithubActionBot)
           ).withSteps(
             checkoutCurrentBranch(),
             setupScala(Some(ZuluJDK17)),
@@ -77,7 +78,8 @@ trait GithubActionsGenerator {
           Job(
             "build-core",
             "Build and test core",
-            need = Seq("tag")
+            need = Seq("tag"),
+            condition = Some(isNotFromGithubActionBot)
           ).matrix(scalaVersions)
             .withSteps(
               checkoutCurrentBranch(),
@@ -127,7 +129,8 @@ trait GithubActionsGenerator {
           Job(
             "integration-test",
             "Integration test",
-            need = Seq("build-core")
+            need = Seq("build-core"),
+            condition = Some(isNotFromGithubActionBot)
           ).matrix(scalaVersions)
             .withServices(
               Service(
@@ -136,12 +139,13 @@ trait GithubActionsGenerator {
                 env = Map(
                   "LOCALSTACK_HOST" -> "localstack",
                   "SERVICES" -> "s3,dynamodb",
+                  "EAGER_SERVICE_LOADING" -> "1",
                   "USE_SSL" -> "false",
                   "DEFAULT_REGION" -> "us-east-1",
                   "AWS_DEFAULT_REGION" -> "us-east-1",
                   "AWS_ACCESS_KEY_ID" -> "dummy-key",
                   "AWS_SECRET_ACCESS_KEY" -> "dummy-key",
-                  "DEBUG" -> "0"
+                  "DEBUG" -> "1"
                 ),
                 ports = Seq(
                   ServicePort(4566, 4566)
@@ -186,7 +190,8 @@ trait GithubActionsGenerator {
             Job(
               s"build-clients-$idx",
               s"Build client libraries #$idx",
-              need = Seq("build-core", "integration-test")
+              need = Seq("build-core", "integration-test"),
+              condition = Some(isNotFromGithubActionBot)
             ).matrix(scalaVersions)
               .withSteps(
                 checkoutCurrentBranch(),
@@ -222,7 +227,7 @@ trait GithubActionsGenerator {
             "Release",
             need = Seq("build-core", "integration-test") ++
               grouped.indices.map(idx => s"build-clients-$idx"),
-            condition = Some(isMaster)
+            condition = Some(isMaster && isNotFromGithubActionBot)
           ).withSteps(
             checkoutCurrentBranch(),
             setupScala(Some(JavaVersion.ZuluJDK17)),
@@ -261,33 +266,6 @@ trait GithubActionsGenerator {
                 "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}",
                 "SONATYPE_USERNAME" -> "${{ secrets.SONATYPE_USERNAME }}",
                 "SONATYPE_PASSWORD" -> "${{ secrets.SONATYPE_PASSWORD }}"
-              )
-            )
-          )
-        )
-        .addJob(
-          Job(
-            "microsite",
-            "Build and publish microsite",
-            need = Seq("release"),
-            condition = Some(isMaster)
-          ).withSteps(
-            checkoutCurrentBranch(),
-            setupScala(Some(JavaVersion.ZuluJDK17)),
-            cacheSBT(
-              os = Some(OS.UbuntuLatest),
-              scalaVersion = Some(scala213)
-            ),
-            runSBT(
-              "Build and publish microsite",
-              parameters = List(
-                "++2.13.8",
-                "generateArtifactList",
-                "docs/docusaurusPublishGhpages"
-              ),
-              heapGb = 4,
-              env = Map(
-                "GIT_DEPLOY_KEY" -> "${{ secrets.GIT_DEPLOY_KEY }}"
               )
             )
           )

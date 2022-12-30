@@ -1,5 +1,5 @@
 ---
-id: overview_examples
+id: examples
 title: Examples
 ---
 
