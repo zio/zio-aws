@@ -17,10 +17,10 @@ object Main extends ZIOAppDefault {
   val secretKey = "TODO"
 
   val program: ZIO[Kinesis, AwsError, Unit] =
-    for {
-      streams <- Kinesis.listStreams(ListStreamsRequest())
+    for {      
       _ <- Console.printLine("Streams:").ignore
-      _ <- ZIO.foreachDiscard(streams.streamNames) { streamName =>
+      streamNames = Kinesis.listStreams(ListStreamsRequest())
+      _ <- streamNames.runForeach { streamName =>
         Console.printLine(streamName).ignore
       }
 
