@@ -1,14 +1,21 @@
 const sidebars = {
   sidebar: [
-    "index",
-    "artifacts",
-    "wrappers",
-    "configuration",
-    "http",
-    "aspects",
-    "examples",
-    "changelog",
-    "migration-guide",
+    {
+      type: "category",
+      label: "ZIO AWS",
+      collapsed: false,
+      link: { type: "doc", id: "index" },
+      items: [
+        "artifacts",
+        "wrappers",
+        "configuration",
+        "http",
+        "aspects",
+        "examples",
+        "changelog",
+        "migration-guide",
+      ]
+    }
   ]
 };
 

@@ -41,6 +41,7 @@ object S3Tests extends ZIOSpecDefault with Logging with Retries {
         .create(AwsBasicCredentials.create("dummy", "key"))
     ).region(Region.US_WEST_2)
       .endpointOverride(new URI("http://localhost:4566"))
+      .serviceConfiguration(_.pathStyleAccessEnabled(true))
   ) @@ callLogging @@ callRetries
 
   private def testBucket(

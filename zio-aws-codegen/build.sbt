@@ -1,5 +1,5 @@
-val zioVersion = "2.0.3"
-val awsVersion = "2.18.16"
+val zioVersion = "2.0.5"
+val awsVersion = "2.19.7"
 
 sbtPlugin := true
 scalaVersion := "2.12.17"
@@ -11,7 +11,6 @@ libraryDependencies ++= Seq(
   "io.circe" %% "circe-yaml" % "0.14.1",
   "software.amazon.awssdk" % "codegen" % awsVersion,
   "org.scalameta" %% "scalameta" % "4.4.31",
-  "com.lihaoyi" %% "os-lib" % "0.8.0",
   "io.github.vigoo" %% "metagen-core" % "0.0.17",
   "org.eclipse.jgit" % "org.eclipse.jgit" % "6.0.0.202111291000-r"
 )

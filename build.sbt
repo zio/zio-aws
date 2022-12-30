@@ -27,7 +27,7 @@ lazy val core = Project("zio-aws-core", file("zio-aws-core"))
       "dev.zio" %% "zio-interop-reactivestreams" % zioReactiveStreamsInteropVersion,
       "dev.zio" %% "zio-config" % zioConfigVersion,
       "dev.zio" %% "zio-prelude" % zioPreludeVersion,
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.8.1",
+      "org.scala-lang.modules" %% "scala-collection-compat" % "2.9.0",
       "dev.zio" %% "zio-test" % zioVersion % "test",
       "dev.zio" %% "zio-test-sbt" % zioVersion % "test",
       "dev.zio" %% "zio-config-typesafe" % zioConfigVersion % "test"
@@ -145,7 +145,24 @@ lazy val docs = project
     publish / skip := true,
     moduleName := "zio-aws-docs",
     scalacOptions -= "-Yno-imports",
-    scalacOptions -= "-Xfatal-warnings"
+    scalacOptions -= "-Xfatal-warnings",
+    projectName := "ZIO AWS",
+    badgeInfo := Some(
+      BadgeInfo(
+        artifact = "zio-aws-core_2.13",
+        projectStage = ProjectStage.ProductionReady
+      )
+    ),
+    docsPublishBranch := "master",
+    sbtBuildOptions := List(
+      "-J-XX:+UseG1GC",
+      "-J-Xmx4g",
+      "-J-Xms4g",
+      "-J-Xss16m",
+      "++2.13.8",
+      "generateArtifactList"
+    ),
+    docsVersioning := DocsVersioning.HashVersioning
   )
   .dependsOn(
     core,
@@ -153,6 +170,7 @@ lazy val docs = project
     netty,
     akkahttp,
     LocalProject("zio-aws-elasticbeanstalk"),
-    LocalProject("zio-aws-ec2")
+    LocalProject("zio-aws-ec2"),
+    LocalProject("zio-aws-netty")
   )
   .enablePlugins(WebsitePlugin)
