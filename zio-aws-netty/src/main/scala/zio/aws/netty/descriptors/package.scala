@@ -22,17 +22,25 @@ package object descriptors {
 
   val proxyConfiguration: ConfigDescriptor[ProxyConfiguration] =
     (
-      (nested("scheme")(httpOrHttps).default(HttpOrHttps.Http) ?? "The proxy scheme") zip
-      (string("host") ?? "Hostname of the proxy") zip
-      (int("port") ?? "Port of the proxy") zip
-      (set("nonProxyHosts")(string).default(Set.empty) ?? "Hosts that should not be proxied")
+      (nested("scheme")(httpOrHttps).default(
+        HttpOrHttps.Http
+      ) ?? "The proxy scheme") zip
+        (string("host") ?? "Hostname of the proxy") zip
+        (int("port") ?? "Port of the proxy") zip
+        (set("nonProxyHosts")(string).default(
+          Set.empty
+        ) ?? "Hosts that should not be proxied")
     ).to[ProxyConfiguration]
 
   val http2Configuration: ConfigDescriptor[Http2Config] =
     (
-      (long("maxStreams") ?? "Max number of concurrent streams per connection") zip
-      (int("initialWindowSize") ?? "Initial window size of a stream") zip
-      (zioDuration("healthCheckPingPeriod").default(5.seconds) ?? "The period that the Netty client will send PING frames to the remote endpoint")
+      (long(
+        "maxStreams"
+      ) ?? "Max number of concurrent streams per connection") zip
+        (int("initialWindowSize") ?? "Initial window size of a stream") zip
+        (zioDuration("healthCheckPingPeriod").default(
+          5.seconds
+        ) ?? "The period that the Netty client will send PING frames to the remote endpoint")
     ).to[Http2Config]
 
   def channelOption[T, JT](
@@ -91,12 +99,16 @@ package object descriptors {
     import ChannelOption._
     val channelOptions =
       (
-        (durationMsChannelOption(CONNECT_TIMEOUT_MILLIS) ?? "Connect timeout") zip
-        (intChannelOption(WRITE_SPIN_COUNT) ?? "Write spin count") zip
-        (boolChannelOption(ALLOW_HALF_CLOSURE) ?? "Allow half closure") zip
-        (boolChannelOption(AUTO_READ) ?? "Auto read") zip
-        (boolChannelOption(AUTO_CLOSE) ?? "Auto close") zip
-        (boolChannelOption(SINGLE_EVENTEXECUTOR_PER_GROUP) ?? "Single event executor per group")
+        (durationMsChannelOption(
+          CONNECT_TIMEOUT_MILLIS
+        ) ?? "Connect timeout") zip
+          (intChannelOption(WRITE_SPIN_COUNT) ?? "Write spin count") zip
+          (boolChannelOption(ALLOW_HALF_CLOSURE) ?? "Allow half closure") zip
+          (boolChannelOption(AUTO_READ) ?? "Auto read") zip
+          (boolChannelOption(AUTO_CLOSE) ?? "Auto close") zip
+          (boolChannelOption(
+            SINGLE_EVENTEXECUTOR_PER_GROUP
+          ) ?? "Single event executor per group")
       ).transform(
         tuple =>
           NettyChannelOptions(tuple.productIterator.collect {
@@ -163,7 +175,7 @@ package object descriptors {
       (int("maxConcurrency").default(
         globalDefault[Integer](MAX_CONNECTIONS)
       ) ?? "Maximum number of allowed concurrent requests") zip
-      (int("maxPendingConnectionAcquires").default(
+        (int("maxPendingConnectionAcquires").default(
           globalDefault[Integer](MAX_PENDING_CONNECTION_ACQUIRES)
         ) ?? "The maximum number of pending acquires allowed") zip
         (zioDuration("readTimeout").default(

@@ -29,15 +29,17 @@ class ZStreamAsyncResponseTransformer[R, Response](
       } yield StreamingOutputResult(response, stream)
     }
 
-  override def onResponse(response: Response): Unit = 
+  override def onResponse(response: Response): Unit =
     Unsafe.unsafe { implicit u =>
-      runtime.unsafe.run(responsePromise.complete(ZIO.succeed(response))).getOrThrowFiberFailure()
+      runtime.unsafe
+        .run(responsePromise.complete(ZIO.succeed(response)))
+        .getOrThrowFiberFailure()
     }
 
-  override def onStream(publisher: SdkPublisher[ByteBuffer]): Unit = 
+  override def onStream(publisher: SdkPublisher[ByteBuffer]): Unit =
     Unsafe.unsafe { implicit u =>
-      runtime.unsafe.run(resultStreamPromise.complete(errorPromise.poll.flatMap {
-        opt =>
+      runtime.unsafe
+        .run(resultStreamPromise.complete(errorPromise.poll.flatMap { opt =>
           opt.getOrElse(ZIO.unit) *> ZIO.attempt(
             publisher
               .toZIOStream()
@@ -54,7 +56,8 @@ class ZStreamAsyncResponseTransformer[R, Response](
               )
               .mapError(AwsError.fromThrowable)
           )
-      })).getOrThrowFiberFailure()
+        }))
+        .getOrThrowFiberFailure()
     }
 
   override def exceptionOccurred(error: Throwable): Unit =

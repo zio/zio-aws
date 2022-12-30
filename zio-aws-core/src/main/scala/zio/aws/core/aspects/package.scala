@@ -48,7 +48,7 @@ package object aspects {
               boundaries
             )
             .tagged("aws_service", r.description.service)
-            .tagged("aws_operation", r.description.operation)            
+            .tagged("aws_operation", r.description.operation)
             .update(durationInSeconds)
             .zipRight(f)
         }
@@ -87,7 +87,7 @@ package object aspects {
       ZLayer.scoped[RIn1] {
         ZIO.environment[RIn1].flatMap { r =>
           layer.build.map(_.get.withAspect(aspect, r))
-        }      
+        }
       }
   }
 }
