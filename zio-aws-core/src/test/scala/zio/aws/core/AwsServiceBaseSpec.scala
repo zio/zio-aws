@@ -259,7 +259,11 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
 
           for {
             result <-
-              asyncRequestInputStream("test", fakeAwsCall)(2, testByteStream)
+              asyncRequestInputStream(
+                "test",
+                fakeAwsCall,
+                AwsServiceBase.noContentLength
+              )(2, testByteStream)
           } yield assert(result)(equalTo(10))
         },
         test("failure on input stream") {
@@ -269,7 +273,11 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
             )
 
           for {
-            result <- asyncRequestInputStream("test", fakeAwsCall)(
+            result <- asyncRequestInputStream(
+              "test",
+              fakeAwsCall,
+              AwsServiceBase.noContentLength
+            )(
               2,
               testByteStreamWithFailure
             ).exit
@@ -753,7 +761,11 @@ object AwsServiceBaseSpec extends ZIOSpecDefault with Service[Any] {
           )(threadPool)(multiplier, asyncBody)
 
     for {
-      result <- asyncRequestInputOutputStream("test", fakeAwsCall)(
+      result <- asyncRequestInputOutputStream(
+        "test",
+        fakeAwsCall,
+        AwsServiceBase.noContentLength
+      )(
         2,
         if (failOnInput) testByteStreamWithFailure else testByteStream
       )

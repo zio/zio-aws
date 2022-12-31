@@ -136,8 +136,8 @@ case class FromGit(modules: Ref[Map[ModuleId, Path]], semaphore: Semaphore)
           serviceJsons <- Files
             .find(repoDir) { case (path, attribs) =>
               path.endsWith(Path("service-2.json")) &&
-              path.startsWith(repoDir / "services") &&
-              attribs.isRegularFile
+                path.startsWith(repoDir / "services") &&
+                attribs.isRegularFile
             }
             .runCollect
         } yield serviceJsons

@@ -185,7 +185,8 @@ trait AwsServiceBase[R] {
 
   final protected def asyncRequestInputStream[Request, Response](
       opName: String,
-      impl: (Request, AsyncRequestBody) => CompletableFuture[Response]
+      impl: (Request, AsyncRequestBody) => CompletableFuture[Response],
+      getContentLength: Request => java.util.Optional[java.lang.Long]
   )(
       request: Request,
       body: ZStream[R, AwsError, Byte]
@@ -194,7 +195,10 @@ trait AwsServiceBase[R] {
       aspect(
         ZIO
           .fromCompletionStage(
-            impl(request, new ZStreamAsyncRequestBody[R](body))
+            impl(
+              request,
+              new ZStreamAsyncRequestBody[R](body, getContentLength(request))
+            )
           )
           .mapError(AwsError.fromThrowable) ? (serviceName / opName)
       ).unwrap
@@ -208,7 +212,8 @@ trait AwsServiceBase[R] {
           AsyncResponseTransformer[Response, Task[
             StreamingOutputResult[R, Response, Byte]
           ]]
-      ) => CompletableFuture[Task[StreamingOutputResult[R, Response, Byte]]]
+      ) => CompletableFuture[Task[StreamingOutputResult[R, Response, Byte]]],
+      getContentLength: Request => java.util.Optional[java.lang.Long]
   )(
       request: Request,
       body: ZStream[R, AwsError, Byte]
@@ -219,7 +224,11 @@ trait AwsServiceBase[R] {
         streamingOutputResultTask <- aspect(
           ZIO
             .fromCompletionStage(
-              impl(request, new ZStreamAsyncRequestBody(body), transformer)
+              impl(
+                request,
+                new ZStreamAsyncRequestBody(body, getContentLength(request)),
+                transformer
+              )
             )
             .mapError(AwsError.fromThrowable(_)) ? (serviceName / opName)
         ).unwrap
@@ -410,4 +419,10 @@ trait AwsServiceBase[R] {
       } yield stream
     }
   }
+}
+
+object AwsServiceBase {
+  def noContentLength[Request](
+      request: Request
+  ): java.util.Optional[java.lang.Long] = java.util.Optional.empty()
 }
