@@ -12,6 +12,7 @@ object Types {
   val builderHelper_ : ScalaType = builderHelper(ScalaType.any).unapplied
 
   val awsConfig: ScalaType = ScalaType(zioawsCore / "config", "AwsConfig")
+  val awsServiceBase: ScalaType = ScalaType(zioawsCore, "AwsServiceBase")
 
   val serviceHttpCapabilities: ScalaType =
     ScalaType(Packages.zioawsHttpClient, "ServiceHttpCapabilities")
