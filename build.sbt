@@ -159,7 +159,7 @@ lazy val docs = project
       "-J-Xmx4g",
       "-J-Xms4g",
       "-J-Xss16m",
-      "++2.13.8",
+      "++2.13.10",
       "generateArtifactList"
     ),
     docsVersioning := DocsVersioning.HashVersioning
