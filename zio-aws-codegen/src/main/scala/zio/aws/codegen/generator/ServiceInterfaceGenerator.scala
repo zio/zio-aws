@@ -1441,6 +1441,18 @@ trait ServiceInterfaceGenerator {
       supportsHttp2 = id.name == "kinesis" || id.name == "transcribestreaming"
       supportsHttp2Lit = Lit.Boolean(supportsHttp2)
 
+      requiresGlobalRegion =
+        Set( // https://docs.aws.amazon.com/general/latest/gr/rande.html
+          "cloudfront",
+          "globalaccelerator",
+          "iam",
+          "networkmanager",
+          "organizations",
+          "route53",
+          "shield",
+          "waf"
+        ).contains(id.name)
+
       mockCompose = q"""
         val compose: zio.URLayer[zio.mock.Proxy, $serviceNameT] =
           zio.ZLayer {
@@ -1489,8 +1501,11 @@ trait ServiceInterfaceGenerator {
                       .build()
                   )
               b0 <- awsConfig.configure[${clientInterface.typ}, ${clientInterfaceBuilder.typ}](builder)
-              b1 <- awsConfig.configureHttpClient[${clientInterface.typ}, ${clientInterfaceBuilder.typ}](b0, ${Types.serviceHttpCapabilities.term}(supportsHttp2 = $supportsHttp2Lit))
-              client <- ${Types.zio_.term}.attempt(customization(b1).build())
+              b1 <- awsConfig.configureHttpClient[${clientInterface.typ}, ${clientInterfaceBuilder.typ}](b0, ${Types.serviceHttpCapabilities.term}(supportsHttp2 = $supportsHttp2Lit))              
+              client <- ${Types.zio_.term}.attempt(customization(${if (
+        requiresGlobalRegion
+      ) q"b1.region(_root_.software.amazon.awssdk.regions.Region.AWS_GLOBAL)"
+      else q"b1"}).build())
             } yield new $serviceImplT(client, zio.aws.core.aspects.AwsCallAspect.identity, zio.ZEnvironment.empty)
 
             private class $serviceImplT[R](override val api: ${clientInterface.typ}, override val aspect: zio.aws.core.aspects.AwsCallAspect[R], r: zio.ZEnvironment[R])
