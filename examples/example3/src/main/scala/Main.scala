@@ -17,7 +17,7 @@ object Main extends ZIOAppDefault {
   val secretKey = "TODO"
 
   val program: ZIO[Kinesis, AwsError, Unit] =
-    for {      
+    for {
       _ <- Console.printLine("Streams:").ignore
       streamNames = Kinesis.listStreams(ListStreamsRequest())
       _ <- streamNames.runForeach { streamName =>
