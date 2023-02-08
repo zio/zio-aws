@@ -288,7 +288,7 @@ trait AwsServiceBase[R] {
           .absolve
         // NOTE: even though receiveResponse's documentation states it is called before the publisher is set,
         // NOTE: this is not true with EventStreamAsyncResponseTransformer for example in case of Kinesis subscribeToShard
-        _ <- publisherPromise.await raceFirst failOnErrorSignal
+        _ <- publisherPromise.await.disconnect raceFirst failOnErrorSignal.disconnect
         publisher <- publisherPromise.await
 
         stream =
@@ -392,7 +392,7 @@ trait AwsServiceBase[R] {
           .absolve
         // NOTE: even though receiveResponse's documentation states it is called before the publisher is set,
         // NOTE: this is not true with EventStreamAsyncResponseTransformer for example in case of Kinesis subscribeToShard
-        _ <- outPublisherPromise.await raceFirst failOnErrorSignal
+        _ <- outPublisherPromise.await.disconnect raceFirst failOnErrorSignal.disconnect
         outPublisher <- outPublisherPromise.await
 
         stream =
