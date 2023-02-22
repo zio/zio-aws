@@ -1,7 +1,7 @@
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.9.17")
 addSbtPlugin("com.github.sbt" % "sbt-pgp" % "2.2.1")
 addSbtPlugin("io.shiftleft" % "sbt-ci-release-early" % "2.0.37")
-addSbtPlugin("com.47deg" % "sbt-microsites" % "1.4.1")
+addSbtPlugin("com.47deg" % "sbt-microsites" % "1.4.2")
 addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.3.7")
 addSbtPlugin("com.github.sbt" % "sbt-ghpages" % "0.7.0")
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.0")
