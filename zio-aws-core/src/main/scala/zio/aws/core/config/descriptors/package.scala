@@ -1,106 +1,89 @@
 package zio.aws.core.config
 
-import software.amazon.awssdk.auth.credentials.{
-  AnonymousCredentialsProvider,
-  AwsBasicCredentials,
-  AwsCredentials,
-  AwsCredentialsProvider,
-  DefaultCredentialsProvider,
-  InstanceProfileCredentialsProvider,
-  StaticCredentialsProvider
-}
+import software.amazon.awssdk.auth.credentials._
 import software.amazon.awssdk.regions.Region
-import zio.config.ConfigDescriptor._
-import zio.config._
+import zio.Config
 
 package object descriptors {
-  val region: ConfigDescriptor[Region] = string.transform(Region.of, _.id())
+  val region: Config[Region] = Config.string.mapAttempt(Region.of)
 
-  val awsCredentials: ConfigDescriptor[AwsCredentials] =
-    ((string("accessKeyId") ?? "AWS access key ID") zip
-      (string("secretAccessKey") ?? "AWS secret access key")).transform(
-      (AwsBasicCredentials.create _).tupled,
-      (creds: AwsCredentials) => (creds.accessKeyId(), creds.secretAccessKey())
+  val awsCredentials: Config[AwsCredentials] =
+    ((Config.string("accessKeyId") ?? "AWS access key ID") zip
+      (Config.string("secretAccessKey") ?? "AWS secret access key")).mapAttempt(
+      (AwsBasicCredentials.create _).tupled
     )
 
-  val credentialsProvider: ConfigDescriptor[AwsCredentialsProvider] = {
-    val defaultCredentialsProvider: ConfigDescriptor[AwsCredentialsProvider] =
-      string.transformOrFail(
-        s =>
-          if (s == "default") Right(DefaultCredentialsProvider.create())
-          else Left("Not 'default'"),
-        {
-          case _: DefaultCredentialsProvider => Right("default")
-          case _ => Left("Unsupported credentials provider")
-        }
-      )
-    val anonymousCredentialsProvider: ConfigDescriptor[AwsCredentialsProvider] =
-      string.transformOrFail(
-        s =>
-          if (s == "anonymous") Right(AnonymousCredentialsProvider.create())
-          else Left("Not 'anonymous'"),
-        {
-          case _: AnonymousCredentialsProvider => Right("anonymous")
-          case _ => Left("Unsupported credentials provider")
-        }
-      )
-    val instanceProfileCredentialsProvider
-        : ConfigDescriptor[AwsCredentialsProvider] =
-      string.transformOrFail(
-        s =>
-          if (s == "instance-profile")
-            Right(InstanceProfileCredentialsProvider.create())
-          else Left("Not 'instance-profile'"),
-        {
-          case _: InstanceProfileCredentialsProvider =>
-            Right("instance-profile")
-          case _ => Left("Unsupported credentials provider")
-        }
-      )
-    val staticCredentialsProvider: ConfigDescriptor[AwsCredentialsProvider] =
-      awsCredentials.transform(
-        creds => StaticCredentialsProvider.create(creds),
-        _.resolveCredentials()
+  val credentialsProvider: Config[AwsCredentialsProvider] =
+    Config
+      .string("type")
+      .switch(
+        "default" -> Config.succeed(DefaultCredentialsProvider.create()),
+        "anonymous" -> Config.succeed(AnonymousCredentialsProvider.create()),
+        "instance-profile" -> Config
+          .succeed(InstanceProfileCredentialsProvider.create()),
+        "static" -> awsCredentials.map(StaticCredentialsProvider.create)
       )
 
-    defaultCredentialsProvider <> anonymousCredentialsProvider <> instanceProfileCredentialsProvider <> staticCredentialsProvider
-  }
+  val rawHeader: Config[(String, List[String])] =
+    (Config.string("name") ?? "Header name" zip
+      Config.listOf("value", Config.string) ?? "Header value")
 
-  val rawHeader: ConfigDescriptor[(String, List[String])] =
-    (string("name") ?? "Header name" zip
-      listOrSingleton("value")(string ?? "Header value"))
+  val rawHeaderMap: Config[Map[String, List[String]]] =
+    Config.listOf(rawHeader).map(_.toMap)
 
-  val rawHeaderMap: ConfigDescriptor[Map[String, List[String]]] =
-    list(rawHeader).transform(
-      _.toMap,
-      _.toList
-    )
-
-  val commonClientConfig: ConfigDescriptor[CommonClientConfig] =
+  val commonClientConfig: Config[CommonClientConfig] =
     (
-      (nested("extraHeaders")(
-        rawHeaderMap
+      (rawHeaderMap.nested(
+        "extraHeaders"
       ) ?? "Extra headers to be sent with each request") zip
-        (duration(
-          "apiCallTimeout"
-        ).optional ?? "Amount of time to allow the client to complete the execution of an API call") zip
-        (duration(
-          "apiCallAttemptTimeout"
-        ).optional ?? "Amount of time to wait for the HTTP request to complete before giving up") zip
-        (string("defaultProfileName").optional ?? "Default profile name")
-    ).to[CommonClientConfig]
+        (Config
+          .duration(
+            "apiCallTimeout"
+          )
+          .optional ?? "Amount of time to allow the client to complete the execution of an API call") zip
+        (Config
+          .duration(
+            "apiCallAttemptTimeout"
+          )
+          .optional ?? "Amount of time to wait for the HTTP request to complete before giving up") zip
+        (Config.string("defaultProfileName").optional ?? "Default profile name")
+    ).map {
+      case (
+            extraHeaders,
+            apiCallTimeout,
+            apiCallAttemptTimeout,
+            defaultProfileName
+          ) =>
+        CommonClientConfig(
+          extraHeaders,
+          apiCallTimeout,
+          apiCallAttemptTimeout,
+          defaultProfileName
+        )
+    }
 
-  val commonAwsConfig: ConfigDescriptor[CommonAwsConfig] =
+  val commonAwsConfig: Config[CommonAwsConfig] =
     (
-      (nested("region")(region).optional ?? "AWS region to connect to") zip
-        (nested("credentials")(credentialsProvider).default(
-          DefaultCredentialsProvider.create()
-        ) ?? "AWS credentials provider") zip
-        (uri(
-          "endpointOverride"
-        ).optional ?? "Overrides the AWS service endpoint") zip
-        (nested("client")(
-          commonClientConfig
-        ).optional ?? "Common settings for AWS service clients")
-    ).to[CommonAwsConfig]
+      (region.nested("region").optional ?? "AWS region to connect to") zip
+        (credentialsProvider
+          .nested("credentials")
+          .withDefault(
+            DefaultCredentialsProvider.create()
+          ) ?? "AWS credentials provider") zip
+        (Config
+          .uri(
+            "endpointOverride"
+          )
+          .optional ?? "Overrides the AWS service endpoint") zip
+        (commonClientConfig
+          .nested("client")
+          .optional ?? "Common settings for AWS service clients")
+    ).map { case (region, credentials, endpointOverride, client) =>
+      CommonAwsConfig(
+        region,
+        credentials,
+        endpointOverride,
+        client
+      )
+    }
 }
