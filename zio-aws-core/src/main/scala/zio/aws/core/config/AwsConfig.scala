@@ -90,11 +90,9 @@ object AwsConfig {
                     .retryPolicy(RetryPolicy.none())
                     .optionallyWith(
                       commonClientConfig.apiCallTimeout
-                        .map(zio.Duration.fromScala)
                     )(_.apiCallTimeout)
                     .optionallyWith(
                       commonClientConfig.apiCallAttemptTimeout
-                        .map(zio.Duration.fromScala)
                     )(_.apiCallAttemptTimeout)
                     .optionallyWith(commonClientConfig.defaultProfileName)(
                       _.defaultProfileName

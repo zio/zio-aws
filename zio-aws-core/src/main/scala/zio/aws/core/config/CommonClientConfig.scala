@@ -1,6 +1,6 @@
 package zio.aws.core.config
 
-import scala.concurrent.duration.Duration
+import zio.Duration
 
 case class CommonClientConfig(
     extraHeaders: Map[String, List[String]],

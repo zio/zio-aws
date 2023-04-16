@@ -1,22 +1,16 @@
 package zio.aws.core.config
 
-import java.net.URI
-
 import software.amazon.awssdk.auth.credentials.{
   AwsCredentialsProvider,
   StaticCredentialsProvider
 }
-import software.amazon.awssdk.core.retry.conditions.{
-  OrRetryCondition,
-  RetryCondition
-}
 import software.amazon.awssdk.regions.Region
-import zio.test._
 import zio.config._
-import zio.config.typesafe.TypesafeConfigSource
+import zio.config.typesafe.TypesafeConfigProvider
 import zio.test.Assertion._
+import zio.test._
 
-import scala.reflect.ClassTag
+import java.net.URI
 
 object CommonAwsConfigSpec extends ZIOSpecDefault {
   override def spec: Spec[TestEnvironment, Any] =
@@ -25,6 +19,7 @@ object CommonAwsConfigSpec extends ZIOSpecDefault {
         val example =
           """region = "us-east-1"
             |credentials {
+            |  type = "static"
             |  accessKeyId = "ID"
             |  secretAccessKey = "SECRET"
             |}
@@ -40,9 +35,10 @@ object CommonAwsConfigSpec extends ZIOSpecDefault {
             |""".stripMargin
 
         val config = read(
-          descriptors.commonAwsConfig from TypesafeConfigSource.fromHoconString(
-            example
-          )
+          descriptors.commonAwsConfig from TypesafeConfigProvider
+            .fromHoconString(
+              example
+            )
         )
         assertZIO(config)(
           hasField[CommonAwsConfig, Option[Region]](
