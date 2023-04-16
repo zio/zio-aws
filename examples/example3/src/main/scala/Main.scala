@@ -19,12 +19,10 @@ object Main extends ZIOAppDefault {
   val program: ZIO[Kinesis, AwsError, Unit] =
     for {
       _ <- Console.printLine("Streams:").ignore
-      streamNames <- Kinesis.listStreams(ListStreamsRequest())
-      _ <- ZIO.foreachDiscard(streamNames.streamNames) {
-        streamName =>
-          Console.printLine(streamName).ignore
+      streamNames = Kinesis.listStreams(ListStreamsRequest())
+      _ <- streamNames.runForeach { streamName =>
+        Console.printLine(streamName).ignore
       }
-
       streamName = StreamName("test-stream")
       _ <- Console.printLine("Shards:").ignore
       shard <- Kinesis
