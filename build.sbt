@@ -26,7 +26,7 @@ lazy val core = Project("zio-aws-core", file("zio-aws-core"))
       "dev.zio" %% "zio-streams" % zioVersion,
       "dev.zio" %% "zio-interop-reactivestreams" % zioReactiveStreamsInteropVersion,
       "dev.zio" %% "zio-prelude" % zioPreludeVersion,
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.9.0",
+      "org.scala-lang.modules" %% "scala-collection-compat" % "2.10.0",
       "dev.zio" %% "zio-test" % zioVersion % "test",
       "dev.zio" %% "zio-test-sbt" % zioVersion % "test",
       "dev.zio" %% "zio-config-typesafe" % zioConfigVersion % Test
@@ -92,17 +92,17 @@ lazy val example1 = Project("example1", file("examples") / "example1")
   )
 
 lazy val example2 = Project("example2", file("examples") / "example2")
-   .settings(
-     resolvers += Resolver.jcenterRepo,
-     libraryDependencies ++= Seq(
-       "nl.vroste" %% "rezilience" % "0.9.2",
-     )
-   )
-   .dependsOn(
-     core,
-     netty,
-     LocalProject("zio-aws-dynamodb")
-   )
+  .settings(
+    resolvers += Resolver.jcenterRepo,
+    libraryDependencies ++= Seq(
+      "nl.vroste" %% "rezilience" % "0.9.2"
+    )
+  )
+  .dependsOn(
+    core,
+    netty,
+    LocalProject("zio-aws-dynamodb")
+  )
 
 lazy val example3 = Project("example3", file("examples") / "example3")
   .dependsOn(
