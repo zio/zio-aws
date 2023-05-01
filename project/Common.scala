@@ -13,7 +13,7 @@ object Common extends AutoPlugin {
   object autoImport {
     val zioVersion = "2.0.12"
     val zioMockVersion = "1.0.0-RC8"
-    val zioCatsInteropVersion = "23.0.0.4"
+    val zioCatsInteropVersion = "23.0.0.5"
     val zioReactiveStreamsInteropVersion = "2.0.1"
     val zioConfigVersion = "4.0.0-RC14"
     val zioPreludeVersion = "1.0.0-RC18"
