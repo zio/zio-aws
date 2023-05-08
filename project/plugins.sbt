@@ -11,7 +11,7 @@ addSbtPlugin("dev.zio" % "zio-sbt-website" % "0.2.7")
 ThisBuild / libraryDependencySchemes += "io.circe" %% "circe-core" % VersionScheme.Always
 ThisBuild / libraryDependencySchemes += "com.lihaoyi" %% "geny" % VersionScheme.Always
 
-libraryDependencies += "xalan" % "xalan" % "2.7.2"
+libraryDependencies += "xalan" % "xalan" % "2.7.3"
 
 // Codegen project
 lazy val codegen = project
