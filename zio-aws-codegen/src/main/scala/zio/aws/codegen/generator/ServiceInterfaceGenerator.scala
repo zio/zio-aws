@@ -1375,7 +1375,7 @@ trait ServiceInterfaceGenerator {
                 .ignore
             } *>
               ZIO.succeed(
-                q"(r: ${javaRequestType.typ}) => java.util.Optional.of(r.contentLength())"
+                q"(r: ${javaRequestType.typ}) => java.util.Optional.ofNullable(r.contentLength())"
               )
           } else {
             ZIO.succeed(
