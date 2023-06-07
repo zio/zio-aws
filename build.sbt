@@ -160,7 +160,8 @@ lazy val docs = project
       "++2.13.10",
       "generateArtifactList"
     ),
-    docsVersioning := DocsVersioning.HashVersioning
+    docsVersioning := DocsVersioning.HashVersioning,
+    libraryDependencies ++= Seq("dev.zio" %% "zio-config" % zioConfigVersion)
   )
   .dependsOn(
     core,
