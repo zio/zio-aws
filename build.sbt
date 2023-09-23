@@ -59,7 +59,7 @@ lazy val akkahttp = Project("zio-aws-akka-http", file("zio-aws-akka-http"))
       ("com.typesafe.akka" %% "akka-http" % "10.2.10")
         .cross(CrossVersion.for3Use2_13)
         .exclude("org.scala-lang.modules", "scala-collection-compat_2.13"),
-      ("com.github.matsluni" %% "aws-spi-akka-http" % "0.0.11")
+      ("com.github.matsluni" %% "aws-spi-akka-http" % "1.0.1")
         .cross(CrossVersion.for3Use2_13)
         .exclude("org.scala-lang.modules", "scala-collection-compat_2.13")
     )
