@@ -23,7 +23,6 @@ object Main extends ZIOAppDefault {
       _ <- streamNames.runForeach { streamName =>
         Console.printLine(streamName).ignore
       }
-
       streamName = StreamName("test-stream")
       _ <- Console.printLine("Shards:").ignore
       shard <- Kinesis

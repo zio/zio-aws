@@ -25,12 +25,11 @@ lazy val core = Project("zio-aws-core", file("zio-aws-core"))
       "dev.zio" %% "zio" % zioVersion,
       "dev.zio" %% "zio-streams" % zioVersion,
       "dev.zio" %% "zio-interop-reactivestreams" % zioReactiveStreamsInteropVersion,
-      "dev.zio" %% "zio-config" % zioConfigVersion,
       "dev.zio" %% "zio-prelude" % zioPreludeVersion,
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.9.0",
+      "org.scala-lang.modules" %% "scala-collection-compat" % "2.11.0",
       "dev.zio" %% "zio-test" % zioVersion % "test",
       "dev.zio" %% "zio-test-sbt" % zioVersion % "test",
-      "dev.zio" %% "zio-config-typesafe" % zioConfigVersion % "test"
+      "dev.zio" %% "zio-config-typesafe" % zioConfigVersion % Test
     ),
     testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
     Compile / doc / sources := Seq.empty // Broken on Scala 3
@@ -44,7 +43,6 @@ lazy val http4s = Project("zio-aws-http4s", file("zio-aws-http4s"))
       "software.amazon.awssdk" % "http-client-spi" % awsVersion,
       "dev.zio" %% "zio" % zioVersion,
       "dev.zio" %% "zio-interop-cats" % zioCatsInteropVersion,
-      "dev.zio" %% "zio-config" % zioConfigVersion,
       "co.fs2" %% "fs2-reactive-streams" % fs2Version,
       "org.typelevel" %% "cats-effect" % catsEffectVersion,
       "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2"
@@ -61,7 +59,7 @@ lazy val akkahttp = Project("zio-aws-akka-http", file("zio-aws-akka-http"))
       ("com.typesafe.akka" %% "akka-http" % "10.2.10")
         .cross(CrossVersion.for3Use2_13)
         .exclude("org.scala-lang.modules", "scala-collection-compat_2.13"),
-      ("com.github.matsluni" %% "aws-spi-akka-http" % "0.0.11")
+      ("com.github.matsluni" %% "aws-spi-akka-http" % "1.0.1")
         .cross(CrossVersion.for3Use2_13)
         .exclude("org.scala-lang.modules", "scala-collection-compat_2.13")
     )
@@ -93,18 +91,18 @@ lazy val example1 = Project("example1", file("examples") / "example1")
     LocalProject("zio-aws-ec2")
   )
 
-// lazy val example2 = Project("example2", file("examples") / "example2")
-//   .settings(
-//     resolvers += Resolver.jcenterRepo,
-//     libraryDependencies ++= Seq(
-//       "nl.vroste" %% "rezilience" % "0.7.0+65-162ab7dd-SNAPSHOT",
-//     )
-//   )
-//   .dependsOn(
-//     core,
-//     netty,
-//     LocalProject("zio-aws-dynamodb")
-//   )
+lazy val example2 = Project("example2", file("examples") / "example2")
+  .settings(
+    resolvers += Resolver.jcenterRepo,
+    libraryDependencies ++= Seq(
+      "nl.vroste" %% "rezilience" % "0.9.2"
+    )
+  )
+  .dependsOn(
+    core,
+    netty,
+    LocalProject("zio-aws-dynamodb")
+  )
 
 lazy val example3 = Project("example3", file("examples") / "example3")
   .dependsOn(
@@ -162,7 +160,8 @@ lazy val docs = project
       "++2.13.10",
       "generateArtifactList"
     ),
-    docsVersioning := DocsVersioning.HashVersioning
+    docsVersioning := DocsVersioning.HashVersioning,
+    libraryDependencies ++= Seq("dev.zio" %% "zio-config" % zioConfigVersion)
   )
   .dependsOn(
     core,

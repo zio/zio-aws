@@ -8,6 +8,9 @@ title: Changelog
 Note: this is a manually maintained list of important changes. Because of having auto-release from CI, this
 list may not reflect _all_ changes immediately. Dependencies are continuously updated and are not documented here.
 
+#### 6.x.x.x
+- Using the new ZIO config providers, compatible with ZIO Config 4.x.x
+
 #### 5.x.x.x
 - Migrated to `ZIO 2.0.0` 
 - Moved to the ZIO organisation
