@@ -26,7 +26,7 @@ lazy val core = Project("zio-aws-core", file("zio-aws-core"))
       "dev.zio" %% "zio-streams" % zioVersion,
       "dev.zio" %% "zio-interop-reactivestreams" % zioReactiveStreamsInteropVersion,
       "dev.zio" %% "zio-prelude" % zioPreludeVersion,
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.10.0",
+      "org.scala-lang.modules" %% "scala-collection-compat" % "2.11.0",
       "dev.zio" %% "zio-test" % zioVersion % "test",
       "dev.zio" %% "zio-test-sbt" % zioVersion % "test",
       "dev.zio" %% "zio-config-typesafe" % zioConfigVersion % Test
@@ -59,7 +59,7 @@ lazy val akkahttp = Project("zio-aws-akka-http", file("zio-aws-akka-http"))
       ("com.typesafe.akka" %% "akka-http" % "10.2.10")
         .cross(CrossVersion.for3Use2_13)
         .exclude("org.scala-lang.modules", "scala-collection-compat_2.13"),
-      ("com.github.matsluni" %% "aws-spi-akka-http" % "0.0.11")
+      ("com.github.matsluni" %% "aws-spi-akka-http" % "1.0.1")
         .cross(CrossVersion.for3Use2_13)
         .exclude("org.scala-lang.modules", "scala-collection-compat_2.13")
     )

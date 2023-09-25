@@ -17,9 +17,9 @@ object Common extends AutoPlugin {
     val zioReactiveStreamsInteropVersion = "2.0.2"
     val zioConfigVersion = "4.0.0-RC16"
     val zioPreludeVersion = "1.0.0-RC19"
-    val catsEffectVersion = "3.5.0"
+    val catsEffectVersion = "3.5.1"
 
-    val awsVersion = "2.20.78"
+    val awsVersion = "2.20.149"
     val awsSubVersion = awsVersion.drop(awsVersion.indexOf('.') + 1)
     val http4sVersion = "0.23.19"
     val blazeVersion = "0.23.15"
@@ -29,7 +29,7 @@ object Common extends AutoPlugin {
     val zioAwsVersionPrefix = s"$majorVersion.$awsSubVersion."
 
     val scala212Version = "2.12.17"
-    val scala213Version = "2.13.10"
+    val scala213Version = "2.13.12"
     val scala3Version = "3.2.1"
 
     val scalacOptions212 = Seq("-Ypartial-unification", "-deprecation")
