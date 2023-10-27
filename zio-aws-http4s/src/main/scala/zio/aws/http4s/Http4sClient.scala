@@ -96,7 +96,7 @@ class Http4sClient(client: Client[Task], closeFn: () => Unit)(implicit
   ): EntityBody[Task] =
     if (method.canHaveBody) {
       publisher
-        .toStreamBuffered(1)(asyncRuntimeInstance)
+        .toStreamBuffered[Task](1)
         .map(fs2.Chunk.byteBuffer(_))
         .flatMap(Stream.chunk(_))
     } else {
