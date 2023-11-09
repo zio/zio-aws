@@ -44,6 +44,6 @@ import zio.aws.core.AwsError
     }
 ```
 
-This aspect can attached to a _client layer_ with the `@@` operator. Multiple aspects can be composed with `>>>`.
+This aspect can attached to a _client layer_ with the `@@@` operator. Multiple aspects can be composed with `>>>`.
 
 To see a full example, check [example #2](https://github.com/vigoo/zio-aws/blob/master/examples/example2/src/main/scala/Main.scala).

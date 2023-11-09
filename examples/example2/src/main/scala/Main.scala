@@ -55,9 +55,9 @@ object Main extends ZIOAppDefault {
         // Default DynamoDB layer
         // val dynamoDb: ZLayer[AwsConfig, Throwable, DynamoDb] = dynamodb.live
         // DynamoDB with logging
-        // val dynamoDb: ZLayer[AwsConfig, Throwable, DynamoDb] = dynamodb.live @@ logging
+        // val dynamoDb: ZLayer[AwsConfig, Throwable, DynamoDb] = dynamodb.live @@@ logging
         // DynamoDB with circuit breaker
-        // val dynamoDb: ZLayer[AwsConfig, Throwable, DynamoDb] = dynamodb.live @@ circuitBreaking(cb)
+        // val dynamoDb: ZLayer[AwsConfig, Throwable, DynamoDb] = dynamodb.live @@@ circuitBreaking(cb)
 
         val dynamoDb = DynamoDb.live @@ (logging >>> circuitBreaking(cb))
         val finalLayer = awsConfig >>> dynamoDb
