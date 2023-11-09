@@ -8,6 +8,9 @@ title: Changelog
 Note: this is a manually maintained list of important changes. Because of having auto-release from CI, this
 list may not reflect _all_ changes immediately. Dependencies are continuously updated and are not documented here.
 
+#### 7.x.x.x
+- ZIO 2.0.18 introduced a `ZLayerAspect` which uses the same operator (`@@`) that ZIO AWS was using on layers, but it is not powerful enough to express this library's aspects. The new operator conflicts with the existing extension method, so starting from this version it has been renamed from `@@` to `@@@` to avoid the conflict. 
+
 #### 6.x.x.x
 - Using the new ZIO config providers, compatible with ZIO Config 4.x.x
 

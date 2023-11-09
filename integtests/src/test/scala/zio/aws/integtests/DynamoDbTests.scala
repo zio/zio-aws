@@ -39,7 +39,7 @@ object DynamoDbTests extends ZIOSpecDefault with Logging with Retries {
         .create(AwsBasicCredentials.create("dummy", "key"))
     ).region(Region.US_WEST_2)
       .endpointOverride(new URI("http://localhost:4566"))
-  ) @@ callLogging @@ callRetries
+  ) @@@ callLogging @@@ callRetries
 
   private def testTable(prefix: String): ZIO[DynamoDb, Nothing, ZIO[
     DynamoDb with Scope,
