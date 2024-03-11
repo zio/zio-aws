@@ -2,7 +2,7 @@ val zioVersion = "2.0.21"
 val awsVersion = "2.21.15"
 
 sbtPlugin := true
-scalaVersion := "2.12.18"
+scalaVersion := "2.12.19"
 organization := "io.github.vigoo"
 scalacOptions := Seq("-Ypartial-unification", "-deprecation")
 libraryDependencies ++= Seq(
