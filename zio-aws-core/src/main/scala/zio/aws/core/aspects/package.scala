@@ -81,7 +81,7 @@ package object aspects {
   implicit class ZLayerSyntax[RIn, E, ROut <: AspectSupport[ROut]: Tag](
       layer: ZLayer[RIn, E, ROut]
   ) {
-    def @@@[RIn1 <: RIn: Tag](
+    def @@@[RIn1 <: RIn](
         aspect: AwsCallAspect[RIn1]
     ): ZLayer[RIn1, E, ROut] =
       ZLayer.scoped[RIn1] {
