@@ -30,7 +30,7 @@ object Common extends AutoPlugin {
 
     val scala212Version = "2.12.19"
     val scala213Version = "2.13.14"
-    val scala3Version = "3.3.3"
+    val scala3Version = "3.3.4"
 
     val scalacOptions212 = Seq("-Ypartial-unification", "-deprecation")
     val scalacOptions213 = Seq("-deprecation")
