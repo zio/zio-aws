@@ -97,7 +97,7 @@ jobs:
       run: tar cvf targets.tar target project/target zio-aws-codegen/target zio-aws-core/target
         zio-aws-akka-http/target zio-aws-http4s/target zio-aws-netty/target
     - name: Upload core targets
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
         path: targets.tar
@@ -152,7 +152,7 @@ jobs:
         key: ${{ matrix.os }}-sbt-${{ matrix.scala }}-${{ hashFiles('**/*.sbt') }}-${{
           hashFiles('**/build.properties') }}
     - name: Download stored core targets
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
     - name: Inflate core targets
@@ -217,7 +217,7 @@ jobs:
         key: ${{ matrix.os }}-sbt-${{ matrix.scala }}-${{ hashFiles('**/*.sbt') }}-${{
           hashFiles('**/build.properties') }}
     - name: Download stored core targets
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
     - name: Inflate core targets
@@ -288,7 +288,7 @@ jobs:
       if: ${{ github.ref == 'refs/heads/master' }}
       run: tar cvf targets.tar target
     - name: Upload clients-0 targets
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       if: ${{ github.ref == 'refs/heads/master' }}
       with:
         name: target-clients-0-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java
@@ -339,7 +339,7 @@ jobs:
         key: ${{ matrix.os }}-sbt-${{ matrix.scala }}-${{ hashFiles('**/*.sbt') }}-${{
           hashFiles('**/build.properties') }}
     - name: Download stored core targets
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
     - name: Inflate core targets
@@ -408,7 +408,7 @@ jobs:
       if: ${{ github.ref == 'refs/heads/master' }}
       run: tar cvf targets.tar target
     - name: Upload clients-1 targets
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       if: ${{ github.ref == 'refs/heads/master' }}
       with:
         name: target-clients-1-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java
@@ -459,7 +459,7 @@ jobs:
         key: ${{ matrix.os }}-sbt-${{ matrix.scala }}-${{ hashFiles('**/*.sbt') }}-${{
           hashFiles('**/build.properties') }}
     - name: Download stored core targets
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
     - name: Inflate core targets
@@ -530,7 +530,7 @@ jobs:
       if: ${{ github.ref == 'refs/heads/master' }}
       run: tar cvf targets.tar target
     - name: Upload clients-2 targets
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       if: ${{ github.ref == 'refs/heads/master' }}
       with:
         name: target-clients-2-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java
@@ -581,7 +581,7 @@ jobs:
         key: ${{ matrix.os }}-sbt-${{ matrix.scala }}-${{ hashFiles('**/*.sbt') }}-${{
           hashFiles('**/build.properties') }}
     - name: Download stored core targets
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
     - name: Inflate core targets
@@ -651,7 +651,7 @@ jobs:
       if: ${{ github.ref == 'refs/heads/master' }}
       run: tar cvf targets.tar target
     - name: Upload clients-3 targets
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       if: ${{ github.ref == 'refs/heads/master' }}
       with:
         name: target-clients-3-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java
@@ -702,7 +702,7 @@ jobs:
         key: ${{ matrix.os }}-sbt-${{ matrix.scala }}-${{ hashFiles('**/*.sbt') }}-${{
           hashFiles('**/build.properties') }}
     - name: Download stored core targets
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
     - name: Inflate core targets
@@ -768,7 +768,7 @@ jobs:
       if: ${{ github.ref == 'refs/heads/master' }}
       run: tar cvf targets.tar target
     - name: Upload clients-4 targets
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       if: ${{ github.ref == 'refs/heads/master' }}
       with:
         name: target-clients-4-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java
@@ -819,7 +819,7 @@ jobs:
         key: ${{ matrix.os }}-sbt-${{ matrix.scala }}-${{ hashFiles('**/*.sbt') }}-${{
           hashFiles('**/build.properties') }}
     - name: Download stored core targets
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
     - name: Inflate core targets
@@ -839,7 +839,7 @@ jobs:
       if: ${{ github.ref == 'refs/heads/master' }}
       run: tar cvf targets.tar target
     - name: Upload clients-5 targets
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       if: ${{ github.ref == 'refs/heads/master' }}
       with:
         name: target-clients-5-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java
@@ -885,7 +885,7 @@ jobs:
         key: ubuntu-latest-sbt-2.13.14-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties')
           }}
     - name: Download stored core targets
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: target-core-ubuntu-latest-2.13.14-temurin@11
     - name: Inflate core targets
@@ -893,7 +893,7 @@ jobs:
         tar xvf targets.tar
         rm targets.tar
     - name: Download stored clients-0 targets
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: target-clients-0-ubuntu-latest-2.13.14-temurin@11
     - name: Inflate clients-0 targets
@@ -901,7 +901,7 @@ jobs:
         tar xvf targets.tar
         rm targets.tar
     - name: Download stored clients-1 targets
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: target-clients-1-ubuntu-latest-2.13.14-temurin@11
     - name: Inflate clients-1 targets
@@ -909,7 +909,7 @@ jobs:
         tar xvf targets.tar
         rm targets.tar
     - name: Download stored clients-2 targets
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: target-clients-2-ubuntu-latest-2.13.14-temurin@11
     - name: Inflate clients-2 targets
@@ -917,7 +917,7 @@ jobs:
         tar xvf targets.tar
         rm targets.tar
     - name: Download stored clients-3 targets
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: target-clients-3-ubuntu-latest-2.13.14-temurin@11
     - name: Inflate clients-3 targets
@@ -925,7 +925,7 @@ jobs:
         tar xvf targets.tar
         rm targets.tar
     - name: Download stored clients-4 targets
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: target-clients-4-ubuntu-latest-2.13.14-temurin@11
     - name: Inflate clients-4 targets
@@ -933,7 +933,7 @@ jobs:
         tar xvf targets.tar
         rm targets.tar
     - name: Download stored clients-5 targets
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: target-clients-5-ubuntu-latest-2.13.14-temurin@11
     - name: Inflate clients-5 targets
@@ -941,7 +941,7 @@ jobs:
         tar xvf targets.tar
         rm targets.tar
     - name: Download stored core targets
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: target-core-ubuntu-latest-2.12.19-temurin@11
     - name: Inflate core targets
@@ -949,7 +949,7 @@ jobs:
         tar xvf targets.tar
         rm targets.tar
     - name: Download stored clients-0 targets
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: target-clients-0-ubuntu-latest-2.12.19-temurin@11
     - name: Inflate clients-0 targets
@@ -957,7 +957,7 @@ jobs:
         tar xvf targets.tar
         rm targets.tar
     - name: Download stored clients-1 targets
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: target-clients-1-ubuntu-latest-2.12.19-temurin@11
     - name: Inflate clients-1 targets
@@ -965,7 +965,7 @@ jobs:
         tar xvf targets.tar
         rm targets.tar
     - name: Download stored clients-2 targets
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: target-clients-2-ubuntu-latest-2.12.19-temurin@11
     - name: Inflate clients-2 targets
@@ -973,7 +973,7 @@ jobs:
         tar xvf targets.tar
         rm targets.tar
     - name: Download stored clients-3 targets
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: target-clients-3-ubuntu-latest-2.12.19-temurin@11
     - name: Inflate clients-3 targets
@@ -981,7 +981,7 @@ jobs:
         tar xvf targets.tar
         rm targets.tar
     - name: Download stored clients-4 targets
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: target-clients-4-ubuntu-latest-2.12.19-temurin@11
     - name: Inflate clients-4 targets
@@ -989,7 +989,7 @@ jobs:
         tar xvf targets.tar
         rm targets.tar
     - name: Download stored clients-5 targets
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: target-clients-5-ubuntu-latest-2.12.19-temurin@11
     - name: Inflate clients-5 targets
@@ -997,7 +997,7 @@ jobs:
         tar xvf targets.tar
         rm targets.tar
     - name: Download stored core targets
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: target-core-ubuntu-latest-3.3.3-temurin@11
     - name: Inflate core targets
@@ -1005,7 +1005,7 @@ jobs:
         tar xvf targets.tar
         rm targets.tar
     - name: Download stored clients-0 targets
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: target-clients-0-ubuntu-latest-3.3.3-temurin@11
     - name: Inflate clients-0 targets
@@ -1013,7 +1013,7 @@ jobs:
         tar xvf targets.tar
         rm targets.tar
     - name: Download stored clients-1 targets
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: target-clients-1-ubuntu-latest-3.3.3-temurin@11
     - name: Inflate clients-1 targets
@@ -1021,7 +1021,7 @@ jobs:
         tar xvf targets.tar
         rm targets.tar
     - name: Download stored clients-2 targets
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: target-clients-2-ubuntu-latest-3.3.3-temurin@11
     - name: Inflate clients-2 targets
@@ -1029,7 +1029,7 @@ jobs:
         tar xvf targets.tar
         rm targets.tar
     - name: Download stored clients-3 targets
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: target-clients-3-ubuntu-latest-3.3.3-temurin@11
     - name: Inflate clients-3 targets
@@ -1037,7 +1037,7 @@ jobs:
         tar xvf targets.tar
         rm targets.tar
     - name: Download stored clients-4 targets
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: target-clients-4-ubuntu-latest-3.3.3-temurin@11
     - name: Inflate clients-4 targets
@@ -1045,7 +1045,7 @@ jobs:
         tar xvf targets.tar
         rm targets.tar
     - name: Download stored clients-5 targets
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: target-clients-5-ubuntu-latest-3.3.3-temurin@11
     - name: Inflate clients-5 targets

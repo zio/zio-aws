@@ -110,7 +110,7 @@ object ScalaWorkflow {
         ),
         SingleStep(
           s"Upload $id targets",
-          uses = Some(ActionRef("actions/upload-artifact@v2")),
+          uses = Some(ActionRef("actions/upload-artifact@v4")),
           parameters = Map(
             "name" := s"target-$id-$osS-$scalaS-$javaS",
             "path" := "targets.tar"
@@ -134,7 +134,7 @@ object ScalaWorkflow {
       Seq(
         SingleStep(
           s"Download stored $id targets",
-          uses = Some(ActionRef("actions/download-artifact@v2")),
+          uses = Some(ActionRef("actions/download-artifact@v4")),
           parameters = Map(
             "name" := s"target-$id-$osS-$scalaS-$javaS"
           )
