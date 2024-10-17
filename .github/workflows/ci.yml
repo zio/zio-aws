@@ -28,7 +28,7 @@ jobs:
           ~/.sbt
           ~/.coursier/cache/v1
           ~/.cache/coursier/v1
-        key: ubuntu-latest-sbt-2.13.12-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties')
+        key: ubuntu-latest-sbt-2.13.14-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties')
           }}
     - name: Setup GIT user
       uses: fregante/setup-git-user@v1
@@ -48,11 +48,11 @@ jobs:
         os:
         - ubuntu-latest
         scala:
-        - 2.12.18
-        - 2.13.12
-        - 3.3.1
+        - 2.12.19
+        - 2.13.14
+        - 3.3.3
         java:
-        - adopt@1.8
+        - zulu@1.17
     needs:
     - tag
     if: ${{ github.actor != 'github-actions[bot]' }}
@@ -109,11 +109,11 @@ jobs:
         os:
         - ubuntu-latest
         scala:
-        - 2.12.18
-        - 2.13.12
-        - 3.3.1
+        - 2.12.19
+        - 2.13.14
+        - 3.3.3
         java:
-        - adopt@1.8
+        - zulu@1.17
     needs:
     - build-core
     services:
@@ -163,11 +163,11 @@ jobs:
       if: ${{ matrix.scala == '2.12.19' }}
       run: sbt -J-XX:+UseG1GC -J-Xmx5g -J-Xms5g -J-Xss16m ++${{ matrix.scala }} integtests/test
     - name: Build and run tests
-      if: ${{ (matrix.scala != '3.3.1') && (matrix.scala != '2.12.19') }}
+      if: ${{ (matrix.scala != '3.3.3') && (matrix.scala != '2.12.19') }}
       run: sbt -J-XX:+UseG1GC -J-Xmx5g -J-Xms5g -J-Xss16m ++${{ matrix.scala }} examples/compile
         integtests/test
     - name: Build and run tests
-      if: ${{ matrix.scala == '3.3.1' }}
+      if: ${{ matrix.scala == '3.3.3' }}
       run: sbt -J-XX:+UseG1GC -J-Xmx5g -J-Xms5g -J-Xss16m ++${{ matrix.scala }} examples/compile
     - name: Collect Docker logs
       uses: jwalton/gh-docker-logs@v1
@@ -180,11 +180,11 @@ jobs:
         os:
         - ubuntu-latest
         scala:
-        - 2.12.18
-        - 2.13.12
-        - 3.3.1
+        - 2.12.19
+        - 2.13.14
+        - 3.3.3
         java:
-        - adopt@1.8
+        - zulu@1.17
     needs:
     - build-core
     - integration-test
@@ -302,11 +302,11 @@ jobs:
         os:
         - ubuntu-latest
         scala:
-        - 2.12.18
-        - 2.13.12
-        - 3.3.1
+        - 2.12.19
+        - 2.13.14
+        - 3.3.3
         java:
-        - adopt@1.8
+        - zulu@1.17
     needs:
     - build-core
     - integration-test
@@ -422,11 +422,11 @@ jobs:
         os:
         - ubuntu-latest
         scala:
-        - 2.12.18
-        - 2.13.12
-        - 3.3.1
+        - 2.12.19
+        - 2.13.14
+        - 3.3.3
         java:
-        - adopt@1.8
+        - zulu@1.17
     needs:
     - build-core
     - integration-test
@@ -544,11 +544,11 @@ jobs:
         os:
         - ubuntu-latest
         scala:
-        - 2.12.18
-        - 2.13.12
-        - 3.3.1
+        - 2.12.19
+        - 2.13.14
+        - 3.3.3
         java:
-        - adopt@1.8
+        - zulu@1.17
     needs:
     - build-core
     - integration-test
@@ -665,11 +665,11 @@ jobs:
         os:
         - ubuntu-latest
         scala:
-        - 2.12.18
-        - 2.13.12
-        - 3.3.1
+        - 2.12.19
+        - 2.13.14
+        - 3.3.3
         java:
-        - adopt@1.8
+        - zulu@1.17
     needs:
     - build-core
     - integration-test
@@ -782,11 +782,11 @@ jobs:
         os:
         - ubuntu-latest
         scala:
-        - 2.12.18
-        - 2.13.12
-        - 3.3.1
+        - 2.12.19
+        - 2.13.14
+        - 3.3.3
         java:
-        - adopt@1.8
+        - zulu@1.17
     needs:
     - build-core
     - integration-test
@@ -882,12 +882,12 @@ jobs:
           ~/.sbt
           ~/.coursier/cache/v1
           ~/.cache/coursier/v1
-        key: ubuntu-latest-sbt-2.13.12-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties')
+        key: ubuntu-latest-sbt-2.13.14-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties')
           }}
     - name: Download stored core targets
       uses: actions/download-artifact@v2
       with:
-        name: target-core-ubuntu-latest-2.13.12-adopt@1.8
+        name: target-core-ubuntu-latest-2.13.14-temurin@11
     - name: Inflate core targets
       run: |-
         tar xvf targets.tar
@@ -895,7 +895,7 @@ jobs:
     - name: Download stored clients-0 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-0-ubuntu-latest-2.13.12-adopt@1.8
+        name: target-clients-0-ubuntu-latest-2.13.14-temurin@11
     - name: Inflate clients-0 targets
       run: |-
         tar xvf targets.tar
@@ -903,7 +903,7 @@ jobs:
     - name: Download stored clients-1 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-1-ubuntu-latest-2.13.12-adopt@1.8
+        name: target-clients-1-ubuntu-latest-2.13.14-temurin@11
     - name: Inflate clients-1 targets
       run: |-
         tar xvf targets.tar
@@ -911,7 +911,7 @@ jobs:
     - name: Download stored clients-2 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-2-ubuntu-latest-2.13.12-adopt@1.8
+        name: target-clients-2-ubuntu-latest-2.13.14-temurin@11
     - name: Inflate clients-2 targets
       run: |-
         tar xvf targets.tar
@@ -919,7 +919,7 @@ jobs:
     - name: Download stored clients-3 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-3-ubuntu-latest-2.13.12-adopt@1.8
+        name: target-clients-3-ubuntu-latest-2.13.14-temurin@11
     - name: Inflate clients-3 targets
       run: |-
         tar xvf targets.tar
@@ -927,7 +927,7 @@ jobs:
     - name: Download stored clients-4 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-4-ubuntu-latest-2.13.12-adopt@1.8
+        name: target-clients-4-ubuntu-latest-2.13.14-temurin@11
     - name: Inflate clients-4 targets
       run: |-
         tar xvf targets.tar
@@ -935,7 +935,7 @@ jobs:
     - name: Download stored clients-5 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-5-ubuntu-latest-2.13.12-adopt@1.8
+        name: target-clients-5-ubuntu-latest-2.13.14-temurin@11
     - name: Inflate clients-5 targets
       run: |-
         tar xvf targets.tar
@@ -943,7 +943,7 @@ jobs:
     - name: Download stored core targets
       uses: actions/download-artifact@v2
       with:
-        name: target-core-ubuntu-latest-2.12.18-adopt@1.8
+        name: target-core-ubuntu-latest-2.12.19-temurin@11
     - name: Inflate core targets
       run: |-
         tar xvf targets.tar
@@ -951,7 +951,7 @@ jobs:
     - name: Download stored clients-0 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-0-ubuntu-latest-2.12.18-adopt@1.8
+        name: target-clients-0-ubuntu-latest-2.12.19-temurin@11
     - name: Inflate clients-0 targets
       run: |-
         tar xvf targets.tar
@@ -959,7 +959,7 @@ jobs:
     - name: Download stored clients-1 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-1-ubuntu-latest-2.12.18-adopt@1.8
+        name: target-clients-1-ubuntu-latest-2.12.19-temurin@11
     - name: Inflate clients-1 targets
       run: |-
         tar xvf targets.tar
@@ -967,7 +967,7 @@ jobs:
     - name: Download stored clients-2 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-2-ubuntu-latest-2.12.18-adopt@1.8
+        name: target-clients-2-ubuntu-latest-2.12.19-temurin@11
     - name: Inflate clients-2 targets
       run: |-
         tar xvf targets.tar
@@ -975,7 +975,7 @@ jobs:
     - name: Download stored clients-3 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-3-ubuntu-latest-2.12.18-adopt@1.8
+        name: target-clients-3-ubuntu-latest-2.12.19-temurin@11
     - name: Inflate clients-3 targets
       run: |-
         tar xvf targets.tar
@@ -983,7 +983,7 @@ jobs:
     - name: Download stored clients-4 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-4-ubuntu-latest-2.12.18-adopt@1.8
+        name: target-clients-4-ubuntu-latest-2.12.19-temurin@11
     - name: Inflate clients-4 targets
       run: |-
         tar xvf targets.tar
@@ -991,7 +991,7 @@ jobs:
     - name: Download stored clients-5 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-5-ubuntu-latest-2.12.18-adopt@1.8
+        name: target-clients-5-ubuntu-latest-2.12.19-temurin@11
     - name: Inflate clients-5 targets
       run: |-
         tar xvf targets.tar
@@ -999,7 +999,7 @@ jobs:
     - name: Download stored core targets
       uses: actions/download-artifact@v2
       with:
-        name: target-core-ubuntu-latest-3.3.1-adopt@1.8
+        name: target-core-ubuntu-latest-3.3.3-temurin@11
     - name: Inflate core targets
       run: |-
         tar xvf targets.tar
@@ -1007,7 +1007,7 @@ jobs:
     - name: Download stored clients-0 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-0-ubuntu-latest-3.3.1-adopt@1.8
+        name: target-clients-0-ubuntu-latest-3.3.3-temurin@11
     - name: Inflate clients-0 targets
       run: |-
         tar xvf targets.tar
@@ -1015,7 +1015,7 @@ jobs:
     - name: Download stored clients-1 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-1-ubuntu-latest-3.3.1-adopt@1.8
+        name: target-clients-1-ubuntu-latest-3.3.3-temurin@11
     - name: Inflate clients-1 targets
       run: |-
         tar xvf targets.tar
@@ -1023,7 +1023,7 @@ jobs:
     - name: Download stored clients-2 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-2-ubuntu-latest-3.3.1-adopt@1.8
+        name: target-clients-2-ubuntu-latest-3.3.3-temurin@11
     - name: Inflate clients-2 targets
       run: |-
         tar xvf targets.tar
@@ -1031,7 +1031,7 @@ jobs:
     - name: Download stored clients-3 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-3-ubuntu-latest-3.3.1-adopt@1.8
+        name: target-clients-3-ubuntu-latest-3.3.3-temurin@11
     - name: Inflate clients-3 targets
       run: |-
         tar xvf targets.tar
@@ -1039,7 +1039,7 @@ jobs:
     - name: Download stored clients-4 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-4-ubuntu-latest-3.3.1-adopt@1.8
+        name: target-clients-4-ubuntu-latest-3.3.3-temurin@11
     - name: Inflate clients-4 targets
       run: |-
         tar xvf targets.tar
@@ -1047,7 +1047,7 @@ jobs:
     - name: Download stored clients-5 targets
       uses: actions/download-artifact@v2
       with:
-        name: target-clients-5-ubuntu-latest-3.3.1-adopt@1.8
+        name: target-clients-5-ubuntu-latest-3.3.3-temurin@11
     - name: Inflate clients-5 targets
       run: |-
         tar xvf targets.tar

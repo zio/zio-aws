@@ -2,7 +2,6 @@ package zio.aws.codegen.githubactions
 
 import io.circe._
 import io.circe.syntax._
-import zio.aws.codegen.githubactions.ScalaWorkflow.JavaVersion.AdoptJDK18
 
 object ScalaWorkflow {
   import Step._
@@ -206,11 +205,14 @@ object ScalaWorkflow {
     val asString: String
   }
   object JavaVersion {
-    case object AdoptJDK18 extends JavaVersion {
-      override val asString: String = "adopt@1.8"
-    }
     case object ZuluJDK17 extends JavaVersion {
       override val asString: String = "zulu@1.17"
+    }
+    case object TemurinJDK11 extends JavaVersion {
+      override val asString: String = "temurin@11"
+    }
+    case object TemurinJDK21 extends JavaVersion {
+      override val asString: String = "temurin@21"
     }
   }
 
@@ -218,7 +220,7 @@ object ScalaWorkflow {
     def matrix(
         scalaVersions: Seq[ScalaVersion],
         operatingSystems: Seq[OS] = Seq(OS.UbuntuLatest),
-        javaVersions: Seq[JavaVersion] = Seq(AdoptJDK18)
+        javaVersions: Seq[JavaVersion] = Seq(JavaVersion.ZuluJDK17)
     ): Job =
       job.copy(
         strategy = Some(

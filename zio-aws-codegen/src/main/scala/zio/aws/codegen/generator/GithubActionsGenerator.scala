@@ -5,7 +5,8 @@ import io.circe.yaml
 import io.circe.yaml.Printer.{LineBreak, YamlVersion}
 import zio.aws.codegen.githubactions.OS.UbuntuLatest
 import zio.aws.codegen.githubactions.ScalaWorkflow.JavaVersion.{
-  AdoptJDK18,
+  TemurinJDK11,
+  TemurinJDK21,
   ZuluJDK17
 }
 import zio.aws.codegen.githubactions.ScalaWorkflow.{JavaVersion, _}
@@ -241,19 +242,19 @@ trait GithubActionsGenerator {
               "core" :: grouped.indices.map(idx => s"clients-$idx").toList,
               os = Some(OS.UbuntuLatest),
               scalaVersion = Some(scala213),
-              javaVersion = Some(JavaVersion.AdoptJDK18)
+              javaVersion = Some(JavaVersion.TemurinJDK11)
             ),
             loadStoredTargets(
               "core" :: grouped.indices.map(idx => s"clients-$idx").toList,
               os = Some(OS.UbuntuLatest),
               scalaVersion = Some(scala212),
-              javaVersion = Some(JavaVersion.AdoptJDK18)
+              javaVersion = Some(JavaVersion.TemurinJDK11)
             ),
             loadStoredTargets(
               "core" :: grouped.indices.map(idx => s"clients-$idx").toList,
               os = Some(OS.UbuntuLatest),
               scalaVersion = Some(scala3),
-              javaVersion = Some(JavaVersion.AdoptJDK18)
+              javaVersion = Some(JavaVersion.TemurinJDK11)
             ),
             runSBT(
               "Publish artifacts",
