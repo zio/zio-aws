@@ -230,21 +230,21 @@ trait ServiceInterfaceGenerator {
     for {
       inputEventStream <- findEventStreamShape(op.getInput.getShape)
       awsInEventStreamT = ScalaType(modelPkg, inputEventStream.name)
-      inEventShapeName = inputEventStream.shape.getMembers.asScala.keys.head
-      inEventT <- get(inEventShapeName).map(_.generatedType)
+      inEventModel = inputEventStream.shape.getMembers.asScala.values.head
+      inEventT <- get(inEventModel.getShape).map(_.generatedType)
 
       outputEventStream <- findEventStreamShape(op.getOutput.getShape)
-      outEventShapeName = outputEventStream.shape.getMembers.asScala.keys.head
-      outEventModel <- get(outEventShapeName)
-      awsOutEventT <- TypeMapping.toJavaType(outEventModel)
+      outEventModel = outputEventStream.shape.getMembers.asScala.values.head
+      outEventT <- get(outEventModel.getShape)
+      awsOutEventT <- TypeMapping.toJavaType(outEventT)
 
       awsOutEventStreamT = ScalaType(modelPkg, outputEventStream.name)
-      outEventRoT = outEventModel.generatedType / "ReadOnly"
+      outEventRoT = outEventT.generatedType / "ReadOnly"
       responseHandlerName = opName + "ResponseHandler"
       responseHandlerT = ScalaType(modelPkg, responseHandlerName)
 
       wrappedItem <- wrapSdkValue(
-        outEventModel,
+        outEventT,
         Term.Name("item")
       )
       opNameLit = Lit.String(opName)

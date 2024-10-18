@@ -57,7 +57,7 @@ trait GeneratorBase {
       case ModelType.Structure =>
         ZIO.succeed(q"""$term.buildAwsValue()""")
       case ModelType.Exception =>
-        ZIO.succeed(term)
+        ZIO.succeed(q"""$term.buildAwsValue()""")
       case ModelType.Document =>
         ZIO.succeed(term)
       case ModelType.BigDecimal =>
@@ -129,8 +129,9 @@ trait GeneratorBase {
           q"""${model.generatedType.term}.wrap($term)"""
         )
       case ModelType.Exception =>
-        ZIO.succeed(term)
-      case ModelType.Document =>
+        ZIO.succeed(
+          q"""${model.generatedType.term}.wrap($term)"""
+        )      case ModelType.Document =>
         ZIO.succeed(term)
       case _ =>
         if (
