@@ -66,7 +66,9 @@ trait GeneratorBase {
         TypeMapping.toWrappedType(model).flatMap { wrapperType =>
           if (
             TypeMapping
-              .isBuiltIn(model.shapeName) || isBlacklistedNewtype(wrapperType)
+              .isBuiltIn(model.shapeName) ||
+             TypeMapping.resolvedToBuiltIn(wrapperType) ||
+             isBlacklistedNewtype(wrapperType)
           ) {
             TypeMapping.toJavaType(model).map { javaType =>
               q"""$term : ${javaType.typ}"""
@@ -132,9 +134,9 @@ trait GeneratorBase {
         ZIO.succeed(term)
       case _ =>
         if (
-          TypeMapping.isBuiltIn(model.shapeName) || isBlacklistedNewtype(
-            model.generatedType
-          )
+          TypeMapping.isBuiltIn(model.shapeName) ||
+            TypeMapping.resolvedToBuiltIn(model.generatedType) ||
+            isBlacklistedNewtype(model.generatedType)
         )
           ZIO.succeed(q"""$term: ${model.generatedType.typ}""")
         else

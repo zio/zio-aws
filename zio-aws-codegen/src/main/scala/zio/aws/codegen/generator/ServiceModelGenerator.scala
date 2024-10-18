@@ -613,6 +613,7 @@ trait ServiceModelGenerator {
           )(
             CodeFileGenerator.keepFullyQualified(_)
           )
+          _ <- CodeFileGenerator.keepFullyQualified(Types.subtype_)
         } yield q"""import scala.jdk.CollectionConverters._
 
                     object primitives {

@@ -29,9 +29,12 @@ object TypeMapping {
     "Long",
     "Float",
     "Double",
-    "BigDecimal",
-    "Instant"
+    "BigDecimal"
   )
+
+  def resolvedToBuiltIn(typ: ScalaType): Boolean = {
+    typ == Types.instant
+  }
 
   def isBuiltIn(name: String): Boolean = {
     builtIns.contains(name)
