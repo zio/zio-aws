@@ -49,7 +49,7 @@ object DynamoDbTests extends ZIOSpecDefault with Logging with Retries {
     for {
       dynamodb <- ZIO.service[DynamoDb]
       postfix <- Random.nextInt.map(Math.abs)
-      tableName = TableName(s"${prefix}_$postfix")
+      tableName = TableArn(s"${prefix}_$postfix")
     } yield ZIO.acquireRelease(
       for {
         _ <- Console.printLine(s"Creating table $tableName").ignore
@@ -80,7 +80,7 @@ object DynamoDbTests extends ZIOSpecDefault with Logging with Retries {
         .flatMap { tableName =>
           for {
             _ <- Console.printLine(s"Deleting table $tableName").ignore
-            _ <- DynamoDb.deleteTable(DeleteTableRequest(tableName))
+            _ <- DynamoDb.deleteTable(DeleteTableRequest(TableArn(TableName.unwrap(tableName))))
           } yield ()
         }
         .provideEnvironment(ZEnvironment(dynamodb))
@@ -112,7 +112,7 @@ object DynamoDbTests extends ZIOSpecDefault with Logging with Retries {
             table.flatMap { tableDescription =>
               val put =
                 for {
-                  tableName <- tableDescription.getTableName.map(TableName(_))
+                  tableName <- tableDescription.getTableName.map(TableArn(_))
                   randomKey <- Random
                     .nextString(10)
                     .map(StringAttributeValue(_))
@@ -139,7 +139,7 @@ object DynamoDbTests extends ZIOSpecDefault with Logging with Retries {
                 _ <- put.repeatN(N - 1)
                 stream = DynamoDb.scan(
                   ScanRequest(
-                    tableName = tableName,
+                    tableName = TableArn(TableName.unwrap(tableName)),
                     limit = Some(PositiveIntegerObject(10))
                   )
                 )

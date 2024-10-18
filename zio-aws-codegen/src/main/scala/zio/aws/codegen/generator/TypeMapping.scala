@@ -32,6 +32,10 @@ object TypeMapping {
     "BigDecimal"
   )
 
+  def resolvedToBuiltIn(typ: ScalaType): Boolean = {
+    typ == Types.instant
+  }
+
   def isBuiltIn(name: String): Boolean = {
     builtIns.contains(name)
   }
@@ -122,7 +126,7 @@ object TypeMapping {
           itemType <- toWrappedTypeReadOnly(itemModel)
         } yield ScalaType.list(itemType)
       case ModelType.Exception =>
-        toJavaType(model)
+        ZIO.succeed(model.generatedType / "ReadOnly")
       case ModelType.Document =>
         toJavaType(model)
       case ModelType.Structure =>

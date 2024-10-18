@@ -66,6 +66,7 @@ object Types {
     ScalaType(Packages.zioPrelude, "Newtype", t)
   def subtype(t: ScalaType): ScalaType =
     ScalaType(Packages.zioPrelude, "Subtype", t)
+  val subtype_ : ScalaType = ScalaType(Packages.zioPrelude, "Subtype")
 
   val awsDocument: ScalaType =
     ScalaType(Packages.awsCore / "document", "Document")

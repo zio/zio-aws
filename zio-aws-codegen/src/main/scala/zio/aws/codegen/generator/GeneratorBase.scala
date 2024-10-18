@@ -57,7 +57,7 @@ trait GeneratorBase {
       case ModelType.Structure =>
         ZIO.succeed(q"""$term.buildAwsValue()""")
       case ModelType.Exception =>
-        ZIO.succeed(term)
+        ZIO.succeed(q"""$term.buildAwsValue()""")
       case ModelType.Document =>
         ZIO.succeed(term)
       case ModelType.BigDecimal =>
@@ -66,7 +66,9 @@ trait GeneratorBase {
         TypeMapping.toWrappedType(model).flatMap { wrapperType =>
           if (
             TypeMapping
-              .isBuiltIn(model.shapeName) || isBlacklistedNewtype(wrapperType)
+              .isBuiltIn(model.shapeName) ||
+             TypeMapping.resolvedToBuiltIn(wrapperType) ||
+             isBlacklistedNewtype(wrapperType)
           ) {
             TypeMapping.toJavaType(model).map { javaType =>
               q"""$term : ${javaType.typ}"""
@@ -127,14 +129,15 @@ trait GeneratorBase {
           q"""${model.generatedType.term}.wrap($term)"""
         )
       case ModelType.Exception =>
-        ZIO.succeed(term)
-      case ModelType.Document =>
+        ZIO.succeed(
+          q"""${model.generatedType.term}.wrap($term)"""
+        )      case ModelType.Document =>
         ZIO.succeed(term)
       case _ =>
         if (
-          TypeMapping.isBuiltIn(model.shapeName) || isBlacklistedNewtype(
-            model.generatedType
-          )
+          TypeMapping.isBuiltIn(model.shapeName) ||
+            TypeMapping.resolvedToBuiltIn(model.generatedType) ||
+            isBlacklistedNewtype(model.generatedType)
         )
           ZIO.succeed(q"""$term: ${model.generatedType.typ}""")
         else
