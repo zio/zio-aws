@@ -325,6 +325,7 @@ trait ServiceModelGenerator {
           .map(_.toMap)
       fields <- ZIO.foreach(fieldList) { case (memberName, _) =>
         val finalFieldModel = fieldModels(memberName)
+
         val property = fieldNames(memberName)
         val propertyNameLit = Lit.String(property.wrapperName)
         val propertyNameJavaTerm = Term.Name(property.javaName)

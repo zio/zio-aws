@@ -1,13 +1,15 @@
 on:
   schedule:
-    - cron: '0 3 * * 1'
+    - cron: "0 3 * * 1"
   workflow_dispatch:
-  
+
 jobs:
   scala-steward:
     runs-on: ubuntu-latest
     name: Launch Scala Steward
     steps:
+      - name: Install sbt
+        uses: sbt/setup-sbt@v1
       - name: Launch Scala Steward
         uses: scala-steward-org/scala-steward-action@v2
         env:

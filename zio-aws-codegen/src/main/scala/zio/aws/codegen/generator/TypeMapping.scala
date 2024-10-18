@@ -29,7 +29,8 @@ object TypeMapping {
     "Long",
     "Float",
     "Double",
-    "BigDecimal"
+    "BigDecimal",
+    "Instant"
   )
 
   def isBuiltIn(name: String): Boolean = {
