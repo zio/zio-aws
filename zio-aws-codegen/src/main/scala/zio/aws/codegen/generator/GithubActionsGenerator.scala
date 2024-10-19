@@ -242,19 +242,19 @@ trait GithubActionsGenerator {
               "core" :: grouped.indices.map(idx => s"clients-$idx").toList,
               os = Some(OS.UbuntuLatest),
               scalaVersion = Some(scala213),
-              javaVersion = Some(JavaVersion.TemurinJDK11)
+              javaVersion = Some(JavaVersion.ZuluJDK17)
             ),
             loadStoredTargets(
               "core" :: grouped.indices.map(idx => s"clients-$idx").toList,
               os = Some(OS.UbuntuLatest),
               scalaVersion = Some(scala212),
-              javaVersion = Some(JavaVersion.TemurinJDK11)
+              javaVersion = Some(JavaVersion.ZuluJDK17)
             ),
             loadStoredTargets(
               "core" :: grouped.indices.map(idx => s"clients-$idx").toList,
               os = Some(OS.UbuntuLatest),
               scalaVersion = Some(scala3),
-              javaVersion = Some(JavaVersion.TemurinJDK11)
+              javaVersion = Some(JavaVersion.ZuluJDK17)
             ),
             runSBT(
               "Publish artifacts",
