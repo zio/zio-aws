@@ -160,10 +160,10 @@ jobs:
         tar xvf targets.tar
         rm targets.tar
     - name: Build and run tests
-      if: ${{ matrix.scala == '2.12.19' }}
+      if: ${{ matrix.scala == '2.12.20' }}
       run: sbt -J-XX:+UseG1GC -J-Xmx5g -J-Xms5g -J-Xss16m ++${{ matrix.scala }} integtests/test
     - name: Build and run tests
-      if: ${{ (matrix.scala != '3.3.3') && (matrix.scala != '2.12.19') }}
+      if: ${{ (matrix.scala != '3.3.3') && (matrix.scala != '2.12.20') }}
       run: sbt -J-XX:+UseG1GC -J-Xmx5g -J-Xms5g -J-Xss16m ++${{ matrix.scala }} examples/compile
         integtests/test
     - name: Build and run tests
