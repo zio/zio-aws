@@ -9,6 +9,7 @@ ThisBuild / ciParallelJobs := 5
 ThisBuild / ciSeparateJobs := Seq("zio-aws-ec2")
 ThisBuild / ciTarget := file(".github/workflows/ci.yml")
 ThisBuild / artifactListTarget := file("docs/artifacts.md")
+ThisBuild / versionScheme := Some(VersionScheme.PVP)
 
 Global / pgpPublicRing := file("/tmp/public.asc")
 Global / pgpSecretRing := file("/tmp/secret.asc")
