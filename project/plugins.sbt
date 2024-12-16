@@ -1,5 +1,5 @@
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.12.2")
-addSbtPlugin("com.github.sbt" % "sbt-pgp" % "2.3.0")
+addSbtPlugin("com.github.sbt" % "sbt-pgp" % "2.3.1")
 addSbtPlugin("io.shiftleft" % "sbt-ci-release-early" % "2.0.48")
 addSbtPlugin("com.47deg" % "sbt-microsites" % "1.4.4")
 addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.6.1")
