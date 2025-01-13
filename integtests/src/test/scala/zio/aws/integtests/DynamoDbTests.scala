@@ -80,7 +80,9 @@ object DynamoDbTests extends ZIOSpecDefault with Logging with Retries {
         .flatMap { tableName =>
           for {
             _ <- Console.printLine(s"Deleting table $tableName").ignore
-            _ <- DynamoDb.deleteTable(DeleteTableRequest(TableArn(TableName.unwrap(tableName))))
+            _ <- DynamoDb.deleteTable(
+              DeleteTableRequest(TableArn(TableName.unwrap(tableName)))
+            )
           } yield ()
         }
         .provideEnvironment(ZEnvironment(dynamodb))
