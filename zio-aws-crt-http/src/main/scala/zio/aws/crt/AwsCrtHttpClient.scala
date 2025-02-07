@@ -4,12 +4,7 @@ import zio.aws.core.BuilderHelper
 import zio.aws.core.httpclient.{HttpClient, ServiceHttpCapabilities}
 import zio.{Scope, ZIO, ZLayer}
 
-import software.amazon.awssdk.http.crt.{
-  AwsCrtAsyncHttpClient,
-  ConnectionHealthConfiguration,
-  ProxyConfiguration,
-  TcpKeepAliveConfiguration
-}
+import software.amazon.awssdk.http.crt.{AwsCrtAsyncHttpClient}
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient
 
 object AwsCrtHttpClient {
@@ -60,7 +55,7 @@ object AwsCrtHttpClient {
                 .optionallyWith(config.proxyConfiguration)(builder =>
                   proxy =>
                     builder.proxyConfiguration(
-                      ProxyConfiguration
+                      software.amazon.awssdk.http.crt.ProxyConfiguration
                         .builder()
                         .scheme(proxy.scheme)
                         .host(proxy.host)
@@ -74,7 +69,7 @@ object AwsCrtHttpClient {
                 .optionallyWith(config.connectionHealthConfiguration)(builder =>
                   health =>
                     builder.connectionHealthConfiguration(
-                      ConnectionHealthConfiguration
+                      software.amazon.awssdk.http.crt.ConnectionHealthConfiguration
                         .builder()
                         .minimumThroughputInBps(
                           health.minimumThroughputInBps
@@ -91,7 +86,7 @@ object AwsCrtHttpClient {
                 .optionallyWith(config.tcpKeepAliveConfiguration)(builder =>
                   tcpKeepAlive =>
                     builder.tcpKeepAliveConfiguration(
-                      TcpKeepAliveConfiguration
+                      software.amazon.awssdk.http.crt.TcpKeepAliveConfiguration
                         .builder()
                         .keepAliveInterval(tcpKeepAlive.keepAliveInterval)
                         .keepAliveTimeout(tcpKeepAlive.keepAliveTimeout)
