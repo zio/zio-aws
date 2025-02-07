@@ -479,7 +479,7 @@ jobs:
         zio-aws-guardduty/compile zio-aws-health/compile zio-aws-healthlake/compile
         zio-aws-iam/compile zio-aws-identitystore/compile zio-aws-imagebuilder/compile
         zio-aws-inspector/compile zio-aws-inspector2/compile zio-aws-inspectorscan/compile
-        zio-aws-internetmonitor/compile zio-aws-iot/compile zio-aws-iot1clickdevices/compile
+        zio-aws-internetmonitor/compile zio-aws-iot/compile
         zio-aws-iot1clickprojects/compile zio-aws-iotanalytics/compile zio-aws-iotdataplane/compile
         zio-aws-iotdeviceadvisor/compile zio-aws-iotevents/compile zio-aws-ioteventsdata/compile
         zio-aws-iotfleethub/compile zio-aws-iotfleetwise/compile zio-aws-iotjobsdataplane/compile
@@ -509,7 +509,7 @@ jobs:
         zio-aws-guardduty/publishSigned zio-aws-health/publishSigned zio-aws-healthlake/publishSigned
         zio-aws-iam/publishSigned zio-aws-identitystore/publishSigned zio-aws-imagebuilder/publishSigned
         zio-aws-inspector/publishSigned zio-aws-inspector2/publishSigned zio-aws-inspectorscan/publishSigned
-        zio-aws-internetmonitor/publishSigned zio-aws-iot/publishSigned zio-aws-iot1clickdevices/publishSigned
+        zio-aws-internetmonitor/publishSigned zio-aws-iot/publishSigned
         zio-aws-iot1clickprojects/publishSigned zio-aws-iotanalytics/publishSigned
         zio-aws-iotdataplane/publishSigned zio-aws-iotdeviceadvisor/publishSigned
         zio-aws-iotevents/publishSigned zio-aws-ioteventsdata/publishSigned zio-aws-iotfleethub/publishSigned
@@ -610,7 +610,7 @@ jobs:
         zio-aws-migrationhubrefactorspaces/compile zio-aws-migrationhubstrategy/compile
         zio-aws-mq/compile zio-aws-mturk/compile zio-aws-mwaa/compile zio-aws-neptune/compile
         zio-aws-neptunedata/compile zio-aws-neptunegraph/compile zio-aws-networkfirewall/compile
-        zio-aws-networkmanager/compile zio-aws-networkmonitor/compile zio-aws-nimble/compile
+        zio-aws-networkmanager/compile zio-aws-networkmonitor/compile
         zio-aws-oam/compile zio-aws-omics/compile zio-aws-opensearch/compile zio-aws-opensearchserverless/compile
         zio-aws-opsworks/compile zio-aws-opsworkscm/compile zio-aws-organizations/compile
         zio-aws-osis/compile zio-aws-outposts/compile zio-aws-panorama/compile zio-aws-paymentcryptography/compile
@@ -639,7 +639,7 @@ jobs:
         zio-aws-mq/publishSigned zio-aws-mturk/publishSigned zio-aws-mwaa/publishSigned
         zio-aws-neptune/publishSigned zio-aws-neptunedata/publishSigned zio-aws-neptunegraph/publishSigned
         zio-aws-networkfirewall/publishSigned zio-aws-networkmanager/publishSigned
-        zio-aws-networkmonitor/publishSigned zio-aws-nimble/publishSigned zio-aws-oam/publishSigned
+        zio-aws-networkmonitor/publishSigned zio-aws-oam/publishSigned
         zio-aws-omics/publishSigned zio-aws-opensearch/publishSigned zio-aws-opensearchserverless/publishSigned
         zio-aws-opsworks/publishSigned zio-aws-opsworkscm/publishSigned zio-aws-organizations/publishSigned
         zio-aws-osis/publishSigned zio-aws-outposts/publishSigned zio-aws-panorama/publishSigned
