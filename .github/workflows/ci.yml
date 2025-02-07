@@ -28,7 +28,7 @@ jobs:
           ~/.sbt
           ~/.coursier/cache/v1
           ~/.cache/coursier/v1
-        key: ubuntu-latest-sbt-2.13.14-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties')
+        key: ubuntu-latest-sbt-2.13.16-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties')
           }}
     - name: Setup GIT user
       uses: fregante/setup-git-user@v1
@@ -48,9 +48,9 @@ jobs:
         os:
         - ubuntu-latest
         scala:
-        - 2.12.19
-        - 2.13.14
-        - 3.3.3
+        - 2.12.20
+        - 2.13.16
+        - 3.3.5
         java:
         - zulu@1.17
     needs:
@@ -85,17 +85,18 @@ jobs:
           hashFiles('**/build.properties') }}
     - name: Build and test core
       run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-core/test
-        zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
+        zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test zio-aws-crt-http/test
     - name: Publish core
       if: ${{ github.ref == 'refs/heads/master' }}
       run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-core/publishSigned
         zio-aws-akka-http/publishSigned zio-aws-http4s/publishSigned zio-aws-netty/publishSigned
+        zio-aws-crt-http/publishSigned
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress core targets
       run: tar cvf targets.tar target project/target zio-aws-codegen/target zio-aws-core/target
-        zio-aws-akka-http/target zio-aws-http4s/target zio-aws-netty/target
+        zio-aws-akka-http/target zio-aws-http4s/target zio-aws-netty/target zio-aws-crt-http/target
     - name: Upload core targets
       uses: actions/upload-artifact@v4
       with:
@@ -109,9 +110,9 @@ jobs:
         os:
         - ubuntu-latest
         scala:
-        - 2.12.19
-        - 2.13.14
-        - 3.3.3
+        - 2.12.20
+        - 2.13.16
+        - 3.3.5
         java:
         - zulu@1.17
     needs:
@@ -163,11 +164,11 @@ jobs:
       if: ${{ matrix.scala == '2.12.20' }}
       run: sbt -J-XX:+UseG1GC -J-Xmx5g -J-Xms5g -J-Xss16m ++${{ matrix.scala }} integtests/test
     - name: Build and run tests
-      if: ${{ (matrix.scala != '3.3.3') && (matrix.scala != '2.12.20') }}
+      if: ${{ (matrix.scala != '3.3.5') && (matrix.scala != '2.12.20') }}
       run: sbt -J-XX:+UseG1GC -J-Xmx5g -J-Xms5g -J-Xss16m ++${{ matrix.scala }} examples/compile
         integtests/test
     - name: Build and run tests
-      if: ${{ matrix.scala == '3.3.3' }}
+      if: ${{ matrix.scala == '3.3.5' }}
       run: sbt -J-XX:+UseG1GC -J-Xmx5g -J-Xms5g -J-Xss16m ++${{ matrix.scala }} examples/compile
     - name: Collect Docker logs
       uses: jwalton/gh-docker-logs@v1
@@ -180,9 +181,9 @@ jobs:
         os:
         - ubuntu-latest
         scala:
-        - 2.12.19
-        - 2.13.14
-        - 3.3.3
+        - 2.12.20
+        - 2.13.16
+        - 3.3.5
         java:
         - zulu@1.17
     needs:
@@ -305,9 +306,9 @@ jobs:
         os:
         - ubuntu-latest
         scala:
-        - 2.12.19
-        - 2.13.14
-        - 3.3.3
+        - 2.12.20
+        - 2.13.16
+        - 3.3.5
         java:
         - zulu@1.17
     needs:
@@ -429,9 +430,9 @@ jobs:
         os:
         - ubuntu-latest
         scala:
-        - 2.12.19
-        - 2.13.14
-        - 3.3.3
+        - 2.12.20
+        - 2.13.16
+        - 3.3.5
         java:
         - zulu@1.17
     needs:
@@ -557,9 +558,9 @@ jobs:
         os:
         - ubuntu-latest
         scala:
-        - 2.12.19
-        - 2.13.14
-        - 3.3.3
+        - 2.12.20
+        - 2.13.16
+        - 3.3.5
         java:
         - zulu@1.17
     needs:
@@ -683,9 +684,9 @@ jobs:
         os:
         - ubuntu-latest
         scala:
-        - 2.12.19
-        - 2.13.14
-        - 3.3.3
+        - 2.12.20
+        - 2.13.16
+        - 3.3.5
         java:
         - zulu@1.17
     needs:
@@ -806,9 +807,9 @@ jobs:
         os:
         - ubuntu-latest
         scala:
-        - 2.12.19
-        - 2.13.14
-        - 3.3.3
+        - 2.12.20
+        - 2.13.16
+        - 3.3.5
         java:
         - zulu@1.17
     needs:
@@ -906,12 +907,12 @@ jobs:
           ~/.sbt
           ~/.coursier/cache/v1
           ~/.cache/coursier/v1
-        key: ubuntu-latest-sbt-2.13.14-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties')
+        key: ubuntu-latest-sbt-2.13.16-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties')
           }}
     - name: Download stored core targets
       uses: actions/download-artifact@v4
       with:
-        name: target-core-ubuntu-latest-2.13.14-zulu@1.17
+        name: target-core-ubuntu-latest-2.13.16-zulu@1.17
     - name: Inflate core targets
       run: |-
         tar xvf targets.tar
@@ -919,7 +920,7 @@ jobs:
     - name: Download stored clients-0 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-0-ubuntu-latest-2.13.14-zulu@1.17
+        name: target-clients-0-ubuntu-latest-2.13.16-zulu@1.17
     - name: Inflate clients-0 targets
       run: |-
         tar xvf targets.tar
@@ -927,7 +928,7 @@ jobs:
     - name: Download stored clients-1 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-1-ubuntu-latest-2.13.14-zulu@1.17
+        name: target-clients-1-ubuntu-latest-2.13.16-zulu@1.17
     - name: Inflate clients-1 targets
       run: |-
         tar xvf targets.tar
@@ -935,7 +936,7 @@ jobs:
     - name: Download stored clients-2 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-2-ubuntu-latest-2.13.14-zulu@1.17
+        name: target-clients-2-ubuntu-latest-2.13.16-zulu@1.17
     - name: Inflate clients-2 targets
       run: |-
         tar xvf targets.tar
@@ -943,7 +944,7 @@ jobs:
     - name: Download stored clients-3 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-3-ubuntu-latest-2.13.14-zulu@1.17
+        name: target-clients-3-ubuntu-latest-2.13.16-zulu@1.17
     - name: Inflate clients-3 targets
       run: |-
         tar xvf targets.tar
@@ -951,7 +952,7 @@ jobs:
     - name: Download stored clients-4 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-4-ubuntu-latest-2.13.14-zulu@1.17
+        name: target-clients-4-ubuntu-latest-2.13.16-zulu@1.17
     - name: Inflate clients-4 targets
       run: |-
         tar xvf targets.tar
@@ -959,7 +960,7 @@ jobs:
     - name: Download stored clients-5 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-5-ubuntu-latest-2.13.14-zulu@1.17
+        name: target-clients-5-ubuntu-latest-2.13.16-zulu@1.17
     - name: Inflate clients-5 targets
       run: |-
         tar xvf targets.tar
@@ -967,7 +968,7 @@ jobs:
     - name: Download stored core targets
       uses: actions/download-artifact@v4
       with:
-        name: target-core-ubuntu-latest-2.12.19-zulu@1.17
+        name: target-core-ubuntu-latest-2.12.20-zulu@1.17
     - name: Inflate core targets
       run: |-
         tar xvf targets.tar
@@ -975,7 +976,7 @@ jobs:
     - name: Download stored clients-0 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-0-ubuntu-latest-2.12.19-zulu@1.17
+        name: target-clients-0-ubuntu-latest-2.12.20-zulu@1.17
     - name: Inflate clients-0 targets
       run: |-
         tar xvf targets.tar
@@ -983,7 +984,7 @@ jobs:
     - name: Download stored clients-1 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-1-ubuntu-latest-2.12.19-zulu@1.17
+        name: target-clients-1-ubuntu-latest-2.12.20-zulu@1.17
     - name: Inflate clients-1 targets
       run: |-
         tar xvf targets.tar
@@ -991,7 +992,7 @@ jobs:
     - name: Download stored clients-2 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-2-ubuntu-latest-2.12.19-zulu@1.17
+        name: target-clients-2-ubuntu-latest-2.12.20-zulu@1.17
     - name: Inflate clients-2 targets
       run: |-
         tar xvf targets.tar
@@ -999,7 +1000,7 @@ jobs:
     - name: Download stored clients-3 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-3-ubuntu-latest-2.12.19-zulu@1.17
+        name: target-clients-3-ubuntu-latest-2.12.20-zulu@1.17
     - name: Inflate clients-3 targets
       run: |-
         tar xvf targets.tar
@@ -1007,7 +1008,7 @@ jobs:
     - name: Download stored clients-4 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-4-ubuntu-latest-2.12.19-zulu@1.17
+        name: target-clients-4-ubuntu-latest-2.12.20-zulu@1.17
     - name: Inflate clients-4 targets
       run: |-
         tar xvf targets.tar
@@ -1015,7 +1016,7 @@ jobs:
     - name: Download stored clients-5 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-5-ubuntu-latest-2.12.19-zulu@1.17
+        name: target-clients-5-ubuntu-latest-2.12.20-zulu@1.17
     - name: Inflate clients-5 targets
       run: |-
         tar xvf targets.tar
@@ -1023,7 +1024,7 @@ jobs:
     - name: Download stored core targets
       uses: actions/download-artifact@v4
       with:
-        name: target-core-ubuntu-latest-3.3.3-zulu@1.17
+        name: target-core-ubuntu-latest-3.3.5-zulu@1.17
     - name: Inflate core targets
       run: |-
         tar xvf targets.tar
@@ -1031,7 +1032,7 @@ jobs:
     - name: Download stored clients-0 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-0-ubuntu-latest-3.3.3-zulu@1.17
+        name: target-clients-0-ubuntu-latest-3.3.5-zulu@1.17
     - name: Inflate clients-0 targets
       run: |-
         tar xvf targets.tar
@@ -1039,7 +1040,7 @@ jobs:
     - name: Download stored clients-1 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-1-ubuntu-latest-3.3.3-zulu@1.17
+        name: target-clients-1-ubuntu-latest-3.3.5-zulu@1.17
     - name: Inflate clients-1 targets
       run: |-
         tar xvf targets.tar
@@ -1047,7 +1048,7 @@ jobs:
     - name: Download stored clients-2 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-2-ubuntu-latest-3.3.3-zulu@1.17
+        name: target-clients-2-ubuntu-latest-3.3.5-zulu@1.17
     - name: Inflate clients-2 targets
       run: |-
         tar xvf targets.tar
@@ -1055,7 +1056,7 @@ jobs:
     - name: Download stored clients-3 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-3-ubuntu-latest-3.3.3-zulu@1.17
+        name: target-clients-3-ubuntu-latest-3.3.5-zulu@1.17
     - name: Inflate clients-3 targets
       run: |-
         tar xvf targets.tar
@@ -1063,7 +1064,7 @@ jobs:
     - name: Download stored clients-4 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-4-ubuntu-latest-3.3.3-zulu@1.17
+        name: target-clients-4-ubuntu-latest-3.3.5-zulu@1.17
     - name: Inflate clients-4 targets
       run: |-
         tar xvf targets.tar
@@ -1071,7 +1072,7 @@ jobs:
     - name: Download stored clients-5 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-5-ubuntu-latest-3.3.3-zulu@1.17
+        name: target-clients-5-ubuntu-latest-3.3.5-zulu@1.17
     - name: Inflate clients-5 targets
       run: |-
         tar xvf targets.tar

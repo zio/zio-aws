@@ -95,7 +95,8 @@ trait GithubActionsGenerator {
                   "zio-aws-core/test",
                   "zio-aws-akka-http/test",
                   "zio-aws-http4s/test",
-                  "zio-aws-netty/test"
+                  "zio-aws-netty/test",
+                  "zio-aws-crt-http/test"
                 )
               ),
               runSBT(
@@ -105,7 +106,8 @@ trait GithubActionsGenerator {
                   "zio-aws-core/publishSigned",
                   "zio-aws-akka-http/publishSigned",
                   "zio-aws-http4s/publishSigned",
-                  "zio-aws-netty/publishSigned"
+                  "zio-aws-netty/publishSigned",
+                  "zio-aws-crt-http/publishSigned"
                 ),
                 env = Map(
                   "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
@@ -121,7 +123,8 @@ trait GithubActionsGenerator {
                   "zio-aws-core",
                   "zio-aws-akka-http",
                   "zio-aws-http4s",
-                  "zio-aws-netty"
+                  "zio-aws-netty",
+                  "zio-aws-crt-http"
                 )
               )
             )
