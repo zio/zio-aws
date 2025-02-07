@@ -1,16 +1,12 @@
 package zio.aws.codegen.generator
 
-import io.circe.syntax._
+import io.circe.syntax.*
 import io.circe.yaml
 import io.circe.yaml.Printer.{LineBreak, YamlVersion}
 import zio.aws.codegen.githubactions.OS.UbuntuLatest
-import zio.aws.codegen.githubactions.ScalaWorkflow.JavaVersion.{
-  TemurinJDK11,
-  TemurinJDK21,
-  ZuluJDK17
-}
-import zio.aws.codegen.githubactions.ScalaWorkflow.{JavaVersion, _}
-import zio.aws.codegen.githubactions._
+import zio.aws.codegen.githubactions.ScalaWorkflow.JavaVersion.{Java17, Java11, Java21}
+import zio.aws.codegen.githubactions.ScalaWorkflow.*
+import zio.aws.codegen.githubactions.*
 import zio.aws.codegen.loader.ModuleId
 
 trait GithubActionsGenerator {
@@ -36,9 +32,9 @@ trait GithubActionsGenerator {
       )
       .toList ++ separateProjectNames.map(List(_))
 
-    val scala212 = ScalaVersion("2.12.20")
-    val scala213 = ScalaVersion("2.13.16")
-    val scala3 = ScalaVersion("3.3.5")
+    val scala212 = ScalaVersion("2.12.x")
+    val scala213 = ScalaVersion("2.13.x")
+    val scala3 = ScalaVersion("3.x")
     val scalaVersions = Seq(
       scala212,
       scala213,
@@ -62,7 +58,8 @@ trait GithubActionsGenerator {
             condition = Some(isNotFromGithubActionBot)
           ).withSteps(
             checkoutCurrentBranch(),
-            setupScala(Some(ZuluJDK17)),
+            setupJava(Some(Java17)),
+            setupSbt(),
             cacheSBT(
               os = Some(UbuntuLatest),
               scalaVersion = Some(scala213)
@@ -84,7 +81,8 @@ trait GithubActionsGenerator {
           ).matrix(scalaVersions)
             .withSteps(
               checkoutCurrentBranch(),
-              setupScala(Some(ZuluJDK17)),
+              setupJava(Some(Java17)),
+              setupSbt(),
               setupGPG().when(isMaster),
               loadPGPSecret.when(isMaster),
               cacheSBT(),
@@ -155,7 +153,8 @@ trait GithubActionsGenerator {
             )
             .withSteps(
               checkoutCurrentBranch(),
-              setupScala(Some(ZuluJDK17)),
+              setupJava(Some(Java17)),
+              setupSbt(),
               cacheSBT(),
               loadStoredTarget("core"),
               runSBT(
@@ -196,7 +195,8 @@ trait GithubActionsGenerator {
             ).matrix(scalaVersions)
               .withSteps(
                 checkoutCurrentBranch(),
-                setupScala(Some(ZuluJDK17)),
+                setupJava(Some(Java17)),
+                setupSbt(),
                 setupGPG().when(isMaster),
                 loadPGPSecret().when(isMaster),
                 cacheSBT(),
@@ -231,7 +231,8 @@ trait GithubActionsGenerator {
             condition = Some(isMaster && isNotFromGithubActionBot)
           ).withSteps(
             checkoutCurrentBranch(),
-            setupScala(Some(JavaVersion.ZuluJDK17)),
+            setupJava(Some(JavaVersion.Java17)),
+            setupSbt(),
             setupGPG(),
             loadPGPSecret(),
             cacheSBT(
@@ -242,19 +243,19 @@ trait GithubActionsGenerator {
               "core" :: grouped.indices.map(idx => s"clients-$idx").toList,
               os = Some(OS.UbuntuLatest),
               scalaVersion = Some(scala213),
-              javaVersion = Some(JavaVersion.ZuluJDK17)
+              javaVersion = Some(JavaVersion.Java17)
             ),
             loadStoredTargets(
               "core" :: grouped.indices.map(idx => s"clients-$idx").toList,
               os = Some(OS.UbuntuLatest),
               scalaVersion = Some(scala212),
-              javaVersion = Some(JavaVersion.ZuluJDK17)
+              javaVersion = Some(JavaVersion.Java17)
             ),
             loadStoredTargets(
               "core" :: grouped.indices.map(idx => s"clients-$idx").toList,
               os = Some(OS.UbuntuLatest),
               scalaVersion = Some(scala3),
-              javaVersion = Some(JavaVersion.ZuluJDK17)
+              javaVersion = Some(JavaVersion.Java17)
             ),
             runSBT(
               "Publish artifacts",

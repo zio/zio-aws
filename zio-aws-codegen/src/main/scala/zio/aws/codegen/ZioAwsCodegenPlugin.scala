@@ -12,30 +12,17 @@ import zio.nio.file.Path
 object ZioAwsCodegenPlugin extends AutoPlugin {
 
   object autoImport {
-    val awsLibraryId =
-      settingKey[String]("Selects the AWS library to generate sources for")
-    val awsLibraryVersion = settingKey[String](
-      "Specifies the version of the  AWS Java SDK to depend on"
-    )
-    val zioLibraryVersion = settingKey[String](
-      "Specifies the version of the ZIO library to depend on"
-    )
-    val zioMockLibraryVersion = settingKey[String](
-      "Specifies the version of the ZIO Mock library to depend on"
-    )
-    val ciParallelJobs =
-      settingKey[Int]("Number of parallel jobs in the generated circleCi file")
-    val ciSeparateJobs = settingKey[Seq[String]](
-      "List of subprojects to have their individual circleCi jobs"
-    )
+    val awsLibraryId = settingKey[String]("Selects the AWS library to generate sources for")
+    val awsLibraryVersion = settingKey[String]("Specifies the version of the  AWS Java SDK to depend on")
+    val zioLibraryVersion = settingKey[String]("Specifies the version of the ZIO library to depend on")
+    val zioMockLibraryVersion = settingKey[String]("Specifies the version of the ZIO Mock library to depend on")
+    val ciParallelJobs = settingKey[Int]("Number of parallel jobs in the generated circleCi file")
+    val ciSeparateJobs = settingKey[Seq[String]]("List of subprojects to have their individual circleCi jobs")
     val ciTarget = settingKey[File]("circleCi target file")
-    val artifactListTarget =
-      settingKey[File]("artifact list markdown target file")
+    val artifactListTarget = settingKey[File]("artifact list markdown target file")
 
-    val generateCiYaml =
-      taskKey[Unit]("Regenerates the CI workflow file")
-    val generateArtifactList =
-      taskKey[Unit]("Regenerates the artifact list markdown file")
+    val generateCiYaml = taskKey[Unit]("Regenerates the CI workflow file")
+    val generateArtifactList = taskKey[Unit]("Regenerates the artifact list markdown file")
 
     lazy val generateSources =
       Def.task {
@@ -44,7 +31,7 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
         val idStr = awsLibraryId.value
         val id = ModuleId.parse(idStr) match {
           case Left(failure) => sys.error(failure)
-          case Right(value)  => value
+          case Right(value) => value
         }
 
         val targetRoot = (Compile / sourceManaged).value
@@ -209,11 +196,11 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
       .sortWith { case (a, b) =>
         val aIsDependent = a.subModuleName match {
           case Some(value) if value != a.name => true
-          case _                              => false
+          case _ => false
         }
         val bIsDependent = b.subModuleName match {
           case Some(value) if value != b.name => true
-          case _                              => false
+          case _ => false
         }
 
         bIsDependent || (!aIsDependent && a.toString < b.toString)

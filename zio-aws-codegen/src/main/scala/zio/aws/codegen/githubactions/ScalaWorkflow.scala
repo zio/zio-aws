@@ -9,31 +9,39 @@ object ScalaWorkflow {
   def checkoutCurrentBranch(fetchDepth: Int = 0): Step =
     SingleStep(
       name = "Checkout current branch",
-      uses = Some(ActionRef("actions/checkout@v2")),
+      uses = Some(ActionRef("actions/checkout@v4")),
       parameters = Map(
         "fetch-depth" := fetchDepth
       )
     )
 
-  def setupScala(javaVersion: Option[JavaVersion] = None): Step =
+  def setupJava(javaVersion: Option[JavaVersion] = None): Step =
     SingleStep(
-      name = "Setup Java and Scala",
-      uses = Some(ActionRef("olafurpg/setup-scala@v11")),
+      name = "Setup Java",
+      uses = Some(ActionRef("actions/setup-java@v4")),
       parameters = Map(
+        "distribution" := "temurin",
         "java-version" := (javaVersion match {
           case None          => "${{ matrix.java }}"
           case Some(version) => version.asString
-        })
+        }),
+        "check-latest" := "true",
       )
+    )
+
+  def setupSbt(): Step =
+    SingleStep(
+      name = "Setup SBT",
+      uses = Some(ActionRef("sbt/setup-sbt@v1"))
     )
 
   def setupNode(javaVersion: Option[JavaVersion] = None): Step =
     SingleStep(
       name = "Setup NodeJS",
-      uses = Some(ActionRef("actions/setup-node@v3")),
+      uses = Some(ActionRef("actions/setup-node@v4")),
       parameters = Map(
         "node-version" := (javaVersion match {
-          case None          => "16.x"
+          case None          => "22.x"
           case Some(version) => version.asString
         }),
         "registry-url" := "https://registry.npmjs.org"
@@ -205,14 +213,14 @@ object ScalaWorkflow {
     val asString: String
   }
   object JavaVersion {
-    case object ZuluJDK17 extends JavaVersion {
-      override val asString: String = "zulu@1.17"
+    case object Java11 extends JavaVersion {
+      override val asString: String = "11"
     }
-    case object TemurinJDK11 extends JavaVersion {
-      override val asString: String = "temurin@11"
+    case object Java17 extends JavaVersion {
+      override val asString: String = "17"
     }
-    case object TemurinJDK21 extends JavaVersion {
-      override val asString: String = "temurin@21"
+    case object Java21 extends JavaVersion {
+      override val asString: String = "21"
     }
   }
 
@@ -220,7 +228,7 @@ object ScalaWorkflow {
     def matrix(
         scalaVersions: Seq[ScalaVersion],
         operatingSystems: Seq[OS] = Seq(OS.UbuntuLatest),
-        javaVersions: Seq[JavaVersion] = Seq(JavaVersion.ZuluJDK17)
+        javaVersions: Seq[JavaVersion] = Seq(JavaVersion.Java17)
     ): Job =
       job.copy(
         strategy = Some(
