@@ -480,7 +480,7 @@ jobs:
         zio-aws-iam/compile zio-aws-identitystore/compile zio-aws-imagebuilder/compile
         zio-aws-inspector/compile zio-aws-inspector2/compile zio-aws-inspectorscan/compile
         zio-aws-internetmonitor/compile zio-aws-iot/compile
-        zio-aws-iot1clickprojects/compile zio-aws-iotanalytics/compile zio-aws-iotdataplane/compile
+        zio-aws-iotanalytics/compile zio-aws-iotdataplane/compile
         zio-aws-iotdeviceadvisor/compile zio-aws-iotevents/compile zio-aws-ioteventsdata/compile
         zio-aws-iotfleethub/compile zio-aws-iotfleetwise/compile zio-aws-iotjobsdataplane/compile
         zio-aws-iotsecuretunneling/compile zio-aws-iotsitewise/compile zio-aws-iotthingsgraph/compile
@@ -510,7 +510,7 @@ jobs:
         zio-aws-iam/publishSigned zio-aws-identitystore/publishSigned zio-aws-imagebuilder/publishSigned
         zio-aws-inspector/publishSigned zio-aws-inspector2/publishSigned zio-aws-inspectorscan/publishSigned
         zio-aws-internetmonitor/publishSigned zio-aws-iot/publishSigned
-        zio-aws-iot1clickprojects/publishSigned zio-aws-iotanalytics/publishSigned
+        zio-aws-iotanalytics/publishSigned
         zio-aws-iotdataplane/publishSigned zio-aws-iotdeviceadvisor/publishSigned
         zio-aws-iotevents/publishSigned zio-aws-ioteventsdata/publishSigned zio-aws-iotfleethub/publishSigned
         zio-aws-iotfleetwise/publishSigned zio-aws-iotjobsdataplane/publishSigned
