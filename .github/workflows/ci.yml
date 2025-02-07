@@ -25,7 +25,7 @@ jobs:
     - name: Setup SBT
       uses: sbt/setup-sbt@v1
     - name: Cache SBT
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: |-
           ~/.ivy2/cache
@@ -35,9 +35,9 @@ jobs:
         key: ubuntu-latest-sbt-2.13.x-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties')
           }}
     - name: Setup GIT user
-      uses: fregante/setup-git-user@v1
+      uses: fregante/setup-git-user@v2
     - name: Turnstyle
-      uses: softprops/turnstyle@v1
+      uses: softprops/turnstyle@v2
       if: ${{ github.ref == 'refs/heads/master' }}
       env:
         GITHUB_TOKEN: ${{ secrets.ADMIN_GITHUB_TOKEN }}
@@ -82,7 +82,7 @@ jobs:
       env:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Cache SBT
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: |-
           ~/.ivy2/cache
@@ -154,7 +154,7 @@ jobs:
     - name: Setup SBT
       uses: sbt/setup-sbt@v1
     - name: Cache SBT
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: |-
           ~/.ivy2/cache
@@ -223,7 +223,7 @@ jobs:
       env:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Cache SBT
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: |-
           ~/.ivy2/cache
@@ -354,7 +354,7 @@ jobs:
       env:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Cache SBT
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: |-
           ~/.ivy2/cache
@@ -485,7 +485,7 @@ jobs:
       env:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Cache SBT
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: |-
           ~/.ivy2/cache
@@ -619,7 +619,7 @@ jobs:
       env:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Cache SBT
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: |-
           ~/.ivy2/cache
@@ -753,7 +753,7 @@ jobs:
       env:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Cache SBT
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: |-
           ~/.ivy2/cache
@@ -882,7 +882,7 @@ jobs:
       env:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Cache SBT
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: |-
           ~/.ivy2/cache
@@ -952,7 +952,7 @@ jobs:
       env:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Cache SBT
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: |-
           ~/.ivy2/cache

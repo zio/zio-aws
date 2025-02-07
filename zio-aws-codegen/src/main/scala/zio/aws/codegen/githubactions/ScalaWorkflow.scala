@@ -63,7 +63,7 @@ object ScalaWorkflow {
 
     SingleStep(
       name = "Cache SBT",
-      uses = Some(ActionRef("actions/cache@v2")),
+      uses = Some(ActionRef("actions/cache@v4")),
       parameters = Map(
         "path" := Seq(
           "~/.ivy2/cache",
@@ -79,7 +79,7 @@ object ScalaWorkflow {
   def setupGitUser(): Step =
     SingleStep(
       name = "Setup GIT user",
-      uses = Some(ActionRef("fregante/setup-git-user@v1"))
+      uses = Some(ActionRef("fregante/setup-git-user@v2"))
     )
 
   def runSBT(
@@ -177,7 +177,7 @@ object ScalaWorkflow {
   def turnstyle(): Step =
     SingleStep(
       "Turnstyle",
-      uses = Some(ActionRef("softprops/turnstyle@v1")),
+      uses = Some(ActionRef("softprops/turnstyle@v2")),
       env = Map(
         "GITHUB_TOKEN" -> "${{ secrets.ADMIN_GITHUB_TOKEN }}"
       )
