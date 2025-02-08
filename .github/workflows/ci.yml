@@ -13,27 +13,31 @@ jobs:
     if: ${{ github.actor != 'github-actions[bot]' }}
     steps:
     - name: Checkout current branch
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    - name: Setup Java and Scala
-      uses: olafurpg/setup-scala@v11
+    - name: Setup Java
+      uses: actions/setup-java@v4
       with:
-        java-version: zulu@1.17
+        distribution: temurin
+        java-version: '17'
+        check-latest: 'true'
+    - name: Setup SBT
+      uses: sbt/setup-sbt@v1
     - name: Cache SBT
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: |-
           ~/.ivy2/cache
           ~/.sbt
           ~/.coursier/cache/v1
           ~/.cache/coursier/v1
-        key: ubuntu-latest-sbt-2.13.16-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties')
+        key: ubuntu-latest-sbt-2.13.x-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties')
           }}
     - name: Setup GIT user
-      uses: fregante/setup-git-user@v1
+      uses: fregante/setup-git-user@v2
     - name: Turnstyle
-      uses: softprops/turnstyle@v1
+      uses: softprops/turnstyle@v2
       if: ${{ github.ref == 'refs/heads/master' }}
       env:
         GITHUB_TOKEN: ${{ secrets.ADMIN_GITHUB_TOKEN }}
@@ -48,23 +52,27 @@ jobs:
         os:
         - ubuntu-latest
         scala:
-        - 2.12.20
-        - 2.13.16
-        - 3.3.5
+        - 2.12.x
+        - 2.13.x
+        - 3.x
         java:
-        - zulu@1.17
+        - '17'
     needs:
     - tag
     if: ${{ github.actor != 'github-actions[bot]' }}
     steps:
     - name: Checkout current branch
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    - name: Setup Java and Scala
-      uses: olafurpg/setup-scala@v11
+    - name: Setup Java
+      uses: actions/setup-java@v4
       with:
-        java-version: zulu@1.17
+        distribution: temurin
+        java-version: '17'
+        check-latest: 'true'
+    - name: Setup SBT
+      uses: sbt/setup-sbt@v1
     - name: Setup GPG
       uses: olafurpg/setup-gpg@v3
       if: ${{ github.ref == 'refs/heads/master' }}
@@ -74,7 +82,7 @@ jobs:
       env:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Cache SBT
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: |-
           ~/.ivy2/cache
@@ -110,11 +118,11 @@ jobs:
         os:
         - ubuntu-latest
         scala:
-        - 2.12.20
-        - 2.13.16
-        - 3.3.5
+        - 2.12.x
+        - 2.13.x
+        - 3.x
         java:
-        - zulu@1.17
+        - '17'
     needs:
     - build-core
     services:
@@ -135,15 +143,19 @@ jobs:
     if: ${{ github.actor != 'github-actions[bot]' }}
     steps:
     - name: Checkout current branch
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    - name: Setup Java and Scala
-      uses: olafurpg/setup-scala@v11
+    - name: Setup Java
+      uses: actions/setup-java@v4
       with:
-        java-version: zulu@1.17
+        distribution: temurin
+        java-version: '17'
+        check-latest: 'true'
+    - name: Setup SBT
+      uses: sbt/setup-sbt@v1
     - name: Cache SBT
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: |-
           ~/.ivy2/cache
@@ -161,14 +173,14 @@ jobs:
         tar xvf targets.tar
         rm targets.tar
     - name: Build and run tests
-      if: ${{ matrix.scala == '2.12.20' }}
+      if: ${{ matrix.scala == '2.12.x' }}
       run: sbt -J-XX:+UseG1GC -J-Xmx5g -J-Xms5g -J-Xss16m ++${{ matrix.scala }} integtests/test
     - name: Build and run tests
-      if: ${{ (matrix.scala != '3.3.5') && (matrix.scala != '2.12.20') }}
+      if: ${{ (matrix.scala != '3.x') && (matrix.scala != '2.12.x') }}
       run: sbt -J-XX:+UseG1GC -J-Xmx5g -J-Xms5g -J-Xss16m ++${{ matrix.scala }} examples/compile
         integtests/test
     - name: Build and run tests
-      if: ${{ matrix.scala == '3.3.5' }}
+      if: ${{ matrix.scala == '3.x' }}
       run: sbt -J-XX:+UseG1GC -J-Xmx5g -J-Xms5g -J-Xss16m ++${{ matrix.scala }} examples/compile
     - name: Collect Docker logs
       uses: jwalton/gh-docker-logs@v1
@@ -181,24 +193,28 @@ jobs:
         os:
         - ubuntu-latest
         scala:
-        - 2.12.20
-        - 2.13.16
-        - 3.3.5
+        - 2.12.x
+        - 2.13.x
+        - 3.x
         java:
-        - zulu@1.17
+        - '17'
     needs:
     - build-core
     - integration-test
     if: ${{ github.actor != 'github-actions[bot]' }}
     steps:
     - name: Checkout current branch
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    - name: Setup Java and Scala
-      uses: olafurpg/setup-scala@v11
+    - name: Setup Java
+      uses: actions/setup-java@v4
       with:
-        java-version: zulu@1.17
+        distribution: temurin
+        java-version: '17'
+        check-latest: 'true'
+    - name: Setup SBT
+      uses: sbt/setup-sbt@v1
     - name: Setup GPG
       uses: olafurpg/setup-gpg@v3
       if: ${{ github.ref == 'refs/heads/master' }}
@@ -208,7 +224,7 @@ jobs:
       env:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Cache SBT
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: |-
           ~/.ivy2/cache
@@ -308,24 +324,28 @@ jobs:
         os:
         - ubuntu-latest
         scala:
-        - 2.12.20
-        - 2.13.16
-        - 3.3.5
+        - 2.12.x
+        - 2.13.x
+        - 3.x
         java:
-        - zulu@1.17
+        - '17'
     needs:
     - build-core
     - integration-test
     if: ${{ github.actor != 'github-actions[bot]' }}
     steps:
     - name: Checkout current branch
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    - name: Setup Java and Scala
-      uses: olafurpg/setup-scala@v11
+    - name: Setup Java
+      uses: actions/setup-java@v4
       with:
-        java-version: zulu@1.17
+        distribution: temurin
+        java-version: '17'
+        check-latest: 'true'
+    - name: Setup SBT
+      uses: sbt/setup-sbt@v1
     - name: Setup GPG
       uses: olafurpg/setup-gpg@v3
       if: ${{ github.ref == 'refs/heads/master' }}
@@ -335,7 +355,7 @@ jobs:
       env:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Cache SBT
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: |-
           ~/.ivy2/cache
@@ -435,24 +455,28 @@ jobs:
         os:
         - ubuntu-latest
         scala:
-        - 2.12.20
-        - 2.13.16
-        - 3.3.5
+        - 2.12.x
+        - 2.13.x
+        - 3.x
         java:
-        - zulu@1.17
+        - '17'
     needs:
     - build-core
     - integration-test
     if: ${{ github.actor != 'github-actions[bot]' }}
     steps:
     - name: Checkout current branch
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    - name: Setup Java and Scala
-      uses: olafurpg/setup-scala@v11
+    - name: Setup Java
+      uses: actions/setup-java@v4
       with:
-        java-version: zulu@1.17
+        distribution: temurin
+        java-version: '17'
+        check-latest: 'true'
+    - name: Setup SBT
+      uses: sbt/setup-sbt@v1
     - name: Setup GPG
       uses: olafurpg/setup-gpg@v3
       if: ${{ github.ref == 'refs/heads/master' }}
@@ -462,7 +486,7 @@ jobs:
       env:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Cache SBT
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: |-
           ~/.ivy2/cache
@@ -565,24 +589,28 @@ jobs:
         os:
         - ubuntu-latest
         scala:
-        - 2.12.20
-        - 2.13.16
-        - 3.3.5
+        - 2.12.x
+        - 2.13.x
+        - 3.x
         java:
-        - zulu@1.17
+        - '17'
     needs:
     - build-core
     - integration-test
     if: ${{ github.actor != 'github-actions[bot]' }}
     steps:
     - name: Checkout current branch
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    - name: Setup Java and Scala
-      uses: olafurpg/setup-scala@v11
+    - name: Setup Java
+      uses: actions/setup-java@v4
       with:
-        java-version: zulu@1.17
+        distribution: temurin
+        java-version: '17'
+        check-latest: 'true'
+    - name: Setup SBT
+      uses: sbt/setup-sbt@v1
     - name: Setup GPG
       uses: olafurpg/setup-gpg@v3
       if: ${{ github.ref == 'refs/heads/master' }}
@@ -592,7 +620,7 @@ jobs:
       env:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Cache SBT
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: |-
           ~/.ivy2/cache
@@ -695,24 +723,28 @@ jobs:
         os:
         - ubuntu-latest
         scala:
-        - 2.12.20
-        - 2.13.16
-        - 3.3.5
+        - 2.12.x
+        - 2.13.x
+        - 3.x
         java:
-        - zulu@1.17
+        - '17'
     needs:
     - build-core
     - integration-test
     if: ${{ github.actor != 'github-actions[bot]' }}
     steps:
     - name: Checkout current branch
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    - name: Setup Java and Scala
-      uses: olafurpg/setup-scala@v11
+    - name: Setup Java
+      uses: actions/setup-java@v4
       with:
-        java-version: zulu@1.17
+        distribution: temurin
+        java-version: '17'
+        check-latest: 'true'
+    - name: Setup SBT
+      uses: sbt/setup-sbt@v1
     - name: Setup GPG
       uses: olafurpg/setup-gpg@v3
       if: ${{ github.ref == 'refs/heads/master' }}
@@ -722,7 +754,7 @@ jobs:
       env:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Cache SBT
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: |-
           ~/.ivy2/cache
@@ -820,24 +852,28 @@ jobs:
         os:
         - ubuntu-latest
         scala:
-        - 2.12.20
-        - 2.13.16
-        - 3.3.5
+        - 2.12.x
+        - 2.13.x
+        - 3.x
         java:
-        - zulu@1.17
+        - '17'
     needs:
     - build-core
     - integration-test
     if: ${{ github.actor != 'github-actions[bot]' }}
     steps:
     - name: Checkout current branch
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    - name: Setup Java and Scala
-      uses: olafurpg/setup-scala@v11
+    - name: Setup Java
+      uses: actions/setup-java@v4
       with:
-        java-version: zulu@1.17
+        distribution: temurin
+        java-version: '17'
+        check-latest: 'true'
+    - name: Setup SBT
+      uses: sbt/setup-sbt@v1
     - name: Setup GPG
       uses: olafurpg/setup-gpg@v3
       if: ${{ github.ref == 'refs/heads/master' }}
@@ -847,7 +883,7 @@ jobs:
       env:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Cache SBT
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: |-
           ~/.ivy2/cache
@@ -899,13 +935,17 @@ jobs:
       }}
     steps:
     - name: Checkout current branch
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    - name: Setup Java and Scala
-      uses: olafurpg/setup-scala@v11
+    - name: Setup Java
+      uses: actions/setup-java@v4
       with:
-        java-version: zulu@1.17
+        distribution: temurin
+        java-version: '17'
+        check-latest: 'true'
+    - name: Setup SBT
+      uses: sbt/setup-sbt@v1
     - name: Setup GPG
       uses: olafurpg/setup-gpg@v3
     - name: Load PGP secret
@@ -913,19 +953,19 @@ jobs:
       env:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Cache SBT
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: |-
           ~/.ivy2/cache
           ~/.sbt
           ~/.coursier/cache/v1
           ~/.cache/coursier/v1
-        key: ubuntu-latest-sbt-2.13.16-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties')
+        key: ubuntu-latest-sbt-2.13.x-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties')
           }}
     - name: Download stored core targets
       uses: actions/download-artifact@v4
       with:
-        name: target-core-ubuntu-latest-2.13.16-zulu@1.17
+        name: target-core-ubuntu-latest-2.13.x-17
     - name: Inflate core targets
       run: |-
         tar xvf targets.tar
@@ -933,7 +973,7 @@ jobs:
     - name: Download stored clients-0 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-0-ubuntu-latest-2.13.16-zulu@1.17
+        name: target-clients-0-ubuntu-latest-2.13.x-17
     - name: Inflate clients-0 targets
       run: |-
         tar xvf targets.tar
@@ -941,7 +981,7 @@ jobs:
     - name: Download stored clients-1 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-1-ubuntu-latest-2.13.16-zulu@1.17
+        name: target-clients-1-ubuntu-latest-2.13.x-17
     - name: Inflate clients-1 targets
       run: |-
         tar xvf targets.tar
@@ -949,7 +989,7 @@ jobs:
     - name: Download stored clients-2 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-2-ubuntu-latest-2.13.16-zulu@1.17
+        name: target-clients-2-ubuntu-latest-2.13.x-17
     - name: Inflate clients-2 targets
       run: |-
         tar xvf targets.tar
@@ -957,7 +997,7 @@ jobs:
     - name: Download stored clients-3 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-3-ubuntu-latest-2.13.16-zulu@1.17
+        name: target-clients-3-ubuntu-latest-2.13.x-17
     - name: Inflate clients-3 targets
       run: |-
         tar xvf targets.tar
@@ -965,7 +1005,7 @@ jobs:
     - name: Download stored clients-4 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-4-ubuntu-latest-2.13.16-zulu@1.17
+        name: target-clients-4-ubuntu-latest-2.13.x-17
     - name: Inflate clients-4 targets
       run: |-
         tar xvf targets.tar
@@ -973,7 +1013,7 @@ jobs:
     - name: Download stored clients-5 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-5-ubuntu-latest-2.13.16-zulu@1.17
+        name: target-clients-5-ubuntu-latest-2.13.x-17
     - name: Inflate clients-5 targets
       run: |-
         tar xvf targets.tar
@@ -981,7 +1021,7 @@ jobs:
     - name: Download stored core targets
       uses: actions/download-artifact@v4
       with:
-        name: target-core-ubuntu-latest-2.12.20-zulu@1.17
+        name: target-core-ubuntu-latest-2.12.x-17
     - name: Inflate core targets
       run: |-
         tar xvf targets.tar
@@ -989,7 +1029,7 @@ jobs:
     - name: Download stored clients-0 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-0-ubuntu-latest-2.12.20-zulu@1.17
+        name: target-clients-0-ubuntu-latest-2.12.x-17
     - name: Inflate clients-0 targets
       run: |-
         tar xvf targets.tar
@@ -997,7 +1037,7 @@ jobs:
     - name: Download stored clients-1 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-1-ubuntu-latest-2.12.20-zulu@1.17
+        name: target-clients-1-ubuntu-latest-2.12.x-17
     - name: Inflate clients-1 targets
       run: |-
         tar xvf targets.tar
@@ -1005,7 +1045,7 @@ jobs:
     - name: Download stored clients-2 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-2-ubuntu-latest-2.12.20-zulu@1.17
+        name: target-clients-2-ubuntu-latest-2.12.x-17
     - name: Inflate clients-2 targets
       run: |-
         tar xvf targets.tar
@@ -1013,7 +1053,7 @@ jobs:
     - name: Download stored clients-3 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-3-ubuntu-latest-2.12.20-zulu@1.17
+        name: target-clients-3-ubuntu-latest-2.12.x-17
     - name: Inflate clients-3 targets
       run: |-
         tar xvf targets.tar
@@ -1021,7 +1061,7 @@ jobs:
     - name: Download stored clients-4 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-4-ubuntu-latest-2.12.20-zulu@1.17
+        name: target-clients-4-ubuntu-latest-2.12.x-17
     - name: Inflate clients-4 targets
       run: |-
         tar xvf targets.tar
@@ -1029,7 +1069,7 @@ jobs:
     - name: Download stored clients-5 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-5-ubuntu-latest-2.12.20-zulu@1.17
+        name: target-clients-5-ubuntu-latest-2.12.x-17
     - name: Inflate clients-5 targets
       run: |-
         tar xvf targets.tar
@@ -1037,7 +1077,7 @@ jobs:
     - name: Download stored core targets
       uses: actions/download-artifact@v4
       with:
-        name: target-core-ubuntu-latest-3.3.5-zulu@1.17
+        name: target-core-ubuntu-latest-3.x-17
     - name: Inflate core targets
       run: |-
         tar xvf targets.tar
@@ -1045,7 +1085,7 @@ jobs:
     - name: Download stored clients-0 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-0-ubuntu-latest-3.3.5-zulu@1.17
+        name: target-clients-0-ubuntu-latest-3.x-17
     - name: Inflate clients-0 targets
       run: |-
         tar xvf targets.tar
@@ -1053,7 +1093,7 @@ jobs:
     - name: Download stored clients-1 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-1-ubuntu-latest-3.3.5-zulu@1.17
+        name: target-clients-1-ubuntu-latest-3.x-17
     - name: Inflate clients-1 targets
       run: |-
         tar xvf targets.tar
@@ -1061,7 +1101,7 @@ jobs:
     - name: Download stored clients-2 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-2-ubuntu-latest-3.3.5-zulu@1.17
+        name: target-clients-2-ubuntu-latest-3.x-17
     - name: Inflate clients-2 targets
       run: |-
         tar xvf targets.tar
@@ -1069,7 +1109,7 @@ jobs:
     - name: Download stored clients-3 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-3-ubuntu-latest-3.3.5-zulu@1.17
+        name: target-clients-3-ubuntu-latest-3.x-17
     - name: Inflate clients-3 targets
       run: |-
         tar xvf targets.tar
@@ -1077,7 +1117,7 @@ jobs:
     - name: Download stored clients-4 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-4-ubuntu-latest-3.3.5-zulu@1.17
+        name: target-clients-4-ubuntu-latest-3.x-17
     - name: Inflate clients-4 targets
       run: |-
         tar xvf targets.tar
@@ -1085,7 +1125,7 @@ jobs:
     - name: Download stored clients-5 targets
       uses: actions/download-artifact@v4
       with:
-        name: target-clients-5-ubuntu-latest-3.3.5-zulu@1.17
+        name: target-clients-5-ubuntu-latest-3.x-17
     - name: Inflate clients-5 targets
       run: |-
         tar xvf targets.tar

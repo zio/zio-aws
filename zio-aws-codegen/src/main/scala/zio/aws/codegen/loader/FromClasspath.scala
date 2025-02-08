@@ -34,7 +34,7 @@ case class FromClasspath() extends Loader {
         case Some(url) =>
           subModule match {
             case Some(value) =>
-              ZIO.succeed(new URL(url.toString + "/" + value))
+              ZIO.succeed(URI.create(url.toString + "/" + value).toURL)
             case None => ZIO.succeed(url)
           }
         case None => ZIO.fail(new RuntimeException(s"Could not find $name"))
@@ -61,7 +61,7 @@ case class FromClasspath() extends Loader {
   private def loadOptionalModel[T](root: URL, name: String, default: => T)(
       implicit classTag: ClassTag[T]
   ): ZIO[Any, Throwable, T] = {
-    val url = new URL(s"${root.toString}/$name")
+    val url = URI.create(s"${root.toString}/$name").toURL
 
     loadJson[T](url).catchSome { case _: FileNotFoundException =>
       ZIO.succeed(default)
@@ -80,7 +80,7 @@ case class FromClasspath() extends Loader {
   private def loadServiceModel(
       root: URL
   ): ZIO[Any, Throwable, ServiceModel] = {
-    val url = new URL(root.toString + "/service-2.json")
+    val url = URI.create(root.toString + "/service-2.json").toURL
     loadJson[ServiceModel](url)
   }
 
