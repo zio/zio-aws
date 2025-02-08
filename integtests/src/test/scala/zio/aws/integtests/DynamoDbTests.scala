@@ -5,6 +5,7 @@ import akka.actor.ActorSystem
 import zio.aws.core._
 import zio.aws.core.aspects._
 import zio.aws.core.config._
+import zio.aws.crt._
 import zio.aws.dynamodb.model._
 import zio.aws.dynamodb.model.primitives._
 import zio.aws.dynamodb._
@@ -32,6 +33,8 @@ object DynamoDbTests extends ZIOSpecDefault with Logging with Retries {
       )
     )
   val akkaHttpClient = AkkaHttpClient.client()
+  val crtClient = AwsCrtHttpClient.default
+
   val awsConfig = AwsConfig.default
   val dynamoDb = DynamoDb.customized(
     _.credentialsProvider(
@@ -212,6 +215,13 @@ object DynamoDbTests extends ZIOSpecDefault with Logging with Retries {
       ).provideCustom(
         actorSystem,
         akkaHttpClient,
+        awsConfig,
+        dynamoDb
+      ) @@ sequential,
+      suite("with aws-crt")(
+        tests("awscrt"): _*
+      ).provideCustom(
+        crtClient,
         awsConfig,
         dynamoDb
       ) @@ sequential

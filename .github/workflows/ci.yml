@@ -85,17 +85,18 @@ jobs:
           hashFiles('**/build.properties') }}
     - name: Build and test core
       run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-core/test
-        zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test
+        zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test zio-aws-crt-http/test
     - name: Publish core
       if: ${{ github.ref == 'refs/heads/master' }}
       run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-core/publishSigned
         zio-aws-akka-http/publishSigned zio-aws-http4s/publishSigned zio-aws-netty/publishSigned
+        zio-aws-crt-http/publishSigned
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress core targets
       run: tar cvf targets.tar target project/target zio-aws-codegen/target zio-aws-core/target
-        zio-aws-akka-http/target zio-aws-http4s/target zio-aws-netty/target
+        zio-aws-akka-http/target zio-aws-http4s/target zio-aws-netty/target zio-aws-crt-http/target
     - name: Upload core targets
       uses: actions/upload-artifact@v4
       with:

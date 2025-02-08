@@ -4,6 +4,7 @@ import java.net.URI
 import akka.actor.ActorSystem
 import zio.aws.core.AwsError
 import zio.aws.core.aspects._
+import zio.aws.crt._
 import zio.aws.s3.model.{primitives, _}
 import zio.aws.s3.model.primitives._
 import zio.aws.s3._
@@ -33,6 +34,7 @@ object S3Tests extends ZIOSpecDefault with Logging with Retries {
       )
     )
   val akkaHttpClient = AkkaHttpClient.client()
+  val crtClient = AwsCrtHttpClient.default
 
   val awsConfig = AwsConfig.default
   val s3Client = S3.customized(
@@ -158,6 +160,13 @@ object S3Tests extends ZIOSpecDefault with Logging with Retries {
       ).provideCustom(
         actorSystem,
         akkaHttpClient,
+        awsConfig,
+        s3Client
+      ) @@ sequential,
+      suite("with aws-crt")(
+        tests("awscrt"): _*
+      ).provideCustom(
+        crtClient,
         awsConfig,
         s3Client
       ) @@ sequential

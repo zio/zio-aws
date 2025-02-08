@@ -75,6 +75,14 @@ lazy val netty = Project("zio-aws-netty", file("zio-aws-netty"))
   )
   .dependsOn(core)
 
+lazy val crthttp = Project("zio-aws-crt-http", file("zio-aws-crt-http"))
+  .settings(
+    libraryDependencies ++= Seq(
+      "software.amazon.awssdk" % "aws-crt-client" % awsVersion
+    )
+  )
+  .dependsOn(core)
+
 lazy val examples = Project("examples", file("examples")).settings(
   publishArtifact := false
 ) aggregate (
@@ -134,6 +142,7 @@ lazy val integtests = Project("integtests", file("integtests"))
     http4s,
     netty,
     akkahttp,
+    crthttp,
     LocalProject("zio-aws-s3"),
     LocalProject("zio-aws-dynamodb")
   )
@@ -169,8 +178,8 @@ lazy val docs = project
     http4s,
     netty,
     akkahttp,
+    crthttp,
     LocalProject("zio-aws-elasticbeanstalk"),
-    LocalProject("zio-aws-ec2"),
-    LocalProject("zio-aws-netty")
+    LocalProject("zio-aws-ec2")
   )
   .enablePlugins(WebsitePlugin)
