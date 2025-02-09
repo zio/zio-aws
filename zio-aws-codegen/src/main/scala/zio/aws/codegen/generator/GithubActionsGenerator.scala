@@ -4,7 +4,11 @@ import io.circe.syntax.*
 import io.circe.yaml
 import io.circe.yaml.Printer.{LineBreak, YamlVersion}
 import zio.aws.codegen.githubactions.OS.UbuntuLatest
-import zio.aws.codegen.githubactions.ScalaWorkflow.JavaVersion.{Java17, Java11, Java21}
+import zio.aws.codegen.githubactions.ScalaWorkflow.JavaVersion.{
+  Java17,
+  Java11,
+  Java21
+}
 import zio.aws.codegen.githubactions.ScalaWorkflow.*
 import zio.aws.codegen.githubactions.*
 import zio.aws.codegen.loader.ModuleId

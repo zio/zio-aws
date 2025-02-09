@@ -35,7 +35,9 @@ trait ArtifactListGenerator {
 
     val clients = ids.toList
       .sortBy(_.moduleName)
-      .map { id => s""""dev.zio" %% "zio-aws-${id.moduleName}" % "<version>"""" }
+      .map { id =>
+        s""""dev.zio" %% "zio-aws-${id.moduleName}" % "<version>""""
+      }
       .mkString("\n")
 
     val postfix = "\n```\n"
