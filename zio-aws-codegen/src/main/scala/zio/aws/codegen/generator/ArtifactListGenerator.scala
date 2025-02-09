@@ -25,6 +25,7 @@ trait ArtifactListGenerator {
                     |"dev.zio" %% "zio-aws-akka-http" % "$version"
                     |"dev.zio" %% "zio-aws-http4s" % "$version"
                     |"dev.zio" %% "zio-aws-netty" % "$version"
+                    |"dev.zio" %% "zio-aws-crt-http" % "$version"
                     |```
                     |
                     |## List of all the generated libraries:

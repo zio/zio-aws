@@ -17,22 +17,24 @@ jobs:
     if: ${{ ((github.event_name == 'release') && (github.event.action == 'published')) || (github.event_name == 'workflow_dispatch') }}
     steps:
     - name: Git Checkout
-      uses: actions/checkout@v3.2.0
+      uses: actions/checkout@v4
       with:
         fetch-depth: '0'
     - name: Setup Scala
-      uses: actions/setup-java@v3.6.0
+      uses: actions/setup-java@v4
       with:
         distribution: temurin
         java-version: 17
         check-latest: true
+    - name: Install sbt
+      uses: sbt/setup-sbt@v1
     - name: Setup NodeJs
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
-        node-version: 16.x
+        node-version: 22.x
         registry-url: https://registry.npmjs.org
     - name: Publish Docs to NPM Registry
-      run: sbt -J-XX:+UseG1GC -J-Xmx4g -J-Xms4g -J-Xss16m ++2.13.10 generateArtifactList docs/publishHashverToNpm
+      run: sbt -J-XX:+UseG1GC -J-Xmx4g -J-Xms4g -J-Xss16m ++2.13.x generateArtifactList docs/publishHashverToNpm
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
   generate-readme:
@@ -40,18 +42,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Git Checkout
-      uses: actions/checkout@v3.2.0
+      uses: actions/checkout@v4
       with:
         ref: ${{ github.head_ref }}
         fetch-depth: '0'
     - name: Setup Scala
-      uses: actions/setup-java@v3.6.0
+      uses: actions/setup-java@v4
       with:
         distribution: temurin
         java-version: 17
         check-latest: true
+    - name: Install sbt
+      uses: sbt/setup-sbt@v1
     - name: Generate Readme
-      run: sbt -J-XX:+UseG1GC -J-Xmx4g -J-Xms4g -J-Xss16m ++2.13.10 generateArtifactList docs/generateReadme
+      run: sbt -J-XX:+UseG1GC -J-Xmx4g -J-Xms4g -J-Xss16m ++2.13.x generateArtifactList docs/generateReadme
     - name: Commit Changes
       run: |
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
