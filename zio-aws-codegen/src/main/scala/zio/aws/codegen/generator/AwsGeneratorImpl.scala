@@ -151,7 +151,7 @@ case class AwsGeneratorImpl(cfg: Parameters)
     Generator
       .generateRawFile(config.artifactListTarget) {
         ZIO
-          .attempt(generateArtifactList(ids, config.version))
+          .attempt(doGenerateArtifactList(ids))
           .mapError(UnknownError)
       }
       .provide(Generator.live)

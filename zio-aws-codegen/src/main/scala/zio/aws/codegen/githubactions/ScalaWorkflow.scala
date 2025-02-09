@@ -25,7 +25,7 @@ object ScalaWorkflow {
           case None          => "${{ matrix.java }}"
           case Some(version) => version.asString
         }),
-        "check-latest" := "true",
+        "check-latest" := "true"
       )
     )
 

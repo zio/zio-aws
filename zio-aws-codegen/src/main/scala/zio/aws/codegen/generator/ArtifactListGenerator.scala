@@ -5,7 +5,7 @@ import zio.aws.codegen.loader.ModuleId
 trait ArtifactListGenerator {
   this: HasConfig with GeneratorBase =>
 
-  def generateArtifactList(ids: Set[ModuleId], version: String): String = {
+  def doGenerateArtifactList(ids: Set[ModuleId]): String = {
     val prefix = s"""---
                     |id: artifacts
                     |title: Artifacts
@@ -16,16 +16,16 @@ trait ArtifactListGenerator {
                     |## Core module
                     |
                     |```scala
-                    |"dev.zio" %% "zio-aws-core" % "$version"
+                    |"dev.zio" %% "zio-aws-core" % "<version>"
                     |```
                     |
                     |## HTTP client modules:
                     |
                     |```scala
-                    |"dev.zio" %% "zio-aws-akka-http" % "$version"
-                    |"dev.zio" %% "zio-aws-http4s" % "$version"
-                    |"dev.zio" %% "zio-aws-netty" % "$version"
-                    |"dev.zio" %% "zio-aws-crt-http" % "$version"
+                    |"dev.zio" %% "zio-aws-akka-http" % "<version>"
+                    |"dev.zio" %% "zio-aws-http4s" % "<version>"
+                    |"dev.zio" %% "zio-aws-netty" % "<version>"
+                    |"dev.zio" %% "zio-aws-crt-http" % "<version>"
                     |```
                     |
                     |## List of all the generated libraries:
@@ -36,7 +36,7 @@ trait ArtifactListGenerator {
     val clients = ids.toList
       .sortBy(_.moduleName)
       .map { id =>
-        s""""dev.zio" %% "zio-aws-${id.moduleName}" % "$version""""
+        s""""dev.zio" %% "zio-aws-${id.moduleName}" % "<version>""""
       }
       .mkString("\n")
 
