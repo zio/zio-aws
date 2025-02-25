@@ -159,7 +159,6 @@ title: Artifacts
 "dev.zio" %% "zio-aws-eksauth" % "<version>"
 "dev.zio" %% "zio-aws-elasticache" % "<version>"
 "dev.zio" %% "zio-aws-elasticbeanstalk" % "<version>"
-"dev.zio" %% "zio-aws-elasticinference" % "<version>"
 "dev.zio" %% "zio-aws-elasticloadbalancing" % "<version>"
 "dev.zio" %% "zio-aws-elasticloadbalancingv2" % "<version>"
 "dev.zio" %% "zio-aws-elasticsearch" % "<version>"
