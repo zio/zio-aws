@@ -180,6 +180,7 @@ title: Artifacts
 "dev.zio" %% "zio-aws-freetier" % "<version>"
 "dev.zio" %% "zio-aws-fsx" % "<version>"
 "dev.zio" %% "zio-aws-gamelift" % "<version>"
+"dev.zio" %% "zio-aws-gameliftstreams" % "<version>"
 "dev.zio" %% "zio-aws-geomaps" % "<version>"
 "dev.zio" %% "zio-aws-geoplaces" % "<version>"
 "dev.zio" %% "zio-aws-georoutes" % "<version>"
