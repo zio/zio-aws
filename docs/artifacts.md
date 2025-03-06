@@ -210,6 +210,7 @@ title: Artifacts
 "dev.zio" %% "zio-aws-iotfleethub" % "<version>"
 "dev.zio" %% "zio-aws-iotfleetwise" % "<version>"
 "dev.zio" %% "zio-aws-iotjobsdataplane" % "<version>"
+"dev.zio" %% "zio-aws-iotmanagedintegrations" % "<version>"
 "dev.zio" %% "zio-aws-iotsecuretunneling" % "<version>"
 "dev.zio" %% "zio-aws-iotsitewise" % "<version>"
 "dev.zio" %% "zio-aws-iotthingsgraph" % "<version>"
