@@ -1506,10 +1506,10 @@ trait ServiceInterfaceGenerator {
                   )
               b0 <- awsConfig.configure[${clientInterface.typ}, ${clientInterfaceBuilder.typ}](builder)
               b1 <- awsConfig.configureHttpClient[${clientInterface.typ}, ${clientInterfaceBuilder.typ}](b0, ${Types.serviceHttpCapabilities.term}(supportsHttp2 = $supportsHttp2Lit))              
-              client <- ${Types.zio_.term}.attempt(customization(${if (
+              client <- ${Types.zio_.term}.fromAutoCloseable(${Types.zio_.term}.attempt(customization(${if (
           requiresGlobalRegion
         ) q"b1.region(_root_.software.amazon.awssdk.regions.Region.AWS_GLOBAL)"
-        else q"b1"}).build())
+        else q"b1"}).build()))
             } yield new $serviceImplT(client, zio.aws.core.aspects.AwsCallAspect.identity, zio.ZEnvironment.empty)
 
             private class $serviceImplT[R](override val api: ${clientInterface.typ}, override val aspect: zio.aws.core.aspects.AwsCallAspect[R], r: zio.ZEnvironment[R])
