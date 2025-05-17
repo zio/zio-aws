@@ -383,7 +383,7 @@ object OperationCollector {
   ) = {
     for {
       paginator <- Option(
-        models.paginatorsModel().getPaginatorDefinition(opName)
+        models.paginatorsModel().getPaginatorDefinition(op.getName)
       )
       if paginator.isValid
       key <- Option(paginator.getResultKey).flatMap(_.asScala.headOption)
