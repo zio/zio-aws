@@ -203,7 +203,7 @@ object OperationCollector {
                   ZIO.succeed(RequestResponse(paginationDefinition))
               )
             } else {
-              getJavaSdkPaginatorDefinition(opName, op, models) match {
+              getJavaSdkPaginatorDefinition(op, models) match {
                 case Some(createDef) =>
                   // Special paginator with Java SDK support
                   for {
@@ -364,7 +364,7 @@ object OperationCollector {
               )
             } else {
               // Fall back to Java SDK paginator if possible
-              getJavaSdkPaginatorDefinition(opName, op, models) match {
+              getJavaSdkPaginatorDefinition(op, models) match {
                 case Some(definition) =>
                   definition.map(Some(_))
                 case None =>
@@ -377,13 +377,12 @@ object OperationCollector {
   }
 
   private def getJavaSdkPaginatorDefinition(
-      opName: String,
       op: Operation,
       models: C2jModels
   ) = {
     for {
       paginator <- Option(
-        models.paginatorsModel().getPaginatorDefinition(opName)
+        models.paginatorsModel().getPaginatorDefinition(op.getName)
       )
       if paginator.isValid
       key <- Option(paginator.getResultKey).flatMap(_.asScala.headOption)
