@@ -387,6 +387,7 @@ title: Artifacts
 "dev.zio" %% "zio-aws-sqs" % "<version>"
 "dev.zio" %% "zio-aws-ssm" % "<version>"
 "dev.zio" %% "zio-aws-ssmcontacts" % "<version>"
+"dev.zio" %% "zio-aws-ssmguiconnect" % "<version>"
 "dev.zio" %% "zio-aws-ssmincidents" % "<version>"
 "dev.zio" %% "zio-aws-ssmquicksetup" % "<version>"
 "dev.zio" %% "zio-aws-ssmsap" % "<version>"
