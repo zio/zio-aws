@@ -319,7 +319,6 @@ title: Artifacts
 "dev.zio" %% "zio-aws-pipes" % "<version>"
 "dev.zio" %% "zio-aws-polly" % "<version>"
 "dev.zio" %% "zio-aws-pricing" % "<version>"
-"dev.zio" %% "zio-aws-privatenetworks" % "<version>"
 "dev.zio" %% "zio-aws-proton" % "<version>"
 "dev.zio" %% "zio-aws-qapps" % "<version>"
 "dev.zio" %% "zio-aws-qbusiness" % "<version>"
