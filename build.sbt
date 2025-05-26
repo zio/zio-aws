@@ -3,6 +3,8 @@ import microsites.ConfigYml
 import scala.xml.{Node => XmlNode, NodeSeq => XmlNodeSeq, _}
 import scala.xml.transform.{RewriteRule, RuleTransformer}
 
+Global / onChangedBuildSource := ReloadOnSourceChanges
+
 enablePlugins(Common, ZioAwsCodegenPlugin, GitVersioning)
 
 ThisBuild / ciParallelJobs := 5

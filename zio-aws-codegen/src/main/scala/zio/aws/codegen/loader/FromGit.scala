@@ -74,7 +74,6 @@ case class FromGit(modules: Ref[Map[ModuleId, Path]], semaphore: Semaphore)
       }
       result <- ZIO.scoped {
         for {
-          tempDir <- Files.createTempDirectoryScoped(None, Iterable.empty)
           _ <- ZIO.logInfo(s"AWS SDK version is $version")
           maybeRepo <- System.env("AWS_JAVA_SDK_REPOSITORY")
           repoDir <- maybeRepo match {
@@ -113,6 +112,7 @@ case class FromGit(modules: Ref[Map[ModuleId, Path]], semaphore: Semaphore)
               } yield Path(repo)
             case None =>
               for {
+                tempDir <- Files.createTempDirectoryScoped(None, Iterable.empty)
                 _ <- ZIO.logInfo(s"AWS Java SDK clone path is $tempDir")
                 _ <- ZIO.logInfo("Cloning AWS Java SDK repository...")
                 _ <- ZIO.attempt {
