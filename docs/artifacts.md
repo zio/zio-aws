@@ -169,6 +169,7 @@ title: Artifacts
 "dev.zio" %% "zio-aws-entityresolution" % "<version>"
 "dev.zio" %% "zio-aws-eventbridge" % "<version>"
 "dev.zio" %% "zio-aws-evidently" % "<version>"
+"dev.zio" %% "zio-aws-evs" % "<version>"
 "dev.zio" %% "zio-aws-finspace" % "<version>"
 "dev.zio" %% "zio-aws-finspacedata" % "<version>"
 "dev.zio" %% "zio-aws-firehose" % "<version>"
