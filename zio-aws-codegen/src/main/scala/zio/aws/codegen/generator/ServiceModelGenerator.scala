@@ -8,12 +8,11 @@ import io.github.vigoo.metagen.core.{
 }
 import software.amazon.awssdk.codegen.model.config.customization.ShapeModifier
 import zio.ZIO
-import zio.aws.codegen.generator.context.AwsGeneratorContext._
-import zio.aws.codegen.generator.context._
+import zio.aws.codegen.generator.context.*
 import zio.nio.file.Path
 
-import scala.jdk.CollectionConverters._
-import scala.meta._
+import scala.jdk.CollectionConverters.*
+import scala.meta.*
 
 trait ServiceModelGenerator {
   this: HasConfig with GeneratorBase with Blacklists =>
@@ -28,15 +27,14 @@ trait ServiceModelGenerator {
 
   private def filterModels(): ZIO[AwsGeneratorContext, Nothing, Set[Model]] =
     for {
-      modelMap <- getModelMap
-      models <- getModels
+      ctx <- ZIO.service[AwsGeneratorContext]
+      modelMap = ctx.modelMap
+      models = ctx.models
       excluded = Option(models.customizationConfig.getShapeModifiers)
         .map(
-          _.asScala
-            .collect {
-              case (name, modifier) if modifier.isExcludeShape => name
-            }
-            .toSet
+          _.asScala.collect {
+            case (name, modifier) if modifier.isExcludeShape => name
+          }.toSet
         )
         .getOrElse(Set.empty)
 
@@ -54,40 +52,40 @@ trait ServiceModelGenerator {
       ]
   ): ZIO[AwsGeneratorContext, Nothing, List[
     (String, software.amazon.awssdk.codegen.model.service.Member)
-  ]] = {
-    getModels.flatMap { models =>
-      val shapeModifiers = Option(
-        models.customizationConfig().getShapeModifiers
-      ).map(_.asScala).getOrElse(Map.empty[String, ShapeModifier])
-      val global = shapeModifiers.get("*")
-      val local = shapeModifiers.get(shape)
-      val globalExcludes = global
-        .flatMap(g => Option(g.getExclude))
-        .map(_.asScala)
-        .getOrElse(List.empty)
-        .map(_.toLowerCase)
-      val localExcludes = local
-        .flatMap(l => Option(l.getExclude))
-        .map(_.asScala)
-        .getOrElse(List.empty)
-        .map(_.toLowerCase)
+  ]] = ZIO.serviceWith[AwsGeneratorContext] { ctx =>
+    val models = ctx.models
+    val shapeModifiers = Option(
+      models.customizationConfig().getShapeModifiers
+    ).map(_.asScala).getOrElse(Map.empty[String, ShapeModifier])
+    val global = shapeModifiers.get("*")
+    val local = shapeModifiers.get(shape)
+    val globalExcludes = global
+      .flatMap(g => Option(g.getExclude))
+      .map(_.asScala)
+      .getOrElse(List.empty)
+      .map(_.toLowerCase)
+    val localExcludes = local
+      .flatMap(l => Option(l.getExclude))
+      .map(_.asScala)
+      .getOrElse(List.empty)
+      .map(_.toLowerCase)
 
-      ZIO.succeed(members.filterNot { case (memberName, member) =>
-        globalExcludes.contains(memberName.toLowerCase) ||
+    members.filterNot { case (memberName, member) =>
+      globalExcludes.contains(memberName.toLowerCase) ||
         localExcludes.contains(memberName.toLowerCase) ||
         member.isStreaming || {
           val shape = models.serviceModel().getShape(member.getShape)
           shape.isStreaming || shape.isEventstream
         }
-      })
     }
   }
 
   private def applyEnumModifiers(
       model: Model,
       enumValueList: List[String]
-  ): ZIO[AwsGeneratorContext, Nothing, List[String]] = {
-    getModels.map { models =>
+  ): ZIO[AwsGeneratorContext, Nothing, List[String]] =
+    ZIO.serviceWith[AwsGeneratorContext] { ctx =>
+      val models = ctx.models
       val shapeModifiers = Option(
         models.customizationConfig().getShapeModifiers
       ).map(_.asScala).getOrElse(Map.empty[String, ShapeModifier])
@@ -110,14 +108,14 @@ trait ServiceModelGenerator {
           enumValueList
       }
     }
-  }
 
   private def adjustFieldType(
       model: Model,
       fieldName: String,
       fieldModel: Model
-  ): ZIO[AwsGeneratorContext, Nothing, Model] = {
-    getModels.map { models =>
+  ): ZIO[AwsGeneratorContext, Nothing, Model] =
+    ZIO.serviceWith[AwsGeneratorContext] { ctx =>
+      val models = ctx.models
       val shapeModifiers = Option(
         models.customizationConfig().getShapeModifiers
       ).map(_.asScala).getOrElse(Map.empty[String, ShapeModifier])
@@ -162,43 +160,45 @@ trait ServiceModelGenerator {
         }
         .getOrElse(fieldModel)
     }
-  }
 
   private def roToEditable(
       model: Model,
       term: Term
-  ): ZIO[AwsGeneratorContext, AwsGeneratorFailure, Term] =
-    model.typ match {
-      case ModelType.Map =>
-        for {
-          keyModel <- get(model.shape.getMapKeyType.getShape)
-          valueModel <- get(model.shape.getMapValueType.getShape)
-          key = Term.Name("key")
-          value = Term.Name("value")
-          keyToEditable <- roToEditable(keyModel, key)
-          valueToEditable <- roToEditable(valueModel, value)
-        } yield
-          if (keyToEditable == key && valueToEditable == value) {
-            term
-          } else {
-            q"""$term.map { case (key, value) => $keyToEditable -> $valueToEditable }"""
-          }
-      case ModelType.List =>
-        for {
-          valueModel <- get(model.shape.getListMember.getShape)
-          item = Term.Name("item")
-          itemToEditable <- roToEditable(valueModel, item)
-        } yield
-          if (itemToEditable == item) {
-            term
-          } else {
-            q"""$term.map { item => $itemToEditable }"""
-          }
-      case ModelType.Structure =>
-        ZIO.succeed(q"""$term.asEditable""")
-      case _ =>
-        ZIO.succeed(term)
+  ): ZIO[AwsGeneratorContext, AwsGeneratorFailure, Term] = {
+    ZIO.serviceWithZIO[AwsGeneratorContext] { ctx =>
+      model.typ match {
+        case ModelType.Map =>
+          for {
+            keyModel <- ctx.get(model.shape.getMapKeyType.getShape)
+            valueModel <- ctx.get(model.shape.getMapValueType.getShape)
+            key = Term.Name("key")
+            value = Term.Name("value")
+            keyToEditable <- roToEditable(keyModel, key)
+            valueToEditable <- roToEditable(valueModel, value)
+          } yield
+            if (keyToEditable == key && valueToEditable == value) {
+              term
+            } else {
+              q"""$term.map { case (key, value) => $keyToEditable -> $valueToEditable }"""
+            }
+        case ModelType.List =>
+          for {
+            valueModel <- ctx.get(model.shape.getListMember.getShape)
+            item = Term.Name("item")
+            itemToEditable <- roToEditable(valueModel, item)
+          } yield
+            if (itemToEditable == item) {
+              term
+            } else {
+              q"""$term.map { item => $itemToEditable }"""
+            }
+        case ModelType.Structure =>
+          ZIO.succeed(q"""$term.asEditable""")
+        case _ =>
+          ZIO.succeed(term)
+      }
     }
+  }
 
   private def generateModel(
       m: Model
@@ -286,10 +286,10 @@ trait ServiceModelGenerator {
           None,
           code = List(
             q"""object ${wrapperType.termName} extends ${Types
-                .subtype(underlyingType)
-                .init}""",
+              .subtype(underlyingType)
+              .init}""",
             q"""type ${wrapperType.typName} = ${Type
-                .Select(wrapperType.term, Type.Name("Type"))}"""
+              .Select(wrapperType.term, Type.Name("Type"))}"""
           ),
           wrapperType
         )
@@ -304,7 +304,8 @@ trait ServiceModelGenerator {
     val shapeNameRoInit = Init(readOnlyType.typ, Name.Anonymous(), List.empty)
 
     for {
-      namingStrategy <- getNamingStrategy
+      ctx <- ZIO.service[AwsGeneratorContext]
+      namingStrategy = ctx.namingStrategy
       fieldList <- filterMembers(m.shapeName, m.shape.getMembers.asScala.toList)
       required =
         Option(m.shape.getRequired).map(_.asScala.toSet).getOrElse(Set.empty)
@@ -312,7 +313,7 @@ trait ServiceModelGenerator {
         ZIO
           .foreach(fieldList) { case (memberName, member) =>
             for {
-              fieldModel <- get(member.getShape)
+              fieldModel <- ctx.get(member.getShape)
               finalFieldModel <- adjustFieldType(m, memberName, fieldModel)
             } yield (memberName -> finalFieldModel)
           }
@@ -368,16 +369,16 @@ trait ServiceModelGenerator {
                             getterInterface =
                               q"""def $pureGetterNameTerm: ${memberRoType.typ}""",
                             getterImplementation = q"""override val ${Pat.Var(
-                                pureGetterNameTerm
-                              )}: ${memberRoType.typ} = $wrappedGet""",
+                              pureGetterNameTerm
+                            )}: ${memberRoType.typ} = $wrappedGet""",
                             zioGetterImplementation =
                               q"""def $effectualGetterNameTerm: ${Types
-                                  .zio(
-                                    ScalaType.any,
-                                    ScalaType.nothing,
-                                    memberRoType
-                                  )
-                                  .typ} = ZIO.succeed($pureGetterNameTerm)""",
+                                .zio(
+                                  ScalaType.any,
+                                  ScalaType.nothing,
+                                  memberRoType
+                                )
+                                .typ} = ZIO.succeed($pureGetterNameTerm)""",
                             applyToBuilder = builder =>
                               q"""$builder.$fluentSetter($unwrappedGet)"""
                           )
@@ -397,35 +398,34 @@ trait ServiceModelGenerator {
                         toEditable =>
                           ModelFieldFragments(
                             paramDef = param"""$pureGetterNameTerm: ${Types
-                                .optional(memberType)
-                                .typ} = ${Types.optionalAbsent.term}""",
+                              .optional(memberType)
+                              .typ} = ${Types.optionalAbsent.term}""",
                             getterCall =
                               q"""$pureGetterNameTerm.map(value => $toEditable)""",
                             getterInterface =
                               q"""def ${pureGetterNameTerm}: ${Types
-                                  .optional(memberRoType)
-                                  .typ}""",
-                            getterImplementation = if (
-                              wrappedGet == valueTerm
-                            ) {
-                              q"""override val ${Pat
+                                .optional(memberRoType)
+                                .typ}""",
+                            getterImplementation =
+                              if (wrappedGet == valueTerm) {
+                                q"""override val ${Pat
                                   .Var(pureGetterNameTerm)}: ${Types
                                   .optional(memberRoType)
                                   .typ} = ${Types.optionalFromNullable}($get)"""
-                            } else {
-                              q"""override val ${Pat
+                              } else {
+                                q"""override val ${Pat
                                   .Var(pureGetterNameTerm)}: ${Types
                                   .optional(memberRoType)
                                   .typ} = ${Types.optionalFromNullable}($get).map(value => $wrappedGet)"""
-                            },
+                              },
                             zioGetterImplementation =
                               q"""def $effectualGetterNameTerm: ${Types
-                                  .zio(
-                                    ScalaType.any,
-                                    Types.awsError,
-                                    memberRoType
-                                  )
-                                  .typ} = ${Types.awsError.term}.unwrapOptionField($propertyNameLit, $pureGetterNameTerm)""",
+                                .zio(
+                                  ScalaType.any,
+                                  Types.awsError,
+                                  memberRoType
+                                )
+                                .typ} = ${Types.awsError.term}.unwrapOptionField($propertyNameLit, $pureGetterNameTerm)""",
                             applyToBuilder = builder =>
                               q"""$builder.optionallyWith($pureGetterNameTerm.map(value => $unwrappedGet))(_.$fluentSetter)"""
                           )
@@ -454,8 +454,8 @@ trait ServiceModelGenerator {
       fileName = Some(m.generatedType.name),
       code = List(
         q"""final case class ${m.generatedType.typName}(..${fields.map(
-            _.paramDef
-          )}) {
+          _.paramDef
+        )}) {
                         def buildAwsValue(): ${javaType.typ} = {
                           import ${m.generatedType.termName}.zioAwsBuilderHelper.BuilderOps
                           $build
@@ -465,11 +465,11 @@ trait ServiceModelGenerator {
                       }""",
         q"""object ${m.generatedType.termName} {
                             private lazy val zioAwsBuilderHelper: ${Types
-            .builderHelper(javaType)
-            .typ} = ${Types.builderHelper_.term}.apply
+          .builderHelper(javaType)
+          .typ} = ${Types.builderHelper_.term}.apply
                             trait ${readOnlyType.typName} {
                               def asEditable: ${m.generatedType.typ} = ${m.generatedType.term}(..${fields
-            .map(_.getterCall)})
+          .map(_.getterCall)})
                               ..${fields.map(_.getterInterface)}
                               ..${fields.map(_.zioGetterImplementation)}
                             }
@@ -490,7 +490,8 @@ trait ServiceModelGenerator {
       m: Model
   ): ZIO[AwsGeneratorContext, AwsGeneratorFailure, ModelWrapper] = {
     for {
-      itemModel <- get(m.shape.getListMember.getShape)
+      ctx <- ZIO.service[AwsGeneratorContext]
+      itemModel <- ctx.get(m.shape.getListMember.getShape)
       elemType <- TypeMapping.toWrappedType(itemModel)
     } yield ModelWrapper(
       fileName = None,
@@ -518,15 +519,16 @@ trait ServiceModelGenerator {
       m: Model
   ): ZIO[AwsGeneratorContext, AwsGeneratorFailure, ModelWrapper] = {
     for {
-      keyModel <- get(m.shape.getMapKeyType.getShape)
-      valueModel <- get(m.shape.getMapValueType.getShape)
+      ctx <- ZIO.service[AwsGeneratorContext]
+      keyModel <- ctx.get(m.shape.getMapKeyType.getShape)
+      valueModel <- ctx.get(m.shape.getMapValueType.getShape)
       keyType <- TypeMapping.toWrappedType(keyModel)
       valueType <- TypeMapping.toWrappedType(valueModel)
     } yield ModelWrapper(
       fileName = None,
       code = List(q"""type ${m.generatedType.typName} = ${ScalaType
-          .map(keyType, valueType)
-          .typ}"""),
+        .map(keyType, valueType)
+        .typ}"""),
       generatedType = m.generatedType
     )
   }
@@ -536,7 +538,8 @@ trait ServiceModelGenerator {
       javaType: ScalaType
   ): ZIO[AwsGeneratorContext, AwsGeneratorFailure, ModelWrapper] = {
     for {
-      namingStrategy <- getNamingStrategy
+      ctx <- ZIO.service[AwsGeneratorContext]
+      namingStrategy = ctx.namingStrategy
       shapeNameI = Init(m.generatedType.typ, Name.Anonymous(), List.empty)
       enumVals <- applyEnumModifiers(m, m.shape.getEnumValues.asScala.toList)
       enumValueList = "unknownToSdkVersion" :: enumVals
@@ -583,7 +586,8 @@ trait ServiceModelGenerator {
         AwsGeneratorFailure
       ], Set[Path]] =
     for {
-      pkg <- getPkg
+      ctx <- ZIO.service[AwsGeneratorContext]
+      pkg = ctx.pkg
 
       filteredModels <- filterModels()
       partition = filteredModels.partition(model =>

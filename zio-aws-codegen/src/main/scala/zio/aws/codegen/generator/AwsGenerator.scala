@@ -29,33 +29,7 @@ trait AwsGenerator {
 object AwsGenerator {
 
   val live: ZLayer[Parameters, Nothing, AwsGenerator] = ZLayer(
-    ZIO.service[Parameters].map(AwsGeneratorImpl.apply)
+    ZIO.serviceWith[Parameters](AwsGeneratorImpl.apply)
   )
 
-  def generateServiceCode(
-      id: ModuleId,
-      model: C2jModels,
-      sbtLogger: sbt.Logger
-  ): ZIO[AwsGenerator, GeneratorFailure[
-    AwsGeneratorFailure
-  ], Set[
-    File
-  ]] =
-    ZIO.serviceWithZIO[AwsGenerator](
-      _.generateServiceCode(id, model, sbtLogger)
-    )
-
-  def generateCiYaml(
-      ids: Set[ModuleId]
-  ): ZIO[AwsGenerator, GeneratorFailure[
-    AwsGeneratorFailure
-  ], Unit] =
-    ZIO.serviceWithZIO[AwsGenerator](_.generateCiYaml(ids))
-
-  def generateArtifactList(
-      ids: Set[ModuleId]
-  ): ZIO[AwsGenerator, GeneratorFailure[
-    AwsGeneratorFailure
-  ], Unit] =
-    ZIO.serviceWithZIO[AwsGenerator](_.generateArtifactList(ids))
 }

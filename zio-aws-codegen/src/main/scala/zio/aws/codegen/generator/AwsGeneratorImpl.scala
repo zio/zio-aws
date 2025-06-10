@@ -6,9 +6,9 @@ import software.amazon.awssdk.codegen.naming.{
   DefaultNamingStrategy,
   NamingStrategy
 }
-import zio._
+import zio.*
 import zio.aws.codegen.Parameters
-import zio.aws.codegen.generator.context._
+import zio.aws.codegen.generator.context.*
 import zio.aws.codegen.loader.ModuleId
 
 import java.io.File
@@ -80,27 +80,29 @@ case class AwsGeneratorImpl(cfg: Parameters)
       sbtLogger: sbt.Logger
   ): ZLayer[Any, Nothing, AwsGeneratorContext] =
     ZLayer.succeed {
-      new context.AwsGeneratorContext {
-        override val pkg: Package = getTargetPackage(id)
-        override val service: ModuleId = id
-        override val modelPkg: Package = getSdkModelPackage(id)
-        override val paginatorPkg: Package =
-          getSdkPaginatorPackage(id)
-        override val namingStrategy: NamingStrategy =
-          new DefaultNamingStrategy(
-            model.serviceModel(),
-            model.customizationConfig()
-          )
-        override val modelMap: ModelMap =
-          ModelCollector.collectUsedModels(
-            modelPkg,
-            pkg / "model",
-            namingStrategy,
-            model
-          )
-        override val models: C2jModels = model
-        override val logger: sbt.Logger = sbtLogger
-      }
+      val pkg = getSdkPackage(id)
+      val modelPkg = getSdkModelPackage(id)
+      val namingStrategy: NamingStrategy =
+        new DefaultNamingStrategy(
+          model.serviceModel(),
+          model.customizationConfig()
+        )
+
+      AwsGeneratorContext(
+        pkg = pkg,
+        service = id,
+        modelPkg = modelPkg,
+        paginatorPkg = getSdkPaginatorPackage(id),
+        namingStrategy = namingStrategy,
+        modelMap = ModelCollector.collectUsedModels(
+          modelPkg,
+          pkg / "model",
+          namingStrategy,
+          model
+        ),
+        models = model,
+        logger = sbtLogger
+      )
     }
 
   override def generateServiceCode(

@@ -4,11 +4,10 @@ import software.amazon.awssdk.codegen.internal.Utils
 import software.amazon.awssdk.codegen.model.config.customization.ShapeModifier
 import zio.ZIO
 import zio.aws.codegen.generator.context.AwsGeneratorContext
-import zio.aws.codegen.generator.context.AwsGeneratorContext._
-import zio.aws.codegen.generator.syntax._
+import zio.aws.codegen.generator.syntax.*
 
-import scala.jdk.CollectionConverters._
-import scala.meta._
+import scala.jdk.CollectionConverters.*
+import scala.meta.*
 
 trait GeneratorBase {
   this: Blacklists =>
@@ -21,8 +20,9 @@ trait GeneratorBase {
     model.typ match {
       case ModelType.Map =>
         for {
-          keyModel <- get(model.shape.getMapKeyType.getShape)
-          valueModel <- get(model.shape.getMapValueType.getShape)
+          ctx <- ZIO.service[AwsGeneratorContext]
+          keyModel <- ctx.get(model.shape.getMapKeyType.getShape)
+          valueModel <- ctx.get(model.shape.getMapValueType.getShape)
           key = Term.Name("key")
           value = Term.Name("value")
           unwrapKey <- unwrapSdkValue(keyModel, key, forceToString = true)
@@ -35,7 +35,8 @@ trait GeneratorBase {
           }
       case ModelType.List =>
         for {
-          valueModel <- get(model.shape.getListMember.getShape)
+          ctx <- ZIO.service[AwsGeneratorContext]
+          valueModel <- ctx.get(model.shape.getListMember.getShape)
           item = Term.Name("item")
           unwrapItem <- unwrapSdkValue(valueModel, item, forceToString = true)
         } yield
@@ -88,8 +89,9 @@ trait GeneratorBase {
     model.typ match {
       case ModelType.Map =>
         for {
-          keyModel <- get(model.shape.getMapKeyType.getShape)
-          valueModel <- get(model.shape.getMapValueType.getShape)
+          ctx <- ZIO.service[AwsGeneratorContext]
+          keyModel <- ctx.get(model.shape.getMapKeyType.getShape)
+          valueModel <- ctx.get(model.shape.getMapValueType.getShape)
           key = Term.Name("key")
           value = Term.Name("value")
           wrapKey <- wrapSdkValue(keyModel, key)
@@ -102,7 +104,8 @@ trait GeneratorBase {
           }
       case ModelType.List =>
         for {
-          valueModel <- get(model.shape.getListMember.getShape)
+          ctx <- ZIO.service[AwsGeneratorContext]
+          valueModel <- ctx.get(model.shape.getListMember.getShape)
           item = Term.Name("item")
           wrapItem <- wrapSdkValue(valueModel, item)
         } yield
@@ -149,60 +152,61 @@ trait GeneratorBase {
       model: Model,
       fieldModel: Model,
       name: String
-  ): ZIO[AwsGeneratorContext, Nothing, PropertyNames] = {
-    getNamingStrategy.flatMap { namingStrategy =>
-      getModels.map { models =>
-        val shapeModifiers = Option(
-          models.customizationConfig().getShapeModifiers
-        ).map(_.asScala).getOrElse(Map.empty[String, ShapeModifier])
-        shapeModifiers
-          .get(model.shapeName)
-          .flatMap { shapeModifier =>
-            val modifies = Option(shapeModifier.getModify)
-              .map(_.asScala)
-              .getOrElse(List.empty)
-            val matchingModifiers = modifies.flatMap { modifiesMap =>
-              modifiesMap.asScala
-                .map { case (key, value) => (key.toLowerCase, value) }
-                .get(name.toLowerCase)
-            }.toList
+  ): ZIO[AwsGeneratorContext, Nothing, PropertyNames] =
+    ZIO.serviceWith[AwsGeneratorContext] { ctx =>
+      val namingStrategy = ctx.namingStrategy
+      val models = ctx.models
 
-            matchingModifiers
-              .map(modifier => Option(modifier.getEmitPropertyName))
-              .find(_.isDefined)
-              .flatten
-              .map(_.uncapitalize)
-              .map(name => PropertyNames(name, name))
-          }
-          .getOrElse {
-            val getterMethod = namingStrategy.getFluentGetterMethodName(
-              name,
-              model.shape,
-              fieldModel.shape
-            )
+      val shapeModifiers = Option(
+        models.customizationConfig().getShapeModifiers
+      ).map(_.asScala).getOrElse(Map.empty[String, ShapeModifier])
 
-            val stripped =
-              if (
-                Utils.isOrContainsEnumShape(
-                  fieldModel.shape,
-                  models.serviceModel().getShapes()
-                )
-              ) {
-                getterMethod
-                  .stripSuffix("AsString")
-                  .stripSuffix("AsStrings")
-              } else {
-                getterMethod
-              }
-            if (fieldModel.typ == ModelType.String) {
-              PropertyNames(getterMethod, stripped)
+      shapeModifiers
+        .get(model.shapeName)
+        .flatMap { shapeModifier =>
+          val modifies = Option(shapeModifier.getModify)
+            .map(_.asScala)
+            .getOrElse(List.empty)
+          val matchingModifiers = modifies.flatMap { modifiesMap =>
+            modifiesMap.asScala
+              .map { case (key, value) => (key.toLowerCase, value) }
+              .get(name.toLowerCase)
+          }.toList
+
+          matchingModifiers
+            .map(modifier => Option(modifier.getEmitPropertyName))
+            .find(_.isDefined)
+            .flatten
+            .map(_.uncapitalize)
+            .map(name => PropertyNames(name, name))
+        }
+        .getOrElse {
+          val getterMethod = namingStrategy.getFluentGetterMethodName(
+            name,
+            model.shape,
+            fieldModel.shape
+          )
+
+          val stripped =
+            if (
+              Utils.isOrContainsEnumShape(
+                fieldModel.shape,
+                models.serviceModel().getShapes()
+              )
+            ) {
+              getterMethod
+                .stripSuffix("AsString")
+                .stripSuffix("AsStrings")
             } else {
-              PropertyNames(stripped, stripped)
+              getterMethod
             }
+          if (fieldModel.typ == ModelType.String) {
+            PropertyNames(getterMethod, stripped)
+          } else {
+            PropertyNames(stripped, stripped)
           }
-      }
+        }
     }
-  }
 
   protected def unsafeRun(body: Term): Term =
     q"""zio.Unsafe.unsafe { implicit u => rts.unsafe.run { $body }.getOrThrowFiberFailure() }"""

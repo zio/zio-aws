@@ -121,7 +121,7 @@ case class FromClasspath() extends Loader {
       .map(_.toSet)
   }
 
-  override def findModels(): ZIO[Any, Throwable, Set[ModuleId]] =
+  override def findModels: ZIO[Any, Throwable, Set[ModuleId]] =
     for {
       codegenRootUrls <- ZIO.attempt(
         getClass.getClassLoader

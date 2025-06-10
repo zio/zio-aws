@@ -6,7 +6,7 @@ import zio.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
 
 trait Loader {
-  def findModels(): ZIO[Any, Throwable, Set[ModuleId]]
+  def findModels: ZIO[Any, Throwable, Set[ModuleId]]
   def loadCodegenModel(id: ModuleId): ZIO[Any, Throwable, C2jModels]
 }
 
@@ -15,15 +15,12 @@ object Loader {
   val fromGit: ZLayer[Any, Nothing, Loader] =
     ZLayer {
       for {
-        map <- Ref.make(Map.empty[ModuleId, Path])
-        semaphore <- Semaphore.make(1)
-      } yield FromGit(map, semaphore)
+        map <- Ref.Synchronized.make(Map.empty[ModuleId, Path])
+      } yield FromGit(map)
     }
 
   private val cachedLoader: AtomicReference[Loader] = new AtomicReference(null)
-  def cached[R, E <: Throwable](
-      impl: ZLayer[R, E, Loader]
-  ): ZLayer[R, Throwable, Loader] =
+  def cached[R, E <: Throwable](impl: ZLayer[R, E, Loader]): ZLayer[R, Throwable, Loader] =
     ZLayer {
       for {
         runtime <- ZIO.runtime[R]
@@ -46,11 +43,4 @@ object Loader {
       } yield value
     }
 
-  def loadCodegenModel(
-      id: ModuleId
-  ): ZIO[Loader, Throwable, C2jModels] =
-    ZIO.service[Loader].flatMap(_.loadCodegenModel(id))
-
-  def findModels(): ZIO[Loader, Throwable, Set[ModuleId]] =
-    ZIO.service[Loader].flatMap(_.findModels())
 }

@@ -18,10 +18,10 @@ import java.util.Properties
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 
-case class FromGit(modules: Ref[Map[ModuleId, Path]], semaphore: Semaphore)
+case class FromGit(modules: Ref.Synchronized[Map[ModuleId, Path]])
     extends Loader {
 
-  override def findModels(): ZIO[Any, Throwable, Set[ModuleId]] =
+  override def findModels: ZIO[Any, Throwable, Set[ModuleId]] =
     getOrCollectModules.map { moduleMap =>
       moduleMap.keySet
     }
@@ -51,17 +51,9 @@ case class FromGit(modules: Ref[Map[ModuleId, Path]], semaphore: Semaphore)
     }
 
   private def getOrCollectModules: ZIO[Any, Throwable, Map[ModuleId, Path]] =
-    semaphore.withPermit {
-      modules.get.flatMap { existing =>
-        if (existing.isEmpty) {
-          collectModules().tap(collected => modules.set(collected))
-        } else {
-          ZIO.succeed(existing)
-        }
-      }
-    }
+    modules.updateSomeAndGetZIO { case existing if existing.isEmpty => collectModules }
 
-  private def collectModules(): ZIO[Any, Throwable, Map[ModuleId, Path]] =
+  private def collectModules: ZIO[Any, Throwable, Map[ModuleId, Path]] =
     for {
       version <- ZIO.attempt {
         val props = new Properties()
