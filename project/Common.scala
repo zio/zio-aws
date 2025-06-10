@@ -2,9 +2,6 @@ import zio.aws.codegen.ZioAwsCodegenPlugin.autoImport._
 import sbt._
 import Keys._
 import com.jsuereth.sbtpgp.PgpKeys._
-import xerial.sbt.Sonatype
-import xerial.sbt.Sonatype._
-import xerial.sbt.Sonatype.SonatypeKeys._
 
 import scala.collection.JavaConverters._
 
@@ -41,7 +38,7 @@ object Common extends AutoPlugin {
 
   override val trigger = allRequirements
 
-  override val requires = (Sonatype && ci.release.early.Plugin)
+  override val requires = ci.release.early.Plugin
 
   override lazy val globalSettings =
     Seq(
@@ -84,11 +81,8 @@ object Common extends AutoPlugin {
         case _             => Nil
       }),
       // Publishing
-      publishMavenStyle := true,
       description := "Low-level AWS wrapper for ZIO",
-      licenses := Seq(
-        "APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")
-      ),
+      licenses := Seq("APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
       developers := List(
         Developer(
           id = "vigoo",
@@ -97,25 +91,12 @@ object Common extends AutoPlugin {
           url = url("https://vigoo.github.io")
         )
       ),
-      publishTo := sonatypePublishToBundle.value,
-      sonatypeTimeoutMillis := 300 * 60 * 1000,
-      sonatypeProjectHosting := Some(
-        GitHubHosting("zio", "zio-aws", "daniel.vigovszky@gmail.com")
-      ),
-      sonatypeCredentialHost := "oss.sonatype.org",
-      sonatypeRepository := "https://oss.sonatype.org/service/local",
-      credentials ++=
-        (for {
-          username <- Option(System.getenv().get("SONATYPE_USERNAME"))
-          password <- Option(System.getenv().get("SONATYPE_PASSWORD"))
-        } yield Credentials(
-          "Sonatype Nexus Repository Manager",
-          "oss.sonatype.org",
-          username,
-          password
-        )).toSeq,
-      resolvers +=
-        "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
+      publishTo := {
+        // See https://github.com/sbt/sbt/releases/tag/v1.11.0
+        val centralSnapshots = "https://central.sonatype.com/repository/maven-snapshots/"
+        if (isSnapshot.value) Some("central-snapshots" at centralSnapshots)
+        else localStaging.value
+      },
       ci.release.early.Plugin.autoImport.verifyNoSnapshotDependencies := {} // Temporarily disable this check until all dependencies are ready for ZIO 2
     )
 
@@ -130,7 +111,7 @@ object Common extends AutoPlugin {
     val highestVersion = findHighestVersion(allTags, log)
     log(s"highest version so far: $highestVersion")
 
-    if (highestVersion.startsWith(zioAwsVersionPrefix)) {
+    if (highestVersion.fold(ifEmpty = false)(_.startsWith(zioAwsVersionPrefix))) {
       // Prefix is already good
       None
     } else {

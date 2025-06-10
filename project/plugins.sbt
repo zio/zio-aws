@@ -1,6 +1,5 @@
-addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.12.2")
 addSbtPlugin("com.github.sbt" % "sbt-pgp" % "2.3.1")
-addSbtPlugin("io.shiftleft" % "sbt-ci-release-early" % "2.0.49")
+addSbtPlugin("io.shiftleft" % "sbt-ci-release-early" % "2.1.3")
 addSbtPlugin("com.47deg" % "sbt-microsites" % "1.4.4")
 addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.7.1")
 addSbtPlugin("com.github.sbt" % "sbt-ghpages" % "0.8.0")
@@ -19,7 +18,7 @@ lazy val codegen = project
   .in(file("."))
   .dependsOn(ProjectRef(file("../zio-aws-codegen"), "zio-aws-codegen"))
 
-resolvers ++= Resolver.sonatypeOssRepos("snapshots")
+resolvers += Resolver.sonatypeCentralSnapshots
 
 ThisBuild / libraryDependencySchemes ++= Seq(
   "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
