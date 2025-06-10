@@ -7,7 +7,7 @@ Global / onChangedBuildSource := ReloadOnSourceChanges
 
 enablePlugins(Common, ZioAwsCodegenPlugin, GitVersioning)
 
-ThisBuild / ciParallelJobs := 5
+ThisBuild / ciParallelJobs := 9
 ThisBuild / ciSeparateJobs := Seq("zio-aws-ec2")
 ThisBuild / ciTarget := file(".github/workflows/ci.yml")
 ThisBuild / artifactListTarget := file("docs/artifacts.md")
