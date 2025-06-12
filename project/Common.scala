@@ -16,7 +16,7 @@ object Common extends AutoPlugin {
     val zioPreludeVersion = "1.0.0-RC41"
     val catsEffectVersion = "3.6.1"
 
-    val awsVersion = "2.31.61"
+    val awsVersion = "2.31.63"
     val awsSubVersion = awsVersion.drop(awsVersion.indexOf('.') + 1)
     val http4sVersion = "0.23.27"
     val blazeVersion = "0.23.17"
@@ -82,7 +82,9 @@ object Common extends AutoPlugin {
       }),
       // Publishing
       description := "Low-level AWS wrapper for ZIO",
-      licenses := Seq("APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
+      licenses := Seq(
+        "APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")
+      ),
       developers := List(
         Developer(
           id = "vigoo",
@@ -93,7 +95,8 @@ object Common extends AutoPlugin {
       ),
       publishTo := {
         // See https://github.com/sbt/sbt/releases/tag/v1.11.0
-        val centralSnapshots = "https://central.sonatype.com/repository/maven-snapshots/"
+        val centralSnapshots =
+          "https://central.sonatype.com/repository/maven-snapshots/"
         if (isSnapshot.value) Some("central-snapshots" at centralSnapshots)
         else localStaging.value
       },
@@ -111,7 +114,9 @@ object Common extends AutoPlugin {
     val highestVersion = findHighestVersion(allTags, log)
     log(s"highest version so far: $highestVersion")
 
-    if (highestVersion.fold(ifEmpty = false)(_.startsWith(zioAwsVersionPrefix))) {
+    if (
+      highestVersion.fold(ifEmpty = false)(_.startsWith(zioAwsVersionPrefix))
+    ) {
       // Prefix is already good
       None
     } else {
