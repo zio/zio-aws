@@ -280,6 +280,7 @@ title: Artifacts
 "dev.zio" %% "zio-aws-migrationhuborchestrator" % "<version>"
 "dev.zio" %% "zio-aws-migrationhubrefactorspaces" % "<version>"
 "dev.zio" %% "zio-aws-migrationhubstrategy" % "<version>"
+"dev.zio" %% "zio-aws-mpa" % "<version>"
 "dev.zio" %% "zio-aws-mq" % "<version>"
 "dev.zio" %% "zio-aws-mturk" % "<version>"
 "dev.zio" %% "zio-aws-mwaa" % "<version>"
