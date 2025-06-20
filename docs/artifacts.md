@@ -27,6 +27,7 @@ title: Artifacts
 "dev.zio" %% "zio-aws-account" % "<version>"
 "dev.zio" %% "zio-aws-acm" % "<version>"
 "dev.zio" %% "zio-aws-acmpca" % "<version>"
+"dev.zio" %% "zio-aws-aiops" % "<version>"
 "dev.zio" %% "zio-aws-amp" % "<version>"
 "dev.zio" %% "zio-aws-amplify" % "<version>"
 "dev.zio" %% "zio-aws-amplifybackend" % "<version>"
