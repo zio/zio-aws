@@ -1,12 +1,11 @@
-import zio.aws.codegen.ZioAwsCodegenPlugin.autoImport._
-import sbt._
-import Keys._
-import com.jsuereth.sbtpgp.PgpKeys._
+import sbt.*
+import sbt.Keys.*
 import xerial.sbt.Sonatype
-import xerial.sbt.Sonatype._
-import xerial.sbt.Sonatype.SonatypeKeys._
+import xerial.sbt.Sonatype.*
+import xerial.sbt.Sonatype.SonatypeKeys.*
+import zio.aws.codegen.ZioAwsCodegenPlugin.autoImport.*
 
-import scala.collection.JavaConverters._
+import scala.collection.JavaConverters.*
 
 object Common extends AutoPlugin {
 
@@ -37,7 +36,7 @@ object Common extends AutoPlugin {
     val scalacOptions3 = Seq("-deprecation")
   }
 
-  import autoImport._
+  import autoImport.*
 
   override val trigger = allRequirements
 
@@ -102,41 +101,33 @@ object Common extends AutoPlugin {
       sonatypeProjectHosting := Some(
         GitHubHosting("zio", "zio-aws", "daniel.vigovszky@gmail.com")
       ),
-      sonatypeCredentialHost := "oss.sonatype.org",
-      sonatypeRepository := "https://oss.sonatype.org/service/local",
+      sonatypeCredentialHost := "central.sonatype.com",
       credentials ++=
         (for {
           username <- Option(System.getenv().get("SONATYPE_USERNAME"))
           password <- Option(System.getenv().get("SONATYPE_PASSWORD"))
         } yield Credentials(
-          "Sonatype Nexus Repository Manager",
-          "oss.sonatype.org",
+          "Central Publisher Portal",
+          "central.sonatype.com",
           username,
           password
         )).toSeq,
-      resolvers +=
-        "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
+      resolvers += Resolver.sonatypeCentralSnapshots,
       ci.release.early.Plugin.autoImport.verifyNoSnapshotDependencies := {} // Temporarily disable this check until all dependencies are ready for ZIO 2
     )
 
   private def adjustTagForAwsVersion(
       log: String => Any
   ): Option[ci.release.early.VersionAndTag] = {
-    import ci.release.early._
-    import ci.release.early.Utils._
+    import ci.release.early.*
+    import ci.release.early.Utils.*
 
     verifyGitIsClean
     val allTags = git.tagList.call.asScala.map(_.getName).toList
     val highestVersion = findHighestVersion(allTags, log)
     log(s"highest version so far: $highestVersion")
 
-<<<<<<< HEAD
-    if (
-      highestVersion.fold(ifEmpty = false)(_.startsWith(zioAwsVersionPrefix))
-    ) {
-=======
-    if (highestVersion.startsWith(zioAwsVersionPrefix)) {
->>>>>>> parent of 12f89217 (Try to migrate the release process to the new Maven Portal (#1517))
+    if (highestVersion.fold(ifEmpty = false)(_.startsWith(zioAwsVersionPrefix))) {
       // Prefix is already good
       None
     } else {
