@@ -18,7 +18,7 @@ object Common extends AutoPlugin {
     val zioPreludeVersion = "1.0.0-RC41"
     val catsEffectVersion = "3.6.1"
 
-    val awsVersion = "2.31.68"
+    val awsVersion = "2.31.69"
     val awsSubVersion = awsVersion.drop(awsVersion.indexOf('.') + 1)
     val http4sVersion = "0.23.27"
     val blazeVersion = "0.23.17"
@@ -127,7 +127,9 @@ object Common extends AutoPlugin {
     val highestVersion = findHighestVersion(allTags, log)
     log(s"highest version so far: $highestVersion")
 
-    if (highestVersion.fold(ifEmpty = false)(_.startsWith(zioAwsVersionPrefix))) {
+    if (
+      highestVersion.fold(ifEmpty = false)(_.startsWith(zioAwsVersionPrefix))
+    ) {
       // Prefix is already good
       None
     } else {
