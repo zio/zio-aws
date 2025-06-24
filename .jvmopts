@@ -2,4 +2,3 @@
 -Xms256M
 -Xmx6G
 -XX:+UseG1GC
--Xss16M
