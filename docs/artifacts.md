@@ -426,6 +426,7 @@ title: Artifacts
 "dev.zio" %% "zio-aws-workmail" % "<version>"
 "dev.zio" %% "zio-aws-workmailmessageflow" % "<version>"
 "dev.zio" %% "zio-aws-workspaces" % "<version>"
+"dev.zio" %% "zio-aws-workspacesinstances" % "<version>"
 "dev.zio" %% "zio-aws-workspacesthinclient" % "<version>"
 "dev.zio" %% "zio-aws-workspacesweb" % "<version>"
 "dev.zio" %% "zio-aws-xray" % "<version>"
