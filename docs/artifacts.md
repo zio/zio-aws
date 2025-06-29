@@ -227,6 +227,7 @@ title: Artifacts
 "dev.zio" %% "zio-aws-kendra" % "<version>"
 "dev.zio" %% "zio-aws-kendraranking" % "<version>"
 "dev.zio" %% "zio-aws-keyspaces" % "<version>"
+"dev.zio" %% "zio-aws-keyspacesstreams" % "<version>"
 "dev.zio" %% "zio-aws-kinesis" % "<version>"
 "dev.zio" %% "zio-aws-kinesisanalytics" % "<version>"
 "dev.zio" %% "zio-aws-kinesisanalyticsv2" % "<version>"
