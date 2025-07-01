@@ -1,8 +1,5 @@
 import sbt.*
 import sbt.Keys.*
-import xerial.sbt.Sonatype
-import xerial.sbt.Sonatype.*
-import xerial.sbt.Sonatype.SonatypeKeys.*
 import zio.aws.codegen.ZioAwsCodegenPlugin.autoImport.*
 
 import scala.collection.JavaConverters.*
@@ -40,7 +37,7 @@ object Common extends AutoPlugin {
 
   override val trigger = allRequirements
 
-  override val requires = (Sonatype && ci.release.early.Plugin)
+  override val requires = (ci.release.early.Plugin)
 
   override lazy val globalSettings =
     Seq(
@@ -96,12 +93,12 @@ object Common extends AutoPlugin {
           url = url("https://vigoo.github.io")
         )
       ),
-      publishTo := sonatypePublishToBundle.value,
-      sonatypeTimeoutMillis := 300 * 60 * 1000,
-      sonatypeProjectHosting := Some(
-        GitHubHosting("zio", "zio-aws", "daniel.vigovszky@gmail.com")
-      ),
-      sonatypeCredentialHost := "central.sonatype.com",
+      ThisBuild / publishTo := {
+        // See https://github.com/sbt/sbt/releases/tag/v1.11.0
+        val centralSnapshots = "https://central.sonatype.com/repository/maven-snapshots/"
+        if (isSnapshot.value) Some("central-snapshots" at centralSnapshots)
+        else localStaging.value
+      },
       credentials ++=
         (for {
           username <- Option(System.getenv().get("SONATYPE_USERNAME"))
