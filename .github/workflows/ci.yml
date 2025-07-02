@@ -1132,7 +1132,7 @@ jobs:
         tar xvf targets.tar
         rm targets.tar
     - name: Publish artifacts
-      run: sbt -J-XX:+UseG1GC -J-Xmx5g -J-Xms5g -J-Xss16m sonatypeBundleRelease
+      run: sbt -J-XX:+UseG1GC -J-Xmx5g -J-Xms5g -J-Xss16m 'sonaUpload;sonaRelease'
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
