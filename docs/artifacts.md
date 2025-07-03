@@ -297,6 +297,7 @@ title: Artifacts
 "dev.zio" %% "zio-aws-notificationscontacts" % "<version>"
 "dev.zio" %% "zio-aws-oam" % "<version>"
 "dev.zio" %% "zio-aws-observabilityadmin" % "<version>"
+"dev.zio" %% "zio-aws-odb" % "<version>"
 "dev.zio" %% "zio-aws-omics" % "<version>"
 "dev.zio" %% "zio-aws-opensearch" % "<version>"
 "dev.zio" %% "zio-aws-opensearchserverless" % "<version>"
