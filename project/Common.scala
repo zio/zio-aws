@@ -3,6 +3,7 @@ import sbt.Keys.*
 import zio.aws.codegen.ZioAwsCodegenPlugin.autoImport.*
 
 import scala.collection.JavaConverters.*
+import scala.concurrent.duration.*
 
 object Common extends AutoPlugin {
 
@@ -100,6 +101,7 @@ object Common extends AutoPlugin {
         if (isSnapshot.value) Some("central-snapshots" at centralSnapshots)
         else localStaging.value
       },
+      ThisBuild / sonaUploadRequestTimeout := 2.hours,
       credentials ++=
         (for {
           username <- Option(System.getenv().get("SONATYPE_USERNAME"))

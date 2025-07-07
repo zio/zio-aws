@@ -3,3 +3,8 @@
 -Xmx6G
 -XX:+UseG1GC
 -Xss16M
+# Needed for sbt-dotenv with modern JVMs
+--add-opens=java.base/java.util=ALL-UNNAMED
+--add-opens=java.base/java.lang=ALL-UNNAMED
+--add-exports=java.base/sun.nio.ch=ALL-UNNAMED
+--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED
