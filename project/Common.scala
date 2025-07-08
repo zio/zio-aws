@@ -101,7 +101,8 @@ object Common extends AutoPlugin {
         if (isSnapshot.value) Some("central-snapshots" at centralSnapshots)
         else localStaging.value
       },
-      ThisBuild / sonaUploadRequestTimeout := 2.hours,
+      Global / excludeLintKeys += sonaUploadRequestTimeout, // avoids noisy useless warnings
+      sonaUploadRequestTimeout := 2.hours,
       credentials ++=
         (for {
           username <- Option(System.getenv().get("SONATYPE_USERNAME"))
