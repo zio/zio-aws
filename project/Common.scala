@@ -102,7 +102,7 @@ object Common extends AutoPlugin {
         else localStaging.value
       },
       Global / excludeLintKeys += sonaUploadRequestTimeout, // avoids noisy useless warnings
-      sonaUploadRequestTimeout := 2.hours,
+      sonaUploadRequestTimeout := 12.hours,
       credentials ++=
         (for {
           username <- Option(System.getenv().get("SONATYPE_USERNAME"))
