@@ -25,7 +25,6 @@ object Common extends AutoPlugin {
     val majorVersion = "7"
     val zioAwsVersionPrefix = s"$majorVersion.$awsSubVersion."
 
-    val scala212Version = "2.12.20"
     val scala213Version = "2.13.16"
     val scala3Version = "3.3.6"
 
@@ -66,7 +65,6 @@ object Common extends AutoPlugin {
     Seq(
       scalaVersion := scala213Version,
       crossScalaVersions := List(
-        scala212Version,
         scala213Version,
         scala3Version
       ),
