@@ -36,11 +36,9 @@ trait GithubActionsGenerator {
       )
       .toList ++ separateProjectNames.map(List(_))
 
-    val scala212 = ScalaVersion("2.12.x")
     val scala213 = ScalaVersion("2.13.x")
     val scala3 = ScalaVersion("3.x")
     val scalaVersions = Seq(
-      scala212,
       scala213,
       scala3
     )
@@ -168,19 +166,11 @@ trait GithubActionsGenerator {
                 "Build and run tests",
                 List(
                   "++${{ matrix.scala }}",
-                  "integtests/test"
-                ),
-                heapGb = 5
-              ).when(isScalaVersion(scala212)),
-              runSBT(
-                "Build and run tests",
-                List(
-                  "++${{ matrix.scala }}",
                   "examples/compile",
                   "integtests/test"
                 ),
                 heapGb = 5
-              ).when(isNotScalaVersion(scala3) && isNotScalaVersion(scala212)),
+              ).when(isNotScalaVersion(scala3)),
               runSBT(
                 "Build and run tests",
                 List(
@@ -255,20 +245,12 @@ trait GithubActionsGenerator {
             loadStoredTargets(
               "core" :: grouped.indices.map(idx => s"clients-$idx").toList,
               os = Some(OS.UbuntuLatest),
-              scalaVersion = Some(scala212),
-              javaVersion = Some(JavaVersion.Java17)
-            ),
-            loadStoredTargets(
-              "core" :: grouped.indices.map(idx => s"clients-$idx").toList,
-              os = Some(OS.UbuntuLatest),
               scalaVersion = Some(scala3),
               javaVersion = Some(JavaVersion.Java17)
             ),
             runSBT(
               "Publish artifacts",
-              parameters = List(
-                "sonatypeBundleRelease"
-              ),
+              parameters = List("sonaRelease"),
               heapGb = 5,
               env = Map(
                 "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
