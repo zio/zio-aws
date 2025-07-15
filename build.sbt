@@ -125,7 +125,7 @@ lazy val example3 = Project("example3", file("examples") / "example3")
 
 lazy val integtests = Project("integtests", file("integtests"))
   .settings(
-    crossScalaVersions := List(scala212Version, scala213Version),
+    crossScalaVersions := List(scala213Version),
     libraryDependencies ++= Seq(
       "dev.zio" %% "zio" % zioVersion,
       "dev.zio" %% "zio-test" % zioVersion,
