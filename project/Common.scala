@@ -92,26 +92,12 @@ object Common extends AutoPlugin {
           url = url("https://vigoo.github.io")
         )
       ),
-      ThisBuild / publishTo := {
-        // See https://github.com/sbt/sbt/releases/tag/v1.11.0
-        val centralSnapshots =
-          "https://central.sonatype.com/repository/maven-snapshots/"
-        if (isSnapshot.value) Some("central-snapshots" at centralSnapshots)
-        else localStaging.value
-      },
+      publishTo := sonatypePublishToBundle.value
       Global / excludeLintKeys += sonaUploadRequestTimeout, // avoids noisy useless warnings
-      sonaUploadRequestTimeout := 12.hours,
-      credentials ++=
-        (for {
-          username <- Option(System.getenv().get("SONATYPE_USERNAME"))
-          password <- Option(System.getenv().get("SONATYPE_PASSWORD"))
-        } yield Credentials(
-          "Central Publisher Portal",
-          "central.sonatype.com",
-          username,
-          password
-        )).toSeq,
+      sonaUploadRequestTimeout := 12.hours,      
+      sonatypeCredentialHost := "central.sonatype.com",
       resolvers += Resolver.sonatypeCentralSnapshots,
+      resolvers += Resolver.sonatypeCentralRepo("staging"),
       ci.release.early.Plugin.autoImport.verifyNoSnapshotDependencies := {} // Temporarily disable this check until all dependencies are ready for ZIO 2
     )
 
