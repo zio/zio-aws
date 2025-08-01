@@ -99,7 +99,7 @@ object Common extends AutoPlugin {
           "https://central.sonatype.com/repository/maven-snapshots/"
         if (isSnapshot.value) Some("central-snapshots" at centralSnapshots)
         else localStaging.value
-      }
+      },
       Global / excludeLintKeys += sonaUploadRequestTimeout, // avoids noisy useless warnings
       sonaUploadRequestTimeout := 12.hours,
       resolvers += Resolver.sonatypeCentralSnapshots,
