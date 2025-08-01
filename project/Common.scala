@@ -1,6 +1,10 @@
-import sbt.*
-import sbt.Keys.*
-import zio.aws.codegen.ZioAwsCodegenPlugin.autoImport.*
+import zio.aws.codegen.ZioAwsCodegenPlugin.autoImport._
+import sbt._
+import Keys._
+import com.jsuereth.sbtpgp.PgpKeys._
+import xerial.sbt.Sonatype
+import xerial.sbt.Sonatype._
+import xerial.sbt.Sonatype.SonatypeKeys._
 
 import scala.collection.JavaConverters.*
 import scala.concurrent.duration.*
@@ -37,7 +41,7 @@ object Common extends AutoPlugin {
 
   override val trigger = allRequirements
 
-  override val requires = (ci.release.early.Plugin)
+  override val requires = (Sonatype && ci.release.early.Plugin)
 
   override lazy val globalSettings =
     Seq(
@@ -92,10 +96,9 @@ object Common extends AutoPlugin {
           url = url("https://vigoo.github.io")
         )
       ),
-      publishTo := sonatypePublishToBundle.value
+      publishTo := sonatypePublishToBundle.value,
       Global / excludeLintKeys += sonaUploadRequestTimeout, // avoids noisy useless warnings
-      sonaUploadRequestTimeout := 12.hours,      
-      sonatypeCredentialHost := "central.sonatype.com",
+      sonaUploadRequestTimeout := 12.hours,
       resolvers += Resolver.sonatypeCentralSnapshots,
       resolvers += Resolver.sonatypeCentralRepo("staging"),
       ci.release.early.Plugin.autoImport.verifyNoSnapshotDependencies := {} // Temporarily disable this check until all dependencies are ready for ZIO 2
