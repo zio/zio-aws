@@ -1,10 +1,6 @@
-import zio.aws.codegen.ZioAwsCodegenPlugin.autoImport._
-import sbt._
-import Keys._
-import com.jsuereth.sbtpgp.PgpKeys._
-import xerial.sbt.Sonatype
-import xerial.sbt.Sonatype._
-import xerial.sbt.Sonatype.SonatypeKeys._
+import sbt.*
+import sbt.Keys.*
+import zio.aws.codegen.ZioAwsCodegenPlugin.autoImport.*
 
 import scala.collection.JavaConverters.*
 import scala.concurrent.duration.*
@@ -41,7 +37,7 @@ object Common extends AutoPlugin {
 
   override val trigger = allRequirements
 
-  override val requires = (Sonatype && ci.release.early.Plugin)
+  override val requires = (ci.release.early.Plugin)
 
   override lazy val globalSettings =
     Seq(
@@ -96,11 +92,26 @@ object Common extends AutoPlugin {
           url = url("https://vigoo.github.io")
         )
       ),
-      publishTo := sonatypePublishToBundle.value,
+      ThisBuild / publishTo := {
+        // See https://github.com/sbt/sbt/releases/tag/v1.11.0
+        val centralSnapshots =
+          "https://central.sonatype.com/repository/maven-snapshots/"
+        if (isSnapshot.value) Some("central-snapshots" at centralSnapshots)
+        else localStaging.value
+      },
       Global / excludeLintKeys += sonaUploadRequestTimeout, // avoids noisy useless warnings
       sonaUploadRequestTimeout := 12.hours,
+      credentials ++=
+        (for {
+          username <- Option(System.getenv().get("SONATYPE_USERNAME"))
+          password <- Option(System.getenv().get("SONATYPE_PASSWORD"))
+        } yield Credentials(
+          "Central Publisher Portal",
+          "central.sonatype.com",
+          username,
+          password
+        )).toSeq,
       resolvers += Resolver.sonatypeCentralSnapshots,
-      resolvers += Resolver.sonatypeCentralRepo("staging"),
       ci.release.early.Plugin.autoImport.verifyNoSnapshotDependencies := {} // Temporarily disable this check until all dependencies are ready for ZIO 2
     )
 

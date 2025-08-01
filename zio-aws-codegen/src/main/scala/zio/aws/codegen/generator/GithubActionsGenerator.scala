@@ -250,7 +250,7 @@ trait GithubActionsGenerator {
             ),
             runSBT(
               "Publish artifacts",
-              parameters = List("sonatypeBundleRelease"),
+              parameters = List("sonaRelease"),
               heapGb = 5,
               env = Map(
                 "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
