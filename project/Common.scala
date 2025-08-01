@@ -38,7 +38,7 @@ object Common extends AutoPlugin {
 
   override val trigger = allRequirements
 
-  override val requires = (Sonatype && ci.release.early.Plugin)
+  override val requires = ci.release.early.Plugin
 
   override lazy val globalSettings =
     Seq(
