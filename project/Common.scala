@@ -2,9 +2,6 @@ import zio.aws.codegen.ZioAwsCodegenPlugin.autoImport._
 import sbt._
 import Keys._
 import com.jsuereth.sbtpgp.PgpKeys._
-import xerial.sbt.Sonatype
-import xerial.sbt.Sonatype._
-import xerial.sbt.Sonatype.SonatypeKeys._
 
 import scala.collection.JavaConverters.*
 import scala.concurrent.duration.*
@@ -96,7 +93,13 @@ object Common extends AutoPlugin {
           url = url("https://vigoo.github.io")
         )
       ),
-      publishTo := sonatypePublishToBundle.value,
+      ThisBuild / publishTo := {
+        // See https://github.com/sbt/sbt/releases/tag/v1.11.0
+        val centralSnapshots =
+          "https://central.sonatype.com/repository/maven-snapshots/"
+        if (isSnapshot.value) Some("central-snapshots" at centralSnapshots)
+        else localStaging.value
+      }
       Global / excludeLintKeys += sonaUploadRequestTimeout, // avoids noisy useless warnings
       sonaUploadRequestTimeout := 12.hours,
       resolvers += Resolver.sonatypeCentralSnapshots,
