@@ -50,7 +50,7 @@ package object aspects {
             .tagged("aws_service", r.description.service)
             .tagged("aws_operation", r.description.operation)
             .update(durationInSeconds)
-            .zipRight(f)
+            .as(r)
         }
       }
     }
