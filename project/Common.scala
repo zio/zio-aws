@@ -69,6 +69,7 @@ object Common extends AutoPlugin {
         scala3Version
       ),
       organization := "dev.zio",
+      homepage := Some(url("https://github.com/zio/zio-aws")),
       awsLibraryVersion := awsVersion,
       zioLibraryVersion := zioVersion,
       zioMockLibraryVersion := zioMockVersion,
