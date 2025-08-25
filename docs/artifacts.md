@@ -62,6 +62,7 @@ title: Artifacts
 "dev.zio" %% "zio-aws-backupgateway" % "<version>"
 "dev.zio" %% "zio-aws-backupsearch" % "<version>"
 "dev.zio" %% "zio-aws-batch" % "<version>"
+"dev.zio" %% "zio-aws-bcmdashboards" % "<version>"
 "dev.zio" %% "zio-aws-bcmdataexports" % "<version>"
 "dev.zio" %% "zio-aws-bcmpricingcalculator" % "<version>"
 "dev.zio" %% "zio-aws-bcmrecommendedactions" % "<version>"

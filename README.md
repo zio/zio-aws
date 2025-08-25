@@ -166,7 +166,7 @@ object ZIOAWSExample extends ZIOAppDefault {
 
 ## Documentation
 
-Learn more on the [ZIO AWS homepage](https://zio.dev/ecosystem/)!
+Learn more on the [ZIO AWS homepage](https://github.com/zio/zio-aws)!
 
 ## Contributing
 
