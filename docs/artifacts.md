@@ -306,8 +306,6 @@ title: Artifacts
 "dev.zio" %% "zio-aws-omics" % "<version>"
 "dev.zio" %% "zio-aws-opensearch" % "<version>"
 "dev.zio" %% "zio-aws-opensearchserverless" % "<version>"
-"dev.zio" %% "zio-aws-opsworks" % "<version>"
-"dev.zio" %% "zio-aws-opsworkscm" % "<version>"
 "dev.zio" %% "zio-aws-organizations" % "<version>"
 "dev.zio" %% "zio-aws-osis" % "<version>"
 "dev.zio" %% "zio-aws-outposts" % "<version>"
