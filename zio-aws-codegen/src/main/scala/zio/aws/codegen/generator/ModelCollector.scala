@@ -355,8 +355,9 @@ object ModelCollector {
       case None                   => shapeName
     }
 
-    models.customizationConfig().getShapeSubstitutions
-      .asScala
+    Option(models.customizationConfig().getShapeSubstitutions)
+      .map(_.asScala)
+      .getOrElse(Map.empty[String, ShapeSubstitution])
       .get(shapeName)
       .flatMap(shapeSubstitution => Option(shapeSubstitution.getEmitAsType))
       .foreach(typ => shape.setType(typ))
