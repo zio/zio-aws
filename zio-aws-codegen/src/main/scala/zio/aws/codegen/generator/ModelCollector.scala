@@ -355,6 +355,12 @@ object ModelCollector {
       case None                   => shapeName
     }
 
+    models.customizationConfig().getShapeSubstitutions
+      .asScala
+      .get(shapeName)
+      .flatMap(shapeSubstitution => Option(shapeSubstitution.getEmitAsType))
+      .foreach(typ => shape.setType(typ))
+
     val className = namingStrategy.getShapeClassName(finalName)
     val isPrimitive = isPrimitiveType(shape) && !isBuiltIn(shapeName)
 
