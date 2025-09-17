@@ -5,9 +5,7 @@ import scala.meta._
 case class ServiceMethod(
     interface: Decl,
     implementation: Defn,
-    accessor: Defn,
-    mockObject: Defn,
-    mockCompose: Defn
+    accessor: Defn
 )
 
 case class ServiceMethods(methods: List[ServiceMethod])
