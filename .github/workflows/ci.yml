@@ -781,18 +781,17 @@ jobs:
         zio-aws-servicecatalog/compile zio-aws-servicecatalogappregistry/compile zio-aws-servicediscovery/compile
         zio-aws-servicequotas/compile zio-aws-ses/compile zio-aws-sesv2/compile zio-aws-sfn/compile
         zio-aws-shield/compile zio-aws-signer/compile zio-aws-simspaceweaver/compile
-        zio-aws-sms/compile zio-aws-snowball/compile zio-aws-snowdevicemanagement/compile
-        zio-aws-sns/compile zio-aws-socialmessaging/compile zio-aws-sqs/compile zio-aws-ssm/compile
-        zio-aws-ssmcontacts/compile zio-aws-ssmguiconnect/compile zio-aws-ssmincidents/compile
-        zio-aws-ssmquicksetup/compile zio-aws-ssmsap/compile zio-aws-sso/compile zio-aws-ssoadmin/compile
-        zio-aws-ssooidc/compile zio-aws-storagegateway/compile zio-aws-sts/compile
-        zio-aws-supplychain/compile zio-aws-support/compile zio-aws-supportapp/compile
-        zio-aws-swf/compile zio-aws-synthetics/compile zio-aws-taxsettings/compile
-        zio-aws-textract/compile zio-aws-timestreaminfluxdb/compile zio-aws-timestreamquery/compile
-        zio-aws-timestreamwrite/compile zio-aws-tnb/compile zio-aws-transcribe/compile
-        zio-aws-transcribestreaming/compile zio-aws-transfer/compile zio-aws-translate/compile
-        zio-aws-trustedadvisor/compile zio-aws-verifiedpermissions/compile zio-aws-voiceid/compile
-        zio-aws-vpclattice/compile zio-aws-waf/compile zio-aws-wafregional/compile
+        zio-aws-snowball/compile zio-aws-snowdevicemanagement/compile zio-aws-sns/compile
+        zio-aws-socialmessaging/compile zio-aws-sqs/compile zio-aws-ssm/compile zio-aws-ssmcontacts/compile
+        zio-aws-ssmguiconnect/compile zio-aws-ssmincidents/compile zio-aws-ssmquicksetup/compile
+        zio-aws-ssmsap/compile zio-aws-sso/compile zio-aws-ssoadmin/compile zio-aws-ssooidc/compile
+        zio-aws-storagegateway/compile zio-aws-sts/compile zio-aws-supplychain/compile
+        zio-aws-support/compile zio-aws-supportapp/compile zio-aws-swf/compile zio-aws-synthetics/compile
+        zio-aws-taxsettings/compile zio-aws-textract/compile zio-aws-timestreaminfluxdb/compile
+        zio-aws-timestreamquery/compile zio-aws-timestreamwrite/compile zio-aws-tnb/compile
+        zio-aws-transcribe/compile zio-aws-transcribestreaming/compile zio-aws-transfer/compile
+        zio-aws-translate/compile zio-aws-trustedadvisor/compile zio-aws-verifiedpermissions/compile
+        zio-aws-voiceid/compile zio-aws-vpclattice/compile zio-aws-waf/compile zio-aws-wafregional/compile
         zio-aws-wafv2/compile zio-aws-wellarchitected/compile zio-aws-wisdom/compile
         zio-aws-workdocs/compile zio-aws-workmail/compile zio-aws-workmailmessageflow/compile
         zio-aws-workspaces/compile zio-aws-workspacesinstances/compile zio-aws-workspacesthinclient/compile
@@ -812,7 +811,7 @@ jobs:
         zio-aws-servicediscovery/publishSigned zio-aws-servicequotas/publishSigned
         zio-aws-ses/publishSigned zio-aws-sesv2/publishSigned zio-aws-sfn/publishSigned
         zio-aws-shield/publishSigned zio-aws-signer/publishSigned zio-aws-simspaceweaver/publishSigned
-        zio-aws-sms/publishSigned zio-aws-snowball/publishSigned zio-aws-snowdevicemanagement/publishSigned
+        zio-aws-snowball/publishSigned zio-aws-snowdevicemanagement/publishSigned
         zio-aws-sns/publishSigned zio-aws-socialmessaging/publishSigned zio-aws-sqs/publishSigned
         zio-aws-ssm/publishSigned zio-aws-ssmcontacts/publishSigned zio-aws-ssmguiconnect/publishSigned
         zio-aws-ssmincidents/publishSigned zio-aws-ssmquicksetup/publishSigned zio-aws-ssmsap/publishSigned
