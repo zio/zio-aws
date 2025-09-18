@@ -387,7 +387,6 @@ title: Artifacts
 "dev.zio" %% "zio-aws-shield" % "<version>"
 "dev.zio" %% "zio-aws-signer" % "<version>"
 "dev.zio" %% "zio-aws-simspaceweaver" % "<version>"
-"dev.zio" %% "zio-aws-sms" % "<version>"
 "dev.zio" %% "zio-aws-snowball" % "<version>"
 "dev.zio" %% "zio-aws-snowdevicemanagement" % "<version>"
 "dev.zio" %% "zio-aws-sns" % "<version>"
