@@ -304,6 +304,7 @@ trait ServiceModelGenerator {
     val shapeNameRoInit = Init(readOnlyType.typ, Name.Anonymous(), List.empty)
 
     for {
+      serviceName <- getServiceName
       namingStrategy <- getNamingStrategy
       fieldList <- filterMembers(m.shapeName, m.shape.getMembers.asScala.toList)
       required =
@@ -453,12 +454,12 @@ trait ServiceModelGenerator {
 
       // Generate has* methods for DynamoDB AttributeValue
       dynamoDbAttributeValueMethods =
-        if (m.generatedType.name == "AttributeValue") {
+        if (serviceName == "dynamodb" && m.generatedType.name == "AttributeValue") {
           generateDynamoDbAttributeValueHasMethods()
         } else List.empty[Defn.Def]
 
       dynamoDbAttributeValueWrapperMethods =
-        if (m.generatedType.name == "AttributeValue") {
+        if (serviceName == "dynamodb" && m.generatedType.name == "AttributeValue") {
           generateDynamoDbAttributeValueWrapperMethods()
         } else List.empty[Defn.Def]
 
