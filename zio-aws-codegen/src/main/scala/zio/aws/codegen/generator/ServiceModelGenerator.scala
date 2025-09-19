@@ -450,6 +450,18 @@ trait ServiceModelGenerator {
         } else {
           q"""$builderChain.build()"""
         }
+
+      // Generate has* methods for DynamoDB AttributeValue
+      dynamoDbAttributeValueMethods =
+        if (m.generatedType.name == "AttributeValue") {
+          generateDynamoDbAttributeValueHasMethods()
+        } else List.empty[Defn.Def]
+
+      dynamoDbAttributeValueWrapperMethods =
+        if (m.generatedType.name == "AttributeValue") {
+          generateDynamoDbAttributeValueWrapperMethods()
+        } else List.empty[Defn.Def]
+
     } yield ModelWrapper(
       fileName = Some(m.generatedType.name),
       code = List(
@@ -472,10 +484,12 @@ trait ServiceModelGenerator {
             .map(_.getterCall)})
                               ..${fields.map(_.getterInterface)}
                               ..${fields.map(_.zioGetterImplementation)}
+                              ..$dynamoDbAttributeValueMethods
                             }
 
                             private final class Wrapper(impl: ${javaType.typ}) extends $shapeNameRoInit {
                               ..${fields.map(_.getterImplementation)}
+                              ..$dynamoDbAttributeValueWrapperMethods
                             }
 
                             def wrap(impl: ${javaType.typ}): ${readOnlyType.typ} = new Wrapper(impl)
@@ -575,6 +589,28 @@ trait ServiceModelGenerator {
          """
       ),
       generatedType = m.generatedType
+    )
+  }
+
+  private def generateDynamoDbAttributeValueHasMethods(): List[Defn.Def] = {
+    List(
+      // Only generate methods that exist in the AWS SDK
+      q"""def hasSs: Boolean = ss.isDefined""",
+      q"""def hasNs: Boolean = ns.isDefined""",
+      q"""def hasBs: Boolean = bs.isDefined""",
+      q"""def hasM: Boolean = m.isDefined""",
+      q"""def hasL: Boolean = l.isDefined"""
+    )
+  }
+
+  private def generateDynamoDbAttributeValueWrapperMethods(): List[Defn.Def] = {
+    List(
+      // Only generate methods that exist in the AWS SDK
+      q"""override def hasSs: Boolean = impl.hasSs()""",
+      q"""override def hasNs: Boolean = impl.hasNs()""",
+      q"""override def hasBs: Boolean = impl.hasBs()""",
+      q"""override def hasM: Boolean = impl.hasM()""",
+      q"""override def hasL: Boolean = impl.hasL()"""
     )
   }
 
