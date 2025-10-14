@@ -25,7 +25,7 @@ object Common extends AutoPlugin {
     val zioAwsVersionPrefix = s"$majorVersion.$awsSubVersion."
 
     val scala213Version = "2.13.16"
-    val scala3Version = "3.3.6"
+    val scala3Version = "3.3.7"
 
     val scalacOptions212 = Seq("-Ypartial-unification", "-deprecation")
     val scalacOptions213 = Seq("-deprecation")
