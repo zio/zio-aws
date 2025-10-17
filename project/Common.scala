@@ -8,14 +8,14 @@ import scala.concurrent.duration.*
 object Common extends AutoPlugin {
 
   object autoImport {
-    val zioVersion = "2.1.21"
+    val zioVersion = "2.1.22"
     val zioCatsInteropVersion = "23.1.0.5"
     val zioReactiveStreamsInteropVersion = "2.0.2"
     val zioConfigVersion = "4.0.5"
     val zioPreludeVersion = "1.0.0-RC42"
     val catsEffectVersion = "3.6.3"
 
-    val awsVersion = "2.34.9"
+    val awsVersion = "2.35.8"
     val awsSubVersion = awsVersion.drop(awsVersion.indexOf('.') + 1)
     val http4sVersion = "0.23.32"
     val blazeVersion = "0.23.17"
@@ -24,8 +24,8 @@ object Common extends AutoPlugin {
     val majorVersion = "7"
     val zioAwsVersionPrefix = s"$majorVersion.$awsSubVersion."
 
-    val scala213Version = "2.13.16"
-    val scala3Version = "3.3.6"
+    val scala213Version = "2.13.17"
+    val scala3Version = "3.3.7"
 
     val scalacOptions212 = Seq("-Ypartial-unification", "-deprecation")
     val scalacOptions213 = Seq("-deprecation")
