@@ -309,7 +309,7 @@ trait AwsServiceBase[R] {
             // NOTE: we should wait the CompletableFuture's fiber here BUT it seems like there are cases when it never gets completed
             finishedPromise.await *>
               signalQueue.poll.map {
-                case None => ZStream.empty
+                case None          => ZStream.empty
                 case Some(failure) =>
                   ZStream.fail(failure)
               }

@@ -55,7 +55,7 @@ trait ServiceInterfaceGenerator {
     getModels.flatMap { models =>
       ModelCollector.tryFindEventStreamShape(models, outputShape) match {
         case Some(value) => ZIO.succeed(value)
-        case None =>
+        case None        =>
           getServiceName.flatMap(serviceName =>
             ZIO.fail(CannotFindEventStreamInShape(serviceName, outputShape))
           )

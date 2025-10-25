@@ -20,7 +20,7 @@ object ModuleId {
     value.split(':').toList match {
       case List(single)    => Right(ModuleId(single, None))
       case List(main, sub) => Right(ModuleId(main, Some(sub)))
-      case _ =>
+      case _               =>
         Left(
           s"Failed to parse $value as ModuleId, use 'svc' or 'svc:subsvc' syntax."
         )

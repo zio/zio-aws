@@ -38,7 +38,7 @@ object SimulatedPublisher {
         if (steps.nonEmpty) {
           steps.dequeue() match {
             case Subscribe => inner.onSubscribe(s)
-            case Emit =>
+            case Emit      =>
               inner.onError(
                 new RuntimeException(s"Simulation cannot emit before subscribe")
               )

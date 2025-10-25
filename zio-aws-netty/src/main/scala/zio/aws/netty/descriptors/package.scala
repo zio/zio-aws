@@ -10,8 +10,8 @@ package object descriptors {
   val httpOrHttps: Config[HttpOrHttps] =
     Config.string.mapOrFail(
       {
-        case "http"  => Right(HttpOrHttps.Http)
-        case "https" => Right(HttpOrHttps.Https)
+        case "http"        => Right(HttpOrHttps.Http)
+        case "https"       => Right(HttpOrHttps.Https)
         case other: String =>
           Left(
             Config.Error.InvalidData(message =
@@ -124,9 +124,9 @@ package object descriptors {
   val protocol: Config[Protocol] =
     Config.string.mapOrFail(
       {
-        case "HTTP/1.1" => Right(Protocol.Http11)
-        case "HTTP/2"   => Right(Protocol.Http2)
-        case "Dual"     => Right(Protocol.Dual)
+        case "HTTP/1.1"    => Right(Protocol.Http11)
+        case "HTTP/2"      => Right(Protocol.Http2)
+        case "Dual"        => Right(Protocol.Dual)
         case other: String =>
           Left(
             Config.Error.InvalidData(message =
@@ -142,7 +142,7 @@ package object descriptors {
         case "JDK"            => Right(SslProvider.JDK)
         case "OPENSSL"        => Right(SslProvider.OPENSSL)
         case "OPENSSL_REFCNT" => Right(SslProvider.OPENSSL_REFCNT)
-        case other: String =>
+        case other: String    =>
           Left(
             Config.Error.InvalidData(message =
               s"Invalid SSL provider: '$other'. Use 'JDK', 'OPENSSL' or 'OPENSSL_REFCNT'"
