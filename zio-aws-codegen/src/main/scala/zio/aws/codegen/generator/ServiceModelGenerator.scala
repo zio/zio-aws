@@ -145,7 +145,7 @@ trait ServiceModelGenerator {
                 case ModelType.Float   => (ScalaType.float, ScalaType.float)
                 case ModelType.Double  => (ScalaType.double, ScalaType.double)
                 case ModelType.Boolean => (ScalaType.boolean, ScalaType.boolean)
-                case ModelType.Timestamp => (Types.instant, Types.instant)
+                case ModelType.Timestamp  => (Types.instant, Types.instant)
                 case ModelType.BigDecimal =>
                   (Types.bigDecimal, Types.bigDecimal)
                 case ModelType.Blob =>
@@ -454,12 +454,16 @@ trait ServiceModelGenerator {
 
       // Generate has* methods for DynamoDB AttributeValue
       dynamoDbAttributeValueMethods =
-        if (serviceName == "dynamodb" && m.generatedType.name == "AttributeValue") {
+        if (
+          serviceName == "dynamodb" && m.generatedType.name == "AttributeValue"
+        ) {
           generateDynamoDbAttributeValueHasMethods()
         } else List.empty[Defn.Def]
 
       dynamoDbAttributeValueWrapperMethods =
-        if (serviceName == "dynamodb" && m.generatedType.name == "AttributeValue") {
+        if (
+          serviceName == "dynamodb" && m.generatedType.name == "AttributeValue"
+        ) {
           generateDynamoDbAttributeValueWrapperMethods()
         } else List.empty[Defn.Def]
 

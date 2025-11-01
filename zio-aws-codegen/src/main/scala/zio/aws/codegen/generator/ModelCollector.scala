@@ -67,7 +67,7 @@ object ModelCollector {
         else Option(op.getOutput).map(_.getShape)
 
       (request, response) match {
-        case (None, None) => List.empty
+        case (None, None)                   => List.empty
         case (Some(requestShapeName), None) =>
           Option(models.serviceModel().getShape(requestShapeName)).map {
             requestShape =>
@@ -267,7 +267,7 @@ object ModelCollector {
       ): ZIO[AwsGeneratorContext, AwsGeneratorFailure, Model] =
         substitutedMap.get(serviceModelName) match {
           case Some(value) => ZIO.succeed(value)
-          case None =>
+          case None        =>
             getServiceName.flatMap { serviceName =>
               ZIO.fail(UnknownShapeReference(serviceName, serviceModelName))
             }

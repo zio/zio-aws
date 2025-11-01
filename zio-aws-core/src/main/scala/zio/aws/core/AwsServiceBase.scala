@@ -66,28 +66,29 @@ trait AwsServiceBase[R] {
               for {
                 nextTokenRef <-
                   Ref.make[Option[String]](Some(nextToken))
-                pull = for {
-                  token <- nextTokenRef.get
-                  chunk <- token match {
-                    case Some(t) =>
-                      for {
-                        nextRequest <-
-                          ZIO
-                            .attempt(setNextToken(request, t))
-                            .mapError(t => Some(GenericAwsError(t)))
-                        rsp <- aspect(
-                          ZIO
-                            .fromCompletionStage(impl(nextRequest))
-                            .mapError(t =>
-                              GenericAwsError(t)
-                            ) ? (serviceName / opName)
-                        ).unwrap.mapError(Some.apply)
-                        _ <- nextTokenRef.set(getNextToken(rsp))
-                      } yield getItems(rsp)
-                    case None =>
-                      ZIO.fail(None)
-                  }
-                } yield chunk
+                pull =
+                  for {
+                    token <- nextTokenRef.get
+                    chunk <- token match {
+                      case Some(t) =>
+                        for {
+                          nextRequest <-
+                            ZIO
+                              .attempt(setNextToken(request, t))
+                              .mapError(t => Some(GenericAwsError(t)))
+                          rsp <- aspect(
+                            ZIO
+                              .fromCompletionStage(impl(nextRequest))
+                              .mapError(t =>
+                                GenericAwsError(t)
+                              ) ? (serviceName / opName)
+                          ).unwrap.mapError(Some.apply)
+                          _ <- nextTokenRef.set(getNextToken(rsp))
+                        } yield getItems(rsp)
+                      case None =>
+                        ZIO.fail(None)
+                    }
+                  } yield chunk
               } yield pull
             }
             ZIO.succeed(ZStream.fromChunk(getItems(response)).concat(stream))
@@ -118,28 +119,29 @@ trait AwsServiceBase[R] {
             for {
               nextTokenRef <-
                 Ref.make[Option[String]](Some(nextToken))
-              pull = for {
-                token <- nextTokenRef.get
-                chunk <- token match {
-                  case Some(t) =>
-                    for {
-                      nextRequest <-
-                        ZIO
-                          .attempt(setNextToken(request, t))
-                          .mapError(t => Some(GenericAwsError(t)))
-                      rsp <- aspect(
-                        ZIO
-                          .fromCompletionStage(impl(nextRequest))
-                          .mapError(t =>
-                            GenericAwsError(t)
-                          ) ? (serviceName / opName)
-                      ).unwrap.mapError(Some.apply)
-                      _ <- nextTokenRef.set(getNextToken(rsp))
-                    } yield getItems(rsp)
-                  case None =>
-                    ZIO.fail(None)
-                }
-              } yield chunk
+              pull =
+                for {
+                  token <- nextTokenRef.get
+                  chunk <- token match {
+                    case Some(t) =>
+                      for {
+                        nextRequest <-
+                          ZIO
+                            .attempt(setNextToken(request, t))
+                            .mapError(t => Some(GenericAwsError(t)))
+                        rsp <- aspect(
+                          ZIO
+                            .fromCompletionStage(impl(nextRequest))
+                            .mapError(t =>
+                              GenericAwsError(t)
+                            ) ? (serviceName / opName)
+                        ).unwrap.mapError(Some.apply)
+                        _ <- nextTokenRef.set(getNextToken(rsp))
+                      } yield getItems(rsp)
+                    case None =>
+                      ZIO.fail(None)
+                  }
+                } yield chunk
             } yield pull
           }
           ZIO.succeed(
@@ -309,7 +311,7 @@ trait AwsServiceBase[R] {
             // NOTE: we should wait the CompletableFuture's fiber here BUT it seems like there are cases when it never gets completed
             finishedPromise.await *>
               signalQueue.poll.map {
-                case None => ZStream.empty
+                case None          => ZStream.empty
                 case Some(failure) =>
                   ZStream.fail(failure)
               }

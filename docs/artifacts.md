@@ -356,6 +356,7 @@ title: Artifacts
 "dev.zio" %% "zio-aws-route53recoverycontrolconfig" % "<version>"
 "dev.zio" %% "zio-aws-route53recoveryreadiness" % "<version>"
 "dev.zio" %% "zio-aws-route53resolver" % "<version>"
+"dev.zio" %% "zio-aws-rtbfabric" % "<version>"
 "dev.zio" %% "zio-aws-rum" % "<version>"
 "dev.zio" %% "zio-aws-s3" % "<version>"
 "dev.zio" %% "zio-aws-s3control" % "<version>"

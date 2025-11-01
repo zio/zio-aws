@@ -770,10 +770,10 @@ jobs:
         rm targets.tar
     - name: Build libraries
       if: ${{ github.ref != 'refs/heads/master' }}
-      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-rum/compile
-        zio-aws-s3/compile zio-aws-s3control/compile zio-aws-s3outposts/compile zio-aws-s3tables/compile
-        zio-aws-s3vectors/compile zio-aws-sagemaker/compile zio-aws-sagemakera2iruntime/compile
-        zio-aws-sagemakeredge/compile zio-aws-sagemakerfeaturestoreruntime/compile
+      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-rtbfabric/compile
+        zio-aws-rum/compile zio-aws-s3/compile zio-aws-s3control/compile zio-aws-s3outposts/compile
+        zio-aws-s3tables/compile zio-aws-s3vectors/compile zio-aws-sagemaker/compile
+        zio-aws-sagemakera2iruntime/compile zio-aws-sagemakeredge/compile zio-aws-sagemakerfeaturestoreruntime/compile
         zio-aws-sagemakergeospatial/compile zio-aws-sagemakermetrics/compile zio-aws-sagemakerruntime/compile
         zio-aws-savingsplans/compile zio-aws-scheduler/compile zio-aws-schemas/compile
         zio-aws-secretsmanager/compile zio-aws-securityhub/compile zio-aws-securityir/compile
@@ -798,20 +798,20 @@ jobs:
         zio-aws-workspacesweb/compile zio-aws-xray/compile
     - name: Build and publish libraries
       if: ${{ github.ref == 'refs/heads/master' }}
-      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-rum/publishSigned
-        zio-aws-s3/publishSigned zio-aws-s3control/publishSigned zio-aws-s3outposts/publishSigned
-        zio-aws-s3tables/publishSigned zio-aws-s3vectors/publishSigned zio-aws-sagemaker/publishSigned
-        zio-aws-sagemakera2iruntime/publishSigned zio-aws-sagemakeredge/publishSigned
-        zio-aws-sagemakerfeaturestoreruntime/publishSigned zio-aws-sagemakergeospatial/publishSigned
-        zio-aws-sagemakermetrics/publishSigned zio-aws-sagemakerruntime/publishSigned
-        zio-aws-savingsplans/publishSigned zio-aws-scheduler/publishSigned zio-aws-schemas/publishSigned
-        zio-aws-secretsmanager/publishSigned zio-aws-securityhub/publishSigned zio-aws-securityir/publishSigned
-        zio-aws-securitylake/publishSigned zio-aws-serverlessapplicationrepository/publishSigned
-        zio-aws-servicecatalog/publishSigned zio-aws-servicecatalogappregistry/publishSigned
-        zio-aws-servicediscovery/publishSigned zio-aws-servicequotas/publishSigned
-        zio-aws-ses/publishSigned zio-aws-sesv2/publishSigned zio-aws-sfn/publishSigned
-        zio-aws-shield/publishSigned zio-aws-signer/publishSigned zio-aws-simspaceweaver/publishSigned
-        zio-aws-snowball/publishSigned zio-aws-snowdevicemanagement/publishSigned
+      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-rtbfabric/publishSigned
+        zio-aws-rum/publishSigned zio-aws-s3/publishSigned zio-aws-s3control/publishSigned
+        zio-aws-s3outposts/publishSigned zio-aws-s3tables/publishSigned zio-aws-s3vectors/publishSigned
+        zio-aws-sagemaker/publishSigned zio-aws-sagemakera2iruntime/publishSigned
+        zio-aws-sagemakeredge/publishSigned zio-aws-sagemakerfeaturestoreruntime/publishSigned
+        zio-aws-sagemakergeospatial/publishSigned zio-aws-sagemakermetrics/publishSigned
+        zio-aws-sagemakerruntime/publishSigned zio-aws-savingsplans/publishSigned
+        zio-aws-scheduler/publishSigned zio-aws-schemas/publishSigned zio-aws-secretsmanager/publishSigned
+        zio-aws-securityhub/publishSigned zio-aws-securityir/publishSigned zio-aws-securitylake/publishSigned
+        zio-aws-serverlessapplicationrepository/publishSigned zio-aws-servicecatalog/publishSigned
+        zio-aws-servicecatalogappregistry/publishSigned zio-aws-servicediscovery/publishSigned
+        zio-aws-servicequotas/publishSigned zio-aws-ses/publishSigned zio-aws-sesv2/publishSigned
+        zio-aws-sfn/publishSigned zio-aws-shield/publishSigned zio-aws-signer/publishSigned
+        zio-aws-simspaceweaver/publishSigned zio-aws-snowball/publishSigned zio-aws-snowdevicemanagement/publishSigned
         zio-aws-sns/publishSigned zio-aws-socialmessaging/publishSigned zio-aws-sqs/publishSigned
         zio-aws-ssm/publishSigned zio-aws-ssmcontacts/publishSigned zio-aws-ssmguiconnect/publishSigned
         zio-aws-ssmincidents/publishSigned zio-aws-ssmquicksetup/publishSigned zio-aws-ssmsap/publishSigned
