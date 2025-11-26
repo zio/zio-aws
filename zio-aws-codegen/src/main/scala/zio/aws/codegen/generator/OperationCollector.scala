@@ -390,16 +390,17 @@ object OperationCollector {
       outputListMember <- outputShape.getMembers.asScala.get(key)
       listShape = models.serviceModel().getShape(outputListMember.getShape)
       itemMember <- Option(listShape.getListMember)
-    } yield for {
-      itemModel <- AwsGeneratorContext.get(itemMember.getShape)
-      itemType <- toJavaType(itemModel)
-      wrappedTypeRo <- toWrappedTypeReadOnly(itemModel)
-    } yield JavaSdkPaginationDefinition(
-      name = key,
-      model = itemModel,
-      itemType = itemType,
-      wrappedTypeRo = wrappedTypeRo
-    )
+    } yield
+      for {
+        itemModel <- AwsGeneratorContext.get(itemMember.getShape)
+        itemType <- toJavaType(itemModel)
+        wrappedTypeRo <- toWrappedTypeReadOnly(itemModel)
+      } yield JavaSdkPaginationDefinition(
+        name = key,
+        model = itemModel,
+        itemType = itemType,
+        wrappedTypeRo = wrappedTypeRo
+      )
   }
 
   private def isExcluded(
