@@ -649,7 +649,8 @@ jobs:
         zio-aws-notificationscontacts/compile zio-aws-oam/compile zio-aws-observabilityadmin/compile
         zio-aws-odb/compile zio-aws-omics/compile zio-aws-opensearch/compile zio-aws-opensearchserverless/compile
         zio-aws-organizations/compile zio-aws-osis/compile zio-aws-outposts/compile
-        zio-aws-panorama/compile zio-aws-partnercentralchannel/compile zio-aws-partnercentralselling/compile
+        zio-aws-panorama/compile zio-aws-partnercentralaccount/compile zio-aws-partnercentralbenefits/compile
+        zio-aws-partnercentralchannel/compile zio-aws-partnercentralselling/compile
         zio-aws-paymentcryptography/compile zio-aws-paymentcryptographydata/compile
         zio-aws-pcaconnectorad/compile zio-aws-pcaconnectorscep/compile zio-aws-pcs/compile
         zio-aws-personalize/compile zio-aws-personalizeevents/compile zio-aws-personalizeruntime/compile
@@ -662,9 +663,9 @@ jobs:
         zio-aws-rekognition/compile zio-aws-repostspace/compile zio-aws-resiliencehub/compile
         zio-aws-resourceexplorer2/compile zio-aws-resourcegroups/compile zio-aws-resourcegroupstaggingapi/compile
         zio-aws-rolesanywhere/compile zio-aws-route53/compile zio-aws-route53domains/compile
-        zio-aws-route53profiles/compile zio-aws-route53recoverycluster/compile zio-aws-route53recoverycontrolconfig/compile
-        zio-aws-route53recoveryreadiness/compile zio-aws-route53resolver/compile zio-aws-rtbfabric/compile
-        zio-aws-rum/compile zio-aws-s3/compile zio-aws-s3control/compile
+        zio-aws-route53globalresolver/compile zio-aws-route53profiles/compile zio-aws-route53recoverycluster/compile
+        zio-aws-route53recoverycontrolconfig/compile zio-aws-route53recoveryreadiness/compile
+        zio-aws-route53resolver/compile zio-aws-rtbfabric/compile
     - name: Build and publish libraries
       if: ${{ github.ref == 'refs/heads/master' }}
       run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-mediastore/publishSigned
@@ -680,7 +681,8 @@ jobs:
         zio-aws-oam/publishSigned zio-aws-observabilityadmin/publishSigned zio-aws-odb/publishSigned
         zio-aws-omics/publishSigned zio-aws-opensearch/publishSigned zio-aws-opensearchserverless/publishSigned
         zio-aws-organizations/publishSigned zio-aws-osis/publishSigned zio-aws-outposts/publishSigned
-        zio-aws-panorama/publishSigned zio-aws-partnercentralchannel/publishSigned
+        zio-aws-panorama/publishSigned zio-aws-partnercentralaccount/publishSigned
+        zio-aws-partnercentralbenefits/publishSigned zio-aws-partnercentralchannel/publishSigned
         zio-aws-partnercentralselling/publishSigned zio-aws-paymentcryptography/publishSigned
         zio-aws-paymentcryptographydata/publishSigned zio-aws-pcaconnectorad/publishSigned
         zio-aws-pcaconnectorscep/publishSigned zio-aws-pcs/publishSigned zio-aws-personalize/publishSigned
@@ -695,11 +697,10 @@ jobs:
         zio-aws-rekognition/publishSigned zio-aws-repostspace/publishSigned zio-aws-resiliencehub/publishSigned
         zio-aws-resourceexplorer2/publishSigned zio-aws-resourcegroups/publishSigned
         zio-aws-resourcegroupstaggingapi/publishSigned zio-aws-rolesanywhere/publishSigned
-        zio-aws-route53/publishSigned zio-aws-route53domains/publishSigned zio-aws-route53profiles/publishSigned
-        zio-aws-route53recoverycluster/publishSigned zio-aws-route53recoverycontrolconfig/publishSigned
-        zio-aws-route53recoveryreadiness/publishSigned zio-aws-route53resolver/publishSigned
-        zio-aws-rtbfabric/publishSigned zio-aws-rum/publishSigned zio-aws-s3/publishSigned
-        zio-aws-s3control/publishSigned
+        zio-aws-route53/publishSigned zio-aws-route53domains/publishSigned zio-aws-route53globalresolver/publishSigned
+        zio-aws-route53profiles/publishSigned zio-aws-route53recoverycluster/publishSigned
+        zio-aws-route53recoverycontrolconfig/publishSigned zio-aws-route53recoveryreadiness/publishSigned
+        zio-aws-route53resolver/publishSigned zio-aws-rtbfabric/publishSigned
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
@@ -770,9 +771,10 @@ jobs:
         rm targets.tar
     - name: Build libraries
       if: ${{ github.ref != 'refs/heads/master' }}
-      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-s3outposts/compile
-        zio-aws-s3tables/compile zio-aws-s3vectors/compile zio-aws-sagemaker/compile
-        zio-aws-sagemakera2iruntime/compile zio-aws-sagemakeredge/compile zio-aws-sagemakerfeaturestoreruntime/compile
+      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-rum/compile
+        zio-aws-s3/compile zio-aws-s3control/compile zio-aws-s3outposts/compile zio-aws-s3tables/compile
+        zio-aws-s3vectors/compile zio-aws-sagemaker/compile zio-aws-sagemakera2iruntime/compile
+        zio-aws-sagemakeredge/compile zio-aws-sagemakerfeaturestoreruntime/compile
         zio-aws-sagemakergeospatial/compile zio-aws-sagemakermetrics/compile zio-aws-sagemakerruntime/compile
         zio-aws-sagemakerruntimehttp2/compile zio-aws-savingsplans/compile zio-aws-scheduler/compile
         zio-aws-schemas/compile zio-aws-secretsmanager/compile zio-aws-securityhub/compile
@@ -797,7 +799,8 @@ jobs:
         zio-aws-workspacesweb/compile zio-aws-xray/compile
     - name: Build and publish libraries
       if: ${{ github.ref == 'refs/heads/master' }}
-      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-s3outposts/publishSigned
+      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-rum/publishSigned
+        zio-aws-s3/publishSigned zio-aws-s3control/publishSigned zio-aws-s3outposts/publishSigned
         zio-aws-s3tables/publishSigned zio-aws-s3vectors/publishSigned zio-aws-sagemaker/publishSigned
         zio-aws-sagemakera2iruntime/publishSigned zio-aws-sagemakeredge/publishSigned
         zio-aws-sagemakerfeaturestoreruntime/publishSigned zio-aws-sagemakergeospatial/publishSigned
