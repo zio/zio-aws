@@ -298,6 +298,7 @@ title: Artifacts
 "dev.zio" %% "zio-aws-networkmonitor" % "<version>"
 "dev.zio" %% "zio-aws-notifications" % "<version>"
 "dev.zio" %% "zio-aws-notificationscontacts" % "<version>"
+"dev.zio" %% "zio-aws-novaact" % "<version>"
 "dev.zio" %% "zio-aws-oam" % "<version>"
 "dev.zio" %% "zio-aws-observabilityadmin" % "<version>"
 "dev.zio" %% "zio-aws-odb" % "<version>"
