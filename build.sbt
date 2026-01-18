@@ -157,22 +157,9 @@ lazy val docs = project
     scalacOptions -= "-Yno-imports",
     scalacOptions -= "-Xfatal-warnings",
     projectName := "ZIO AWS",
-    badgeInfo := Some(
-      BadgeInfo(
-        artifact = "zio-aws-core_2.13",
-        projectStage = ProjectStage.ProductionReady
-      )
-    ),
-    docsPublishBranch := "master",
-    sbtBuildOptions := List(
-      "-J-XX:+UseG1GC",
-      "-J-Xmx4g",
-      "-J-Xms4g",
-      "-J-Xss16m",
-      "++2.13.x",
-      "generateArtifactList"
-    ),
-    docsVersioning := DocsVersioning.HashVersioning,
+    mainModuleName := (core / moduleName).value,
+    projectStage := ProjectStage.ProductionReady,
+    docsVersioningScheme := zio.sbt.WebsitePlugin.VersioningScheme.HashVersioning,
     libraryDependencies ++= Seq("dev.zio" %% "zio-config" % zioConfigVersion)
   )
   .dependsOn(
