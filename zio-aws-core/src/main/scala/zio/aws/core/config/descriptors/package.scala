@@ -4,8 +4,27 @@ import software.amazon.awssdk.auth.credentials._
 import software.amazon.awssdk.regions.Region
 import zio.Config
 
+import java.net.URI
+
 package object descriptors {
   val region: Config[Region] = Config.string.mapAttempt(Region.of)
+
+  /**
+   * A URI config that validates the scheme is http or https.
+   * This prevents runtime NullPointerExceptions when invalid URIs
+   * (e.g., "minio:9000" without scheme) are passed to AWS SDK.
+   *
+   * @see https://github.com/zio/zio-aws/issues/626
+   */
+  val httpUri: Config[URI] = Config.uri.mapAttempt { uri =>
+    val scheme = uri.getScheme
+    if (scheme == null || (!scheme.equalsIgnoreCase("http") && !scheme.equalsIgnoreCase("https"))) {
+      throw new IllegalArgumentException(
+        s"Invalid endpoint URI '$uri': scheme must be 'http' or 'https' (e.g., 'http://localhost:9000')"
+      )
+    }
+    uri
+  }
 
   val awsCredentials: Config[AwsCredentials] =
     ((Config.string("accessKeyId") ?? "AWS access key ID") zip
@@ -70,11 +89,9 @@ package object descriptors {
           .withDefault(
             DefaultCredentialsProvider.create()
           ) ?? "AWS credentials provider") zip
-        (Config
-          .uri(
-            "endpointOverride"
-          )
-          .optional ?? "Overrides the AWS service endpoint") zip
+        (httpUri
+          .nested("endpointOverride")
+          .optional ?? "Overrides the AWS service endpoint (must include http:// or https:// scheme)") zip
         (commonClientConfig
           .nested("client")
           .optional ?? "Common settings for AWS service clients")

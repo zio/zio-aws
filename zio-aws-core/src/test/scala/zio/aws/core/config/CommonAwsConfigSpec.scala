@@ -15,6 +15,65 @@ import java.net.URI
 object CommonAwsConfigSpec extends ZIOSpecDefault {
   override def spec: Spec[TestEnvironment, Any] =
     suite("commonAwsConfig")(
+      test("rejects endpoint without scheme") {
+        val example =
+          """region = "us-east-1"
+            |credentials {
+            |  type = "default"
+            |}
+            |endpointOverride = "minio:9000"
+            |""".stripMargin
+
+        val config = read(
+          descriptors.commonAwsConfig from TypesafeConfigProvider
+            .fromHoconString(example)
+        )
+        assertZIO(config.exit)(
+          fails(hasMessage(containsString("scheme must be 'http' or 'https'")))
+        )
+      },
+      test("accepts endpoint with http scheme") {
+        val example =
+          """region = "us-east-1"
+            |credentials {
+            |  type = "default"
+            |}
+            |endpointOverride = "http://minio:9000"
+            |""".stripMargin
+
+        val config = read(
+          descriptors.commonAwsConfig from TypesafeConfigProvider
+            .fromHoconString(example)
+        )
+        assertZIO(config)(
+          hasField[CommonAwsConfig, Option[URI]](
+            "endpointOverride",
+            _.endpointOverride,
+            isSome(equalTo(URI.create("http://minio:9000")))
+          )
+        )
+      },
+      test("accepts endpoint with https scheme") {
+        val example =
+          """region = "us-east-1"
+            |credentials {
+            |  type = "default"
+            |}
+            |endpointOverride = "https://s3.amazonaws.com"
+            |""".stripMargin
+
+        val config = read(
+          descriptors.commonAwsConfig from TypesafeConfigProvider
+            .fromHoconString(example)
+        )
+        assertZIO(config)(
+          hasField[CommonAwsConfig, Option[URI]](
+            "endpointOverride",
+            _.endpointOverride,
+            isSome(equalTo(URI.create("https://s3.amazonaws.com")))
+          )
+        )
+      },
       test("can read example HOCON") {
         val example =
           """region = "us-east-1"
