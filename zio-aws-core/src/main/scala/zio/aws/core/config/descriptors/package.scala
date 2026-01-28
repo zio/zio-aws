@@ -16,14 +16,16 @@ package object descriptors {
    *
    * @see https://github.com/zio/zio-aws/issues/626
    */
-  val httpUri: Config[URI] = Config.uri.mapAttempt { uri =>
-    val scheme = uri.getScheme
-    if (scheme == null || (!scheme.equalsIgnoreCase("http") && !scheme.equalsIgnoreCase("https"))) {
-      throw new IllegalArgumentException(
-        s"Invalid endpoint URI '$uri': scheme must be 'http' or 'https' (e.g., 'http://localhost:9000')"
-      )
+  val httpUri: Config[URI] = Config.uri.mapOrFail { uri =>
+    Option(uri.getScheme).map(_.toLowerCase) match {
+      case Some("http") | Some("https") => Right(uri)
+      case _ =>
+        Left(
+          Config.Error.InvalidData(message =
+            s"Invalid endpoint URI '$uri': scheme must be 'http' or 'https' (e.g., 'http://localhost:9000')"
+          )
+        )
     }
-    uri
   }
 
   val awsCredentials: Config[AwsCredentials] =
