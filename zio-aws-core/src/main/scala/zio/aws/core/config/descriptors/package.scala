@@ -9,17 +9,17 @@ import java.net.URI
 package object descriptors {
   val region: Config[Region] = Config.string.mapAttempt(Region.of)
 
-  /**
-   * A URI config that validates the scheme is http or https.
-   * This prevents runtime NullPointerExceptions when invalid URIs
-   * (e.g., "minio:9000" without scheme) are passed to AWS SDK.
-   *
-   * @see https://github.com/zio/zio-aws/issues/626
-   */
+  /** A URI config that validates the scheme is http or https. This prevents
+    * runtime NullPointerExceptions when invalid URIs (e.g., "minio:9000"
+    * without scheme) are passed to AWS SDK.
+    *
+    * @see
+    *   https://github.com/zio/zio-aws/issues/626
+    */
   val httpUri: Config[URI] = Config.uri.mapOrFail { uri =>
     Option(uri.getScheme).map(_.toLowerCase) match {
       case Some("http") | Some("https") => Right(uri)
-      case _ =>
+      case _                            =>
         Left(
           Config.Error.InvalidData(message =
             s"Invalid endpoint URI '$uri': scheme must be 'http' or 'https' (e.g., 'http://localhost:9000')"
