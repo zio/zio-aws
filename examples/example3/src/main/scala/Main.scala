@@ -67,9 +67,9 @@ object Main extends ZIOAppDefault {
 
       shardStream = Kinesis.subscribeToShard(
         SubscribeToShardRequest(
-          consumer.consumerDescription.consumerARN,
-          shard.shardId,
-          StartingPosition(ShardIteratorType.TRIM_HORIZON)
+          consumerARN = consumer.consumerDescription.consumerARN,
+          shardId = shard.shardId,
+          startingPosition = StartingPosition(ShardIteratorType.TRIM_HORIZON)
         )
       )
 
