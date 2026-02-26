@@ -56,6 +56,8 @@ jobs:
         - 3.x
         java:
         - '17'
+        - '21'
+        - '25'
     needs:
     - tag
     if: ${{ github.actor != 'github-actions[bot]' }}
@@ -68,7 +70,7 @@ jobs:
       uses: actions/setup-java@v4
       with:
         distribution: temurin
-        java-version: '17'
+        java-version: ${{ matrix.java }}
         check-latest: 'true'
     - name: Setup SBT
       uses: sbt/setup-sbt@v1
@@ -94,7 +96,7 @@ jobs:
       run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-core/test
         zio-aws-akka-http/test zio-aws-http4s/test zio-aws-netty/test zio-aws-crt-http/test
     - name: Publish core
-      if: ${{ github.ref == 'refs/heads/master' }}
+      if: ${{ github.ref == 'refs/heads/master' && matrix.java == '17' }}
       run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms6g -J-Xss16m ++${{ matrix.scala }} zio-aws-core/publishSigned
         zio-aws-akka-http/publishSigned zio-aws-http4s/publishSigned zio-aws-netty/publishSigned
         zio-aws-crt-http/publishSigned
@@ -102,9 +104,11 @@ jobs:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
     - name: Compress core targets
+      if: ${{ matrix.java == '17' }}
       run: tar cvf targets.tar target project/target zio-aws-codegen/target zio-aws-core/target
         zio-aws-akka-http/target zio-aws-http4s/target zio-aws-netty/target zio-aws-crt-http/target
     - name: Upload core targets
+      if: ${{ matrix.java == '17' }}
       uses: actions/upload-artifact@v4
       with:
         name: target-core-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
