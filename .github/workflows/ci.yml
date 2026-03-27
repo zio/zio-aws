@@ -6,6 +6,8 @@ name: CI
   push:
     branches:
     - master
+env:
+  LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
 jobs:
   tag:
     name: Tag build

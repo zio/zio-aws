@@ -53,6 +53,11 @@ trait GithubActionsGenerator {
             branches = Seq(Branch.Named("master"))
           )
         )
+        .withEnv(
+          Map(
+            "LOCALSTACK_AUTH_TOKEN" -> "${{ secrets.LOCALSTACK_AUTH_TOKEN }}"
+          )
+        )
         .addJob(
           Job(
             "tag",
