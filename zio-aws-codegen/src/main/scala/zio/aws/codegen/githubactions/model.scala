@@ -213,10 +213,14 @@ object Job {
 case class Workflow(
     name: String,
     triggers: Seq[Trigger] = Seq.empty,
+    env: Map[String, String] = Map.empty,
     jobs: Seq[Job] = Seq.empty
 ) {
   def on(triggers: Trigger*): Workflow =
     copy(triggers = triggers)
+
+  def withEnv(env: Map[String, String]): Workflow =
+    copy(env = env)
 
   def withJobs(jobs: Job*): Workflow =
     copy(jobs = jobs)
@@ -242,6 +246,8 @@ object Workflow {
                          .map(_.toKeyValuePair): _*
                      )
                    }),
+          "env" := (if (wf.env.isEmpty) Json.Null
+                    else Json.obj(wf.env.map { case (k, v) => k := v }.toSeq: _*)),
           "jobs" := Json.obj(wf.jobs.map(job => job.id := job): _*)
         )
 }

@@ -53,6 +53,11 @@ trait GithubActionsGenerator {
             branches = Seq(Branch.Named("master"))
           )
         )
+        .withEnv(
+          Map(
+            "LOCALSTACK_AUTH_TOKEN" -> "${{ secrets.LOCALSTACK_AUTH_TOKEN }}"
+          )
+        )
         .addJob(
           Job(
             "tag",
@@ -141,6 +146,7 @@ trait GithubActionsGenerator {
                 name = "localstack",
                 image = ImageRef("localstack/localstack:latest"),
                 env = Map(
+                  "LOCALSTACK_AUTH_TOKEN" -> "${{ secrets.LOCALSTACK_AUTH_TOKEN }}",
                   "LOCALSTACK_HOST" -> "localstack",
                   "SERVICES" -> "s3,dynamodb",
                   "EAGER_SERVICE_LOADING" -> "1",
