@@ -247,7 +247,8 @@ object Workflow {
                      )
                    }),
           "env" := (if (wf.env.isEmpty) Json.Null
-                    else Json.obj(wf.env.map { case (k, v) => k := v }.toSeq: _*)),
+                    else
+                      Json.obj(wf.env.map { case (k, v) => k := v }.toSeq: _*)),
           "jobs" := Json.obj(wf.jobs.map(job => job.id := job): _*)
         )
 }
