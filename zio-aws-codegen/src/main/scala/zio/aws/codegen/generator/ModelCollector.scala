@@ -181,7 +181,7 @@ object ModelCollector {
       .asScala
       .toList
       .flatMap { case (name, paginator) =>
-        if (paginator.hasAllRequiredFields()) {
+        if (paginator.hasAllRequiredFields) {
           Option(paginator.getResultKey)
             .flatMap(_.asScala.headOption)
             .flatMap { key =>
