@@ -384,7 +384,7 @@ object OperationCollector {
       paginator <- Option(
         models.paginatorsModel().getPaginatorDefinition(op.getName)
       )
-      if paginator.isValid
+      if paginator.hasAllRequiredFields()
       key <- Option(paginator.getResultKey).flatMap(_.asScala.headOption)
       outputShape = models.serviceModel().getShape(op.getOutput.getShape)
       outputListMember <- outputShape.getMembers.asScala.get(key)
