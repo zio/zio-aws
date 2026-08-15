@@ -244,6 +244,8 @@ title: Artifacts
 "dev.zio" %% "zio-aws-kms" % "<version>"
 "dev.zio" %% "zio-aws-lakeformation" % "<version>"
 "dev.zio" %% "zio-aws-lambda" % "<version>"
+"dev.zio" %% "zio-aws-lambdacore" % "<version>"
+"dev.zio" %% "zio-aws-lambdamicrovms" % "<version>"
 "dev.zio" %% "zio-aws-launchwizard" % "<version>"
 "dev.zio" %% "zio-aws-lexmodelbuilding" % "<version>"
 "dev.zio" %% "zio-aws-lexmodelsv2" % "<version>"
