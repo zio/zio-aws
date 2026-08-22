@@ -6,8 +6,6 @@ name: CI
   push:
     branches:
     - master
-env:
-  LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
 jobs:
   tag:
     name: Tag build
@@ -126,19 +124,12 @@ jobs:
     needs:
     - build-core
     services:
-      localstack:
-        image: localstack/localstack:latest
+      floci:
+        image: floci/floci:latest
         env:
-          EAGER_SERVICE_LOADING: '1'
-          DEFAULT_REGION: us-east-1
-          DEBUG: '1'
-          SERVICES: s3,dynamodb
           AWS_ACCESS_KEY_ID: dummy-key
           AWS_SECRET_ACCESS_KEY: dummy-key
-          LOCALSTACK_HOST: localstack
           AWS_DEFAULT_REGION: us-east-1
-          LOCALSTACK_AUTH_TOKEN: ${{ secrets.LOCALSTACK_AUTH_TOKEN }}
-          USE_SSL: 'false'
         ports:
         - 4566:4566
     if: ${{ github.actor != 'github-actions[bot]' }}
