@@ -127,9 +127,11 @@ jobs:
       floci:
         image: floci/floci:latest
         env:
-          AWS_DEFAULT_REGION: us-east-1
+          QUARKUS_LOG_LEVEL: DEBUG
           AWS_ACCESS_KEY_ID: dummy-key
           AWS_SECRET_ACCESS_KEY: dummy-key
+          AWS_DEFAULT_REGION: us-east-1
+          FLOCI_HOSTNAME: localstack
         ports:
         - 4566:4566
     if: ${{ github.actor != 'github-actions[bot]' }}

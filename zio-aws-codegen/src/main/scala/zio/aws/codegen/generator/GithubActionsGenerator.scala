@@ -141,9 +141,11 @@ trait GithubActionsGenerator {
                 name = "floci",
                 image = ImageRef("floci/floci:latest"),
                 env = Map(
+                  "FLOCI_HOSTNAME" -> "localstack",
                   "AWS_DEFAULT_REGION" -> "us-east-1",
                   "AWS_ACCESS_KEY_ID" -> "dummy-key",
                   "AWS_SECRET_ACCESS_KEY" -> "dummy-key",
+                  "QUARKUS_LOG_LEVEL" -> "DEBUG"
                 ),
                 ports = Seq(
                   ServicePort(4566, 4566)
