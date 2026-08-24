@@ -517,7 +517,7 @@ jobs:
         zio-aws-kinesisanalytics/compile zio-aws-kinesisanalyticsv2/compile zio-aws-kinesisvideo/compile
         zio-aws-kinesisvideoarchivedmedia/compile zio-aws-kinesisvideomedia/compile
         zio-aws-kinesisvideosignaling/compile zio-aws-kinesisvideowebrtcstorage/compile
-        zio-aws-kms/compile zio-aws-lakeformation/compile zio-aws-lambda/compile zio-aws-lambdacore/compile
+        zio-aws-kms/compile zio-aws-lakeformation/compile zio-aws-lambda/compile
         zio-aws-lambdamicrovms/compile zio-aws-launchwizard/compile zio-aws-lexmodelbuilding/compile
         zio-aws-lexmodelsv2/compile zio-aws-lexruntime/compile zio-aws-lexruntimev2/compile
         zio-aws-licensemanager/compile zio-aws-licensemanagerlinuxsubscriptions/compile
@@ -552,7 +552,7 @@ jobs:
         zio-aws-kinesisvideo/publishSigned zio-aws-kinesisvideoarchivedmedia/publishSigned
         zio-aws-kinesisvideomedia/publishSigned zio-aws-kinesisvideosignaling/publishSigned
         zio-aws-kinesisvideowebrtcstorage/publishSigned zio-aws-kms/publishSigned
-        zio-aws-lakeformation/publishSigned zio-aws-lambda/publishSigned zio-aws-lambdacore/publishSigned
+        zio-aws-lakeformation/publishSigned zio-aws-lambda/publishSigned
         zio-aws-lambdamicrovms/publishSigned zio-aws-launchwizard/publishSigned zio-aws-lexmodelbuilding/publishSigned
         zio-aws-lexmodelsv2/publishSigned zio-aws-lexruntime/publishSigned zio-aws-lexruntimev2/publishSigned
         zio-aws-licensemanager/publishSigned zio-aws-licensemanagerlinuxsubscriptions/publishSigned
