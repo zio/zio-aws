@@ -550,6 +550,20 @@ trait ServiceModelGenerator {
     )
   }
 
+  // Scalameta backtick-escapes hard keywords (`private`, `type`, ...) when
+  // printing identifiers, but not Scala 3 soft keywords. Of those, `inline` is
+  // rejected by the Scala 3 parser in the positions the generated enum code
+  // uses it (e.g. the IAM PolicyIdentifierPolicyType enum has an "inline"
+  // value), so such enum values get a trailing underscore in the generated
+  // case object name.
+  private val unescapableScalaKeywords: Set[String] = Set("inline")
+
+  private def enumValueTermName(enumValue: String): Term.Name =
+    if (unescapableScalaKeywords.contains(enumValue))
+      Term.Name(enumValue + "_")
+    else
+      Term.Name(enumValue)
+
   private def generateEnum(
       m: Model,
       javaType: ScalaType
@@ -560,7 +574,7 @@ trait ServiceModelGenerator {
       enumVals <- applyEnumModifiers(m, m.shape.getEnumValues.asScala.toList)
       enumValueList = "unknownToSdkVersion" :: enumVals
       enumValues = enumValueList.map { enumValue =>
-        val enumValueTerm = Term.Name(enumValue)
+        val enumValueTerm = enumValueTermName(enumValue)
         val enumValueScreaming =
           Term.Name(namingStrategy.getEnumValueName(enumValue))
         q"""case object $enumValueTerm extends $shapeNameI {
@@ -571,7 +585,7 @@ trait ServiceModelGenerator {
       wrapPatterns = Term.Match(
         Term.Name("value"),
         enumValueList.map { enumValue =>
-          val enumValueTerm = Term.Name(enumValue)
+          val enumValueTerm = enumValueTermName(enumValue)
           val enumValueScreaming =
             Term.Name(namingStrategy.getEnumValueName(enumValue))
           val term = Term.Select(m.sdkType.term, enumValueScreaming)
