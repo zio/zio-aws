@@ -53,11 +53,6 @@ trait GithubActionsGenerator {
             branches = Seq(Branch.Named("master"))
           )
         )
-        .withEnv(
-          Map(
-            "LOCALSTACK_AUTH_TOKEN" -> "${{ secrets.LOCALSTACK_AUTH_TOKEN }}"
-          )
-        )
         .addJob(
           Job(
             "tag",
@@ -143,19 +138,14 @@ trait GithubActionsGenerator {
           ).matrix(scalaVersions)
             .withServices(
               Service(
-                name = "localstack",
-                image = ImageRef("localstack/localstack:latest"),
+                name = "floci",
+                image = ImageRef("floci/floci:latest"),
                 env = Map(
-                  "LOCALSTACK_AUTH_TOKEN" -> "${{ secrets.LOCALSTACK_AUTH_TOKEN }}",
-                  "LOCALSTACK_HOST" -> "localstack",
-                  "SERVICES" -> "s3,dynamodb",
-                  "EAGER_SERVICE_LOADING" -> "1",
-                  "USE_SSL" -> "false",
-                  "DEFAULT_REGION" -> "us-east-1",
+                  "FLOCI_HOSTNAME" -> "localstack",
                   "AWS_DEFAULT_REGION" -> "us-east-1",
                   "AWS_ACCESS_KEY_ID" -> "dummy-key",
                   "AWS_SECRET_ACCESS_KEY" -> "dummy-key",
-                  "DEBUG" -> "1"
+                  "QUARKUS_LOG_LEVEL" -> "DEBUG"
                 ),
                 ports = Seq(
                   ServicePort(4566, 4566)
