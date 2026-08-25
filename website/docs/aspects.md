@@ -37,7 +37,7 @@ val callLogging: AwsCallAspect[Any] =
           }
       }
     }
-// callLogging: AwsCallAspect[Any] = repl.MdocSession$MdocApp$$anon$1@5fd1fbcd
+// callLogging: AwsCallAspect[Any] = repl.MdocSession$MdocApp$$anon$1@2a4a4bf
 ```
 
 This aspect can attached to a _client layer_ with the `@@@` operator. Multiple aspects can be composed with `>>>`.
