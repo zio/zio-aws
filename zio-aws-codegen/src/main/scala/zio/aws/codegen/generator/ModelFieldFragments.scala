@@ -8,5 +8,10 @@ case class ModelFieldFragments(
     getterInterface: Decl.Def,
     getterImplementation: Defn.Val,
     zioGetterImplementation: Defn.Def,
-    applyToBuilder: Term.Apply => Term.Apply
-)
+    applyToBuilder: Term.Apply => Term.Apply,
+    editableGetter: Defn.Def,
+    wither: Defn.Def,
+    isRequired: Boolean
+) {
+  def witherName: Term.Name = wither.name
+}
