@@ -32,11 +32,9 @@ trait ServiceModelGenerator {
       models <- getModels
       excluded = Option(models.customizationConfig.getShapeModifiers)
         .map(
-          _.asScala
-            .collect {
-              case (name, modifier) if modifier.isExcludeShape => name
-            }
-            .toSet
+          _.asScala.collect {
+            case (name, modifier) if modifier.isExcludeShape => name
+          }.toSet
         )
         .getOrElse(Set.empty)
 
@@ -74,11 +72,11 @@ trait ServiceModelGenerator {
 
       ZIO.succeed(members.filterNot { case (memberName, member) =>
         globalExcludes.contains(memberName.toLowerCase) ||
-        localExcludes.contains(memberName.toLowerCase) ||
-        member.isStreaming || {
-          val shape = models.serviceModel().getShape(member.getShape)
-          shape.isStreaming || shape.isEventstream
-        }
+          localExcludes.contains(memberName.toLowerCase) ||
+          member.isStreaming || {
+            val shape = models.serviceModel().getShape(member.getShape)
+            shape.isStreaming || shape.isEventstream
+          }
       })
     }
   }
@@ -145,7 +143,7 @@ trait ServiceModelGenerator {
                 case ModelType.Float   => (ScalaType.float, ScalaType.float)
                 case ModelType.Double  => (ScalaType.double, ScalaType.double)
                 case ModelType.Boolean => (ScalaType.boolean, ScalaType.boolean)
-                case ModelType.Timestamp  => (Types.instant, Types.instant)
+                case ModelType.Timestamp => (Types.instant, Types.instant)
                 case ModelType.BigDecimal =>
                   (Types.bigDecimal, Types.bigDecimal)
                 case ModelType.Blob =>
@@ -286,10 +284,10 @@ trait ServiceModelGenerator {
           None,
           code = List(
             q"""object ${wrapperType.termName} extends ${Types
-                .subtype(underlyingType)
-                .init}""",
+              .subtype(underlyingType)
+              .init}""",
             q"""type ${wrapperType.typName} = ${Type
-                .Select(wrapperType.term, Type.Name("Type"))}"""
+              .Select(wrapperType.term, Type.Name("Type"))}"""
           ),
           wrapperType
         )
@@ -347,6 +345,9 @@ trait ServiceModelGenerator {
           )
         )
 
+        val witherNameTerm =
+          Term.Name("with" + property.wrapperName.capitalize)
+
         TypeMapping.toWrappedType(finalFieldModel).flatMap { memberType =>
           TypeMapping.toWrappedTypeReadOnly(finalFieldModel).flatMap {
             memberRoType =>
@@ -361,27 +362,55 @@ trait ServiceModelGenerator {
                       )
                     ).flatMap { wrappedGet =>
                       roToEditable(finalFieldModel, pureGetterNameTerm)
-                        .map { toEditable =>
-                          ModelFieldFragments(
-                            paramDef =
-                              param"""$pureGetterNameTerm: ${memberType.typ}""",
-                            getterCall = toEditable,
-                            getterInterface =
-                              q"""def $pureGetterNameTerm: ${memberRoType.typ}""",
-                            getterImplementation = q"""override val ${Pat.Var(
+                        .flatMap { toEditable =>
+                          roToEditable(
+                            finalFieldModel,
+                            Term.Select(
+                              Term.Name("asReadOnly"),
+                              pureGetterNameTerm
+                            )
+                          ).map { editableFromReadOnly =>
+                            val applyToBuilderFn: Term.Apply => Term.Apply =
+                              builder =>
+                                q"""$builder.$fluentSetter($unwrappedGet)"""
+                            val witherChain =
+                              q"""impl.toBuilder().$fluentSetter($unwrappedGet).build()"""
+                            val witherBuild =
+                              if (isException)
+                                q"""$witherChain.asInstanceOf[${javaType.typ}]"""
+                              else witherChain
+                            ModelFieldFragments(
+                              paramDef =
+                                param"""$pureGetterNameTerm: ${memberType.typ}""",
+                              getterCall = toEditable,
+                              getterInterface =
+                                q"""def $pureGetterNameTerm: ${memberRoType.typ}""",
+                              getterImplementation = q"""override val ${Pat.Var(
                                 pureGetterNameTerm
                               )}: ${memberRoType.typ} = $wrappedGet""",
-                            zioGetterImplementation =
-                              q"""def $effectualGetterNameTerm: ${Types
+                              zioGetterImplementation =
+                                q"""def $effectualGetterNameTerm: ${Types
                                   .zio(
                                     ScalaType.any,
                                     ScalaType.nothing,
                                     memberRoType
                                   )
                                   .typ} = ZIO.succeed($pureGetterNameTerm)""",
-                            applyToBuilder = builder =>
-                              q"""$builder.$fluentSetter($unwrappedGet)"""
-                          )
+                              applyToBuilder = applyToBuilderFn,
+                              editableGetter =
+                                q"""def $pureGetterNameTerm: ${memberType.typ} = $editableFromReadOnly""",
+                              wither = q"""def $witherNameTerm(..${List(
+                                param"""$pureGetterNameTerm: ${memberType.typ}"""
+                              )}): ${m.generatedType.typ} = ${Term.New(
+                                Init(
+                                  m.generatedType.typ,
+                                  Name.Anonymous(),
+                                  List(List(witherBuild))
+                                )
+                              )}""",
+                              isRequired = true
+                            )
+                          }
                         }
                     }
                 }
@@ -396,39 +425,72 @@ trait ServiceModelGenerator {
                     unwrappedGet =>
                       roToEditable(finalFieldModel, valueTerm).map {
                         toEditable =>
+                          val applyToBuilderFn: Term.Apply => Term.Apply =
+                            builder =>
+                              q"""$builder.optionallyWith($pureGetterNameTerm.map(value => $unwrappedGet))(_.$fluentSetter)"""
+                          val witherChain = q"""${applyToBuilderFn(
+                            Term.Apply(
+                              Term.Select(
+                                Term.Name("impl"),
+                                Term.Name("toBuilder")
+                              ),
+                              List.empty
+                            )
+                          )}.build()"""
+                          val witherBuild =
+                            if (isException)
+                              q"""$witherChain.asInstanceOf[${javaType.typ}]"""
+                            else witherChain
                           ModelFieldFragments(
                             paramDef = param"""$pureGetterNameTerm: ${Types
-                                .optional(memberType)
-                                .typ} = ${Types.optionalAbsent.term}""",
+                              .optional(memberType)
+                              .typ} = ${Types.optionalAbsent.term}""",
                             getterCall =
                               q"""$pureGetterNameTerm.map(value => $toEditable)""",
                             getterInterface =
                               q"""def ${pureGetterNameTerm}: ${Types
-                                  .optional(memberRoType)
-                                  .typ}""",
-                            getterImplementation = if (
-                              wrappedGet == valueTerm
-                            ) {
-                              q"""override val ${Pat
+                                .optional(memberRoType)
+                                .typ}""",
+                            getterImplementation =
+                              if (wrappedGet == valueTerm) {
+                                q"""override val ${Pat
                                   .Var(pureGetterNameTerm)}: ${Types
                                   .optional(memberRoType)
                                   .typ} = ${Types.optionalFromNullable}($get)"""
-                            } else {
-                              q"""override val ${Pat
+                              } else {
+                                q"""override val ${Pat
                                   .Var(pureGetterNameTerm)}: ${Types
                                   .optional(memberRoType)
                                   .typ} = ${Types.optionalFromNullable}($get).map(value => $wrappedGet)"""
-                            },
+                              },
                             zioGetterImplementation =
                               q"""def $effectualGetterNameTerm: ${Types
-                                  .zio(
-                                    ScalaType.any,
-                                    Types.awsError,
-                                    memberRoType
-                                  )
-                                  .typ} = ${Types.awsError.term}.unwrapOptionField($propertyNameLit, $pureGetterNameTerm)""",
-                            applyToBuilder = builder =>
-                              q"""$builder.optionallyWith($pureGetterNameTerm.map(value => $unwrappedGet))(_.$fluentSetter)"""
+                                .zio(
+                                  ScalaType.any,
+                                  Types.awsError,
+                                  memberRoType
+                                )
+                                .typ} = ${Types.awsError.term}.unwrapOptionField($propertyNameLit, $pureGetterNameTerm)""",
+                            applyToBuilder = applyToBuilderFn,
+                            editableGetter =
+                              q"""def $pureGetterNameTerm: ${Types
+                                .optional(memberType)
+                                .typ} = asReadOnly.$pureGetterNameTerm.map(value => $toEditable)""",
+                            wither = q"""def $witherNameTerm(..${List(
+                              param"""$pureGetterNameTerm: ${Types
+                                .optional(memberType)
+                                .typ}"""
+                            )}): ${m.generatedType.typ} = {
+                                  import ${m.generatedType.termName}.zioAwsBuilderHelper.BuilderOps
+                                  ${Term.New(
+                              Init(
+                                m.generatedType.typ,
+                                Name.Anonymous(),
+                                List(List(witherBuild))
+                              )
+                            )}
+                                }""",
+                            isRequired = false
                           )
                       }
                   }
@@ -469,10 +531,45 @@ trait ServiceModelGenerator {
 
     } yield ModelWrapper(
       fileName = Some(m.generatedType.name),
-      code = List(
-        q"""final case class ${m.generatedType.typName}(..${fields.map(
-            _.paramDef
-          )}) {
+      code =
+        if (fields.size > maxCaseClassFields)
+          generateOversizedStructureCode(
+            m,
+            javaType,
+            isException,
+            fields,
+            readOnlyType,
+            shapeNameRoInit
+          )
+        else
+          generateCaseClassStructureCode(
+            m,
+            javaType,
+            fields,
+            readOnlyType,
+            shapeNameRoInit,
+            build,
+            dynamoDbAttributeValueMethods,
+            dynamoDbAttributeValueWrapperMethods
+          ),
+      generatedType = m.generatedType
+    )
+  }
+
+  private def generateCaseClassStructureCode(
+      m: Model,
+      javaType: ScalaType,
+      fields: List[ModelFieldFragments],
+      readOnlyType: ScalaType,
+      shapeNameRoInit: Init,
+      build: Term,
+      dynamoDbAttributeValueMethods: List[Defn.Def],
+      dynamoDbAttributeValueWrapperMethods: List[Defn.Def]
+  ): List[Defn] =
+    List(
+      q"""final case class ${m.generatedType.typName}(..${fields.map(
+        _.paramDef
+      )}) {
                         def buildAwsValue(): ${javaType.typ} = {
                           import ${m.generatedType.termName}.zioAwsBuilderHelper.BuilderOps
                           $build
@@ -480,13 +577,13 @@ trait ServiceModelGenerator {
 
                         def asReadOnly: ${readOnlyType.typ} = ${m.generatedType.term}.wrap(buildAwsValue())
                       }""",
-        q"""object ${m.generatedType.termName} {
+      q"""object ${m.generatedType.termName} {
                             private lazy val zioAwsBuilderHelper: ${Types
-            .builderHelper(javaType)
-            .typ} = ${Types.builderHelper_.term}.apply
+        .builderHelper(javaType)
+        .typ} = ${Types.builderHelper_.term}.apply
                             trait ${readOnlyType.typName} {
                               def asEditable: ${m.generatedType.typ} = ${m.generatedType.term}(..${fields
-            .map(_.getterCall)})
+        .map(_.getterCall)})
                               ..${fields.map(_.getterInterface)}
                               ..${fields.map(_.zioGetterImplementation)}
                               ..$dynamoDbAttributeValueMethods
@@ -500,8 +597,103 @@ trait ServiceModelGenerator {
                             def wrap(impl: ${javaType.typ}): ${readOnlyType.typ} = new Wrapper(impl)
                           }
                          """
+    )
+
+  // The JVM limits method descriptors (and thus constructors) to 254
+  // parameters, and scalac refuses larger parameter lists ("Platform
+  // restriction: a parameter list's length cannot exceed 254").
+  private val maxCaseClassFields: Int = 254
+
+  // Structures too large to be represented as a case class (e.g. the
+  // QuickSight Capabilities shape with 279 members) are generated as a wrapper
+  // around the built Java value instead, with one getter and one `with*`
+  // method per field taking the place of the constructor parameters. The
+  // public contract used by the rest of the generated code (`apply` with the
+  // required fields, `buildAwsValue`, `asReadOnly`, `wrap`, and
+  // `ReadOnly.asEditable`) stays the same as for case class structures.
+  private def generateOversizedStructureCode(
+      m: Model,
+      javaType: ScalaType,
+      isException: Boolean,
+      fields: List[ModelFieldFragments],
+      readOnlyType: ScalaType,
+      shapeNameRoInit: Init
+  ): List[Defn] = {
+    val (requiredFields, optionalFields) = fields.partition(_.isRequired)
+    val createBuilderTerm = Term.Apply(
+      Term.Select(javaType.term, Term.Name("builder")),
+      List.empty
+    )
+    val applyBuilderChain = requiredFields.foldLeft(createBuilderTerm) {
+      case (term, fieldFragments) =>
+        fieldFragments.applyToBuilder(term)
+    }
+    val applyBuild =
+      if (isException)
+        q"""$applyBuilderChain.build().asInstanceOf[${javaType.typ}]"""
+      else
+        q"""$applyBuilderChain.build()"""
+    val asEditableChain = optionalFields.foldLeft(
+      Term.Apply(m.generatedType.term, requiredFields.map(_.getterCall)): Term
+    ) { case (term, fieldFragments) =>
+      q"""$term.${fieldFragments.witherName}(${fieldFragments.getterCall})"""
+    }
+
+    val classMembers: List[Stat] =
+      List[Stat](
+        q"""def buildAwsValue(): ${javaType.typ} = impl""",
+        q"""def asReadOnly: ${readOnlyType.typ} = ${m.generatedType.term}.wrap(impl)"""
+      ) ++
+        fields.map(_.editableGetter) ++
+        fields.map(_.wither) ++
+        List[Stat](
+          q"""override def equals(other: Any): Boolean = other.isInstanceOf[${m.generatedType.typ}] && impl == other.asInstanceOf[${m.generatedType.typ}].buildAwsValue()""",
+          q"""override def hashCode(): Int = impl.hashCode()""",
+          q"""override def toString(): String = impl.toString()"""
+        )
+
+    List(
+      Defn.Class(
+        mods = List(Mod.Final()),
+        name = m.generatedType.typName,
+        tparams = List.empty,
+        ctor = Ctor.Primary(
+          mods = List(Mod.Private(Name.Anonymous())),
+          name = Name.Anonymous(),
+          paramss = List(List(param"""private val impl: ${javaType.typ}"""))
+        ),
+        templ = Template(
+          List.empty,
+          List.empty,
+          Self(Name.Anonymous(), None),
+          classMembers
+        )
       ),
-      generatedType = m.generatedType
+      q"""object ${m.generatedType.termName} {
+            private lazy val zioAwsBuilderHelper: ${Types
+        .builderHelper(javaType)
+        .typ} = ${Types.builderHelper_.term}.apply
+            def apply(..${requiredFields.map(
+        _.paramDef
+      )}): ${m.generatedType.typ} = ${Term
+        .New(
+          Init(
+            m.generatedType.typ,
+            Name.Anonymous(),
+            List(List(applyBuild))
+          )
+        )}
+            trait ${readOnlyType.typName} {
+              def asEditable: ${m.generatedType.typ} = $asEditableChain
+              ..${fields.map(_.getterInterface)}
+              ..${fields.map(_.zioGetterImplementation)}
+            }
+            private final class Wrapper(impl: ${javaType.typ}) extends $shapeNameRoInit {
+              ..${fields.map(_.getterImplementation)}
+            }
+            def wrap(impl: ${javaType.typ}): ${readOnlyType.typ} = new Wrapper(impl)
+          }
+         """
     )
   }
 
@@ -544,8 +736,8 @@ trait ServiceModelGenerator {
     } yield ModelWrapper(
       fileName = None,
       code = List(q"""type ${m.generatedType.typName} = ${ScalaType
-          .map(keyType, valueType)
-          .typ}"""),
+        .map(keyType, valueType)
+        .typ}"""),
       generatedType = m.generatedType
     )
   }
