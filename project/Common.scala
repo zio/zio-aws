@@ -17,7 +17,7 @@ object Common extends AutoPlugin {
 
     val awsVersion = "2.54.13"
     val awsSubVersion = awsVersion.drop(awsVersion.indexOf('.') + 1)
-    val http4sVersion = "0.23.36"
+    val http4sVersion = "0.23.37"
     val blazeVersion = "0.23.18"
     val fs2Version = "3.14.0"
 
