@@ -25,11 +25,9 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
     val ciSeparateJobs = settingKey[Seq[String]](
       "List of subprojects to have their individual circleCi jobs"
     )
-    val ciTarget = settingKey[File]("circleCi target file")
     val artifactListTarget =
       settingKey[File]("artifact list markdown target file")
 
-    val generateCiYaml = taskKey[Unit]("Regenerates the CI workflow file")
     val generateArtifactList =
       taskKey[Unit]("Regenerates the artifact list markdown file")
 
@@ -44,7 +42,6 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
         }
 
         val targetRoot = (Compile / sourceManaged).value
-        val circleCiDst = ciTarget.value
         val parallelJobs = ciParallelJobs.value
         val separateJobs = ciSeparateJobs.value
         val artifactLstTarget = artifactListTarget.value
@@ -53,7 +50,6 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
 
         val params = Parameters(
           targetRoot = Path.fromJava(targetRoot.toPath),
-          ciTarget = Path.fromJava(circleCiDst.toPath),
           parallelCiJobs = parallelJobs,
           separateCiJobs = separateJobs.toSet,
           artifactListTarget = Path.fromJava(artifactLstTarget.toPath),
@@ -94,9 +90,13 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
   case class GeneratorError(error: AwsGeneratorFailure) extends Error
 
   override lazy val projectSettings = Seq(
-    generateCiYaml := generateCiYamlTask.value,
     generateArtifactList := generateArtifactListTask.value
   )
+
+  /** Names of all AWS modules, filled in while the build loads (see
+    * `extraProjects`).
+    */
+  @volatile var moduleNames: Set[String] = Set.empty
 
   override lazy val extraProjects: Seq[Project] = {
     unsafe { implicit u =>
@@ -105,7 +105,10 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
           val env = Loader.cached(Loader.fromGit)
           val task = for {
             ids <- Loader.findModels()
-          } yield generateSbtSubprojects(ids)
+          } yield {
+            moduleNames = ids.map(_.moduleName)
+            generateSbtSubprojects(ids)
+          }
 
           task.provideLayer(env).tapError { generatorError =>
             zio.Console
@@ -116,51 +119,9 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
     }
   }
 
-  private lazy val generateCiYamlTask = Def.task {
-    val log = streams.value.log
-    val targetRoot = (Compile / sourceManaged).value
-    val circleCiDst = ciTarget.value
-    val parallelJobs = ciParallelJobs.value
-    val separateJobs = ciSeparateJobs.value
-    val artifactLstTarget = artifactListTarget.value
-    val ver = version.value
-    val scalaVer = scalaVersion.value
-
-    val params = Parameters(
-      targetRoot = Path.fromJava(targetRoot.toPath),
-      ciTarget = Path.fromJava(circleCiDst.toPath),
-      parallelCiJobs = parallelJobs,
-      separateCiJobs = separateJobs.toSet,
-      artifactListTarget = Path.fromJava(artifactLstTarget.toPath),
-      version = ver,
-      scalaVersion = scalaVer
-    )
-
-    unsafe { implicit u =>
-      zio.Runtime.default.unsafe
-        .run {
-          val cfg = ZLayer.succeed(params)
-          val env = Loader.cached(Loader.fromGit) ++ (cfg >+> AwsGenerator.live)
-          val task =
-            for {
-              _ <- ZIO.attempt(log.info(s"Regenerating ${params.ciTarget}"))
-              ids <- Loader.findModels()
-              _ <- AwsGenerator.generateCiYaml(ids)
-            } yield ()
-          task.provideLayer(env).catchAll { generatorError =>
-            ZIO
-              .attempt(log.error(s"Code generator failure: ${generatorError}"))
-              .as(Seq.empty)
-          }
-        }
-        .getOrThrowFiberFailure()
-    }
-  }
-
   private lazy val generateArtifactListTask = Def.task {
     val log = streams.value.log
     val targetRoot = (Compile / sourceManaged).value
-    val circleCiDst = ciTarget.value
     val parallelJobs = ciParallelJobs.value
     val separateJobs = ciSeparateJobs.value
     val artifactLstTarget = artifactListTarget.value
@@ -169,7 +130,6 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
 
     val params = Parameters(
       targetRoot = Path.fromJava(targetRoot.toPath),
-      ciTarget = Path.fromJava(circleCiDst.toPath),
       parallelCiJobs = parallelJobs,
       separateCiJobs = separateJobs.toSet,
       artifactListTarget = Path.fromJava(artifactLstTarget.toPath),
