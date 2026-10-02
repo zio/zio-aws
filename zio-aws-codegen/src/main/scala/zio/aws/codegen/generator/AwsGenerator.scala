@@ -12,14 +12,10 @@ trait AwsGenerator {
   def generateServiceCode(
       id: ModuleId,
       model: C2jModels,
-      sbtLogger: sbt.Logger
+      sbtLogger: _root_.sbt.Logger
   ): ZIO[Any, GeneratorFailure[AwsGeneratorFailure], Set[
     File
   ]]
-
-  def generateCiYaml(
-      ids: Set[ModuleId]
-  ): ZIO[Any, GeneratorFailure[AwsGeneratorFailure], Unit]
 
   def generateArtifactList(
       ids: Set[ModuleId]
@@ -35,7 +31,7 @@ object AwsGenerator {
   def generateServiceCode(
       id: ModuleId,
       model: C2jModels,
-      sbtLogger: sbt.Logger
+      sbtLogger: _root_.sbt.Logger
   ): ZIO[AwsGenerator, GeneratorFailure[
     AwsGeneratorFailure
   ], Set[
@@ -44,13 +40,6 @@ object AwsGenerator {
     ZIO.serviceWithZIO[AwsGenerator](
       _.generateServiceCode(id, model, sbtLogger)
     )
-
-  def generateCiYaml(
-      ids: Set[ModuleId]
-  ): ZIO[AwsGenerator, GeneratorFailure[
-    AwsGeneratorFailure
-  ], Unit] =
-    ZIO.serviceWithZIO[AwsGenerator](_.generateCiYaml(ids))
 
   def generateArtifactList(
       ids: Set[ModuleId]
