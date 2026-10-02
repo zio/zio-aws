@@ -1,5 +1,6 @@
 import com.jsuereth.sbtpgp.PgpKeys.{pgpPublicRing, pgpSecretRing}
 import microsites.ConfigYml
+import zio.sbt.githubactions.{Branch, DependencyBot, Trigger}
 import scala.xml.{Node => XmlNode, NodeSeq => XmlNodeSeq, _}
 import scala.xml.transform.{RewriteRule, RuleTransformer}
 
@@ -9,7 +10,44 @@ enablePlugins(Common, ZioAwsCodegenPlugin, GitVersioning)
 
 ThisBuild / ciParallelJobs := 5
 ThisBuild / ciSeparateJobs := Seq("zio-aws-ec2")
-ThisBuild / ciTarget := file(".github/workflows/ci.yml")
+
+// Everything in ci.yml is hand-built from the module list; the plugin's stock jobs and the extras it
+// wraps around them are switched off.
+ThisBuild / ciBuildJobs := zio.aws.codegen.ci.ZioAwsCi.buildJobs(
+  zio.aws.codegen.ZioAwsCodegenPlugin.moduleNames,
+  ciParallelJobs.value,
+  ciSeparateJobs.value.toSet
+)
+ThisBuild / ciReleaseJobs := zio.aws.codegen.ci.ZioAwsCi.releaseJobs(
+  zio.aws.codegen.ZioAwsCodegenPlugin.moduleNames,
+  ciParallelJobs.value,
+  ciSeparateJobs.value.toSet
+)
+ThisBuild / ciLintJobs := Seq.empty
+ThisBuild / ciTestJobs := Seq.empty
+ThisBuild / ciUpdateReadmeJobs := Seq.empty
+ThisBuild / ciPostReleaseJobs := Seq.empty
+ThisBuild / ciReportSuccessfulJobs := Seq.empty
+ThisBuild / ciWorkflowPermissions := None
+ThisBuild / ciConcurrency := None
+ThisBuild / ciEnableReleaseDrafter := false
+// Scala Steward runs as the zio-scala-steward GitHub App, so its PRs come from a bot account that
+// auto-approve/auto-merge can recognise (they were previously opened by a personal token).
+ThisBuild / ciEnableScalaSteward := true
+ThisBuild / ciScalaStewardSchedule := "0 21 * * *"
+ThisBuild / ciScalaStewardWorkflowEnv := Map("JAVA_OPTS" -> "-Xmx6g -Xms1g")
+ThisBuild / ciDependencyUpdateBots := Seq(
+  DependencyBot.Dependabot,
+  DependencyBot.Renovate,
+  DependencyBot.ScalaSteward("zio-scala-steward")
+)
+ThisBuild / ciEnableDependabot := false
+ThisBuild / ciEnableRegenerateWorkflows := false
+ThisBuild / ciWorkflowEnv := Map.empty
+ThisBuild / ciWorkflowTriggers := Seq(
+  Trigger.PullRequest(ignoredBranches = Seq(Branch.Named("gh-pages"))),
+  Trigger.Push(branches = Seq(Branch.Named("master")))
+)
 ThisBuild / artifactListTarget := file("docs/artifacts.md")
 ThisBuild / versionScheme := Some(VersionScheme.PVP)
 
