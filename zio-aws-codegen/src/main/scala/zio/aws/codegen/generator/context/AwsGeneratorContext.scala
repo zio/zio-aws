@@ -20,7 +20,7 @@ trait AwsGeneratorContext {
   val modelMap: ModelMap
   val models: C2jModels
 
-  val logger: sbt.Logger
+  val logger: _root_.sbt.Logger
 }
 
 object AwsGeneratorContext {
@@ -51,7 +51,7 @@ object AwsGeneratorContext {
   def get(name: String): ZIO[AwsGeneratorContext, AwsGeneratorFailure, Model] =
     ZIO.serviceWithZIO(_.modelMap.get(name))
 
-  def getLogger: ZIO[AwsGeneratorContext, Nothing, sbt.Logger] =
+  def getLogger: ZIO[AwsGeneratorContext, Nothing, _root_.sbt.Logger] =
     ZIO.serviceWith(_.logger)
 
   def logWarn(message: => String): ZIO[AwsGeneratorContext, Nothing, Unit] =

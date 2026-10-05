@@ -2,13 +2,14 @@ val zioVersion = "2.1.26"
 val awsVersion = "2.55.11"
 
 sbtPlugin := true
+resolvers += Resolver.sonatypeCentralSnapshots
 scalaVersion := "2.12.21"
 organization := "io.github.vigoo"
 scalacOptions := Seq("-Ypartial-unification", "-deprecation")
 libraryDependencies ++= Seq(
   "dev.zio" %% "zio" % zioVersion,
   "dev.zio" %% "zio-nio" % "2.0.0",
-  "io.circe" %% "circe-yaml" % "0.14.1",
+  "dev.zio" %% "zio-sbt-githubactions" % "0.8.5+3-9742dfda-SNAPSHOT",
   "software.amazon.awssdk" % "codegen" % awsVersion,
   "org.scalameta" %% "scalameta" % "4.4.31",
   "io.github.vigoo" %% "metagen-core" % "0.0.17",
