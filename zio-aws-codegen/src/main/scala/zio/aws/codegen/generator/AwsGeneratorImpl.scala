@@ -18,7 +18,6 @@ case class AwsGeneratorImpl(cfg: Parameters)
     with GeneratorBase
     with ServiceInterfaceGenerator
     with ServiceModelGenerator
-    with GithubActionsGenerator
     with ArtifactListGenerator
     with HasConfig
     with Blacklists {
@@ -77,7 +76,7 @@ case class AwsGeneratorImpl(cfg: Parameters)
   private def createGeneratorContext(
       id: ModuleId,
       model: C2jModels,
-      sbtLogger: sbt.Logger
+      sbtLogger: _root_.sbt.Logger
   ): ZLayer[Any, Nothing, AwsGeneratorContext] =
     ZLayer.succeed {
       new context.AwsGeneratorContext {
@@ -99,14 +98,14 @@ case class AwsGeneratorImpl(cfg: Parameters)
             model
           )
         override val models: C2jModels = model
-        override val logger: sbt.Logger = sbtLogger
+        override val logger: _root_.sbt.Logger = sbtLogger
       }
     }
 
   override def generateServiceCode(
       id: ModuleId,
       model: C2jModels,
-      sbtLogger: sbt.Logger
+      sbtLogger: _root_.sbt.Logger
   ): ZIO[Any, GeneratorFailure[
     AwsGeneratorFailure
   ], Set[File]] = {
@@ -122,26 +121,6 @@ case class AwsGeneratorImpl(cfg: Parameters)
       )
       .map(_.map(_.toFile))
   }
-
-  override def generateCiYaml(
-      ids: Set[ModuleId]
-  ): ZIO[Any, GeneratorFailure[
-    AwsGeneratorFailure
-  ], Unit] =
-    Generator
-      .generateRawFile(config.ciTarget) {
-        ZIO
-          .attempt(
-            generateCiYaml(
-              ids,
-              config.parallelCiJobs,
-              config.separateCiJobs
-            )
-          )
-          .mapError(UnknownError)
-      }
-      .provide(Generator.live)
-      .unit
 
   override def generateArtifactList(
       ids: Set[ModuleId]
