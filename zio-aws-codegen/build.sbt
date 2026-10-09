@@ -1,5 +1,5 @@
 val zioVersion = "2.1.26"
-val awsVersion = "2.55.12"
+val awsVersion = "2.55.13"
 
 sbtPlugin := true
 scalaVersion := "2.12.21"
