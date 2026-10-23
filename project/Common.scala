@@ -8,7 +8,7 @@ import scala.concurrent.duration.*
 object Common extends AutoPlugin {
 
   object autoImport {
-    val zioVersion = "2.1.26"
+    val zioVersion = "2.1.27"
     val zioCatsInteropVersion = "23.1.0.14"
     val zioReactiveStreamsInteropVersion = "2.0.2"
     val zioConfigVersion = "4.1.0"
