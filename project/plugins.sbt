@@ -7,7 +7,7 @@ addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.6")
 addSbtPlugin("com.github.sbt" % "sbt-unidoc" % "0.6.1")
 addSbtPlugin("dev.zio" % "zio-sbt-website" % "0.8.6")
 addSbtPlugin("dev.zio" % "zio-sbt-ci" % "0.8.6")
-addSbtPlugin("nl.gn0s1s" % "sbt-dotenv" % "3.3.0")
+addSbtPlugin("nl.gn0s1s" % "sbt-dotenv" % "3.4.0")
 
 ThisBuild / libraryDependencySchemes += "io.circe" %% "circe-core" % VersionScheme.Always
 ThisBuild / libraryDependencySchemes += "com.lihaoyi" %% "geny" % VersionScheme.Always
