@@ -11,7 +11,6 @@ keywords:
   - "AWS CRT"
 ---
 
-# HTTP Clients
 
 ZIO AWS sends every request through an `HttpClient` layer, which the `AwsConfig` layer depends on. Each HTTP client is its own module, and each module provides one or more factory functions that build an `HttpClient` layer. The [Choose an HTTP Client](./guide-choose-http-client.md) guide explains how to pick one.
 
