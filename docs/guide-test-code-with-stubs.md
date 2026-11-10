@@ -10,7 +10,6 @@ keywords:
   - "Service pattern"
 ---
 
-# Test Code That Uses AWS
 
 In this guide, we will put the AWS calls behind a small service of our own, implement that service once with ZIO AWS and once as a stub for tests. By the end, your business logic will run in tests without network access or credentials.
 
