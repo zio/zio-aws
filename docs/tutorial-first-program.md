@@ -10,7 +10,6 @@ keywords:
   - "AwsConfig"
 ---
 
-# Tutorial: Your First ZIO AWS Program
 
 Welcome to ZIO AWS! This tutorial is for newcomers who know basic Scala and have some familiarity with [ZIO](https://zio.dev) effects and layers. You don't need any prior experience with AWS to follow along, although the tutorial assumes you have an AWS account whose credentials are available on your machine.
 
