@@ -10,7 +10,6 @@ keywords:
   - "Region"
 ---
 
-# Configure Credentials and Region
 
 In this guide, we will configure the region, the credentials and the client timeouts that every ZIO AWS client uses. By the end, you will know how to use the defaults, how to set the values in code and how to load them from a configuration source.
 
