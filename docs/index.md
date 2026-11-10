@@ -51,6 +51,8 @@ The following example uses the _ElasticBeanstalk_ and _EC2_ APIs:
 >
 > See the [artifacts](artifacts.md) page for the latest release.
 
+The dependencies are declared as follows:
+
 ```scala
 libraryDependencies += "dev.zio" %% "zio-aws-core"             % "<version>"
 libraryDependencies += "dev.zio" %% "zio-aws-ec2"              % "<version>"
