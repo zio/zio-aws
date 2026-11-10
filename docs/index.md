@@ -3,7 +3,7 @@ id: index
 title: "Overview"
 ---
 
-[ZIO AWS](https://zio.dev/zio-aws) is AWS wrapper for [ZIO](https://zio.dev) for _all_ AWS services using the AWS Java SDK v2.
+[ZIO AWS](https://zio.dev/zio-aws) is an AWS wrapper for [ZIO](https://zio.dev) for _all_ AWS services, built on the AWS Java SDK v2.
 
 @PROJECT_BADGES@
 
@@ -13,24 +13,42 @@ The goal is to have access to all AWS functionality for cases when only a simple
 
 Key features of ZIO AWS:
 
-- Common configuration layer
-- ZIO module layer per AWS service
-- Wrapper for all operations on all services
-- HTTP service implementations for functional Scala HTTP libraries, injected through ZIO’s module system
-- ZStream wrapper around paginated operations
+- A common configuration layer, `AwsConfig`
+- A ZIO service module per AWS service
+- A wrapper for all operations on all services
+- HTTP client implementations for functional Scala HTTP libraries, injected through ZIO's module system
+- ZStream wrappers around paginated and streaming operations
 - Service-specific extra configuration
 - More idiomatic Scala request and response types wrapping the Java classes
+- [Aspects](aspects.md) to take care of additional concerns like logging, metrics and retries
+
+## Where to Start
+
+If you are new to ZIO AWS, read the [first program tutorial](tutorial-first-program.md) and then the guides that match your task:
+
+- [Configure Credentials and Region](guide-configure-credentials-and-region.md)
+- [Choose an HTTP Client](guide-choose-http-client.md)
+- [Paginate and Stream Results](guide-paginate-and-stream.md)
+- [Handle AWS Errors](guide-handle-errors.md)
+- [Add Aspects for Logging and Metrics](guide-add-aspects.md)
+- [Test Code That Uses AWS](guide-test-code-with-stubs.md)
+
+The reference pages describe the [artifacts](artifacts.md), [wrappers](wrappers.md), [configuration](configuration.md), [HTTP clients](http.md), [aspects](aspects.md) and [errors](aws-error.md) in detail.
+
+## Design
+
+The library consists of a core module and one generated library for _each_ AWS service, based on the official JSON schema from the AWS Java SDK's repository. By only providing a wrapper on top of the Java SDK the code generator does not have to know all the implementation details and features of the schema.
 
 ## Installation
 
-There are tones of artifacts [published](artifacts.md) for each AWS service. We can pick whichever services we need.
+There are many artifacts [published](artifacts.md), one for each AWS service. You pick the services you need.
 
 ## Example
 
 The following example uses the _ElasticBeanstalk_ and _EC2_ APIs:
 
 > **Note**
-> 
+>
 > See the [artifacts](artifacts.md) page for the latest release.
 
 ```scala
@@ -59,7 +77,7 @@ object ZIOAWSExample extends ZIOAppDefault {
   val program: ZIO[Ec2 & ElasticBeanstalk, AwsError, Unit] =
     for {
       appsResult <- ElasticBeanstalk.describeApplications(
-        DescribeApplicationsRequest(applicationNames = Some(List(ApplicationName("my-service"))))
+        DescribeApplicationsRequest(applicationNames = List(ApplicationName("my-service")))
       )
       app <- appsResult.getApplications.map(_.headOption)
       _ <- app match {
@@ -74,7 +92,7 @@ object ZIOAWSExample extends ZIOAppDefault {
 
             envStream = ElasticBeanstalk.describeEnvironments(
               DescribeEnvironmentsRequest(applicationName =
-                Some(applicationName)
+                applicationName
               )
             )
 
@@ -91,7 +109,7 @@ object ZIOAWSExample extends ZIOAppDefault {
                   resourcesResult <-
                     ElasticBeanstalk.describeEnvironmentResources(
                       DescribeEnvironmentResourcesRequest(environmentId =
-                        Some(environmentId)
+                        environmentId
                       )
                     )
                   resources <- resourcesResult.getEnvironmentResources
@@ -109,7 +127,7 @@ object ZIOAWSExample extends ZIOAppDefault {
                     .ignore
 
                   reservationsStream = Ec2.describeInstances(
-                    DescribeInstancesRequest(instanceIds = Some(instanceIds.map(id => zio.aws.ec2.model.primitives.InstanceId(ResourceId.unwrap(id)))))
+                    DescribeInstancesRequest(instanceIds = instanceIds.map(id => zio.aws.ec2.model.primitives.InstanceId(ResourceId.unwrap(id))))
                   )
                   _ <- reservationsStream.run(ZSink.foreach { reservation =>
                     reservation.getInstances
@@ -162,3 +180,17 @@ object ZIOAWSExample extends ZIOAppDefault {
   }
 }
 ```
+
+## Higher Level AWS Libraries
+
+The following libraries are built on top of `zio-aws` and provide higher level interfaces for specific AWS services:
+
+- [ZIO DynamoDB](https://github.com/zio/zio-dynamodb)
+- [ZIO Kinesis](https://github.com/svroonland/zio-kinesis)
+- [ZIO SQS](https://github.com/zio/zio-sqs)
+
+## Additional Resources
+
+- There is a [blog post](https://vigoo.github.io/posts/2020-09-23-zioaws-code-generation.html) explaining how the code generator is implemented.
+- [This post](https://vigoo.github.io/posts/2020-11-01-zioaws-zioquery.html) shows an example of using `zio-aws` together with [ZIO Query](https://zio.github.io/zio-query/).
+- [Talk about generating libraries](https://www.youtube.com/watch?v=HCPTmytex3U) from Functional Scala 2021.
