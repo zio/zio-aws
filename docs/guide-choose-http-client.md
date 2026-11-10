@@ -10,7 +10,6 @@ keywords:
   - "HTTP/2"
 ---
 
-# Choose an HTTP Client
 
 In this guide, we will choose an HTTP client for ZIO AWS, build it as a layer and tune its connection settings. By the end, you will know which module to add, which layer to provide and how to set the protocol.
 
@@ -87,7 +86,7 @@ val tunedNetty: ZLayer[Any, Throwable, HttpClient] =
   )
 ```
 
-The `Protocol` values are `Protocol.Http11`, `Protocol.Http2` and `Protocol.Dual`. The `customized` function returns a layer that you provide in the same way as `NettyHttpClient.default`.
+The `Protocol` values are `Protocol.Http11`, `Protocol.Http2` and `Protocol.Dual`. The `NettyHttpClient.customized` function returns a layer that you provide in the same way as `NettyHttpClient.default`.
 
 :::tip
 For a Netty client configured from a ZIO Config source, use `NettyHttpClient.configured`. It needs a `NettyClientConfig` layer, which you can load with `ZIO.config(nettyClientConfig)` from `zio.aws.netty.descriptors`. The [HTTP Clients](./http.md) reference lists every key.
