@@ -10,7 +10,6 @@ keywords:
   - "GenericAwsError"
 ---
 
-# Handle AWS Errors
 
 In this guide, we will handle the failures of an AWS call with pattern matching on `AwsError`, read the AWS error code behind a failed request and recover from a missing field. By the end, you will know how to decide which failures to retry, which to report and which to ignore.
 
