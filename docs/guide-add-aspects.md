@@ -10,7 +10,6 @@ keywords:
   - "Logging"
 ---
 
-# Add Aspects for Logging and Metrics
 
 In this guide, we will wrap every call to an AWS service with logging and duration metrics, and we will add an aspect of our own that logs failures. By the end, you will know how to write an aspect and attach it to a service layer.
 
