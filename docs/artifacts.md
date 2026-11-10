@@ -5,6 +5,8 @@ title: Artifacts
 
 # Published artifacts
 
+Every module of one release is published with the same version number, so use one version for all the `zio-aws-*` modules in your build. Find the latest version on [Maven Central](https://central.sonatype.com/search?q=dev.zio+zio-aws) and replace the `<version>` placeholder with it. The core module is always needed. Add one HTTP client module, and add one module for each AWS service that your code calls.
+
 ## Core module
 
 ```scala

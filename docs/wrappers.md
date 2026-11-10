@@ -3,11 +3,10 @@ id: wrappers
 title: Wrappers
 ---
 
-# Client wrappers
 
 ### Service modules
-For each AWS Service the library defines a _ZIO service_ with wrapper functions for all the _operations_, a `live` 
-implementation calling the Java SDK and a `mock` implementation using [zio-mock](https://github.com/zio/zio-mock).
+For each AWS Service the library defines a _ZIO service_ with wrapper functions for all the _operations_ and a `live`
+implementation calling the Java SDK.
 
 The live implementation depends on a core _AWS configuration layer_:
 
@@ -19,6 +18,13 @@ The `AwsConfig` layer defines how each service's async Java client gets configur
 provided by another layer `AwsConfig` is depending on.
 
 Each module has accessor functions for _all operations_ of the given service.
+
+Besides `live`, every service object has two more constructors:
+
+- `customized(f)` builds the same layer, but first applies `f` to the underlying AWS SDK client builder, for example to change an SDK setting that the configuration does not expose.
+- `scoped(f)` is the same as `customized(f)` but returns a `ZIO` that needs a `Scope` instead of a `ZLayer`, so you can manage the client's lifetime yourself.
+
+Both take the SDK builder as the parameter of `f`. The [Configuration](./configuration.md) page describes the settings you can apply without touching the builder.
 
 ### Operations
 
@@ -63,7 +69,7 @@ For use cases when calling the _paginating_ interface directly is necessary - fo
 For example the DynamoDB `scan` method's non-streaming variant is defined as:
 
 ```scala
-def scanPaginated(request: ScanRequest): ZIO[DynamoDb, ScanResponse.ReadOnly]
+def scanPaginated(request: ScanRequest): ZIO[DynamoDb, AwsError, ScanResponse.ReadOnly]
 ```
 
 ### Model wrappers
@@ -126,28 +132,5 @@ object CreateMedicalVocabularyResponse {
 As a large part of the models in the AWS SDK are defined as _optional_, the generated wrapper also contains ZIO accessor functions,
 which lift the option value to make it more comfortable to chain the AWS operations.
 
-### Mocks
-Each module also contains generated [_ZIO Test mocks_](https://github.com/zio/zio-mock) for the given service.
-
-The following example shows how to use them with the `zio-aws-athena` library:
-
-```scala
-val athena = AthenaMock.StartQueryExecution(
-  hasField(
-    "queryString",
-    (startQueryExecutionRequest: StartQueryExecutionRequest) =>
-      startQueryExecutionRequest.queryString,
-      equalTo(givenQuery)
-  ),
-  value(
-    StartQueryExecutionResponse.wrap(
-      software.amazon.awssdk.services.athena.model.StartQueryExecutionResponse
-        .builder()
-        .queryExecutionId(executionId)
-        build()
-    )
-  )
-)
-
-codeUsingAthena.provide(athena)
-```
+### Testing
+The library does not generate mock objects for the services. To test code that calls AWS, put the calls behind a small service of your own and provide a stub in tests. The [Test Code That Uses AWS](./guide-test-code-with-stubs.md) guide shows the pattern.
