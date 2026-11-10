@@ -3,7 +3,6 @@ id: wrappers
 title: Wrappers
 ---
 
-# Client wrappers
 
 ### Service modules
 For each AWS Service the library defines a _ZIO service_ with wrapper functions for all the _operations_ and a `live`
