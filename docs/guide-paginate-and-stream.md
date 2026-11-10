@@ -10,7 +10,6 @@ keywords:
   - "describeInstances"
 ---
 
-# Paginate and Stream Results
 
 In this guide, we will read all the results of a paginated AWS operation without writing a loop that tracks the next-page token. By the end, you will know how to consume a stream of results, how to limit it and how to fetch one page when you need that instead.
 
