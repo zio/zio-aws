@@ -35,7 +35,7 @@ libraryDependencies += "dev.zio" %% "zio-aws-crt-http"   % "<version>"
 
 The examples below use these imports:
 
-```scala mdoc:silent
+```scala
 import zio._
 import zio.aws.core.config.AwsConfig
 import zio.aws.core.httpclient.{HttpClient, Protocol}
@@ -58,7 +58,7 @@ Use the table below as a starting point. The Netty client is the default choice,
 
 Each layer has the same shape. It provides an `HttpClient`, and `AwsConfig` consumes it:
 
-```scala mdoc:compile-only
+```scala
 val withNetty: ZLayer[Any, Throwable, Ec2] =
   NettyHttpClient.default >>> AwsConfig.default >>> Ec2.live
 
@@ -72,13 +72,13 @@ Changing the HTTP client leaves the service layers untouched, because they only 
 
 The Netty client can speak HTTP/1.1, HTTP/2 or both. `NettyHttpClient.default` uses HTTP/1.1. `NettyHttpClient.dual` uses HTTP/2 for the services that support it and HTTP/1.1 for the rest:
 
-```scala mdoc:compile-only
+```scala
 val dualNetty: ZLayer[Any, Throwable, HttpClient] = NettyHttpClient.dual
 ```
 
 To choose the protocol and adjust the builder, call `NettyHttpClient.customized`. Its first argument is a `Protocol`, and its second is a function that receives the Netty builder:
 
-```scala mdoc:compile-only
+```scala
 val tunedNetty: ZLayer[Any, Throwable, HttpClient] =
   NettyHttpClient.customized(
     Protocol.Dual,
@@ -96,7 +96,7 @@ For a Netty client configured from a ZIO Config source, use `NettyHttpClient.con
 
 The http4s client is built on the Blaze client. `Http4sClient.default` uses the default settings, and `Http4sClient.customized` receives a function that changes the `BlazeClientBuilder`. Pass `identity` to keep the defaults, and change the builder when you need other settings:
 
-```scala mdoc:compile-only
+```scala
 val tunedHttp4s: ZLayer[Any, Throwable, HttpClient] =
   Http4sClient.customized(identity)
 ```
@@ -107,7 +107,7 @@ The http4s client needs no extra layers, so it can replace Netty in a project th
 
 The AWS Common Runtime client is a native implementation. `AwsCrtHttpClient.default` uses the defaults, and `AwsCrtHttpClient.customized` changes its builder:
 
-```scala mdoc:compile-only
+```scala
 val crt: ZLayer[Any, Throwable, HttpClient] = AwsCrtHttpClient.default
 ```
 

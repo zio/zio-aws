@@ -33,7 +33,7 @@ libraryDependencies += "dev.zio" %% "zio-aws-netty" % "<version>"
 
 The examples use these imports:
 
-```scala mdoc:silent
+```scala
 import zio._
 import zio.metrics.MetricKeyType
 import zio.aws.core.AwsError
@@ -49,7 +49,7 @@ The `zio.aws.core.aspects._` import brings in the `@@@` operator, the built-in a
 
 The library provides `callLogging`, which logs how long each call takes. Attach it to the service layer with the `@@@` operator:
 
-```scala mdoc:compile-only
+```scala
 val ec2WithLogging: ZLayer[AwsConfig, Throwable, Ec2] =
   Ec2.live @@@ callLogging
 ```
@@ -60,7 +60,7 @@ The `@@@` operator returns a new layer. The service it builds is the same `Ec2` 
 
 `callDuration` is a function, because it needs a name for the metric and the boundaries of its histogram buckets. The metric records each call's duration with the `aws_service` and `aws_operation` tags:
 
-```scala mdoc:compile-only
+```scala
 val ec2WithMetrics: ZLayer[AwsConfig, Throwable, Ec2] =
   Ec2.live @@@ callDuration(
     "myapp",
@@ -74,7 +74,7 @@ The metric name is `myapp_aws_call` in this example. The boundaries are the uppe
 
 An aspect is an `AwsCallAspect[R]`. To write one, extend the trait and implement `apply`. The aspect receives the call as a ZIO effect and returns a new effect. This one logs every failure and passes the error on unchanged:
 
-```scala mdoc:compile-only
+```scala
 val logFailures: AwsCallAspect[Any] =
   new AwsCallAspect[Any] {
     override final def apply[R, E, A <: Described[_]](
@@ -94,7 +94,7 @@ The library's `callLogging` also reads the service and operation name from `Desc
 
 Several aspects combine with `>>>`. Both aspects in this example only observe the call and return its result unchanged, so the order does not affect the outcome:
 
-```scala mdoc:compile-only
+```scala
 val ec2Observed: ZLayer[AwsConfig, Throwable, Ec2] =
   Ec2.live @@@ (logFailures >>> callLogging)
 ```

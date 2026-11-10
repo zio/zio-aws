@@ -35,7 +35,7 @@ libraryDependencies += "dev.zio" %% "zio-aws-netty" % "<version>"
 
 The examples in this guide use these imports:
 
-```scala mdoc:silent
+```scala
 import zio._
 import zio.aws.core.config.{AwsConfig, CommonAwsConfig, CommonClientConfig}
 import zio.aws.core.config.descriptors.commonAwsConfig
@@ -49,7 +49,7 @@ import software.amazon.awssdk.regions.Region
 
 `AwsConfig.default` depends only on an `HttpClient`. It does not set the region, the credentials or any timeout, so the AWS SDK decides these on its own. This is the smallest setup, and it works when the environment already has the values:
 
-```scala mdoc:compile-only
+```scala
 val defaultLayers: ZLayer[Any, Throwable, Ec2] =
   NettyHttpClient.default >>> AwsConfig.default >>> Ec2.live
 ```
@@ -60,7 +60,7 @@ The layer chain is read from left to right. `NettyHttpClient.default` provides t
 
 To set the values explicitly, build a `CommonAwsConfig` and pass it to `AwsConfig.configured()`. This layer depends on an `HttpClient` and on a `CommonAwsConfig`, so we provide both:
 
-```scala mdoc:compile-only
+```scala
 val explicitConfig: CommonAwsConfig = CommonAwsConfig(
   region = Some(Region.EU_WEST_1),
   credentialsProvider = DefaultCredentialsProvider.create(),
@@ -94,7 +94,7 @@ When `commonClientConfig` is `Some`, `AwsConfig.configured()` also turns off the
 
 To keep the values out of the code, read them with ZIO Config. The `commonAwsConfig` descriptor in `zio.aws.core.config.descriptors` describes all the keys, so the same layer works with any ZIO Config provider:
 
-```scala mdoc:compile-only
+```scala
 val configFromSource: ZLayer[Any, Config.Error, CommonAwsConfig] =
   ZLayer.fromZIO(ZIO.config(commonAwsConfig))
 

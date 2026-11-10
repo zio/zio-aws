@@ -33,7 +33,7 @@ libraryDependencies += "dev.zio" %% "zio-aws-netty" % "<version>"
 
 The examples use these imports:
 
-```scala mdoc:silent
+```scala
 import zio._
 import zio.aws.core.AwsError
 import zio.aws.ec2.Ec2
@@ -45,7 +45,7 @@ import zio.aws.ec2.model.primitives._
 
 We define a trait for the one question our code needs answered. The trait has no AWS types in its public methods, so code that uses it never needs to know about the AWS client:
 
-```scala mdoc:compile-only
+```scala
 trait RegionCatalog {
   def regionNames: ZIO[Any, AwsError, Iterable[String]]
 }
@@ -62,7 +62,7 @@ The companion object provides an accessor, so a program can write `RegionCatalog
 
 The live implementation calls EC2 through the `Ec2` service. It takes the `Ec2` service from the layer, and then it provides that service to the AWS calls:
 
-```scala mdoc:compile-only
+```scala
 val live: ZLayer[Ec2, Nothing, RegionCatalog] =
   ZLayer.fromZIO(
     ZIO.service[Ec2].map { ec2 =>
@@ -89,7 +89,7 @@ The code above:
 
 The stub implements the same trait without calling AWS. Its effect requires nothing, so a test can provide it directly:
 
-```scala mdoc:compile-only
+```scala
 val stub: ULayer[RegionCatalog] =
   ZLayer.succeed(
     new RegionCatalog {
@@ -105,14 +105,14 @@ The stub returns a fixed list. You can make it return any value or fail with an 
 
 Business logic depends only on `RegionCatalog`. The function below counts the regions and reports the count:
 
-```scala mdoc:compile-only
+```scala
 val regionReport: ZIO[RegionCatalog, AwsError, String] =
   RegionCatalog.regionNames.map(names => s"${names.size} regions available")
 ```
 
 A test provides the stub in place of the live layer, and no network call happens:
 
-```scala mdoc:compile-only
+```scala
 val reportWithStub: ZIO[Any, AwsError, String] =
   regionReport.provideLayer(stub)
 ```

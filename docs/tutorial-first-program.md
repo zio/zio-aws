@@ -66,7 +66,7 @@ The HTTP client does the network I/O. `AwsConfig` applies the common settings, s
 
 Before we write the program, we declare the import list that covers all three layers and the ZIO API:
 
-```scala mdoc:compile-only
+```scala
 import zio._
 import zio.aws.core.AwsError
 import zio.aws.core.config.AwsConfig
@@ -81,7 +81,7 @@ The `zio.aws.ec2.model._` import brings in the request and response types. The `
 
 We call `DescribeRegions`, which lists the regions that EC2 offers. Each operation is a method on the `Ec2` service, and its request is a case class with default values, so an empty request is valid:
 
-```scala mdoc:compile-only
+```scala
 val listRegions: ZIO[Ec2, AwsError, Unit] =
   for {
     response <- Ec2.describeRegions(DescribeRegionsRequest())
@@ -106,7 +106,7 @@ The effect does nothing until it runs. Building the `listRegions` value makes no
 
 We provide the three layers to the program and run it as a `ZIOAppDefault`:
 
-```scala mdoc:compile-only
+```scala
 object ListRegionsApp extends ZIOAppDefault {
   override def run: URIO[ZIOAppArgs & Scope, ExitCode] =
     listRegions
