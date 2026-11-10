@@ -10,7 +10,6 @@ keywords:
   - "Metrics"
 ---
 
-# Aspects
 
 An aspect of type `AwsCallAspect[R]` changes how the operations of a service behave, without changing the operations themselves. Aspects are the library's recommended way to add logging, metrics, retries or rate limiting to AWS calls. The [Add Aspects for Logging and Metrics](./guide-add-aspects.md) guide shows how to write and attach one.
 
@@ -39,7 +38,7 @@ The `service` and `operation` fields are the names used by the built-in aspects.
 
 ## Built-in Aspects
 
-The library provides two aspects. Both only observe the call, so they do not change its result.
+The library provides two aspects. Both only observe the call, so they do not change its result. Their signatures are:
 
 ```scala
 val callLogging: AwsCallAspect[Any]
