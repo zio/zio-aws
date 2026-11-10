@@ -10,7 +10,6 @@ keywords:
   - "Error model"
 ---
 
-# AWS Errors
 
 Every ZIO AWS operation fails with the type `AwsError`. The type is a sealed trait, so the compiler can check that a pattern match covers every case. The [Handle AWS Errors](./guide-handle-errors.md) guide shows how to use it in practice.
 
@@ -60,7 +59,7 @@ The companion object of `AwsError` has two functions that the library uses inter
 
 ## Error Flow
 
-Errors flow in one direction. The SDK throws an exception, `AwsError.fromThrowable` wraps it into `GenericAwsError`, and the effect fails with that value. A missing field fails with `FieldIsNone`, created by `unwrapOptionField`. Aspects see both cases on the same error channel, so a logging or retry aspect handles them the same way. See [Add Aspects](./guide-add-aspects.md).
+Errors flow in one direction. The SDK throws an exception, `AwsError.fromThrowable` wraps it into `GenericAwsError`, and the effect fails with that value. A missing field fails with `FieldIsNone`, created by `AwsError.unwrapOptionField`. Aspects see both cases on the same error channel, so a logging or retry aspect handles them the same way. See [Add Aspects](./guide-add-aspects.md).
 
 ## Related Pages
 
