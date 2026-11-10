@@ -18,11 +18,11 @@ settings. You can use the following layers to provide `AwsConfig`:
 `AwsConfig.customized(customization)` gives the freedom to customize the creation of the AWS async client directly by modifying it's `Builder`
 
 #### Configured
-`AwsConfig.configured()` is the *recommended* way to construct an `AwsConfig`. Beside requiring a `HttpClient` it also has `ZConfig[CommonAwsConfig]` as dependency.
-The `CommonAwsConfig` value can be either provided from code for example by `ZLayer.succeed(CommonAwsConfig(...))` or it can
-be read from any of the supported config sources by [zio-config](https://zio.dev/zio-config/).
+`AwsConfig.configured()` is the *recommended* way to construct an `AwsConfig`. Beside requiring a `HttpClient` it also requires a `CommonAwsConfig` service.
+The `CommonAwsConfig` value can be either provided from code, for example by `ZLayer.succeed(CommonAwsConfig(...))`, or it can
+be read from any of the supported config sources by [zio-config](https://zio.dev/zio-config/), for example with `ZLayer.fromZIO(ZIO.config(commonAwsConfig))`, where `commonAwsConfig` is the descriptor in `zio.aws.core.config.descriptors`. The [Configure Credentials and Region](./guide-configure-credentials-and-region.md) guide shows both ways.
 
-Note that **AWS level retries are disabled** by the configuration layer and it is not exposed in the `CommonAwsConfig` data structure either. The reason for this is that the recommended way to handle retries is to use [aspects on the service layers](aspects.md).
+When `commonClientConfig` is set, `configured()` also turns off the AWS SDK's own retries. Retries are not exposed as a setting in `CommonAwsConfig`. The recommended way to handle retries is to use [aspects on the service layers](aspects.md).
  
 See the following table about the possible configuration values. Please note that the underlying HTTP engine also has its own
 specific configuration which is described [on the page about the HTTP engines](http.md). 
