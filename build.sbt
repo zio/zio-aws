@@ -26,7 +26,7 @@ ThisBuild / ciReleaseJobs := zio.aws.codegen.ci.ZioAwsCi.releaseJobs(
 ThisBuild / ciLintJobs := Seq.empty
 ThisBuild / ciTestJobs := Seq.empty
 ThisBuild / ciUpdateReadmeJobs := Seq.empty
-ThisBuild / ciPostReleaseJobs := Seq.empty
+ThisBuild / ciPostReleaseJobs := zio.aws.codegen.ci.ZioAwsCi.postReleaseJobs
 ThisBuild / ciReportSuccessfulJobs := Seq.empty
 ThisBuild / ciWorkflowPermissions := None
 ThisBuild / ciConcurrency := None
@@ -195,6 +195,13 @@ lazy val docs = project
     scalacOptions -= "-Yno-imports",
     scalacOptions -= "-Xfatal-warnings",
     projectName := "ZIO AWS",
+    // publishHashverToNpm reads the repository URL from scmInfo (npm provenance)
+    scmInfo := Some(
+      ScmInfo(
+        url("https://github.com/zio/zio-aws"),
+        "scm:git:git@github.com:zio/zio-aws.git"
+      )
+    ),
     mainModuleName := (core / moduleName).value,
     projectStage := ProjectStage.ProductionReady,
     docsVersioningScheme := zio.sbt.WebsitePlugin.VersioningScheme.HashVersioning,
