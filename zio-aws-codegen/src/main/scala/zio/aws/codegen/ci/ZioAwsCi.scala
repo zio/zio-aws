@@ -356,4 +356,100 @@ object ZioAwsCi {
       )
     )
   }
+
+  /** Publishes the docs to npm as `@zio.dev/zio-aws` after every successful
+    * release on master, then tells zio/zio to bump its pin.
+    *
+    * zio-sbt-ci's stock post-release jobs only run for `release: published` /
+    * `workflow_dispatch`, which never happen here (versions are tags created by
+    * the `tag` job), so they are built by hand. The package is published with
+    * npm trusted publishing (OIDC), hence the job-level `id-token: write` and
+    * no npm token.
+    */
+  def postReleaseJobs: Seq[Job] = {
+    val npmPackage = "@zio.dev/zio-aws"
+
+    val setupNode = SingleStep(
+      "Setup NodeJs",
+      uses = action("actions/setup-node@v7.1.0"),
+      parameters = Map(
+        "node-version" -> Json.Str("24.22.1"),
+        "registry-url" -> Json.Str("https://registry.npmjs.org")
+      )
+    )
+
+    val appTokenConfigured =
+      Condition.Expression("steps.check-app-token.outputs.configured == 'true'")
+
+    Seq(
+      Job(
+        "release-docs",
+        "Release Docs",
+        need = Seq("release"),
+        condition = Some(isMaster && notFromBot),
+        permissions = Map("id-token" -> "write", "contents" -> "read"),
+        steps = Seq(
+          checkout,
+          setupJava,
+          setupSbt,
+          cacheSbt(os = "ubuntu-latest", scala = scala213),
+          setupNode,
+          sbt(
+            "Publish Docs to NPM Registry",
+            List(
+              "++" + scala213,
+              "generateArtifactList",
+              "docs/publishHashverToNpm"
+            ),
+            heapGb = 4
+          ),
+          // Same job as the publish: the version is read from the package.json that
+          // `publishHashverToNpm` just stamped. zio-sbt-ci's stock notify step asks
+          // `npm view <pkg> version`, which is the `latest` dist-tag, and hash
+          // versions are published under the `hash` tag, so it would announce the
+          // previous version.
+          SingleStep(
+            "Check App Token",
+            id = Some("check-app-token"),
+            env = Map("APP_ID" -> "${{ secrets.APP_ID }}"),
+            run = Some(
+              """|if [ -n "$APP_ID" ]; then
+                 |  echo "configured=true" >> "$GITHUB_OUTPUT"
+                 |else
+                 |  echo "configured=false" >> "$GITHUB_OUTPUT"
+                 |fi""".stripMargin
+            )
+          ),
+          // github_repo must be zio/zio: the dispatch below targets that repository.
+          SingleStep(
+            "Generate Token",
+            id = Some("generate-token"),
+            condition = Some(appTokenConfigured),
+            uses = action("zio/generate-github-app-token@v1.0.0"),
+            parameters = Map(
+              "app_id" -> Json.Str("${{ secrets.APP_ID }}"),
+              "app_private_key" -> Json.Str("${{ secrets.APP_PRIVATE_KEY }}"),
+              "github_repo" -> Json.Str("zio/zio")
+            )
+          ),
+          SingleStep(
+            "Notify the main repo about the new version of the docs package",
+            env = Map(
+              "NOTIFY_TOKEN" -> "${{ steps.generate-token.outputs.token || secrets.PAT_TOKEN }}"
+            ),
+            run = Some(
+              s"""|PACKAGE_NAME="$npmPackage"
+                  |PACKAGE_VERSION=$$(node -p "require('./website/docs/package.json').version")
+                  |curl -sSL --fail-with-body \\
+                  |  -X POST \\
+                  |  -H "Accept: application/vnd.github+json" \\
+                  |  -H "Authorization: token $$NOTIFY_TOKEN" \\
+                  |  https://api.github.com/repos/zio/zio/dispatches \\
+                  |  -d '{"event_type":"update-docs","client_payload":{"package_name":"'"$$PACKAGE_NAME"'","package_version":"'"$$PACKAGE_VERSION"'"}}'""".stripMargin
+            )
+          )
+        )
+      )
+    )
+  }
 }

@@ -782,3 +782,72 @@ jobs:
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
         SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
         SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+  release-docs:
+    name: Release Docs
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    permissions:
+      id-token: write
+      contents: read
+    needs:
+    - release
+    if: ${{ (github.ref == 'refs/heads/master') && (github.actor != 'github-actions[bot]') }}
+    steps:
+    - name: Checkout current branch
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: '17'
+        check-latest: 'true'
+    - name: Setup SBT
+      uses: sbt/setup-sbt@v1
+    - name: Cache SBT
+      uses: actions/cache@v4
+      with:
+        path: |-
+          ~/.ivy2/cache
+          ~/.sbt
+          ~/.coursier/cache/v1
+          ~/.cache/coursier/v1
+        key: ubuntu-latest-sbt-2.13.x-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('**/build.properties') }}
+    - name: Setup NodeJs
+      uses: actions/setup-node@v7.1.0
+      with:
+        node-version: 24.22.1
+        registry-url: https://registry.npmjs.org
+    - name: Publish Docs to NPM Registry
+      run: sbt -J-XX:+UseG1GC -J-Xmx4g -J-Xms4g -J-Xss16m ++2.13.x generateArtifactList docs/publishHashverToNpm
+    - name: Check App Token
+      id: check-app-token
+      run: |-
+        if [ -n "$APP_ID" ]; then
+          echo "configured=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "configured=false" >> "$GITHUB_OUTPUT"
+        fi
+      env:
+        APP_ID: ${{ secrets.APP_ID }}
+    - name: Generate Token
+      id: generate-token
+      uses: zio/generate-github-app-token@v1.0.0
+      if: ${{ steps.check-app-token.outputs.configured == 'true' }}
+      with:
+        app_id: ${{ secrets.APP_ID }}
+        app_private_key: ${{ secrets.APP_PRIVATE_KEY }}
+        github_repo: zio/zio
+    - name: Notify the main repo about the new version of the docs package
+      run: |-
+        PACKAGE_NAME="@zio.dev/zio-aws"
+        PACKAGE_VERSION=$(node -p "require('./website/docs/package.json').version")
+        curl -sSL --fail-with-body \
+          -X POST \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: token $NOTIFY_TOKEN" \
+          https://api.github.com/repos/zio/zio/dispatches \
+          -d '{"event_type":"update-docs","client_payload":{"package_name":"'"$PACKAGE_NAME"'","package_version":"'"$PACKAGE_VERSION"'"}}'
+      env:
+        NOTIFY_TOKEN: ${{ steps.generate-token.outputs.token || secrets.PAT_TOKEN }}
