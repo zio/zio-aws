@@ -5,7 +5,7 @@ title: "Overview"
 
 [ZIO AWS](https://zio.dev/zio-aws) is an AWS wrapper for [ZIO](https://zio.dev) for _all_ AWS services, built on the AWS Java SDK v2.
 
-@PROJECT_BADGES@
+[![Production Ready](https://img.shields.io/badge/Project%20Stage-Production%20Ready-brightgreen.svg)](https://github.com/zio/zio/wiki/Project-Stages) ![CI Badge](https://github.com/zio/zio-aws/workflows/CI/badge.svg) [![Sonatype Releases](https://img.shields.io/maven-central/v/dev.zio/zio-aws-core_2.13.svg?label=Sonatype%20Release)](https://central.sonatype.com/artifact/dev.zio/zio-aws-core_2.13) [![Sonatype Snapshots](https://img.shields.io/badge/Sonatype%20Snapshot-published-blue)](https://central.sonatype.com/repository/maven-snapshots/dev/zio/zio-aws-core_2.13/) [![javadoc](https://javadoc.io/badge2/dev.zio/zio-aws-core_2.13/javadoc.svg)](https://javadoc.io/doc/dev.zio/zio-aws-core_2.13) [![ZIO AWS](https://img.shields.io/github/stars/zio/zio-aws?style=social)](https://github.com/zio/zio-aws)
 
 ## Introduction
 
