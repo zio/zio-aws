@@ -19,7 +19,7 @@ By the end of this tutorial, you will understand:
 
 - How a generated ZIO AWS service turns AWS responses into ZIO effects and streams
 - How to turn the read-only AWS wrappers into your own data types
-- How to build a service client for a different region with `scoped`
+- How to build a service client for a different region with `Ec2.scoped`
 - How to keep a program running when one AWS call fails
 
 We'll learn these concepts through:
@@ -133,7 +133,7 @@ The code above:
 
 ## 4. Building One Client per Region
 
-`Ec2.live` builds a client for the region in the configuration. To ask another region, we build another client. Every service has a `scoped` constructor that takes a function to change the AWS SDK builder, and returns the client as a scoped effect:
+`Ec2.live` builds a client for the region in the configuration. To ask another region, we build another client. Every service has a `scoped` constructor, such as `Ec2.scoped`, that takes a function to change the AWS SDK builder, and returns the client as a scoped effect:
 
 ```scala mdoc:silent
 def instancesIn(region: String): ZIO[AwsConfig, AwsError, Chunk[InstanceInfo]] =
@@ -175,7 +175,7 @@ The code above:
 
 - `ZIO.foreachPar` queries all regions at the same time.
 - `instancesIn(region).either` turns a failure into a `Left` value, so the effect for that region always succeeds and the others keep running.
-- The `foreachDiscard` reports each failed region on standard error. `AwsError#toThrowable` returns the AWS SDK exception, whose message names the problem.
+- The `ZIO.foreachDiscard` call reports each failed region on standard error. `AwsError#toThrowable` returns the AWS SDK exception, whose message names the problem.
 - The `yield` keeps the instances of the regions that succeeded.
 
 Try changing `instancesIn(region).either` to `instancesIn(region)` and the first failing region would fail the whole program.

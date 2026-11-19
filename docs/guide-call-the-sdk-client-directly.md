@@ -50,7 +50,7 @@ The last import gives the SDK's EC2 model package the short name `sdk`, so that 
 
 ## Customizing One Service Client
 
-Every service has a `customized` constructor next to `live`. It takes a function from the SDK builder to the SDK builder, and applies it after `AwsConfig` has applied the common settings, so the function has the last word. This EC2 client gets its own API call timeout:
+Every service has a `customized` constructor next to `live`, such as `Ec2.customized`. It takes a function from the SDK builder to the SDK builder, and applies it after `AwsConfig` has applied the common settings, so the function has the last word. This EC2 client gets its own API call timeout:
 
 ```scala mdoc:silent
 val ec2WithTimeout: ZLayer[AwsConfig, Throwable, Ec2] =
@@ -131,7 +131,7 @@ When code mixes both APIs, convert the models at the boundary. Every request cas
 DescribeRegionsRequest(allRegions = true).buildAwsValue()
 ```
 
-In the other direction, the companion's `wrap` turns an SDK object into the read-only wrapper, and `ReadOnly#editable` turns that into the case class:
+In the other direction, the companion's `wrap` method, here `Region.wrap`, turns an SDK object into the read-only wrapper, and `ReadOnly#editable` turns that into the case class:
 
 ```scala mdoc
 val wrapped: Region.ReadOnly =

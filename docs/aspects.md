@@ -65,7 +65,7 @@ val observed = Ec2.live @@@ (logFailures >>> callLogging)
 
 ## Attaching an Aspect to a Service Value
 
-When you hold a service value instead of a layer, for example one built with a service's `scoped` constructor, attach the aspect with `AspectSupport#withAspect`. Every generated service extends `AspectSupport`:
+When you hold a service value instead of a layer, for example one built with `Ec2.scoped`, attach the aspect with `AspectSupport#withAspect`. Every generated service extends `AspectSupport`:
 
 ```scala
 trait AspectSupport[Self] {
@@ -73,7 +73,7 @@ trait AspectSupport[Self] {
 }
 ```
 
-`withAspect` returns a copy of the service whose operations run through `newAspect`, with the aspect's environment taken from `r`. It replaces the aspect the service had; to keep both, combine them with `>>>` first. `@@@` is built on `withAspect`. For an aspect that needs nothing, pass `ZEnvironment.empty`:
+`AspectSupport#withAspect` returns a copy of the service whose operations run through `newAspect`, with the aspect's environment taken from `r`. It replaces the aspect the service had; to keep both, combine them with `>>>` first. `@@@` is built on `AspectSupport#withAspect`. For an aspect that needs nothing, pass `ZEnvironment.empty`:
 
 ```scala mdoc:compile-only
 import zio._

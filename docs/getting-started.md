@@ -66,7 +66,7 @@ object ListRegionsApp extends ZIOAppDefault {
 }
 ```
 
-The `provide` call builds the layers in dependency order: `NettyHttpClient.default` provides the `HttpClient`, `AwsConfig.default` uses it to provide `AwsConfig`, and `Ec2.live` uses that to build the EC2 client. The client is closed when the program ends.
+The `ZIO#provide` call builds the layers in dependency order: `NettyHttpClient.default` provides the `HttpClient`, `AwsConfig.default` uses it to provide `AwsConfig`, and `Ec2.live` uses that to build the EC2 client. The client is closed when the program ends.
 
 When you run the program, it prints one line per EC2 region, such as `eu-west-1`.
 

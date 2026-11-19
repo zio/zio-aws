@@ -51,12 +51,12 @@ import zio.aws.crt.AwsCrtHttpClient
 
 Use the table below as a starting point. The Netty client is the default choice, because it is the one the AWS SDK uses itself.
 
-| Client         | Module              | Layer to provide                  | Choose it when                                  |
-| -------------- | ------------------- | --------------------------------- | ----------------------------------------------- |
-| Netty          | `zio-aws-netty`     | `NettyHttpClient.default`         | You have no other HTTP stack (recommended)      |
-| http4s         | `zio-aws-http4s`    | `Http4sClient.default`            | Your application already uses http4s and Blaze  |
-| Akka HTTP      | `zio-aws-akka-http` | `AkkaHttpClient.client()`         | Your application already runs an Akka actor system (also needs an `ActorSystem` layer) |
-| AWS CRT        | `zio-aws-crt-http`  | `AwsCrtHttpClient.default`        | You want the AWS Common Runtime implementation  |
+| Client    | Module              | Layer to provide           | Choose it when                                                                         |
+| --------- | ------------------- | -------------------------- | -------------------------------------------------------------------------------------- |
+| Netty     | `zio-aws-netty`     | `NettyHttpClient.default`  | You have no other HTTP stack (recommended)                                             |
+| http4s    | `zio-aws-http4s`    | `Http4sClient.default`     | Your application already uses http4s and Blaze                                         |
+| Akka HTTP | `zio-aws-akka-http` | `AkkaHttpClient.client()`  | Your application already runs an Akka actor system (also needs an `ActorSystem` layer) |
+| AWS CRT   | `zio-aws-crt-http`  | `AwsCrtHttpClient.default` | You want the AWS Common Runtime implementation                                         |
 
 Each layer has the same shape. It provides an `HttpClient`, and `AwsConfig` consumes it:
 
@@ -144,7 +144,7 @@ Most AWS services use HTTP/1.1, but the event-streaming operations of Kinesis (`
 | `NettyHttpClient.dual` (`Protocol.Dual`)      | HTTP/2          | HTTP/1.1       | You call Kinesis or Transcribe streams |
 | `customized(Protocol.Http2)`                  | HTTP/2          | fails          | Every service you use supports HTTP/2  |
 
-With `Protocol.Http2`, building a client for a service that does not support HTTP/2 fails with `UnsupportedOperationException`. The http4s, Akka HTTP and AWS CRT layers have no protocol setting: they give every service the same underlying client, and the http4s Blaze client speaks HTTP/1.1 only. Use Netty with `dual` for the HTTP/2 operations.
+With `Protocol.Http2`, building a client for a service that does not support HTTP/2 fails with `UnsupportedOperationException`. The http4s, Akka HTTP and AWS CRT layers have no protocol setting: they give every service the same underlying client, and the http4s Blaze client speaks HTTP/1.1 only. Use Netty with `NettyHttpClient.dual` for the HTTP/2 operations.
 
 To share one Netty layer between Kinesis and other services, provide `NettyHttpClient.dual`:
 

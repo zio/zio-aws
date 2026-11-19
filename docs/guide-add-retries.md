@@ -18,7 +18,7 @@ We'll take an incremental approach: first we retry every failure, then we retry 
 
 AWS services reject requests when a caller sends too many of them, and networks drop connections. Both failures go away on their own, so the right reaction is to wait and send the request again.
 
-The AWS SDK has its own retry logic, but ZIO AWS turns it off when you configure clients with `AwsConfig.configured()` and a `client` section, so that retries can be controlled in ZIO instead. Adding `.retry(...)` to each call is repetitive, and a forgotten call site has no retries at all.
+The AWS SDK has its own retry logic, but ZIO AWS turns it off when you configure clients with `AwsConfig.configured()` and a `client` section, so that retries can be controlled in ZIO instead. Adding `ZIO#retry` to each call is repetitive, and a forgotten call site has no retries at all.
 
 An aspect solves both problems. ZIO AWS runs every AWS request of a service through the aspect attached to the service layer, so one aspect gives every operation the same retry policy.
 
@@ -48,7 +48,7 @@ import software.amazon.awssdk.core.exception.SdkException
 
 ## Retrying Every Failure
 
-An aspect is an `AwsCallAspect[R]`. Its `apply` method receives one AWS request as a ZIO effect and returns a new effect. To retry, we call `retry` on that effect with the schedule we are given:
+An aspect is an `AwsCallAspect[R]`. Its `apply` method receives one AWS request as a ZIO effect and returns a new effect. To retry, we call `ZIO#retry` on that effect with the schedule we are given:
 
 ```scala mdoc:silent
 def retrying(policy: Schedule[Any, AwsError, Any]): AwsCallAspect[Any] =

@@ -156,7 +156,7 @@ case class DescribePackagesFilter(
 }
 ```
 
-Newtypes are created with their `apply`, such as `InstanceId("i-0123")`, and read back with `unwrap`, such as `InstanceId.unwrap(id)`.
+Newtypes are created with their `apply`, such as `InstanceId("i-0123")`, and read back with the companion's `unwrap`, such as `InstanceId.unwrap(id)`.
 
 ### Read-Only Wrappers
 
