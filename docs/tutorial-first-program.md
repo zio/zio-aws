@@ -92,7 +92,7 @@ Notice that nothing has run yet. `regionNames` is a description of the calls; it
 The program should not pass AWS wrapper types around, so let's define our own record for one instance:
 
 ```scala mdoc:silent
-final case class InstanceInfo(
+case class InstanceInfo(
   region: String,
   id: String,
   instanceType: String,
@@ -193,7 +193,7 @@ import zio.aws.netty.NettyHttpClient
 import software.amazon.awssdk.regions.{Region => AwsRegion}
 
 object Ec2Inventory extends ZIOAppDefault {
-  final case class InstanceInfo(region: String, id: String, instanceType: String, state: String)
+  case class InstanceInfo(region: String, id: String, instanceType: String, state: String)
 
   val regionNames: ZIO[Ec2, AwsError, List[String]] =
     for {

@@ -62,7 +62,7 @@ libraryDependencies ++= Seq(
 )
 ```
 
-The [HTTP Clients](http.md) reference describes each one, and [Choose an HTTP Client](guide-choose-http-client.md) helps you pick.
+[Choose an HTTP Client](guide-choose-http-client.md) helps you pick one and links to the reference of each.
 
 ### AWS Service Modules
 
