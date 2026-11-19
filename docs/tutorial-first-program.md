@@ -124,10 +124,10 @@ def listInstances(region: String): ZIO[Ec2, AwsError, Chunk[InstanceInfo]] =
 The code above:
 
 - `Ec2.describeInstances(...)` is a `ZStream[Ec2, AwsError, Reservation.ReadOnly]`. The stream requests the next page only after the items of the previous page are consumed.
-- `mapZIO(_.getInstances)` reads the instance list of each reservation, and `flatMap(... ZStream.fromIterable ...)` turns the lists into one stream of instances.
+- `ZStream#mapZIO` with `_.getInstances` reads the instance list of each reservation, and `ZStream#flatMap` with `ZStream.fromIterable` turns the lists into one stream of instances.
 - `instance.getInstanceId` fails with `AwsError` if the ID is missing, which never happens for a real instance, so we use the failing getter.
 - `instance.instanceType` and `instance.state` are the non-failing accessors. They return `Optional` values, which we turn into text with a default. The `get`-prefixed getters fail; the plain ones return `Optional`.
-- `runCollect` runs the stream and collects the instances into a `Chunk`.
+- `ZStream#runCollect` runs the stream and collects the instances into a `Chunk`.
 
 ## 4. Building One Client per Region
 
@@ -146,8 +146,8 @@ def instancesIn(region: String): ZIO[AwsConfig, AwsError, Chunk[InstanceInfo]] =
 The code above:
 
 - `Ec2.scoped(builder => builder.region(...))` builds an EC2 client whose region is `region`. The function runs after `AwsConfig` has applied the common settings, so its region wins.
-- Building a client can fail with a `Throwable`, so `mapError(AwsError.fromThrowable)` turns that failure into an `AwsError`. Now every failure of `instancesIn` has the same type.
-- `provideEnvironment(ZEnvironment(ec2))` gives `listInstances` the client it needs.
+- Building a client can fail with a `Throwable`, so `ZIO#mapError` with `AwsError.fromThrowable` turns that failure into an `AwsError`. Now every failure of `instancesIn` has the same type.
+- `ZIO#provideEnvironment` with `ZEnvironment(ec2)` gives `listInstances` the client it needs.
 - `ZIO.scoped` closes the client when the region is done.
 
 The result only needs `AwsConfig`, which every client in the program shares.
@@ -172,7 +172,7 @@ val inventory: ZIO[Ec2 & AwsConfig, AwsError, Chunk[InstanceInfo]] =
 The code above:
 
 - `ZIO.foreachPar` queries all regions at the same time.
-- `instancesIn(region).either` turns a failure into a `Left` value, so the effect for that region always succeeds and the others keep running.
+- `ZIO#either` on `instancesIn(region)` turns a failure into a `Left` value, so the effect for that region always succeeds and the others keep running.
 - The `ZIO.foreachDiscard` call reports each failed region on standard error. `AwsError#toThrowable` returns the AWS SDK exception, whose message names the problem.
 - The `yield` keeps the instances of the regions that succeeded.
 

@@ -68,7 +68,7 @@ The code above:
 - `BucketName`, `ObjectKey` and `ContentLength` are the S3 newtypes for these fields; the request case class does not accept plain strings or numbers.
 - Optional request fields such as `contentLength` take the value directly; ZIO AWS wraps it in `Optional` for you.
 - `ZStream.fromChunk(bytes)` is the body. It must produce exactly `contentLength` bytes.
-- `S3.putObject` returns a `PutObjectResponse.ReadOnly`, which holds the object's ETag; `unit` discards it here.
+- `S3.putObject` returns a `PutObjectResponse.ReadOnly`, which holds the object's ETag; `ZIO#unit` discards it here.
 
 ## Uploading a File
 
