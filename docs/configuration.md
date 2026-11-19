@@ -94,7 +94,11 @@ import zio.config._
 import zio.aws.core.config.descriptors._
 
 val docs = generateDocs(commonAwsConfig)
-println(docs.toTable.toGithubFlavouredMarkdown)
+println(
+  docs.toTable.toGithubFlavouredMarkdown
+    .replaceAll("""\[([^\]]+)\]\(#[^)]*\)""", "$1")
+    .replace("### Field Descriptions", "#### Field Descriptions")
+)
 ```
 
 The descriptor's building blocks, `region`, `httpUri`, `credentialsProvider`, `awsCredentials` and `commonClientConfig`, are public too, so you can reuse them in your own configuration types.

@@ -62,8 +62,14 @@ The configuration keys are listed in the following table:
 import zio.config._
 import zio.aws.netty.descriptors._
 
+// zio-config links nested tables with anchors that collide when a page has several tables
+def keyTable(markdown: String): String =
+  markdown
+    .replaceAll("""\[([^\]]+)\]\(#[^)]*\)""", "$1")
+    .replace("### Field Descriptions", "#### Field Descriptions")
+
 val docs = generateDocs(nettyClientConfig)
-println(docs.toTable.toGithubFlavouredMarkdown)
+println(keyTable(docs.toTable.toGithubFlavouredMarkdown))
 ```
 
 ## Akka HTTP
@@ -100,7 +106,7 @@ def configured(
  import zio.aws.http4s.descriptors._
 
  val docs2 = generateDocs(blazeClientConfig)
- println(docs2.toTable.toGithubFlavouredMarkdown)
+ println(keyTable(docs2.toTable.toGithubFlavouredMarkdown))
 ```
 
 ## AWS CRT
@@ -119,7 +125,7 @@ def configured(): ZLayer[AwsCrtHttpClientConfig, Throwable, HttpClient]
 import zio.aws.crt.descriptors._
 
 val docs3 = generateDocs(awsCrtHttpClientConfig)
-println(docs3.toTable.toGithubFlavouredMarkdown)
+println(keyTable(docs3.toTable.toGithubFlavouredMarkdown))
 ```
 
 ## Custom HTTP Clients
