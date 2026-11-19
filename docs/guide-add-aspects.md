@@ -26,14 +26,16 @@ ZIO AWS lets you attach one aspect to a service layer. Every operation of that s
 Add the core module, the service module and an HTTP client:
 
 ```scala
-libraryDependencies += "dev.zio" %% "zio-aws-core"  % "<version>"
-libraryDependencies += "dev.zio" %% "zio-aws-ec2"   % "<version>"
-libraryDependencies += "dev.zio" %% "zio-aws-netty" % "<version>"
+libraryDependencies ++= Seq(
+  "dev.zio" %% "zio-aws-core"  % "@VERSION@",
+  "dev.zio" %% "zio-aws-ec2"   % "@VERSION@",
+  "dev.zio" %% "zio-aws-netty" % "@VERSION@"
+)
 ```
 
 The examples use these imports:
 
-```scala
+```scala mdoc:silent
 import zio._
 import zio.metrics.MetricKeyType
 import zio.aws.core.AwsError
@@ -49,7 +51,7 @@ The `zio.aws.core.aspects._` import brings in the `@@@` operator, the built-in a
 
 The library provides `callLogging`, which logs how long each call takes. Attach it to the service layer with the `@@@` operator:
 
-```scala
+```scala mdoc:silent
 val ec2WithLogging: ZLayer[AwsConfig, Throwable, Ec2] =
   Ec2.live @@@ callLogging
 ```
@@ -60,7 +62,7 @@ The `@@@` operator returns a new layer. The service it builds is the same `Ec2` 
 
 `callDuration` is a function, because it needs a name for the metric and the boundaries of its histogram buckets. The metric records each call's duration with the `aws_service` and `aws_operation` tags:
 
-```scala
+```scala mdoc:silent
 val ec2WithMetrics: ZLayer[AwsConfig, Throwable, Ec2] =
   Ec2.live @@@ callDuration(
     "myapp",
@@ -74,7 +76,7 @@ The metric name is `myapp_aws_call` in this example. The boundaries are the uppe
 
 An aspect is an `AwsCallAspect[R]`. To write one, extend the trait and implement `apply`. The aspect receives the call as a ZIO effect and returns a new effect. This one logs every failure and passes the error on unchanged:
 
-```scala
+```scala mdoc:silent
 val logFailures: AwsCallAspect[Any] =
   new AwsCallAspect[Any] {
     override final def apply[R, E, A <: Described[_]](
@@ -94,7 +96,7 @@ The library's `callLogging` also reads the service and operation name from `Desc
 
 Several aspects combine with `>>>`. Both aspects in this example only observe the call and return its result unchanged, so the order does not affect the outcome:
 
-```scala
+```scala mdoc:silent
 val ec2Observed: ZLayer[AwsConfig, Throwable, Ec2] =
   Ec2.live @@@ (logFailures >>> callLogging)
 ```
@@ -103,7 +105,7 @@ Each service layer takes its own aspect, so the EC2 layer and a second service l
 
 ## Retries
 
-The library does not ship a retry aspect. Retries are a good use for an aspect, because they apply to every call of a service in the same way. Write one with the ZIO `retry` operator, using a `Schedule` that matches the error type you want to retry. The [AWS Errors](./aws-error.md) reference lists the error cases you can match.
+Retries are also a good use for an aspect, because they apply to every call of a service in the same way. The [Add Retries](guide-add-retries.md) guide builds a retry aspect step by step.
 
 ## Going Further
 
