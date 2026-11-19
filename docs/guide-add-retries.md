@@ -43,7 +43,8 @@ import zio.aws.core.aspects._
 import zio.aws.core.config.AwsConfig
 import zio.aws.ec2.Ec2
 import software.amazon.awssdk.awscore.exception.AwsServiceException
-import software.amazon.awssdk.core.exception.SdkException
+import software.amazon.awssdk.core.exception.SdkClientException
+import java.io.IOException
 ```
 
 ## Retrying Every Failure
@@ -73,13 +74,14 @@ val threeTimes: Schedule[Any, AwsError, Any] =
 
 ## Retrying Only Transient Failures
 
-Retrying every failure is wasteful: a request that AWS rejects for missing permissions fails the same way every time. The AWS SDK marks the failures that are worth retrying. A `GenericAwsError` carries the SDK exception, and two of its methods answer the question:
+Retrying every failure is wasteful: a request that AWS rejects for missing permissions fails the same way every time. A `GenericAwsError` carries the exception the AWS SDK threw, and its type and fields tell whether the failure is worth retrying:
 
 ```scala mdoc:silent
 def isTransient(error: AwsError): Boolean =
   error match {
-    case GenericAwsError(e: AwsServiceException) => e.isThrottlingException || e.retryable()
-    case GenericAwsError(e: SdkException)        => e.retryable()
+    case GenericAwsError(e: AwsServiceException) => e.isThrottlingException || e.statusCode() >= 500
+    case GenericAwsError(e: SdkClientException)  => e.getCause.isInstanceOf[IOException]
+    case GenericAwsError(_: IOException)         => true
     case _                                       => false
   }
 ```
@@ -87,7 +89,8 @@ def isTransient(error: AwsError): Boolean =
 The code above:
 
 - `AwsServiceException#isThrottlingException` is `true` when the service rejected the request because of its rate limit, for example with the `Throttling` or `RequestLimitExceeded` error code.
-- `SdkException#retryable` is `true` for failures the SDK considers temporary, such as I/O errors and 5xx responses.
+- `AwsServiceException#statusCode` is the HTTP status of the response; a 5xx status means the service itself failed.
+- An `SdkClientException` caused by an `IOException`, or a bare `IOException` from the HTTP client, means the request did not reach the service or the connection broke.
 - `FieldIsNone`, the other case of `AwsError`, is a missing field in a successful response, so it is never retried.
 
 We add the check to the policy with `Schedule.recurWhile`, and add jitter so that many fibers do not retry at the same moment:
