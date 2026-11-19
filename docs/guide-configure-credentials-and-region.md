@@ -65,7 +65,7 @@ To set the values explicitly, build a `CommonAwsConfig` and pass it to `AwsConfi
 ```scala mdoc:silent
 val explicitConfig: CommonAwsConfig = CommonAwsConfig(
   region = Some(Region.EU_WEST_1),
-  credentialsProvider = DefaultCredentialsProvider.create(),
+  credentialsProvider = DefaultCredentialsProvider.builder().build(),
   endpointOverride = None,
   commonClientConfig = Some(
     CommonClientConfig(
