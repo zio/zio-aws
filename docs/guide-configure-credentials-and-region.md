@@ -113,4 +113,5 @@ Do not put literal access keys in a configuration file that is committed to sour
 ## Going Further
 
 - The [Configuration](./configuration.md) reference lists every `CommonAwsConfig` key.
+- The [Use a Local Endpoint](./guide-use-a-local-endpoint.md) guide points the clients at LocalStack or MinIO.
 - The HTTP client has its own settings. See [HTTP Clients](./http.md), and [Choose an HTTP Client](./guide-choose-http-client.md) for guidance on which one to use.
