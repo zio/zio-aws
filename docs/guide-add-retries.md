@@ -109,7 +109,7 @@ val ec2WithRetries: ZLayer[AwsConfig, Throwable, Ec2] =
   Ec2.live @@@ retrying(transientOnly)
 ```
 
-Every operation of the `Ec2` service built by this layer now retries transient failures. For a paginated operation, each page request is retried on its own, so a failure on the tenth page does not fetch the first nine again.
+Every operation of the `Ec2` service built by this layer now retries transient failures. For most paginated operations, including those with a `NextToken` field such as `Ec2.describeInstances`, each page request is retried on its own, so a failure on the tenth page does not fetch the first nine again. Operations that use the AWS Java SDK's paginator run the aspect once, when the stream starts.
 
 To log the calls as well, combine the retry aspect with another one using `>>>`:
 

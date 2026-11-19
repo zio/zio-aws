@@ -95,7 +95,7 @@ override final def apply[R, E, A <: Described[_]](f: ZIO[R, E, A])(implicit trac
 
 The `Described[_]` bound is part of the signature, so an aspect cannot be applied to a plain `ZIO` that is not a generated AWS call. To use the error, declare the bounds `E >: AwsError <: AwsError`, which tell the compiler that the error is exactly `AwsError`; the [Add Retries](./guide-add-retries.md) guide uses them to retry with a `Schedule`.
 
-An aspect runs once for each AWS request. For a paginated operation that is once per page, and calls made through a service's `api` field do not run through aspects at all.
+An aspect runs once for each AWS request. For an operation that ZIO AWS pages itself, that is once per page; for an operation that uses the Java SDK paginator, it is once for the whole stream, and calls made through a service's `api` field do not run through aspects at all.
 
 ## Going Further
 

@@ -99,20 +99,20 @@ The AWS call starts when the stream is pulled.
 
 ### Paginated Operations
 
-For operations that return their results in pages, the generator creates a streaming wrapper that requests the next page when the stream needs more items, and a `Paginated` variant that makes one call. The streaming wrapper has one of two shapes. Most paginated operations, including every operation that has a paginator in the AWS Java SDK, return a `ZStream` of the items:
+For operations that return their results in pages, the generator creates a streaming wrapper that requests the next page when the stream needs more items, and a `Paginated` variant that makes one call. The streaming wrapper has one of two shapes. Most paginated operations return a `ZStream` of the items:
 
 ```scala
 def scan(request: ScanRequest): ZStream[DynamoDb, AwsError, Map[AttributeName, AttributeValue.ReadOnly]]
 def scanPaginated(request: ScanRequest): ZIO[DynamoDb, AwsError, ScanResponse.ReadOnly]
 ```
 
-Some operations have no paginator in the Java SDK, and ZIO AWS pages through them itself, following the next-page token. When the response of such an operation has fields besides the items and the token, the first page is fetched right away, and the result is a `StreamingOutputResult` whose `response` is the first page's response and whose `output` is the stream of items from all pages:
+For operations whose request and response both have a `NextToken` field, ZIO AWS pages through the results itself, following the next-page token. Other paginated operations use the AWS Java SDK's paginator. When the response of an operation that ZIO AWS pages itself has fields besides the items and the token, the first page is fetched right away, and the result is a `StreamingOutputResult` whose `response` is the first page's response and whose `output` is the stream of items from all pages:
 
 ```scala
 def listSomething(request: ListSomethingRequest): ZIO[Svc, AwsError, StreamingOutputResult[Any, ListSomethingResponse.ReadOnly, Item.ReadOnly]]
 ```
 
-Each page request is a separate AWS call that runs through the service's aspects. Use the `Paginated` variant to forward pages through your own API, passing the next-page token yourself. The [Paginate and Stream Results](guide-paginate-and-stream.md) guide shows both.
+For operations that ZIO AWS pages itself, each page request is a separate AWS call that runs through the service's aspects; for operations that use the Java SDK paginator, the aspect runs once for the whole stream. Use the `Paginated` variant to forward pages through your own API, passing the next-page token yourself. The [Paginate and Stream Results](guide-paginate-and-stream.md) guide shows both.
 
 ## StreamingOutputResult
 
