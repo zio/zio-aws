@@ -60,12 +60,11 @@ import zio.aws.core.AwsError
 import zio.aws.core.config.AwsConfig
 import zio.aws.ec2.Ec2
 import zio.aws.ec2.model.{DescribeInstancesRequest, DescribeRegionsRequest}
-import zio.aws.ec2.model.primitives.{InstanceId, RegionName}
 import zio.aws.netty.NettyHttpClient
 import software.amazon.awssdk.regions.{Region => AwsRegion}
 ```
 
-The `zio.aws.ec2.model` package holds the request and response types, and `zio.aws.ec2.model.primitives` holds the newtypes for AWS's primitive values, such as `InstanceId`. The AWS SDK's own `Region` type is renamed to `AwsRegion`, because EC2's model also has a type named `Region`.
+The `zio.aws.ec2.model` package holds the request and response types. The AWS SDK's own `Region` type is renamed to `AwsRegion`, because EC2's model also has a type named `Region`.
 
 ## 2. Listing the Regions
 
@@ -77,15 +76,14 @@ val regionNames: ZIO[Ec2, AwsError, List[String]] =
     response <- Ec2.describeRegions(DescribeRegionsRequest())
     regions  <- response.getRegions
     names    <- ZIO.foreach(regions.toList)(_.getRegionName)
-  } yield names.map(name => RegionName.unwrap(name))
+  } yield names
 ```
 
 The code above:
 
 - `Ec2.describeRegions(...)` performs the call. Its type is `ZIO[Ec2, AwsError, DescribeRegionsResponse.ReadOnly]`, so it needs the `Ec2` service and can fail with an `AwsError`.
 - `response.getRegions` reads the `regions` field. The field is optional in the AWS model, so the getter is an effect that fails with `AwsError` when the field is absent.
-- `ZIO.foreach(...)(_.getRegionName)` reads the name of each region the same way.
-- `RegionName.unwrap` turns the `RegionName` newtype into a plain `String`.
+- `ZIO.foreach(...)(_.getRegionName)` reads the name of each region the same way. In EC2's model the region name is a plain `String`; services that define their own value types use newtypes instead, as the [Wrappers](wrappers.md) reference describes.
 
 Notice that nothing has run yet. `regionNames` is a description of the calls; it runs when we provide an `Ec2` service and execute it.
 
@@ -114,7 +112,7 @@ def listInstances(region: String): ZIO[Ec2, AwsError, Chunk[InstanceInfo]] =
       instance.getInstanceId.map { id =>
         InstanceInfo(
           region = region,
-          id = InstanceId.unwrap(id),
+          id = id,
           instanceType = instance.instanceType.map(_.toString).getOrElse("unknown"),
           state = instance.state.flatMap(_.name).map(_.toString).getOrElse("unknown")
         )
@@ -191,7 +189,6 @@ import zio.aws.core.AwsError
 import zio.aws.core.config.AwsConfig
 import zio.aws.ec2.Ec2
 import zio.aws.ec2.model.{DescribeInstancesRequest, DescribeRegionsRequest}
-import zio.aws.ec2.model.primitives.{InstanceId, RegionName}
 import zio.aws.netty.NettyHttpClient
 import software.amazon.awssdk.regions.{Region => AwsRegion}
 
@@ -203,7 +200,7 @@ object Ec2Inventory extends ZIOAppDefault {
       response <- Ec2.describeRegions(DescribeRegionsRequest())
       regions  <- response.getRegions
       names    <- ZIO.foreach(regions.toList)(_.getRegionName)
-    } yield names.map(name => RegionName.unwrap(name))
+    } yield names
 
   def listInstances(region: String): ZIO[Ec2, AwsError, Chunk[InstanceInfo]] =
     Ec2
@@ -214,7 +211,7 @@ object Ec2Inventory extends ZIOAppDefault {
         instance.getInstanceId.map { id =>
           InstanceInfo(
             region,
-            InstanceId.unwrap(id),
+            id,
             instance.instanceType.map(_.toString).getOrElse("unknown"),
             instance.state.flatMap(_.name).map(_.toString).getOrElse("unknown")
           )

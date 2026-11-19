@@ -137,7 +137,7 @@ For each model type, the generator creates:
 
 - A case class with default parameter values, used as input, instead of the SDK's builder
 - A `ReadOnly` trait, used for output, that wraps the SDK's immutable object
-- [ZIO Prelude newtypes](https://zio.dev/zio-prelude/newtypes/) in `model.primitives` for primitive values, such as `InstanceId` or `BucketName`
+- [ZIO Prelude newtypes](https://zio.dev/zio-prelude/newtypes/) in `model.primitives` for primitive values, such as S3's `BucketName` or `ObjectKey`
 - Scala collections instead of Java collections
 - A sealed trait with one case object per value instead of each Java enum
 - ZIO Prelude's `Optional` type for optional fields, which accepts a plain value or `Optional.Absent` in a constructor
@@ -156,7 +156,7 @@ case class DescribePackagesFilter(
 }
 ```
 
-Newtypes are created with their `apply`, such as `InstanceId("i-0123")`, and read back with the companion's `unwrap`, such as `InstanceId.unwrap(id)`.
+Newtypes are created with their `apply`, such as `ObjectKey("reports/2026.csv")`, and read back with the companion's `unwrap`, such as `ObjectKey.unwrap(key)`. Fields without a dedicated AWS type, such as EC2's region names and instance IDs, are plain Scala types.
 
 ### Read-Only Wrappers
 

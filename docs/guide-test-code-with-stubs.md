@@ -40,7 +40,6 @@ import zio._
 import zio.aws.core.AwsError
 import zio.aws.ec2.Ec2
 import zio.aws.ec2.model._
-import zio.aws.ec2.model.primitives._
 ```
 
 ## Defining the Service
@@ -74,7 +73,6 @@ val live: ZLayer[Ec2, Nothing, RegionCatalog] =
             .describeRegions(DescribeRegionsRequest())
             .flatMap(_.getRegions)
             .flatMap(regions => ZIO.foreach(regions)(_.getRegionName))
-            .map(_.map(RegionName.unwrap))
             .provideEnvironment(ZEnvironment(ec2))
       }
     }
@@ -85,7 +83,7 @@ The code above:
 
 - `ZIO.service[Ec2]` reads the EC2 service from the environment, which the caller provides.
 - `provideEnvironment(ZEnvironment(ec2))` gives the AWS calls the `Ec2` service they need. The returned effect requires nothing, so callers do not have to provide `Ec2` again.
-- `RegionName.unwrap` turns the EC2 region-name type into a plain `String`, so the public method has no AWS types.
+- `getRegionName` returns the region name as a plain `String`, so the public method has no AWS types.
 
 ## Writing the Stub
 
