@@ -131,14 +131,14 @@ When code mixes both APIs, convert the models at the boundary. Every request cas
 DescribeRegionsRequest(allRegions = true).buildAwsValue()
 ```
 
-In the other direction, the companion's `wrap` method, here `Region.wrap`, turns an SDK object into the read-only wrapper, and `ReadOnly#editable` turns that into the case class:
+In the other direction, the companion's `wrap` method, here `Region.wrap`, turns an SDK object into the read-only wrapper, and `ReadOnly#asEditable` turns that into the case class:
 
 ```scala mdoc
 val wrapped: Region.ReadOnly =
   Region.wrap(sdk.Region.builder().regionName("eu-west-1").build())
 
 wrapped.regionName
-wrapped.editable
+wrapped.asEditable
 ```
 
 ## Going Further

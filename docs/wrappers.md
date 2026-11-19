@@ -165,7 +165,7 @@ Responses and the values inside them are read-only wrappers around the SDK objec
 ```scala
 object CreateMedicalVocabularyResponse {
   trait ReadOnly {
-    def editable: CreateMedicalVocabularyResponse
+    def asEditable: CreateMedicalVocabularyResponse
     def vocabularyName: Optional[VocabularyName]
     def languageCode: Optional[LanguageCode]
     def getVocabularyName: ZIO[Any, AwsError, VocabularyName]
@@ -177,7 +177,7 @@ object CreateMedicalVocabularyResponse {
 }
 ```
 
-Each field has two accessors. The plain one, such as `vocabularyName`, returns the `Optional` value. The `get`-prefixed one, such as `getVocabularyName`, is an effect that fails with [`FieldIsNone`](aws-error.md) when the field is absent, which makes it easy to chain AWS calls in a for-comprehension. `editable` copies the values into the case class, so you can change them and send them in a new request, and `wrap` turns an SDK object into the wrapper.
+Each field has two accessors. The plain one, such as `vocabularyName`, returns the `Optional` value. The `get`-prefixed one, such as `getVocabularyName`, is an effect that fails with [`FieldIsNone`](aws-error.md) when the field is absent, which makes it easy to chain AWS calls in a for-comprehension. `asEditable` copies the values into the case class, so you can change them and send them in a new request, and `wrap` turns an SDK object into the wrapper.
 
 ## Testing
 
