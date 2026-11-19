@@ -156,5 +156,8 @@ def nettyFor(protocol: SdkProtocol): ZIO[Scope, Throwable, SdkAsyncHttpClient] =
   )
 
 val myHttpClient: ZLayer[Any, Throwable, HttpClient] =
-  HttpClient.fromScopedPerProtocol(nettyFor(SdkProtocol.HTTP1_1), nettyFor(SdkProtocol.HTTP2))(Protocol.Dual)
+  HttpClient.fromScopedPerProtocol[Any, Throwable, SdkAsyncHttpClient](
+    nettyFor(SdkProtocol.HTTP1_1),
+    nettyFor(SdkProtocol.HTTP2)
+  )(Protocol.Dual)
 ```
