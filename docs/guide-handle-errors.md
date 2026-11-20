@@ -26,14 +26,16 @@ ZIO AWS turns both into values of one type, `AwsError`, in the error channel of 
 Add the core module and a service module, such as EC2:
 
 ```scala
-libraryDependencies += "dev.zio" %% "zio-aws-core"  % "<version>"
-libraryDependencies += "dev.zio" %% "zio-aws-ec2"   % "<version>"
-libraryDependencies += "dev.zio" %% "zio-aws-netty" % "<version>"
+libraryDependencies ++= Seq(
+  "dev.zio" %% "zio-aws-core"  % "@VERSION@",
+  "dev.zio" %% "zio-aws-ec2"   % "@VERSION@",
+  "dev.zio" %% "zio-aws-netty" % "@VERSION@"
+)
 ```
 
 The examples use these imports:
 
-```scala
+```scala mdoc:silent
 import zio._
 import zio.aws.core.{AwsError, FieldIsNone, GenericAwsError}
 import zio.aws.ec2.Ec2
@@ -45,7 +47,7 @@ import software.amazon.awssdk.services.ec2.model.Ec2Exception
 
 Each AWS call has the error type `AwsError`. The simplest way to recover is to provide a fallback for every failure. Here a failed `DescribeRegions` call returns an empty list of regions:
 
-```scala
+```scala mdoc:silent
 val regions: ZIO[Ec2, Nothing, Iterable[Region.ReadOnly]] =
   Ec2
     .describeRegions(DescribeRegionsRequest())
@@ -68,7 +70,7 @@ Catching every error hides the difference between a network problem and a reject
 
 To handle each case differently:
 
-```scala
+```scala mdoc:silent
 val described: ZIO[Ec2, Nothing, Unit] =
   Ec2
     .describeRegions(DescribeRegionsRequest())
@@ -88,7 +90,7 @@ The code above handles the two failures with different messages. The `GenericAws
 
 Failures from the service itself carry the AWS error code, such as `UnauthorizedOperation` or `Throttling`. The `reason` of a `GenericAwsError` is the SDK exception, which is specific to the service. For EC2 it is `Ec2Exception`, and that exception gives access to the error code:
 
-```scala
+```scala mdoc:silent
 val errorCode: AwsError => Option[String] = {
   case GenericAwsError(ec2: Ec2Exception) =>
     Option(ec2.awsErrorDetails()).map(_.errorCode())
@@ -103,7 +105,7 @@ The code above returns the AWS error code when the failure comes from EC2, and `
 
 Code that still uses exceptions can convert an `AwsError` with `toThrowable`. Both cases have a `Throwable` form. The effect below fails with a `Throwable` instead of an `AwsError`:
 
-```scala
+```scala mdoc:silent
 val asThrowable: ZIO[Ec2, Throwable, Iterable[Region.ReadOnly]] =
   Ec2
     .describeRegions(DescribeRegionsRequest())

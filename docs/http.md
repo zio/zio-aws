@@ -14,6 +14,28 @@ keywords:
 
 ZIO AWS sends every request through an `HttpClient` layer, which the `AwsConfig` layer depends on. Each HTTP client is its own module, and each module provides one or more factory functions that build an `HttpClient` layer. The [Choose an HTTP Client](./guide-choose-http-client.md) guide explains how to pick one.
 
+## HttpClient
+
+`HttpClient` is a trait in `zio.aws.core.httpclient`. When a service builds its AWS SDK client, `AwsConfig` asks the `HttpClient` for an SDK HTTP client that fits the service:
+
+```scala
+trait HttpClient {
+  def clientFor(serviceCaps: ServiceHttpCapabilities): Task[SdkAsyncHttpClient]
+}
+
+case class ServiceHttpCapabilities(supportsHttp2: Boolean)
+```
+
+`supportsHttp2` is `true` for the services generated with HTTP/2 support, `kinesis` and `transcribestreaming`, and `false` for the rest. The `Protocol` type, with the cases `Protocol.Http11`, `Protocol.Http2` and `Protocol.Dual`, chooses how a client answers:
+
+| Protocol          | HTTP/2 services | Other services                             |
+| ----------------- | --------------- | ------------------------------------------ |
+| `Protocol.Http11` | HTTP/1.1 client | HTTP/1.1 client                            |
+| `Protocol.Http2`  | HTTP/2 client   | fails with `UnsupportedOperationException` |
+| `Protocol.Dual`   | HTTP/2 client   | HTTP/1.1 client                            |
+
+Only the Netty module takes a `Protocol`. The http4s, Akka HTTP and AWS CRT modules return the same client for every service.
+
 The following modules are available:
 
 - `zio-aws-netty` uses Netty, which is the HTTP client the AWS SDK uses by default
@@ -40,8 +62,14 @@ The configuration keys are listed in the following table:
 import zio.config._
 import zio.aws.netty.descriptors._
 
+// zio-config links nested tables with anchors that collide when a page has several tables
+def keyTable(markdown: String): String =
+  markdown
+    .replaceAll("""\[([^\]]+)\]\(#[^)]*\)""", "$1")
+    .replace("### Field Descriptions", "#### Field Descriptions")
+
 val docs = generateDocs(nettyClientConfig)
-println(docs.toTable.toGithubFlavouredMarkdown)
+println(keyTable(docs.toTable.toGithubFlavouredMarkdown))
 ```
 
 ## Akka HTTP
@@ -78,7 +106,7 @@ def configured(
  import zio.aws.http4s.descriptors._
 
  val docs2 = generateDocs(blazeClientConfig)
- println(docs2.toTable.toGithubFlavouredMarkdown)
+ println(keyTable(docs2.toTable.toGithubFlavouredMarkdown))
 ```
 
 ## AWS CRT
@@ -97,5 +125,39 @@ def configured(): ZLayer[AwsCrtHttpClientConfig, Throwable, HttpClient]
 import zio.aws.crt.descriptors._
 
 val docs3 = generateDocs(awsCrtHttpClientConfig)
-println(docs3.toTable.toGithubFlavouredMarkdown)
+println(keyTable(docs3.toTable.toGithubFlavouredMarkdown))
+```
+
+## Custom HTTP Clients
+
+You rarely need this; it is an advanced API for using an `SdkAsyncHttpClient` that has no ZIO AWS module, such as one built by other code in your application. `HttpClient.fromScopedPerProtocol` builds an `HttpClient` layer from two scoped effects, one that creates the HTTP/1.1 client and one that creates the HTTP/2 client, and a `Protocol` that chooses between them:
+
+```scala
+object HttpClient {
+  def fromScopedPerProtocol[R, E, A <: SdkAsyncHttpClient](
+      http11Client: ZIO[R & Scope, E, A],
+      http2Client: ZIO[R & Scope, E, A]
+  )(protocol: Protocol): ZLayer[R, E, HttpClient]
+}
+```
+
+The effects only run for the protocols the `Protocol` value uses, and the clients are closed when the layer's scope ends. `HttpClient.fromScopedPerProtocolScoped` returns the same `HttpClient` as a scoped `ZIO` instead of a layer. The Netty module uses this function itself:
+
+```scala mdoc:compile-only
+import zio._
+import zio.aws.core.httpclient.{HttpClient, Protocol}
+import software.amazon.awssdk.http.async.SdkAsyncHttpClient
+import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient
+import software.amazon.awssdk.http.{Protocol => SdkProtocol}
+
+def nettyFor(protocol: SdkProtocol): ZIO[Scope, Throwable, SdkAsyncHttpClient] =
+  ZIO.fromAutoCloseable(
+    ZIO.attempt(NettyNioAsyncHttpClient.builder().protocol(protocol).build())
+  )
+
+val myHttpClient: ZLayer[Any, Throwable, HttpClient] =
+  HttpClient.fromScopedPerProtocol[Any, Throwable, SdkAsyncHttpClient](
+    nettyFor(SdkProtocol.HTTP1_1),
+    nettyFor(SdkProtocol.HTTP2)
+  )(Protocol.Dual)
 ```

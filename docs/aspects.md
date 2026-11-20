@@ -45,7 +45,7 @@ val callLogging: AwsCallAspect[Any]
 def callDuration(prefix: String, boundaries: MetricKeyType.Histogram.Boundaries): AwsCallAspect[Any]
 ```
 
-`callLogging` logs one line for each call in the form `[service/operation] ran for <duration>`, using ZIO's logging. It logs successful calls only, because a failed call never reaches the point where the duration is logged. Use `logFailures`-style aspects, shown in the how-to guide, to log errors.
+`callLogging` logs one line for each call in the form `[service/operation] ran for <duration>`, using ZIO's logging. It logs successful calls only, because a failed call never reaches the point where the duration is logged. To log failures, write an aspect of your own, as the [Add Aspects](./guide-add-aspects.md) guide does.
 
 `callDuration` records each call's duration in a histogram named `<prefix>_aws_call`. The histogram has the tags `aws_service` and `aws_operation`, and the `boundaries` are the upper limits of its buckets in seconds. Create the boundaries with `MetricKeyType.Histogram.Boundaries.fromChunk`.
 
@@ -63,6 +63,28 @@ The operator works on any `ZLayer` whose output is a service that extends `Aspec
 val observed = Ec2.live @@@ (logFailures >>> callLogging)
 ```
 
+## Attaching an Aspect to a Service Value
+
+When you hold a service value instead of a layer, for example one built with `Ec2.scoped`, attach the aspect with `AspectSupport#withAspect`. Every generated service extends `AspectSupport`:
+
+```scala
+trait AspectSupport[Self] {
+  def withAspect[R](newAspect: AwsCallAspect[R], r: ZEnvironment[R]): Self
+}
+```
+
+`AspectSupport#withAspect` returns a copy of the service whose operations run through `newAspect`, with the aspect's environment taken from `r`. It replaces the aspect the service had; to keep both, combine them with `>>>` first. `@@@` is built on `AspectSupport#withAspect`. For an aspect that needs nothing, pass `ZEnvironment.empty`:
+
+```scala mdoc:compile-only
+import zio._
+import zio.aws.core.aspects._
+import zio.aws.core.config.AwsConfig
+import zio.aws.ec2.Ec2
+
+val loggedEc2: ZIO[AwsConfig & Scope, Throwable, Ec2] =
+  Ec2.scoped(identity).map(_.withAspect(callLogging, ZEnvironment.empty))
+```
+
 ## Writing an Aspect
 
 An aspect is a class that extends `AwsCallAspect[R]` and implements `apply`. The library's own aspects use this signature:
@@ -71,9 +93,11 @@ An aspect is a class that extends `AwsCallAspect[R]` and implements `apply`. The
 override final def apply[R, E, A <: Described[_]](f: ZIO[R, E, A])(implicit trace: Trace): ZIO[R, E, A]
 ```
 
-The `Described[_]` bound is part of the signature, so an aspect cannot be applied to a plain `ZIO` that is not a generated AWS call.
+The `Described[_]` bound is part of the signature, so an aspect cannot be applied to a plain `ZIO` that is not a generated AWS call. To use the error, declare the bounds `E >: AwsError <: AwsError`, which tell the compiler that the error is exactly `AwsError`; the [Add Retries](./guide-add-retries.md) guide uses them to retry with a `Schedule`.
+
+An aspect runs once for each AWS request. For an operation that ZIO AWS pages itself, that is once per page; for an operation that uses the Java SDK paginator, it is once for the whole stream, and calls made through a service's `api` field do not run through aspects at all.
 
 ## Going Further
 
 - The [Add Aspects for Logging and Metrics](./guide-add-aspects.md) guide walks through attaching the built-in aspects and writing one of your own.
-- The [Examples](./examples.md) page shows a complete program that builds its layers from `AwsConfig`.
+- The [Add Retries](./guide-add-retries.md) guide builds a retry aspect.

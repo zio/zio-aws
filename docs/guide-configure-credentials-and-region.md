@@ -28,14 +28,16 @@ ZIO AWS solves this with one common configuration layer, `AwsConfig`, that every
 Add the core module, one service module and one HTTP client module to your build:
 
 ```scala
-libraryDependencies += "dev.zio" %% "zio-aws-core"  % "<version>"
-libraryDependencies += "dev.zio" %% "zio-aws-ec2"   % "<version>"
-libraryDependencies += "dev.zio" %% "zio-aws-netty" % "<version>"
+libraryDependencies ++= Seq(
+  "dev.zio" %% "zio-aws-core"  % "@VERSION@",
+  "dev.zio" %% "zio-aws-ec2"   % "@VERSION@",
+  "dev.zio" %% "zio-aws-netty" % "@VERSION@"
+)
 ```
 
 The examples in this guide use these imports:
 
-```scala
+```scala mdoc:silent
 import zio._
 import zio.aws.core.config.{AwsConfig, CommonAwsConfig, CommonClientConfig}
 import zio.aws.core.config.descriptors.commonAwsConfig
@@ -49,7 +51,7 @@ import software.amazon.awssdk.regions.Region
 
 `AwsConfig.default` depends only on an `HttpClient`. It does not set the region, the credentials or any timeout, so the AWS SDK decides these on its own. This is the smallest setup, and it works when the environment already has the values:
 
-```scala
+```scala mdoc:silent
 val defaultLayers: ZLayer[Any, Throwable, Ec2] =
   NettyHttpClient.default >>> AwsConfig.default >>> Ec2.live
 ```
@@ -60,10 +62,10 @@ The layer chain is read from left to right. `NettyHttpClient.default` provides t
 
 To set the values explicitly, build a `CommonAwsConfig` and pass it to `AwsConfig.configured()`. This layer depends on an `HttpClient` and on a `CommonAwsConfig`, so we provide both:
 
-```scala
+```scala mdoc:silent
 val explicitConfig: CommonAwsConfig = CommonAwsConfig(
   region = Some(Region.EU_WEST_1),
-  credentialsProvider = DefaultCredentialsProvider.create(),
+  credentialsProvider = DefaultCredentialsProvider.builder().build(),
   endpointOverride = None,
   commonClientConfig = Some(
     CommonClientConfig(
@@ -94,7 +96,7 @@ When `commonClientConfig` is `Some`, `AwsConfig.configured()` also turns off the
 
 To keep the values out of the code, read them with ZIO Config. The `commonAwsConfig` descriptor in `zio.aws.core.config.descriptors` describes all the keys, so the same layer works with any ZIO Config provider:
 
-```scala
+```scala mdoc:silent
 val configFromSource: ZLayer[Any, Config.Error, CommonAwsConfig] =
   ZLayer.fromZIO(ZIO.config(commonAwsConfig))
 
@@ -111,4 +113,5 @@ Do not put literal access keys in a configuration file that is committed to sour
 ## Going Further
 
 - The [Configuration](./configuration.md) reference lists every `CommonAwsConfig` key.
+- The [Use a Local Endpoint](./guide-use-a-local-endpoint.md) guide points the clients at LocalStack or MinIO.
 - The HTTP client has its own settings. See [HTTP Clients](./http.md), and [Choose an HTTP Client](./guide-choose-http-client.md) for guidance on which one to use.
