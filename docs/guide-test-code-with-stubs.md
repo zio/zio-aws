@@ -26,26 +26,27 @@ ZIO AWS does not generate mock objects for the service modules. Instead, you sep
 Add the core module, the service module and an HTTP client:
 
 ```scala
-libraryDependencies += "dev.zio" %% "zio-aws-core"  % "<version>"
-libraryDependencies += "dev.zio" %% "zio-aws-ec2"   % "<version>"
-libraryDependencies += "dev.zio" %% "zio-aws-netty" % "<version>"
+libraryDependencies ++= Seq(
+  "dev.zio" %% "zio-aws-core"  % "@VERSION@",
+  "dev.zio" %% "zio-aws-ec2"   % "@VERSION@",
+  "dev.zio" %% "zio-aws-netty" % "@VERSION@"
+)
 ```
 
 The examples use these imports:
 
-```scala
+```scala mdoc:silent
 import zio._
 import zio.aws.core.AwsError
 import zio.aws.ec2.Ec2
 import zio.aws.ec2.model._
-import zio.aws.ec2.model.primitives._
 ```
 
 ## Defining the Service
 
 We define a trait for the one question our code needs answered. The trait has no AWS types in its public methods, so code that uses it never needs to know about the AWS client:
 
-```scala
+```scala mdoc:silent
 trait RegionCatalog {
   def regionNames: ZIO[Any, AwsError, Iterable[String]]
 }
@@ -62,7 +63,7 @@ The companion object provides an accessor, so a program can write `RegionCatalog
 
 The live implementation calls EC2 through the `Ec2` service. It takes the `Ec2` service from the layer, and then it provides that service to the AWS calls:
 
-```scala
+```scala mdoc:silent
 val live: ZLayer[Ec2, Nothing, RegionCatalog] =
   ZLayer.fromZIO(
     ZIO.service[Ec2].map { ec2 =>
@@ -72,7 +73,6 @@ val live: ZLayer[Ec2, Nothing, RegionCatalog] =
             .describeRegions(DescribeRegionsRequest())
             .flatMap(_.getRegions)
             .flatMap(regions => ZIO.foreach(regions)(_.getRegionName))
-            .map(_.map(RegionName.unwrap))
             .provideEnvironment(ZEnvironment(ec2))
       }
     }
@@ -83,13 +83,13 @@ The code above:
 
 - `ZIO.service[Ec2]` reads the EC2 service from the environment, which the caller provides.
 - `provideEnvironment(ZEnvironment(ec2))` gives the AWS calls the `Ec2` service they need. The returned effect requires nothing, so callers do not have to provide `Ec2` again.
-- `RegionName.unwrap` turns the EC2 region-name type into a plain `String`, so the public method has no AWS types.
+- `getRegionName` returns the region name as a plain `String`, so the public method has no AWS types.
 
 ## Writing the Stub
 
 The stub implements the same trait without calling AWS. Its effect requires nothing, so a test can provide it directly:
 
-```scala
+```scala mdoc:silent
 val stub: ULayer[RegionCatalog] =
   ZLayer.succeed(
     new RegionCatalog {
@@ -105,14 +105,14 @@ The stub returns a fixed list. You can make it return any value or fail with an 
 
 Business logic depends only on `RegionCatalog`. The function below counts the regions and reports the count:
 
-```scala
+```scala mdoc:silent
 val regionReport: ZIO[RegionCatalog, AwsError, String] =
   RegionCatalog.regionNames.map(names => s"${names.size} regions available")
 ```
 
 A test provides the stub in place of the live layer, and no network call happens:
 
-```scala
+```scala mdoc:silent
 val reportWithStub: ZIO[Any, AwsError, String] =
   regionReport.provideLayer(stub)
 ```

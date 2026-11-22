@@ -28,14 +28,16 @@ ZIO AWS generates a stream for each paginated operation. The stream fetches the 
 Add the core module and the EC2 service module, plus an HTTP client:
 
 ```scala
-libraryDependencies += "dev.zio" %% "zio-aws-core"  % "<version>"
-libraryDependencies += "dev.zio" %% "zio-aws-ec2"   % "<version>"
-libraryDependencies += "dev.zio" %% "zio-aws-netty" % "<version>"
+libraryDependencies ++= Seq(
+  "dev.zio" %% "zio-aws-core"  % "@VERSION@",
+  "dev.zio" %% "zio-aws-ec2"   % "@VERSION@",
+  "dev.zio" %% "zio-aws-netty" % "@VERSION@"
+)
 ```
 
 The examples use these imports:
 
-```scala
+```scala mdoc:silent
 import zio._
 import zio.stream._
 import zio.aws.core.AwsError
@@ -47,7 +49,7 @@ import zio.aws.ec2.model._
 
 `Ec2.describeInstances` is a paginated operation, so the wrapper returns a `ZStream` of `Reservation.ReadOnly` items. Each item is one reservation from one page:
 
-```scala
+```scala mdoc:silent
 val reservations: ZStream[Ec2, AwsError, Reservation.ReadOnly] =
   Ec2.describeInstances(DescribeInstancesRequest())
 ```
@@ -56,7 +58,7 @@ The stream type is `ZStream[Ec2, AwsError, Reservation.ReadOnly]`. Nothing runs 
 
 To count every instance across all reservations:
 
-```scala
+```scala mdoc:silent
 val instanceCount: ZIO[Ec2, AwsError, Long] =
   Ec2
     .describeInstances(DescribeInstancesRequest())
@@ -75,7 +77,7 @@ The code above:
 
 A stream can contain many pages, and the operation keeps paging until the listing is complete. Use the standard stream operators to stop early. This example reads at most ten reservations:
 
-```scala
+```scala mdoc:silent
 val firstTenReservations: ZIO[Ec2, AwsError, Chunk[Reservation.ReadOnly]] =
   Ec2
     .describeInstances(DescribeInstancesRequest())
@@ -93,7 +95,7 @@ val firstTenReservations: ZIO[Ec2, AwsError, Chunk[Reservation.ReadOnly]] =
 
 Sometimes you need the page itself, for example to forward it through an HTTP API that has its own paging. For those cases the library also generates a non-streaming wrapper with a `Paginated` suffix. It makes one call and returns the raw response:
 
-```scala
+```scala mdoc:silent
 val onePage: ZIO[Ec2, AwsError, DescribeInstancesResponse.ReadOnly] =
   Ec2.describeInstancesPaginated(DescribeInstancesRequest())
 ```

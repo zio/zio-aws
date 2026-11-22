@@ -214,6 +214,7 @@ lazy val docs = project
     akkahttp,
     crthttp,
     LocalProject("zio-aws-elasticbeanstalk"),
-    LocalProject("zio-aws-ec2")
+    LocalProject("zio-aws-ec2"),
+    LocalProject("zio-aws-s3")
   )
   .enablePlugins(WebsitePlugin)

@@ -3,9 +3,7 @@ id: examples
 title: Examples
 ---
 
-# Examples
-
-The following example uses the ElasticBeanstalk and EC2 APIs to print some info. 
+The following program combines two services, Elastic Beanstalk and EC2. It finds an Elastic Beanstalk application named `my-service`, streams its environments, reads the EC2 instance IDs behind each environment, and prints the type and launch time of each instance. It builds the layers by hand with `>>>` and `++`, and reports the failures of each environment without stopping the others:
 
 ```scala mdoc:invisible
 import zio.aws.core.AwsError

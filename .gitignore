@@ -13,7 +13,10 @@ metals.sbt
 
 website/node_modules
 website/build
-website/i18n/en.json
+website/i18n
+website/.docusaurus
+website/package-lock.json
+website/yarn.lock
 website/static/api
 website/docs/*
 !website/docs/package.json
