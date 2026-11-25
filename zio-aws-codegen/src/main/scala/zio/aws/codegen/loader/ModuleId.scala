@@ -28,8 +28,8 @@ case class ModuleId(name: String, subModule: Option[String]) {
 object ModuleId {
 
   /** Parses `svc` or `svc:subsvc` into a `ModuleId`. Returns `Left` with a
-    * message when splitting on `:` gives no parts or more than two (for example `:` or
-    * `a:b:c`).
+    * message when splitting on `:` gives no parts or more than two (for example
+    * `:` or `a:b:c`).
     */
   def parse(value: String): Either[String, ModuleId] =
     value.split(':').toList match {

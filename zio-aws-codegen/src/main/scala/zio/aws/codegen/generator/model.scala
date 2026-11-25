@@ -107,9 +107,9 @@ object ModelType {
 
 /** A shape of an AWS service model together with the types the generator uses
   * for it: `sdkType` is the AWS SDK's Java type, `generatedType` is the type
-  * the generator emits, and `serviceModelName` is the key the model map stores it under: the shape
-  * name, or the SDK request or response class name for an operation's input
-  * and output.
+  * the generator emits, and `serviceModelName` is the key the model map stores
+  * it under: the shape name, or the SDK request or response class name for an
+  * operation's input and output.
   */
 case class Model(
     sdkType: ScalaType,

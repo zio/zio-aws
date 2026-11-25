@@ -56,8 +56,8 @@ object AwsGeneratorContext {
   def getService: ZIO[AwsGeneratorContext, Nothing, ModuleId] =
     ZIO.serviceWith(_.service)
 
-  /** Returns `ModuleId.name` of the module being generated; for a sub-module such
-    * as `dynamodb:dynamodbstreams` that is `dynamodb`.
+  /** Returns `ModuleId.name` of the module being generated; for a sub-module
+    * such as `dynamodb:dynamodbstreams` that is `dynamodb`.
     */
   def getServiceName: ZIO[AwsGeneratorContext, Nothing, String] =
     ZIO.serviceWith(_.service.name)

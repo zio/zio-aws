@@ -170,7 +170,8 @@ object ZioAwsCi {
   /** Returns the jobs of the build workflow: tagging, building and testing the
     * core modules, the integration tests, and one job per group of client
     * modules. The groups come from `moduleNames`, `parallelJobs` and
-    * `separateJobs`. On master the core and client jobs also publish signed artifacts.
+    * `separateJobs`. On master the core and client jobs also publish signed
+    * artifacts.
     */
   def buildJobs(
       moduleNames: Set[String],
