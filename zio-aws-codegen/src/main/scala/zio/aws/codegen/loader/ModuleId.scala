@@ -18,6 +18,7 @@ case class ModuleId(name: String, subModule: Option[String]) {
     }
 }
 
+/** Holds the parser for the text form of a `ModuleId`. */
 object ModuleId {
   /** Parses `svc` or `svc:subsvc` into a `ModuleId`. Returns `Left` with a message when the text splits into more than two parts on `:`. */
   def parse(value: String): Either[String, ModuleId] =
