@@ -27,8 +27,9 @@ object AkkaHttpClient {
 
   /** Builds a layer with an Akka HTTP client that runs on the `ActorSystem` in
     * the environment, and returns this client for every service. When the
-    * layer's scope ends it closes the client and leaves the `ActorSystem`
-    * running, so whoever created the system terminates it.
+    * layer's scope ends it calls the client's `close`, which does nothing for a
+    * client built on a given `ActorSystem`: the connection pools and the
+    * `ActorSystem` stay running, so whoever created the system terminates it.
     *
     * {{{
     * import zio._

@@ -193,8 +193,7 @@ package object descriptors {
       }
     )
 
-  /** Reads a [[zio.aws.netty.NettyClientConfig]]. The keys and their defaults,
-    * with AWS SDK 2.59.5:
+  /** Reads a [[zio.aws.netty.NettyClientConfig]]. The keys and their defaults:
     *
     *   - `maxConcurrency`: 50
     *   - `maxPendingConnectionAcquires`: 10000
@@ -209,8 +208,11 @@ package object descriptors {
     *   - `sslProvider`, `proxy` and `http2`: not set (read with
     *     [[sslProvider]], [[proxyConfiguration]] and [[http2Configuration]])
     *
-    * All defaults except `connectionMaxIdleTime` and `protocol` come from the
-    * SDK's `SdkHttpConfigurationOption.GLOBAL_HTTP_DEFAULTS`.
+    * The defaults of `maxConcurrency`, `maxPendingConnectionAcquires`,
+    * `readTimeout`, `writeTimeout`, `connectionTimeout`,
+    * `connectionAcquisitionTimeout`, `connectionTimeToLive` and
+    * `useIdleConnectionReaper` come from the SDK's
+    * `SdkHttpConfigurationOption.GLOBAL_HTTP_DEFAULTS`.
     */
   val nettyClientConfig: Config[NettyClientConfig] = {
     def globalDefault[T](key: SdkHttpConfigurationOption[T]): T =

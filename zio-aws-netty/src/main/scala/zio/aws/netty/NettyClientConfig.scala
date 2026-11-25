@@ -17,8 +17,8 @@ import zio.Duration
   * @param connectionAcquisitionTimeout
   *   how long a request waits for a connection from the pool before it fails
   * @param connectionTimeToLive
-  *   the maximum time a connection stays open, however often it is used; zero
-  *   means no limit
+  *   the time after which the client closes a connection that is not in use,
+  *   however often it was used; zero means no limit
   * @param connectionMaxIdleTime
   *   how long a connection can stay idle before the idle connection reaper
   *   closes it

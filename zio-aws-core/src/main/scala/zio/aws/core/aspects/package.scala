@@ -33,8 +33,9 @@ package object aspects {
       }
   }
 
-  /** An aspect that logs each successful call at the `INFO` level with
-    * `ZIO.log`. The line holds the service and operation names and the call's
+  /** An aspect that logs each successful call with
+    * `ZIO.log`, at the fiber's current log level (`INFO` unless it is changed, for
+    * example with `ZIO.logLevel`). The line holds the service and operation names and the call's
     * duration as a `java.time.Duration`, for example
     * `[sqs/ListQueues] ran for PT0.0019S`. A call that fails logs nothing, and
     * the call's result is unchanged.
@@ -78,7 +79,7 @@ package object aspects {
     * import zio.metrics.MetricKeyType
     * import zio.aws.core.aspects._
     *
-    * // records into the histogram `myapp_aws_call`, with buckets up to 0.1, 0.5, 1 and 5 seconds
+    * // records into the histogram `myapp_aws_call`, with buckets up to 0.1, 0.5, 1 and 5 seconds, plus one bucket for larger values
     * val timed: AwsCallAspect[Any] =
     *   callDuration("myapp", MetricKeyType.Histogram.Boundaries.fromChunk(Chunk(0.1, 0.5, 1.0, 5.0)))
     *
