@@ -11,9 +11,17 @@ import zio._
 import zio.stream._
 import zio.interop.reactivestreams._
 
-/** An AWS SDK `AsyncResponseTransformer` that turns a streaming response into a [[StreamingOutputResult]] of bytes. Create one with the companion's `apply`.
+/** An AWS SDK `AsyncResponseTransformer` that turns a streaming response into a
+  * [[StreamingOutputResult]] of bytes. Create one with the companion's `apply`.
   *
-  * `prepare()` returns an already completed future that holds a task. The task waits until the SDK has called both `onResponse` and `onStream`, then succeeds with the response and the byte stream. When `exceptionOccurred` is called before `onStream`, the task fails with that exception; without a later `onStream`, the task keeps waiting. When `exceptionOccurred` is called while the stream runs, the stream stops and fails with the exception wrapped by `AwsError.fromThrowable`; errors of the SDK publisher are wrapped the same way.
+  * `prepare()` returns an already completed future that holds a task. The task
+  * waits until the SDK has called both `onResponse` and `onStream`, then
+  * succeeds with the response and the byte stream. When `exceptionOccurred` is
+  * called before `onStream`, the task fails with that exception; without a
+  * later `onStream`, the task keeps waiting. When `exceptionOccurred` is called
+  * while the stream runs, the stream stops and fails with the exception wrapped
+  * by `AwsError.fromThrowable`; errors of the SDK publisher are wrapped the
+  * same way.
   */
 class ZStreamAsyncResponseTransformer[R, Response](
     resultStreamPromise: Promise[Throwable, Stream[AwsError, Byte]],
@@ -72,7 +80,10 @@ class ZStreamAsyncResponseTransformer[R, Response](
 
 /** Creates [[ZStreamAsyncResponseTransformer]] instances. */
 object ZStreamAsyncResponseTransformer {
-  /** Returns a new transformer with new promises, which runs the SDK callbacks with the runtime of the effect that creates it. */
+
+  /** Returns a new transformer with new promises, which runs the SDK callbacks
+    * with the runtime of the effect that creates it.
+    */
   def apply[R, Response]()
       : ZIO[R, Nothing, ZStreamAsyncResponseTransformer[R, Response]] =
     ZIO.runtime.flatMap { implicit runtime: Runtime[R] =>

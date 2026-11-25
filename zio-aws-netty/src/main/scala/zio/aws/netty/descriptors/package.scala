@@ -7,9 +7,10 @@ import software.amazon.awssdk.http.SdkHttpConfigurationOption
 import zio._
 
 package object descriptors {
-  /**
-   * Reads `http` or `https` as an [[zio.aws.netty.HttpOrHttps]]. Any other string fails: `socks` gives `Invalid value socks. Use 'http' or 'https'`.
-   */
+
+  /** Reads `http` or `https` as an [[zio.aws.netty.HttpOrHttps]]. Any other
+    * string fails: `socks` gives `Invalid value socks. Use 'http' or 'https'`.
+    */
   val httpOrHttps: Config[HttpOrHttps] =
     Config.string.mapOrFail(
       {
@@ -24,9 +25,10 @@ package object descriptors {
       }
     )
 
-  /**
-   * Reads a [[zio.aws.netty.ProxyConfiguration]] from the keys `scheme` (default `http`), `host`, `port` and `nonProxyHosts` (a list of host names, default empty).
-   */
+  /** Reads a [[zio.aws.netty.ProxyConfiguration]] from the keys `scheme`
+    * (default `http`), `host`, `port` and `nonProxyHosts` (a list of host
+    * names, default empty).
+    */
   val proxyConfiguration: Config[ProxyConfiguration] =
     (
       (httpOrHttps
@@ -45,9 +47,10 @@ package object descriptors {
       ProxyConfiguration(scheme, host, port, nonProxyHosts)
     }
 
-  /**
-   * Reads an [[zio.aws.netty.Http2Config]] from the keys `maxStreams` (an `Int`), `initialWindowSize` and `healthCheckPingPeriod` (a duration, default 5 seconds).
-   */
+  /** Reads an [[zio.aws.netty.Http2Config]] from the keys `maxStreams` (an
+    * `Int`), `initialWindowSize` and `healthCheckPingPeriod` (a duration,
+    * default 5 seconds).
+    */
   val http2Configuration: Config[Http2Config] =
     (
       (Config.int(
@@ -65,9 +68,10 @@ package object descriptors {
       Http2Config(maxStreams, initialWindowSize, healthCheckPingPeriod)
     }
 
-  /**
-   * Reads an optional Netty channel option with `desc` from the key named after the option (`opt.name()`, for example `CONNECT_TIMEOUT_MILLIS`), and converts the value with `toJava`. A missing key gives `None`.
-   */
+  /** Reads an optional Netty channel option with `desc` from the key named
+    * after the option (`opt.name()`, for example `CONNECT_TIMEOUT_MILLIS`), and
+    * converts the value with `toJava`. A missing key gives `None`.
+    */
   def channelOption[T, JT](
       opt: ChannelOption[JT],
       toJava: T => JT
@@ -99,7 +103,9 @@ package object descriptors {
       (i: Int) => java.lang.Integer.valueOf(i)
     )(Config.int)
 
-  /** A [[channelOption]] that reads a duration and passes it to Netty as whole milliseconds. */
+  /** A [[channelOption]] that reads a duration and passes it to Netty as whole
+    * milliseconds.
+    */
   def durationMsChannelOption(
       opt: ChannelOption[java.lang.Integer]
   ): Config[Option[NettyOptionValue[java.lang.Integer]]] =
@@ -108,11 +114,19 @@ package object descriptors {
       (d: Duration) => java.lang.Integer.valueOf(d.toMillis.toInt)
     )(Config.duration)
 
-  /**
-   * Reads [[zio.aws.netty.NettyChannelOptions]] from these keys, each optional: the socket options `SO_BROADCAST`, `SO_KEEPALIVE`, `SO_SNDBUF`, `SO_RCVBUF`, `SO_REUSEADDR`, `SO_LINGER`, `IP_TOS`, `IP_MULTICAST_IF`, `IP_MULTICAST_TTL`, `IP_MULTICAST_LOOP` and `TCP_NODELAY`, and the Netty options `CONNECT_TIMEOUT_MILLIS` (a duration), `WRITE_SPIN_COUNT`, `ALLOW_HALF_CLOSURE`, `AUTO_READ`, `AUTO_CLOSE` and `SINGLE_EVENTEXECUTOR_PER_GROUP`.
-   *
-   * Netty does not apply `SO_BROADCAST`, `IP_MULTICAST_IF`, `IP_MULTICAST_TTL` and `IP_MULTICAST_LOOP` to the NIO socket channel that the client of `NettyHttpClient.configured` uses: it logs `Unknown channel option` and skips them.
-   */
+  /** Reads [[zio.aws.netty.NettyChannelOptions]] from these keys, each
+    * optional: the socket options `SO_BROADCAST`, `SO_KEEPALIVE`, `SO_SNDBUF`,
+    * `SO_RCVBUF`, `SO_REUSEADDR`, `SO_LINGER`, `IP_TOS`, `IP_MULTICAST_IF`,
+    * `IP_MULTICAST_TTL`, `IP_MULTICAST_LOOP` and `TCP_NODELAY`, and the Netty
+    * options `CONNECT_TIMEOUT_MILLIS` (a duration), `WRITE_SPIN_COUNT`,
+    * `ALLOW_HALF_CLOSURE`, `AUTO_READ`, `AUTO_CLOSE` and
+    * `SINGLE_EVENTEXECUTOR_PER_GROUP`.
+    *
+    * Netty does not apply `SO_BROADCAST`, `IP_MULTICAST_IF`, `IP_MULTICAST_TTL`
+    * and `IP_MULTICAST_LOOP` to the NIO socket channel that the client of
+    * `NettyHttpClient.configured` uses: it logs `Unknown channel option` and
+    * skips them.
+    */
   val nettyChannelOptions: Config[NettyChannelOptions] = {
     val socketChannelOptions =
       zio.aws.core.httpclient.descriptors.channelOptions
@@ -141,9 +155,10 @@ package object descriptors {
     )
   }
 
-  /**
-   * Reads `HTTP/1.1`, `HTTP/2` or `Dual` as a `Protocol`. Any other string fails: `h2` gives `Invalid protocol: 'h2'. Use 'HTTP/1.1' or 'HTTP/2' or 'Dual'`.
-   */
+  /** Reads `HTTP/1.1`, `HTTP/2` or `Dual` as a `Protocol`. Any other string
+    * fails: `h2` gives
+    * `Invalid protocol: 'h2'. Use 'HTTP/1.1' or 'HTTP/2' or 'Dual'`.
+    */
   val protocol: Config[Protocol] =
     Config.string.mapOrFail(
       {
@@ -159,9 +174,10 @@ package object descriptors {
       }
     )
 
-  /**
-   * Reads `JDK`, `OPENSSL` or `OPENSSL_REFCNT` as a Netty `SslProvider`. Any other string fails: `BORING` gives `Invalid SSL provider: 'BORING'. Use 'JDK', 'OPENSSL' or 'OPENSSL_REFCNT'`.
-   */
+  /** Reads `JDK`, `OPENSSL` or `OPENSSL_REFCNT` as a Netty `SslProvider`. Any
+    * other string fails: `BORING` gives
+    * `Invalid SSL provider: 'BORING'. Use 'JDK', 'OPENSSL' or 'OPENSSL_REFCNT'`.
+    */
   val sslProvider: Config[SslProvider] =
     Config.string.mapOrFail(
       {
@@ -177,23 +193,25 @@ package object descriptors {
       }
     )
 
-  /**
-   * Reads a [[zio.aws.netty.NettyClientConfig]]. The keys and their defaults, with AWS SDK 2.59.5:
-   *
-   *  - `maxConcurrency`: 50
-   *  - `maxPendingConnectionAcquires`: 10000
-   *  - `readTimeout` and `writeTimeout`: 30 seconds
-   *  - `connectionTimeout`: 2 seconds
-   *  - `connectionAcquisitionTimeout`: 10 seconds
-   *  - `connectionTimeToLive`: 0 (no limit)
-   *  - `connectionMaxIdleTime`: 5 seconds
-   *  - `useIdleConnectionReaper`: `true`
-   *  - `protocol`: `Dual` (read with [[protocol]])
-   *  - `channelOptions`: none (read with [[nettyChannelOptions]])
-   *  - `sslProvider`, `proxy` and `http2`: not set (read with [[sslProvider]], [[proxyConfiguration]] and [[http2Configuration]])
-   *
-   * All defaults except `connectionMaxIdleTime` and `protocol` come from the SDK's `SdkHttpConfigurationOption.GLOBAL_HTTP_DEFAULTS`.
-   */
+  /** Reads a [[zio.aws.netty.NettyClientConfig]]. The keys and their defaults,
+    * with AWS SDK 2.59.5:
+    *
+    *   - `maxConcurrency`: 50
+    *   - `maxPendingConnectionAcquires`: 10000
+    *   - `readTimeout` and `writeTimeout`: 30 seconds
+    *   - `connectionTimeout`: 2 seconds
+    *   - `connectionAcquisitionTimeout`: 10 seconds
+    *   - `connectionTimeToLive`: 0 (no limit)
+    *   - `connectionMaxIdleTime`: 5 seconds
+    *   - `useIdleConnectionReaper`: `true`
+    *   - `protocol`: `Dual` (read with [[protocol]])
+    *   - `channelOptions`: none (read with [[nettyChannelOptions]])
+    *   - `sslProvider`, `proxy` and `http2`: not set (read with
+    *     [[sslProvider]], [[proxyConfiguration]] and [[http2Configuration]])
+    *
+    * All defaults except `connectionMaxIdleTime` and `protocol` come from the
+    * SDK's `SdkHttpConfigurationOption.GLOBAL_HTTP_DEFAULTS`.
+    */
   val nettyClientConfig: Config[NettyClientConfig] = {
     def globalDefault[T](key: SdkHttpConfigurationOption[T]): T =
       SdkHttpConfigurationOption.GLOBAL_HTTP_DEFAULTS.get(key)

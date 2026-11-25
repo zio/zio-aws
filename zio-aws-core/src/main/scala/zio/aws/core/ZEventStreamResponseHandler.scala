@@ -6,16 +6,23 @@ import software.amazon.awssdk.core.async.SdkPublisher
 import zio._
 import zio.stream.ZStream
 
-/** Builds the AWS SDK `EventStreamResponseHandler` that the generated event-stream operations pass to the SDK. */
+/** Builds the AWS SDK `EventStreamResponseHandler` that the generated
+  * event-stream operations pass to the SDK.
+  */
 object ZEventStreamResponseHandler {
-  /** Returns a handler that reports the SDK's callbacks through the given promises and queue:
+
+  /** Returns a handler that reports the SDK's callbacks through the given
+    * promises and queue:
     *
-    *  - `responseReceived` completes `responsePromise` with the response;
-    *  - `onEventStream` completes `promise` with the event publisher;
-    *  - `exceptionOccurred` converts the exception with `AwsError.fromThrowable`, offers the error to `signalQueue` twice, and fails `finishedPromise` with it;
-    *  - `complete` completes `finishedPromise` with `()`.
+    *   - `responseReceived` completes `responsePromise` with the response;
+    *   - `onEventStream` completes `promise` with the event publisher;
+    *   - `exceptionOccurred` converts the exception with
+    *     `AwsError.fromThrowable`, offers the error to `signalQueue` twice, and
+    *     fails `finishedPromise` with it;
+    *   - `complete` completes `finishedPromise` with `()`.
     *
-    * Each callback runs its effect with `runtime` and returns after the effect has finished.
+    * Each callback runs its effect with `runtime` and returns after the effect
+    * has finished.
     */
   def create[ResponseT, EventT](
       runtime: Runtime[Any],

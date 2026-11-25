@@ -4,7 +4,12 @@ import zio._
 import zio.metrics._
 
 package object aspects {
-  /** An aspect that wraps each call of a generated service, for example to log it, measure it or retry it. It is a `ZIOAspect` whose error is [[zio.aws.core.AwsError]] and whose result is a [[Described]] value, so the aspect can read the service and operation names of the call. Attach one to a service layer with `@@@`, and combine two with `>>>`.
+
+  /** An aspect that wraps each call of a generated service, for example to log
+    * it, measure it or retry it. It is a `ZIOAspect` whose error is
+    * [[zio.aws.core.AwsError]] and whose result is a [[Described]] value, so
+    * the aspect can read the service and operation names of the call. Attach
+    * one to a service layer with `@@@`, and combine two with `>>>`.
     *
     * `R` is the environment the aspect needs.
     *
@@ -16,7 +21,10 @@ package object aspects {
 
   /** Predefined values of the `AwsCallAspect` type. */
   object AwsCallAspect {
-    /** An aspect that returns each call unchanged. Generated services start with it. */
+
+    /** An aspect that returns each call unchanged. Generated services start
+      * with it.
+      */
     val identity: AwsCallAspect[Any] =
       new AwsCallAspect[Any] {
         override final def apply[R, E, A](
@@ -25,7 +33,11 @@ package object aspects {
       }
   }
 
-  /** An aspect that logs each successful call at the `INFO` level with `ZIO.log`. The line holds the service and operation names and the call's duration as a `java.time.Duration`, for example `[sqs/ListQueues] ran for PT0.0019S`. A call that fails logs nothing, and the call's result is unchanged.
+  /** An aspect that logs each successful call at the `INFO` level with
+    * `ZIO.log`. The line holds the service and operation names and the call's
+    * duration as a `java.time.Duration`, for example
+    * `[sqs/ListQueues] ran for PT0.0019S`. A call that fails logs nothing, and
+    * the call's result is unchanged.
     *
     * {{{
     * import zio._
@@ -56,7 +68,10 @@ package object aspects {
       }
     }
 
-  /** Returns an aspect that records the duration of each successful call, in seconds, in a histogram whose name is `prefix` followed by `_aws_call`, tagged with `aws_service` and `aws_operation`. A call that fails records nothing, and the call's result is unchanged.
+  /** Returns an aspect that records the duration of each successful call, in
+    * seconds, in a histogram whose name is `prefix` followed by `_aws_call`,
+    * tagged with `aws_service` and `aws_operation`. A call that fails records
+    * nothing, and the call's result is unchanged.
     *
     * {{{
     * import zio._
@@ -101,9 +116,16 @@ package object aspects {
       }
     }
 
-  /** Names one AWS call by its `service` and `operation`. `callLogging` writes both in its log line, and `callDuration` uses them as the `aws_service` and `aws_operation` tags. */
+  /** Names one AWS call by its `service` and `operation`. `callLogging` writes
+    * both in its log line, and `callDuration` uses them as the `aws_service`
+    * and `aws_operation` tags.
+    */
   case class ServiceCallDescription(service: String, operation: String)
-  /** The result `value` of a call together with the [[ServiceCallDescription]] of the call. Generated services wrap each result in `Described` while it passes through their aspect, and unwrap it afterwards. */
+
+  /** The result `value` of a call together with the [[ServiceCallDescription]]
+    * of the call. Generated services wrap each result in `Described` while it
+    * passes through their aspect, and unwrap it afterwards.
+    */
   case class Described[+A](value: A, description: ServiceCallDescription)
 
   private[core] implicit class StringSyntax(service: String) {
@@ -122,13 +144,19 @@ package object aspects {
     final def unwrap: ZIO[R, E, A] = f.map(_.value)
   }
 
-  /** A service whose calls run through an `AwsCallAspect`. Every generated service extends it.
+  /** A service whose calls run through an `AwsCallAspect`. Every generated
+    * service extends it.
     *
     * @see
     *   [[https://zio.dev/zio-aws/aspects/ Aspects]]
     */
   trait AspectSupport[Self] {
-    /** Returns a copy of this service whose calls run through `newAspect` instead of its current aspect, with `r` as the environment of the aspect. To keep the current aspect as well, combine both with `>>>` first. */
+
+    /** Returns a copy of this service whose calls run through `newAspect`
+      * instead of its current aspect, with `r` as the environment of the
+      * aspect. To keep the current aspect as well, combine both with `>>>`
+      * first.
+      */
     def withAspect[R](newAspect: AwsCallAspect[R], r: ZEnvironment[R]): Self
   }
 
@@ -136,7 +164,10 @@ package object aspects {
   implicit class ZLayerSyntax[RIn, E, ROut <: AspectSupport[ROut]: Tag](
       layer: ZLayer[RIn, E, ROut]
   ) {
-    /** Returns a layer that builds this layer and then attaches `aspect` to the service with `withAspect`, using the layer's input environment as the environment of the aspect. The service's previous aspect is replaced.
+
+    /** Returns a layer that builds this layer and then attaches `aspect` to the
+      * service with `withAspect`, using the layer's input environment as the
+      * environment of the aspect. The service's previous aspect is replaced.
       *
       * {{{
       * import zio._

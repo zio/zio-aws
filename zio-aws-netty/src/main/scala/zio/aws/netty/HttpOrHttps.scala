@@ -1,10 +1,13 @@
 package zio.aws.netty
 
-/**
- * The scheme that the Netty client uses to connect to a proxy: `HttpOrHttps.Http` or `HttpOrHttps.Https`.
- */
+/** The scheme that the Netty client uses to connect to a proxy:
+  * `HttpOrHttps.Http` or `HttpOrHttps.Https`.
+  */
 sealed trait HttpOrHttps {
-  /** The scheme as the AWS SDK's proxy configuration takes it: `"http"` or `"https"`. */
+
+  /** The scheme as the AWS SDK's proxy configuration takes it: `"http"` or
+    * `"https"`.
+    */
   val asString: String
 }
 

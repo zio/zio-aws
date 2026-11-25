@@ -16,11 +16,21 @@ import zio.stream.ZStream.HaltStrategy
 
 import scala.reflect.ClassTag
 
-/** The base of every generated service implementation. It holds the service name and the aspect that wraps each call, and provides the protected helpers that turn the AWS SDK's asynchronous calls into ZIO effects and streams, with errors converted by `AwsError.fromThrowable`. */
+/** The base of every generated service implementation. It holds the service
+  * name and the aspect that wraps each call, and provides the protected helpers
+  * that turn the AWS SDK's asynchronous calls into ZIO effects and streams,
+  * with errors converted by `AwsError.fromThrowable`.
+  */
 trait AwsServiceBase[R] {
-  /** The aspect that each call of this service runs through. The generated `live`, `scoped` and `customized` constructors use `AwsCallAspect.identity`; `@@@` and `withAspect` replace it. */
+
+  /** The aspect that each call of this service runs through. The generated
+    * `live`, `scoped` and `customized` constructors use
+    * `AwsCallAspect.identity`; `@@@` and `withAspect` replace it.
+    */
   val aspect: AwsCallAspect[R]
-  /** The service name that aspects receive as `ServiceCallDescription.service`. */
+
+  /** The service name that aspects receive as `ServiceCallDescription.service`.
+    */
   val serviceName: String
 
   final protected def asyncRequestResponse[Request, Response](
@@ -428,7 +438,11 @@ trait AwsServiceBase[R] {
 
 /** Helpers for the generated service implementations. */
 object AwsServiceBase {
-  /** Returns an empty `java.util.Optional` for any request. The generated code passes it as the content length of streaming inputs whose request has no `ContentLength` field of type `Long`. */
+
+  /** Returns an empty `java.util.Optional` for any request. The generated code
+    * passes it as the content length of streaming inputs whose request has no
+    * `ContentLength` field of type `Long`.
+    */
   def noContentLength[Request](
       request: Request
   ): java.util.Optional[java.lang.Long] = java.util.Optional.empty()

@@ -9,9 +9,14 @@ import zio._
 import zio.stream.ZStream
 import zio.interop.reactivestreams._
 
-/** An AWS SDK `AsyncRequestBody` that sends the bytes of `stream` as a request body. The generated operations with a streaming input create it.
+/** An AWS SDK `AsyncRequestBody` that sends the bytes of `stream` as a request
+  * body. The generated operations with a streaming input create it.
   *
-  * `contentLength()` returns `knownContentLength`. Each call to `subscribe` runs `stream` again, with the implicit `runtime`, on a new daemon fiber, and returns without waiting for it. Each chunk of the stream reaches the subscriber as one `ByteBuffer`, and a failure of the stream reaches the subscriber's `onError` as the error's `toThrowable`.
+  * `contentLength()` returns `knownContentLength`. Each call to `subscribe`
+  * runs `stream` again, with the implicit `runtime`, on a new daemon fiber, and
+  * returns without waiting for it. Each chunk of the stream reaches the
+  * subscriber as one `ByteBuffer`, and a failure of the stream reaches the
+  * subscriber's `onError` as the error's `toThrowable`.
   */
 class ZStreamAsyncRequestBody[R](
     stream: ZStream[R, AwsError, Byte],
