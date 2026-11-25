@@ -2,6 +2,9 @@ package zio.aws.codegen.generator
 
 import io.github.vigoo.metagen.core.ScalaType
 
+/**
+ * Decides which AWS shape names the generator does not turn into newtypes, through the protected `isBlacklistedNewtype`. It returns `true` for a name that is a boolean, double, integer, long or string alias, such as `Bool`, `BoxedLong` or `WrapperInt`, and for any name that starts with `__`.
+ */
 trait Blacklists {
   protected def isBlacklistedNewtype(wrapperType: ScalaType): Boolean =
     wrapperType.name match {
