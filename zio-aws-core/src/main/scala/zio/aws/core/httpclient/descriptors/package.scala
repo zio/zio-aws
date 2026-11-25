@@ -6,6 +6,7 @@ import java.net.{NetworkInterface, SocketOption, StandardSocketOptions}
 
 package object descriptors {
 
+  /** Reads an optional socket option: `desc` is read under the key `opt.name()`, such as `SO_KEEPALIVE`, and the value is converted with `toJava`. Reads `None` when the key is absent. */
   def socketOption[T, JT](
       opt: SocketOption[JT],
       toJava: T => JT
@@ -17,6 +18,7 @@ package object descriptors {
         _.map(value => OptionValue(opt, toJava(value)))
       )
 
+  /** Reads an optional `Boolean` socket option under the key `opt.name()`, with `socketOption`. */
   def boolSocketOption(
       opt: SocketOption[java.lang.Boolean]
   ): Config[Option[OptionValue[java.lang.Boolean]]] =
@@ -25,6 +27,7 @@ package object descriptors {
       (b: Boolean) => java.lang.Boolean.valueOf(b)
     )(Config.boolean)
 
+  /** Reads an optional `Int` socket option under the key `opt.name()`, with `socketOption`. */
   def intSocketOption(
       opt: SocketOption[java.lang.Integer]
   ): Config[Option[OptionValue[java.lang.Integer]]] =
@@ -33,9 +36,15 @@ package object descriptors {
       (i: Int) => java.lang.Integer.valueOf(i)
     )(Config.int)
 
+  /** Reads a network interface by its name, such as `lo`, with `java.net.NetworkInterface.getByName`. For a name that no interface has, it reads `null`, because `getByName` returns `null`. */
   val networkInterfaceByName: Config[NetworkInterface] =
     Config.string.mapAttempt(name => NetworkInterface.getByName(name))
 
+  /** Reads [[ChannelOptions]] from optional keys named after the standard socket options: `SO_BROADCAST`, `SO_KEEPALIVE`, `SO_SNDBUF`, `SO_RCVBUF`, `SO_REUSEADDR`, `SO_LINGER`, `IP_TOS`, `IP_MULTICAST_IF` (an interface name, read by `networkInterfaceByName`), `IP_MULTICAST_TTL`, `IP_MULTICAST_LOOP` and `TCP_NODELAY`. The result has one entry per key that is present, in that order; with no keys, it is empty.
+    *
+    * @see
+    *   [[https://zio.dev/zio-aws/http/ HTTP Clients]]
+    */
   val channelOptions: Config[ChannelOptions] = {
     import StandardSocketOptions._
 
