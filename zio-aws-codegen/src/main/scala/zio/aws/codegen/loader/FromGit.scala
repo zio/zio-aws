@@ -18,6 +18,7 @@ import java.util.Properties
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 
+/** A `Loader` that reads the models from the `services` directory of a checkout of the AWS Java SDK repository, at the tag that matches the version of the AWS SDK codegen library on the classpath. It uses the clone in the `AWS_JAVA_SDK_REPOSITORY` environment variable when set, and otherwise clones `https://github.com/aws/aws-sdk-java-v2.git` into a temporary directory. The module list is collected once and kept in `modules`; `semaphore` guards that collection. */
 case class FromGit(modules: Ref[Map[ModuleId, Path]], semaphore: Semaphore)
     extends Loader {
 

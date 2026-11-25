@@ -9,28 +9,39 @@ import zio._
 import zio.Unsafe.unsafe
 import zio.nio.file.Path
 
+/** The sbt plugin that generates the zio-aws service clients. It adds one sbt project per AWS SDK service module found by the loader (see `extraProjects`), each with a source generator that writes the client sources into `sourceManaged`, and the `generateArtifactList` task. A build enables it with `enablePlugins(ZioAwsCodegenPlugin)`.
+  */
 object ZioAwsCodegenPlugin extends AutoPlugin {
 
+  /** The keys the plugin exposes to build definitions. */
   object autoImport {
+    /** Identifies the AWS service module a project generates sources for, written as `svc` or `svc:subsvc`. The plugin sets it on each project it creates, and `generateSources` parses it with `ModuleId.parse`. */
     val awsLibraryId =
       settingKey[String]("Selects the AWS library to generate sources for")
+    /** The version of the `software.amazon.awssdk` service artifact that each generated project depends on. */
     val awsLibraryVersion = settingKey[String](
       "Specifies the version of the  AWS Java SDK to depend on"
     )
+    /** The version of `dev.zio` `zio` and `zio-streams` that each generated project depends on. */
     val zioLibraryVersion = settingKey[String](
       "Specifies the version of the ZIO library to depend on"
     )
+    /** The value that `ZioAwsCi.buildJobs` and `ZioAwsCi.releaseJobs` divide the module count by to size each group of client modules built in one CI job. */
     val ciParallelJobs =
       settingKey[Int]("Number of parallel jobs in the generated circleCi file")
+    /** The names of the generated projects (such as `zio-aws-ec2`) that get a CI job of their own instead of being grouped with the others. */
     val ciSeparateJobs = settingKey[Seq[String]](
       "List of subprojects to have their individual circleCi jobs"
     )
+    /** The file that `generateArtifactList` writes the artifact list to. */
     val artifactListTarget =
       settingKey[File]("artifact list markdown target file")
 
+    /** Finds the AWS service modules and writes the artifact list to `artifactListTarget`. A generator failure is logged and does not fail the task. */
     val generateArtifactList =
       taskKey[Unit]("Regenerates the artifact list markdown file")
 
+    /** The source generator of each generated project. It parses `awsLibraryId`, loads that module's models with the git-based loader, and returns the files it writes under `Compile / sourceManaged`. A generator failure is logged and then thrown. */
     lazy val generateSources =
       Def.task {
         val log = streams.value.log
@@ -83,19 +94,20 @@ object ZioAwsCodegenPlugin extends AutoPlugin {
 
   import autoImport._
 
+  /** The base type of the errors this plugin defines. */
   sealed trait Error
 
+  /** An error that wraps the `Throwable` in `reason`. */
   case class ReflectionError(reason: Throwable) extends Error
 
+  /** An error that wraps the generator failure in `error`. */
   case class GeneratorError(error: AwsGeneratorFailure) extends Error
 
   override lazy val projectSettings = Seq(
     generateArtifactList := generateArtifactListTask.value
   )
 
-  /** Names of all AWS modules, filled in while the build loads (see
-    * `extraProjects`).
-    */
+  /** The `ModuleId.moduleName` of each module the loader found (the sub-module name when there is one, otherwise the service name). It is empty until `extraProjects` is evaluated while the build loads. */
   @volatile var moduleNames: Set[String] = Set.empty
 
   override lazy val extraProjects: Seq[Project] = {

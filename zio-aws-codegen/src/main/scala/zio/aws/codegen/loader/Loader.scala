@@ -5,13 +5,20 @@ import zio._
 import zio.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
 
+/** A source of the AWS SDK service models that the generator reads. */
 trait Loader {
+  /** Returns the ids of the service modules this loader can load. */
   def findModels(): ZIO[Any, Throwable, Set[ModuleId]]
+
+  /** Loads the service model, and the customization, waiters and paginators models when present, of the module `id`. */
   def loadCodegenModel(id: ModuleId): ZIO[Any, Throwable, C2jModels]
 }
 
+/** The loader implementations and accessors for the `Loader` service. */
 object Loader {
+  /** A layer that reads the models from the `codegen-resources` directories on the classpath, through `FromClasspath`. */
   val fromClasspath: ULayer[Loader] = ZLayer.succeed(FromClasspath())
+  /** A layer that reads the models from a checkout of the AWS Java SDK repository, through `FromGit`. */
   val fromGit: ZLayer[Any, Nothing, Loader] =
     ZLayer {
       for {
@@ -21,6 +28,7 @@ object Loader {
     }
 
   private val cachedLoader: AtomicReference[Loader] = new AtomicReference(null)
+  /** Wraps `impl` in a layer that builds it the first time and returns that same loader on every later use in the same JVM, whatever `impl` is passed later. */
   def cached[R, E <: Throwable](
       impl: ZLayer[R, E, Loader]
   ): ZLayer[R, Throwable, Loader] =
@@ -46,11 +54,13 @@ object Loader {
       } yield value
     }
 
+  /** Calls `loadCodegenModel` on the `Loader` in the environment. */
   def loadCodegenModel(
       id: ModuleId
   ): ZIO[Loader, Throwable, C2jModels] =
     ZIO.service[Loader].flatMap(_.loadCodegenModel(id))
 
+  /** Calls `findModels` on the `Loader` in the environment. */
   def findModels(): ZIO[Loader, Throwable, Set[ModuleId]] =
     ZIO.service[Loader].flatMap(_.findModels())
 }

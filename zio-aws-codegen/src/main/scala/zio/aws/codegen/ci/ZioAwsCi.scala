@@ -5,9 +5,7 @@ import zio.json.ast.Json
 import zio.sbt.githubactions._
 import zio.sbt.githubactions.Step.SingleStep
 
-/** The zio-aws CI jobs, handed to zio-sbt-ci through `ciBuildJobs` and
-  * `ciReleaseJobs`.
-  */
+/** The zio-aws CI jobs, handed to zio-sbt-ci through `ciBuildJobs`, `ciReleaseJobs` and `ciPostReleaseJobs`. */
 object ZioAwsCi {
   private val scala213 = "2.13.x"
   private val scala3 = "3.x"
@@ -167,6 +165,7 @@ object ZioAwsCi {
       .toList ++ separate.map(List(_))
   }
 
+  /** Returns the jobs of the build workflow: tagging, building and testing the core modules, the integration tests, and one job per group of client modules. The groups come from `moduleNames`, `parallelJobs` and `separateJobs`. On master the jobs also publish signed artifacts. */
   def buildJobs(
       moduleNames: Set[String],
       parallelJobs: Int,
@@ -313,6 +312,7 @@ object ZioAwsCi {
     Seq(tag, buildCore, integrationTest) ++ clients
   }
 
+  /** Returns the release job, which waits for the core build, the integration tests and every client build job, loads the stored build targets and runs `sonaRelease`. It runs on master. */
   def releaseJobs(
       moduleNames: Set[String],
       parallelJobs: Int,
