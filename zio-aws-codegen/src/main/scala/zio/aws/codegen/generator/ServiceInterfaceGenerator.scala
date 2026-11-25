@@ -13,6 +13,7 @@ import java.lang
 import scala.jdk.CollectionConverters._
 import scala.meta._
 
+/** Generates the service module source of a service: the service trait with a method for each operation, its implementation and the accessors. */
 trait ServiceInterfaceGenerator {
   this: HasConfig with GeneratorBase =>
 

@@ -10,6 +10,7 @@ import zio.aws.codegen.generator.syntax._
 import scala.jdk.CollectionConverters._
 import scala.meta._
 
+/** Helpers shared by the service interface and model generators, such as wrapping and unwrapping AWS SDK values. */
 trait GeneratorBase {
   this: Blacklists =>
 

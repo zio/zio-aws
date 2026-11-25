@@ -13,6 +13,7 @@ import zio.aws.codegen.loader.ModuleId
 
 import java.io.File
 
+/** The [[AwsGenerator]] implementation. It generates the service module and the models of a service, and the artifact list file. */
 case class AwsGeneratorImpl(cfg: Parameters)
     extends AwsGenerator
     with GeneratorBase
@@ -22,6 +23,7 @@ case class AwsGeneratorImpl(cfg: Parameters)
     with HasConfig
     with Blacklists {
 
+  /** The generator parameters. */
   val config: Parameters = cfg
 
   private def getSdkPackage(id: ModuleId): Package =
