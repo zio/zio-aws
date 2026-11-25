@@ -17,8 +17,8 @@ import zio.interop.reactivestreams._
   * `prepare()` returns an already completed future that holds a task. The task
   * waits until the SDK has called both `onResponse` and `onStream`, then
   * succeeds with the response and the byte stream. When `exceptionOccurred` is
-  * called before `onStream`, the task fails with that exception once
-  * `onStream` is called; until then it keeps waiting. When `exceptionOccurred` is called
+  * called before `onStream`, the task fails with that exception once `onStream`
+  * is called; until then it keeps waiting. When `exceptionOccurred` is called
   * while the stream runs, the stream stops and fails with the exception wrapped
   * by `AwsError.fromThrowable`; errors of the SDK publisher are wrapped the
   * same way.

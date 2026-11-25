@@ -5,9 +5,10 @@ import zio.ZEnvironment
 
 /** The result of an operation whose output is a stream: the operation's
   * `response` and the `output` stream. Operations with a byte-stream output,
-  * such as S3's `getObject`, return it with `Item = Byte`. Some paginated operations also return it, with
-  * `Item` the type of the page items; there `response` is the first page's
-  * response and `output` streams the items of every page.
+  * such as S3's `getObject`, return it with `Item = Byte`. Some paginated
+  * operations also return it, with `Item` the type of the page items; there
+  * `response` is the first page's response and `output` streams the items of
+  * every page.
   *
   * @see
   *   [[https://zio.dev/zio-aws/wrappers/ Wrappers]]

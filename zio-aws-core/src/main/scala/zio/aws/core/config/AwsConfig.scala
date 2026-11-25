@@ -55,7 +55,8 @@ object AwsConfig {
     * setting of the builder unchanged, so the region, the credentials and the
     * retries come from the AWS SDK's defaults unless a service's own
     * customization sets them; the generated layers of global services, such as
-    * IAM, set the region to `aws-global`. It is `customized(ClientCustomization.None)`.
+    * IAM, set the region to `aws-global`. It is
+    * `customized(ClientCustomization.None)`.
     *
     * {{{
     * import zio._
