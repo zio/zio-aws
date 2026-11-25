@@ -16,13 +16,78 @@ import software.amazon.awssdk.http.nio.netty.{
 }
 import zio.{Scope, ZIO, ZLayer}
 
+/**
+ * Builds a `zio.aws.core.httpclient.HttpClient` layer backed by the AWS SDK's Netty client, `NettyNioAsyncHttpClient`. Each layer creates its Netty clients when it is built and closes them when its scope ends.
+ *
+ * {{{
+ * import zio._
+ * import zio.aws.core.config.AwsConfig
+ *
+ * val awsConfig: ZLayer[Any, Throwable, AwsConfig] =
+ *   NettyHttpClient.default >>> AwsConfig.default
+ * }}}
+ *
+ * @see [[https://zio.dev/zio-aws/http/ HTTP Clients]]
+ */
 object NettyHttpClient {
+  /**
+   * A layer with one Netty client that uses HTTP/1.1. It returns this client for every service, also for the services that support HTTP/2. It is `customized(Protocol.Http11)`.
+   *
+   * {{{
+   * import zio._
+   * import zio.aws.core.httpclient.{HttpClient, ServiceHttpCapabilities}
+   *
+   * val clientName: Task[String] =
+   *   HttpClient
+   *     .clientFor(ServiceHttpCapabilities(supportsHttp2 = false))
+   *     .map(_.clientName())
+   *     .provide(NettyHttpClient.default)
+   * // result: "NettyNio"
+   * }}}
+   *
+   * @see [[https://zio.dev/zio-aws/http/ HTTP Clients]]
+   */
   val default: ZLayer[Any, Throwable, HttpClient] =
     customized(Protocol.Http11, identity)
 
+  /**
+   * A layer with two Netty clients, one for HTTP/1.1 and one for HTTP/2. It returns the HTTP/2 client for the services that support HTTP/2 and the HTTP/1.1 client for the rest. It is `customized(Protocol.Dual)`.
+   *
+   * {{{
+   * import zio._
+   * import zio.aws.core.httpclient.{HttpClient, ServiceHttpCapabilities}
+   *
+   * val sameClient: Task[Boolean] =
+   *   (for {
+   *     http11 <- HttpClient.clientFor(ServiceHttpCapabilities(supportsHttp2 = false))
+   *     http2  <- HttpClient.clientFor(ServiceHttpCapabilities(supportsHttp2 = true))
+   *   } yield http11 eq http2).provide(NettyHttpClient.dual)
+   * // result: false
+   * }}}
+   *
+   * @see [[https://zio.dev/zio-aws/http/ HTTP Clients]]
+   */
   val dual: ZLayer[Any, Throwable, HttpClient] =
     customized(Protocol.Dual, identity)
 
+  /**
+   * Builds a layer with the Netty clients that `protocol` needs, each created from `NettyNioAsyncHttpClient.builder()` after `customization` changes it. The layer sets the builder's protocol after `customization` runs, so a protocol set in `customization` is replaced. With `Protocol.Http2`, asking for the client of a service without HTTP/2 support fails with an `UnsupportedOperationException`.
+   *
+   * {{{
+   * import zio._
+   * import zio.aws.core.httpclient.{HttpClient, Protocol}
+   *
+   * val httpClient: ZLayer[Any, Throwable, HttpClient] =
+   *   NettyHttpClient.customized(
+   *     Protocol.Http11,
+   *     _.maxConcurrency(20).connectionMaxIdleTime(java.time.Duration.ofSeconds(30))
+   *   )
+   * }}}
+   *
+   * @param protocol `Protocol.Http11` builds one HTTP/1.1 client, `Protocol.Http2` one HTTP/2 client, and `Protocol.Dual` one of each
+   * @param customization changes the SDK builder before the layer builds the client
+   * @see [[https://zio.dev/zio-aws/http/ HTTP Clients]]
+   */
   def customized(
       protocol: Protocol,
       customization: NettyNioAsyncHttpClient.Builder => NettyNioAsyncHttpClient.Builder =
@@ -49,6 +114,26 @@ object NettyHttpClient {
     )(protocol)
   }
 
+  /**
+   * Builds a layer with Netty clients configured from the [[NettyClientConfig]] in the environment. `NettyClientConfig.protocol` chooses the clients, as `protocol` does in `customized`. The TLS key and trust manager providers are parameters because configuration cannot describe them.
+   *
+   * {{{
+   * import zio._
+   * import zio.aws.core.httpclient.HttpClient
+   *
+   * val settings: IO[Config.Error, NettyClientConfig] =
+   *   ConfigProvider
+   *     .fromMap(Map("maxConcurrency" -> "20", "protocol" -> "HTTP/1.1"))
+   *     .load(descriptors.nettyClientConfig)
+   *
+   * val httpClient: ZLayer[Any, Throwable, HttpClient] =
+   *   ZLayer.fromZIO(settings) >>> NettyHttpClient.configured()
+   * }}}
+   *
+   * @param tlsKeyManagersProvider passed to the builder's `tlsKeyManagersProvider`; `None` keeps the SDK's default
+   * @param tlsTrustManagersProvider passed to the builder's `tlsTrustManagersProvider`; `None` keeps the SDK's default
+   * @see [[https://zio.dev/zio-aws/http/ HTTP Clients]]
+   */
   def configured(
       tlsKeyManagersProvider: Option[TlsKeyManagersProvider] = None,
       tlsTrustManagersProvider: Option[TlsTrustManagersProvider] = None
