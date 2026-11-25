@@ -20,7 +20,8 @@ case class JavaSdkPaginationDefinition(
 
 /** Pagination over the list member `memberName` of the response. `isSimple` is
   * `true` when the response has no member other than `memberName` and
-  * `NextToken`.
+  * `NextToken`. It is always `false` for a definition from a pagination
+  * override.
   */
 case class ListPaginationDefinition(
     memberName: String,
@@ -44,7 +45,8 @@ case class NestedListPaginationDefinition(
 
 /** Pagination over the map member `memberName` of the response. `isSimple` is
   * `true` when the response has no member other than `memberName` and
-  * `NextToken`.
+  * `NextToken`. It is always `false` for a definition from a pagination
+  * override.
   */
 case class MapPaginationDefinition(
     memberName: String,
@@ -56,7 +58,8 @@ case class MapPaginationDefinition(
 
 /** Pagination over the string member `memberName` of the response. `isSimple`
   * is `true` when the response has no member other than `memberName` and
-  * `NextToken`.
+  * `NextToken`. It is always `false` for a definition from a pagination
+  * override.
   */
 case class StringPaginationDefinition(
     memberName: String,

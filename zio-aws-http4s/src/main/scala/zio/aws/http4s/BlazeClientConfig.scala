@@ -35,8 +35,8 @@ import scala.concurrent.duration.Duration
   * @param maxChunkSize
   *   the maximum size of a chunk in a chunked response
   * @param chunkBufferMaxSize
-  *   the maximum size of the buffer for a response body without a
-  *   `Content-Length` header
+  *   the maximum size of the buffer that Blaze uses to send a request body that
+  *   has no `Content-Length` or `Transfer-Encoding` header
   * @param parserMode
   *   whether the response parser is strict or lenient
   * @param bufferSize

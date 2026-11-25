@@ -183,9 +183,10 @@ object OperationCollector {
     * checked before event streams, and the remaining operations are classified
     * by whether they have an input and an output; when both exist and both have
     * a `NextToken` member, or the SDK defines a paginator for the operation,
-    * the result carries the pagination definition. A failure to work out the
-    * pagination definition is logged as a warning and the operation is treated
-    * as not paginated.
+    * the result carries the pagination definition. In the `NextToken` case, a
+    * failure to work out the pagination definition is logged as a warning and
+    * the operation is treated as not paginated; in the SDK paginator case the
+    * failure fails `get`.
     */
   def get(
       opName: String,

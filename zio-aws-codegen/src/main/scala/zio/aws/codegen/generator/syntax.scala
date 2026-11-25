@@ -17,8 +17,10 @@ object syntax {
         case Nil            => Nil
       }).mkString
 
-    /** Returns the string with its first character lower-cased, using the AWS
-      * SDK codegen's `Utils.unCapitalize`.
+    /** Lower-cases the first character and the capitals that follow it, except a
+      * capital that is followed by a lower-case letter (`URLPath` gives
+      * `urlPath`), using the AWS SDK codegen's `Utils.unCapitalize`. Throws
+      * `java.lang.IllegalArgumentException` for an empty string.
       */
     def uncapitalize: String = Utils.unCapitalize(value)
   }
