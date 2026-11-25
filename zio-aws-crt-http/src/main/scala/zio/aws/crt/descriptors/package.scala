@@ -3,6 +3,9 @@ package zio.aws.crt
 import zio.Config
 
 package object descriptors {
+  /**
+   * Reads a [[zio.aws.crt.ConnectionHealthConfiguration]] from the keys `minimumThroughputInBps` (a `Long`) and `minimumThroughputTimeout` (a duration). Both are required.
+   */
   val connectionHealthConfiguration: Config[ConnectionHealthConfiguration] =
     (
       (Config.long(
@@ -18,6 +21,9 @@ package object descriptors {
       )
     }
 
+  /**
+   * Reads a [[zio.aws.crt.ProxyConfiguration]] from the keys `scheme`, `host`, `port`, `username` and `password`. All five are required.
+   */
   val proxyConfiguration: Config[ProxyConfiguration] =
     (
       (Config.string("scheme") ?? "The scheme of the proxy") zip
@@ -35,6 +41,9 @@ package object descriptors {
       )
     }
 
+  /**
+   * Reads a [[zio.aws.crt.TcpKeepAliveConfiguration]] from the keys `keepAliveInterval` and `keepAliveTimeout`, both durations and both required.
+   */
   val tcpKeepAliveConfiguration: Config[TcpKeepAliveConfiguration] =
     (
       (Config.duration(
@@ -50,6 +59,9 @@ package object descriptors {
       )
     }
 
+  /**
+   * Reads an [[zio.aws.crt.AwsCrtHttpClientConfig]]. The keys `maxConcurrency`, `readBufferSizeInBytes`, `connectionMaxIdleTime`, `connectionTimeout` and `postQuantumTlsEnabled` are required and have no defaults. The sections `proxy` ([[proxyConfiguration]]), `connectionHealth` ([[connectionHealthConfiguration]]) and `tcpKeepAlive` ([[tcpKeepAliveConfiguration]]) are optional.
+   */
   val awsCrtHttpClientConfig: Config[AwsCrtHttpClientConfig] =
     (
       (Config.int(

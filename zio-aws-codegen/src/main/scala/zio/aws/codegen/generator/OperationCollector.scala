@@ -24,7 +24,16 @@ import zio.aws.codegen.generator.OperationMethodType.{
 
 import scala.jdk.CollectionConverters._
 
+/** Classifies the operations of a service into the [[OperationMethodType]] that
+  * decides which kind of method the generator emits for them, and finds out how
+  * a paginated operation can be streamed.
+  */
 object OperationCollector {
+
+  /** Pagination overrides for individual operations of individual services. An
+    * operation that has an entry here skips the automatic detection of the
+    * paginated member.
+    */
   val overrides: Set[PaginationOverride] = Set(
     PaginationNotSupported(
       loader.ModuleId("greengrass", None),
@@ -109,11 +118,18 @@ object OperationCollector {
     )
   )
 
+  /** The key of a pagination override: a service module and an operation name.
+    */
   case class OverrideKey(id: loader.ModuleId, opName: String)
 
+  /** The [[overrides]] indexed by their [[OverrideKey]]. */
   val overrideMap: Map[OverrideKey, PaginationOverride] =
     overrides.map(o => o.toKey -> o).toMap
 
+  /** Returns the operations of the service model by name, without the
+    * deprecated ones and without the ones that the customization config marks
+    * as excluded.
+    */
   def getFilteredOperations(models: C2jModels): Map[String, Operation] =
     models
       .serviceModel()
@@ -125,11 +141,19 @@ object OperationCollector {
         !isExcluded(models.customizationConfig(), opName)
       }
 
+  /** Returns `true` when the input shape of `op` has a streaming member, either
+    * directly or in a shape that it refers to. Returns `false` when `op` has no
+    * input.
+    */
   def inputIsStreamingOf(models: C2jModels, op: Operation): Boolean =
     Option(op.getInput)
       .flatMap(input => Option(models.serviceModel().getShape(input.getShape)))
       .exists(hasStreamingMember(models, _))
 
+  /** Returns `true` when the output shape of `op` has a streaming member,
+    * either directly or in a shape that it refers to. Returns `false` when `op`
+    * has no output.
+    */
   def outputIsStreamingOf(models: C2jModels, op: Operation): Boolean =
     Option(op.getOutput)
       .flatMap(output =>
@@ -137,11 +161,17 @@ object OperationCollector {
       )
       .exists(hasStreamingMember(models, _))
 
+  /** Returns `true` when the input shape of `op` is an event stream or refers
+    * to one. Returns `false` when `op` has no input.
+    */
   def inputIsEventStreamOf(models: C2jModels, op: Operation): Boolean =
     Option(op.getInput)
       .flatMap(input => Option(models.serviceModel().getShape(input.getShape)))
       .exists(hasEventStreamMember(models, _))
 
+  /** Returns `true` when the output shape of `op` is an event stream or refers
+    * to one. Returns `false` when `op` has no output.
+    */
   def outputIsEventStreamOf(models: C2jModels, op: Operation): Boolean =
     Option(op.getOutput)
       .flatMap(output =>
@@ -149,6 +179,15 @@ object OperationCollector {
       )
       .exists(hasEventStreamMember(models, _))
 
+  /** Returns the [[OperationMethodType]] of an operation. Streaming shapes are
+    * checked before event streams, and the remaining operations are classified
+    * by whether they have an input and an output; when both exist and both have
+    * a `NextToken` member, or the SDK defines a paginator for the operation,
+    * the result carries the pagination definition. In the `NextToken` case, a
+    * failure to work out the pagination definition is logged as a warning and
+    * the operation is treated as not paginated; in the SDK paginator case the
+    * failure fails `get`.
+    */
   def get(
       opName: String,
       op: Operation
@@ -390,17 +429,16 @@ object OperationCollector {
       outputListMember <- outputShape.getMembers.asScala.get(key)
       listShape = models.serviceModel().getShape(outputListMember.getShape)
       itemMember <- Option(listShape.getListMember)
-    } yield
-      for {
-        itemModel <- AwsGeneratorContext.get(itemMember.getShape)
-        itemType <- toJavaType(itemModel)
-        wrappedTypeRo <- toWrappedTypeReadOnly(itemModel)
-      } yield JavaSdkPaginationDefinition(
-        name = key,
-        model = itemModel,
-        itemType = itemType,
-        wrappedTypeRo = wrappedTypeRo
-      )
+    } yield for {
+      itemModel <- AwsGeneratorContext.get(itemMember.getShape)
+      itemType <- toJavaType(itemModel)
+      wrappedTypeRo <- toWrappedTypeReadOnly(itemModel)
+    } yield JavaSdkPaginationDefinition(
+      name = key,
+      model = itemModel,
+      itemType = itemType,
+      wrappedTypeRo = wrappedTypeRo
+    )
   }
 
   private def isExcluded(
@@ -445,15 +483,24 @@ object OperationCollector {
       }
     }
 
+  /** A hand-written exception to the automatic pagination detection, for one
+    * operation of one service module.
+    */
   sealed trait PaginationOverride {
+
+    /** Returns the key that identifies the service module and operation of this
+      * override.
+      */
     def toKey: OverrideKey
   }
 
+  /** Marks the operation as not paginated. */
   case class PaginationNotSupported(id: loader.ModuleId, opName: String)
       extends PaginationOverride {
     override def toKey: OverrideKey = OverrideKey(id, opName)
   }
 
+  /** Pages over the output member `memberName`, which must be a list. */
   case class SelectPaginatedListMember(
       id: loader.ModuleId,
       opName: String,
@@ -462,6 +509,10 @@ object OperationCollector {
     override def toKey: OverrideKey = OverrideKey(id, opName)
   }
 
+  /** Pages over the list member `listName` that sits inside the output member
+    * `innerName`; `resultName` names the member of the same inner shape that
+    * holds the result.
+    */
   case class SelectNestedPaginatedListMember(
       id: loader.ModuleId,
       opName: String,
@@ -472,6 +523,7 @@ object OperationCollector {
     override def toKey: OverrideKey = OverrideKey(id, opName)
   }
 
+  /** Pages over the output member `memberName`, which must be a string. */
   case class SelectPaginatedStringMember(
       id: loader.ModuleId,
       opName: String,

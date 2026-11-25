@@ -33,6 +33,17 @@ import java.nio.channels.AsynchronousChannelGroup
 import javax.net.ssl.SSLContext
 import scala.util.control.NonFatal
 
+/** An AWS SDK `SdkAsyncHttpClient` that runs each request with an http4s
+  * `Client`. It sends every request as HTTP/1.1 and leaves out an
+  * `Expect: 100-continue` header. The layers of `Http4sClient` build it on a
+  * Blaze client.
+  *
+  * @param client
+  *   the http4s client that runs the requests
+  * @param closeFn
+  *   run by `close()`; for the clients that the layers build it does nothing,
+  *   and the Blaze client is released when the layer's scope ends
+  */
 class Http4sClient(client: Client[Task], closeFn: () => Unit)(implicit
     runtime: Runtime[Any],
     dispatcher: Dispatcher[Task]
@@ -165,6 +176,21 @@ class Http4sClient(client: Client[Task], closeFn: () => Unit)(implicit
   }
 }
 
+/** Builds a `zio.aws.core.httpclient.HttpClient` layer backed by the http4s
+  * Blaze client. Each layer builds one [[Http4sClient]], returns it for every
+  * service, and releases it when its scope ends. The client uses HTTP/1.1 only.
+  *
+  * {{{
+  * import zio._
+  * import zio.aws.core.config.AwsConfig
+  *
+  * val awsConfig: ZLayer[Any, Throwable, AwsConfig] =
+  *   Http4sClient.default >>> AwsConfig.default
+  * }}}
+  *
+  * @see
+  *   [[https://zio.dev/zio-aws/http/ HTTP Clients]]
+  */
 object Http4sClient {
   private case class ExtendedMethod(value: Method, canHaveBody: Boolean)
 
@@ -222,8 +248,43 @@ object Http4sClient {
   private[http4s] def builder(): Http4sClientBuilder =
     Http4sClientBuilder()(Runtime.default)
 
+  /** A layer with a Blaze client that uses the Blaze defaults. It returns the
+    * same client for every service, also for the services that support HTTP/2.
+    *
+    * {{{
+    * import zio._
+    * import zio.aws.core.httpclient.{HttpClient, ServiceHttpCapabilities}
+    *
+    * val sameClient: Task[Boolean] =
+    *   (for {
+    *     http11 <- HttpClient.clientFor(ServiceHttpCapabilities(supportsHttp2 = false))
+    *     http2  <- HttpClient.clientFor(ServiceHttpCapabilities(supportsHttp2 = true))
+    *   } yield http11 eq http2).provide(Http4sClient.default)
+    * // result: true
+    * }}}
+    *
+    * @see
+    *   [[https://zio.dev/zio-aws/http/ HTTP Clients]]
+    */
   val default: ZLayer[Any, Throwable, HttpClient] = customized(identity)
 
+  /** Builds a layer with a Blaze client created from `BlazeClientBuilder[Task]`
+    * after `f` changes it.
+    *
+    * {{{
+    * import zio._
+    * import zio.aws.core.httpclient.HttpClient
+    *
+    * val httpClient: ZLayer[Any, Throwable, HttpClient] =
+    *   Http4sClient.customized(
+    *     _.withMaxTotalConnections(20)
+    *       .withRequestTimeout(scala.concurrent.duration.Duration(30, "seconds"))
+    *   )
+    * }}}
+    *
+    * @see
+    *   [[https://zio.dev/zio-aws/http/ HTTP Clients]]
+    */
   def customized(
       f: BlazeClientBuilder[Task] => BlazeClientBuilder[Task]
   ): ZLayer[Any, Throwable, HttpClient] =
@@ -242,6 +303,36 @@ object Http4sClient {
       }
     }
 
+  /** Builds a layer with a Blaze client configured from the
+    * [[BlazeClientConfig]] in the environment. The parameters cover the
+    * settings that configuration cannot describe.
+    *
+    * {{{
+    * import zio._
+    * import zio.aws.core.httpclient.HttpClient
+    *
+    * val settings: IO[Config.Error, BlazeClientConfig] =
+    *   ConfigProvider
+    *     .fromMap(Map("maxTotalConnections" -> "20", "userAgent" -> "bucket-sync/2.0"))
+    *     .load(descriptors.blazeClientConfig)
+    *
+    * val httpClient: ZLayer[Any, Throwable, HttpClient] =
+    *   ZLayer.fromZIO(settings) >>> Http4sClient.configured()
+    * }}}
+    *
+    * @param sslContext
+    *   passed to Blaze's `withSslContextOption`; the default is
+    *   `SSLContext.getDefault`, or `None` when that call throws
+    * @param maxConnectionsPerRequestKey
+    *   the connection limit for each request key (scheme, host and port);
+    *   `None` uses `BlazeClientConfig.maxWaitQueueLimit` for every key
+    * @param asynchronousChannelGroup
+    *   passed to Blaze's `withAsynchronousChannelGroupOption`
+    * @param additionalSocketOptions
+    *   socket options added after `BlazeClientConfig.channelOptions`
+    * @see
+    *   [[https://zio.dev/zio-aws/http/ HTTP Clients]]
+    */
   def configured(
       sslContext: Option[SSLContext] = tryDefaultSslContext,
       maxConnectionsPerRequestKey: Option[RequestKey => Int] = None,
