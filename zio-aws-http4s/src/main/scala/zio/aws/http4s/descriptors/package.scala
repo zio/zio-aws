@@ -11,6 +11,9 @@ import zio.Config
 import scala.concurrent.duration._
 
 package object descriptors {
+  /**
+   * Reads a `User-Agent` header value, such as `bucket-sync/2.0`. A string that does not parse as a `User-Agent` header fails with the http4s parse error.
+   */
   val userAgent: Config[`User-Agent`] =
     Config.string.mapOrFail(s =>
       `User-Agent`
@@ -18,6 +21,9 @@ package object descriptors {
         .left
         .map(r => Config.Error.InvalidData(message = r.message))
     )
+  /**
+   * Reads `strict` or `lenient` as a Blaze `ParserMode`. Any other string fails: `loose` gives `Invalid parser mode 'loose'. Use 'strict' or 'lenient'`.
+   */
   val parserMode: Config[ParserMode] =
     Config.string.mapOrFail(
       {
@@ -32,6 +38,9 @@ package object descriptors {
       }
     )
 
+  /**
+   * Reads the socket options of `zio.aws.core.httpclient.descriptors.channelOptions` (keys such as `SO_KEEPALIVE` and `TCP_NODELAY`, each optional) as Blaze `ChannelOptions`.
+   */
   val http4sChannelOptions: Config[ChannelOptions] =
     channelOptions.map(opts =>
       ChannelOptions(
@@ -39,6 +48,27 @@ package object descriptors {
       )
     )
 
+  /**
+   * Reads a [[zio.aws.http4s.BlazeClientConfig]]. The keys and their defaults:
+   *
+   *  - `responseHeaderTimeout`: infinite
+   *  - `idleTimeout`: 1 minute
+   *  - `requestTimeout`: 45 seconds (http4s `defaults.RequestTimeout`)
+   *  - `connectTimeout`: 10 seconds (http4s `defaults.ConnectTimeout`)
+   *  - `userAgent`: `http4s-blaze/` followed by `org.http4s.BuildInfo.version` (read with [[userAgent]])
+   *  - `maxTotalConnections`: 10
+   *  - `maxWaitQueueLimit`: 256
+   *  - `checkEndpointIdentification`: `true`
+   *  - `maxResponseLineSize`: 4096
+   *  - `maxHeaderLength`: 40960
+   *  - `maxChunkSize`: `Int.MaxValue`
+   *  - `chunkBufferMaxSize`: 1048576
+   *  - `parserMode`: `strict` (read with [[parserMode]])
+   *  - `bufferSize`: 8192
+   *  - `channelOptions`: read with [[http4sChannelOptions]]
+   *
+   * The `channelOptions` default in the code sets `TCP_NODELAY` to `true`, but it is never used: with no `channelOptions` keys, the result has no socket options.
+   */
   val blazeClientConfig: Config[BlazeClientConfig] = (
     Config
       .duration("responseHeaderTimeout")
