@@ -17,7 +17,9 @@ import java.nio.file.FileSystemNotFoundException
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 
-/** A `Loader` that reads the models from the `codegen-resources` directories found on the classpath, in jars or in plain directories. */
+/** A `Loader` that reads the models from the `codegen-resources` directories
+  * found on the classpath, in jars or in plain directories.
+  */
 case class FromClasspath() extends Loader {
   private def findRoot(
       name: String,

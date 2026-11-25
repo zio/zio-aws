@@ -13,7 +13,9 @@ import zio.aws.codegen.loader.ModuleId
 
 import java.io.File
 
-/** The [[AwsGenerator]] implementation. It generates the service module and the models of a service, and the artifact list file. */
+/** The [[AwsGenerator]] implementation. It generates the service module and the
+  * models of a service, and the artifact list file.
+  */
 case class AwsGeneratorImpl(cfg: Parameters)
     extends AwsGenerator
     with GeneratorBase

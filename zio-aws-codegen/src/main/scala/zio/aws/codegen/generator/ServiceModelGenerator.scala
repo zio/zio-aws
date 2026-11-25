@@ -15,7 +15,11 @@ import zio.nio.file.Path
 import scala.jdk.CollectionConverters._
 import scala.meta._
 
-/** Generates the model sources of a service: a `model` package object that holds the models without a file name of their own, and one file for each model that has one. Models that the customization config excludes are left out. */
+/** Generates the model sources of a service: a `model` package object that
+  * holds the models without a file name of their own, and one file for each
+  * model that has one. Models that the customization config excludes are left
+  * out.
+  */
 trait ServiceModelGenerator {
   this: HasConfig with GeneratorBase with Blacklists =>
 

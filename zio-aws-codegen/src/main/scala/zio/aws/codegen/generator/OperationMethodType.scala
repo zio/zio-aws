@@ -1,10 +1,14 @@
 package zio.aws.codegen.generator
 
-/** The kind of method that the generator emits for an operation. [[OperationCollector]] picks it from the input and output shapes of the operation. */
+/** The kind of method that the generator emits for an operation.
+  * [[OperationCollector]] picks it from the input and output shapes of the
+  * operation.
+  */
 sealed trait OperationMethodType
 
 /** The cases of [[OperationMethodType]]. */
 object OperationMethodType {
+
   /** An operation with no input and no output. */
   case object UnitToUnit extends OperationMethodType
 
@@ -14,7 +18,10 @@ object OperationMethodType {
   /** An operation with an input and no output. */
   case object RequestToUnit extends OperationMethodType
 
-  /** An operation with an input and an output, none of them streaming. `pagination` holds the definition of the paginated member when the operation is paginated. */
+  /** An operation with an input and an output, none of them streaming.
+    * `pagination` holds the definition of the paginated member when the
+    * operation is paginated.
+    */
   case class RequestResponse(pagination: Option[PaginationDefinition])
       extends OperationMethodType
 

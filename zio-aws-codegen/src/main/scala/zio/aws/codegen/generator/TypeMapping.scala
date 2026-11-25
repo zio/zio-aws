@@ -7,13 +7,16 @@ import zio.aws.codegen.generator.context._
 import zio.aws.codegen.generator.context.AwsGeneratorContext._
 import _root_.io.github.vigoo.metagen.core._
 
-/**
- * Maps AWS service model shapes to the Scala types that the generator emits for them, as the Java SDK type, the wrapper type or the read-only wrapper type.
- */
+/** Maps AWS service model shapes to the Scala types that the generator emits
+  * for them, as the Java SDK type, the wrapper type or the read-only wrapper
+  * type.
+  */
 object TypeMapping {
-  /**
-   * Returns `true` when the shape's type is `integer`, `long`, `float`, `double`, `boolean`, `timestamp`, `blob`, `bigdecimal`, or `string` without enum values, and `false` otherwise.
-   */
+
+  /** Returns `true` when the shape's type is `integer`, `long`, `float`,
+    * `double`, `boolean`, `timestamp`, `blob`, `bigdecimal`, or `string`
+    * without enum values, and `false` otherwise.
+    */
   def isPrimitiveType(shape: Shape): Boolean =
     shape.getType match {
       case "string" if Option(shape.getEnumValues).isEmpty => true
@@ -38,23 +41,27 @@ object TypeMapping {
     "BigDecimal"
   )
 
-  /**
-   * Returns `true` when `typ` is `java.time.Instant` and `false` for any other type.
-   */
+  /** Returns `true` when `typ` is `java.time.Instant` and `false` for any other
+    * type.
+    */
   def resolvedToBuiltIn(typ: ScalaType): Boolean = {
     typ == Types.instant
   }
 
-  /**
-   * Returns `true` when `name` is one of `String`, `Boolean`, `Int`, `Long`, `Float`, `Double` or `BigDecimal`.
-   */
+  /** Returns `true` when `name` is one of `String`, `Boolean`, `Int`, `Long`,
+    * `Float`, `Double` or `BigDecimal`.
+    */
   def isBuiltIn(name: String): Boolean = {
     builtIns.contains(name)
   }
 
-  /**
-   * Returns the AWS SDK Java type for the model: `java.util.Map` and `java.util.List` of the mapped key, value or item types, the boxed `java.lang` types, `java.time.Instant`, `java.math.BigDecimal`, `SdkBytes` for blobs, the SDK's `Document` for documents, and `model.sdkType` for enums, structures and exceptions. Fails with `UnknownType` for a `ModelType.Unknown` model.
-   */
+  /** Returns the AWS SDK Java type for the model: `java.util.Map` and
+    * `java.util.List` of the mapped key, value or item types, the boxed
+    * `java.lang` types, `java.time.Instant`, `java.math.BigDecimal`, `SdkBytes`
+    * for blobs, the SDK's `Document` for documents, and `model.sdkType` for
+    * enums, structures and exceptions. Fails with `UnknownType` for a
+    * `ModelType.Unknown` model.
+    */
   def toJavaType(
       model: Model
   ): ZIO[AwsGeneratorContext, AwsGeneratorFailure, ScalaType] = {
@@ -103,9 +110,10 @@ object TypeMapping {
     }
   }
 
-  /**
-   * Returns the type of the model's value in the generated wrapper API: a `Map` of the wrapped key and value types, an `Iterable` of the wrapped item type, and `model.generatedType` for every other model type.
-   */
+  /** Returns the type of the model's value in the generated wrapper API: a
+    * `Map` of the wrapped key and value types, an `Iterable` of the wrapped
+    * item type, and `model.generatedType` for every other model type.
+    */
   def toWrappedType(
       model: Model
   ): ZIO[AwsGeneratorContext, AwsGeneratorFailure, ScalaType] = {
@@ -127,9 +135,11 @@ object TypeMapping {
     }
   }
 
-  /**
-   * Returns the type of the model's value in the generated read-only wrapper API: a `Map` or `List` of the mapped types, `generatedType / "ReadOnly"` for structures and exceptions, the Java type for documents, and `model.generatedType` for every other model type.
-   */
+  /** Returns the type of the model's value in the generated read-only wrapper
+    * API: a `Map` or `List` of the mapped types, `generatedType / "ReadOnly"`
+    * for structures and exceptions, the Java type for documents, and
+    * `model.generatedType` for every other model type.
+    */
   def toWrappedTypeReadOnly(
       model: Model
   ): ZIO[AwsGeneratorContext, AwsGeneratorFailure, ScalaType] = {

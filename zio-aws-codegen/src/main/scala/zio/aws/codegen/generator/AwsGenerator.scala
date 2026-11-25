@@ -8,9 +8,14 @@ import zio.aws.codegen.loader.ModuleId
 
 import java.io.File
 
-/** Generates the zio-aws client sources of a service and the list of published artifacts. */
+/** Generates the zio-aws client sources of a service and the list of published
+  * artifacts.
+  */
 trait AwsGenerator {
-  /** Generates the client and model sources of the module `id` from `model` and returns the files that were written. */
+
+  /** Generates the client and model sources of the module `id` from `model` and
+    * returns the files that were written.
+    */
   def generateServiceCode(
       id: ModuleId,
       model: C2jModels,
@@ -28,7 +33,9 @@ trait AwsGenerator {
 /** Accessors and the live implementation of [[AwsGenerator]]. */
 object AwsGenerator {
 
-  /** A layer that builds an [[AwsGeneratorImpl]] from the `Parameters` in the environment. */
+  /** A layer that builds an [[AwsGeneratorImpl]] from the `Parameters` in the
+    * environment.
+    */
   val live: ZLayer[Parameters, Nothing, AwsGenerator] = ZLayer(
     ZIO.service[Parameters].map(AwsGeneratorImpl.apply)
   )
@@ -47,7 +54,8 @@ object AwsGenerator {
       _.generateServiceCode(id, model, sbtLogger)
     )
 
-  /** Calls `generateArtifactList` on the [[AwsGenerator]] in the environment. */
+  /** Calls `generateArtifactList` on the [[AwsGenerator]] in the environment.
+    */
   def generateArtifactList(
       ids: Set[ModuleId]
   ): ZIO[AwsGenerator, GeneratorFailure[

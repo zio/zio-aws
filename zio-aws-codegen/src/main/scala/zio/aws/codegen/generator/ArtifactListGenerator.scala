@@ -6,7 +6,9 @@ import zio.aws.codegen.loader.ModuleId
 trait ArtifactListGenerator {
   this: HasConfig with GeneratorBase =>
 
-  /** Returns the page text: the core module, the four HTTP client modules and one line for each of `ids`, sorted by module name. */
+  /** Returns the page text: the core module, the four HTTP client modules and
+    * one line for each of `ids`, sorted by module name.
+    */
   def doGenerateArtifactList(ids: Set[ModuleId]): String = {
     val prefix = s"""---
                     |id: artifacts

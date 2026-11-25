@@ -12,9 +12,14 @@ import zio.aws.codegen.generator.context.AwsGeneratorContext.getServiceName
 
 import scala.jdk.CollectionConverters._
 
-/** Maps names from the service model to the models that the generator collected. */
+/** Maps names from the service model to the models that the generator
+  * collected.
+  */
 trait ModelMap {
-  /** Returns the model for `serviceModelName`, or fails with `UnknownShapeReference` when there is none. */
+
+  /** Returns the model for `serviceModelName`, or fails with
+    * `UnknownShapeReference` when there is none.
+    */
   def get(
       serviceModelName: String
   ): ZIO[AwsGeneratorContext, AwsGeneratorFailure, Model]
@@ -25,7 +30,11 @@ trait ModelMap {
 
 /** Collects the models that the generator emits for a service. */
 object ModelCollector {
-  /** Searches `outputShape` and the shapes it refers to for an event stream shape and returns the first one found, or `None` when there is none. `alreadyChecked` holds the shapes already visited. */
+
+  /** Searches `outputShape` and the shapes it refers to for an event stream
+    * shape and returns the first one found, or `None` when there is none.
+    * `alreadyChecked` holds the shapes already visited.
+    */
   def tryFindEventStreamShape(
       models: C2jModels,
       outputShape: String,
@@ -72,7 +81,7 @@ object ModelCollector {
         else Option(op.getOutput).map(_.getShape)
 
       (request, response) match {
-        case (None, None)                   => List.empty
+        case (None, None) => List.empty
         case (Some(requestShapeName), None) =>
           Option(models.serviceModel().getShape(requestShapeName)).map {
             requestShape =>
@@ -221,7 +230,11 @@ object ModelCollector {
       }
       .toSet
 
-  /** Collects the models that the non-deprecated, non-excluded operations use, together with the shapes they refer to, and applies the customization config's shape substitutions. The result is the [[ModelMap]] of the service. */
+  /** Collects the models that the non-deprecated, non-excluded operations use,
+    * together with the shapes they refer to, and applies the customization
+    * config's shape substitutions. The result is the [[ModelMap]] of the
+    * service.
+    */
   def collectUsedModels(
       modelPkg: Package,
       targetModelPkg: Package,
@@ -273,7 +286,7 @@ object ModelCollector {
       ): ZIO[AwsGeneratorContext, AwsGeneratorFailure, Model] =
         substitutedMap.get(serviceModelName) match {
           case Some(value) => ZIO.succeed(value)
-          case None        =>
+          case None =>
             getServiceName.flatMap { serviceName =>
               ZIO.fail(UnknownShapeReference(serviceName, serviceModelName))
             }
